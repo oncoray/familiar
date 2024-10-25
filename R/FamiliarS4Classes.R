@@ -1565,3 +1565,24 @@ setClass(
     prediction_data = NULL
   )
 )
+
+
+
+# familiarTask object ----------------------------------------------------------
+setClass(
+  "familiarTask",
+  slots = list(
+    name = "character",
+    data_id = "integer",
+    run_id = "integer",
+    file = "character",
+    project_id = "ANY"
+  ),
+  prototype = methods::prototype(
+    name = NA_character_,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
+    file = NA_character_,
+    project_id = NULL
+  )
+)

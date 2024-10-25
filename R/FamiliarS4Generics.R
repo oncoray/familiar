@@ -346,12 +346,7 @@ setGeneric("preprocess_vimp_table", function(x, ...) standardGeneric("preprocess
 
 setGeneric("remove_signature_features", function(x, ...) standardGeneric("remove_signature_features"))
 
-setGeneric(
-  "update_vimp_table_to_reference",
-  function(x, ...) {
-    standardGeneric("update_vimp_table_to_reference")
-  }
-)
+setGeneric("update_vimp_table_to_reference", function(x, ...) standardGeneric("update_vimp_table_to_reference"))
 
 setGeneric("collect_vimp_table", function(x, ...) standardGeneric("collect_vimp_table"))
 
@@ -370,9 +365,15 @@ setGeneric("feature_info_complete", function(object, ...) standardGeneric("featu
 
 setGeneric("add_feature_info_parameters", function(object, data, ...) standardGeneric("add_feature_info_parameters"))
 
-setGeneric(
-  "apply_feature_info_parameters",
-  function(object, data, ...) {
-    standardGeneric("apply_feature_info_parameters")
-  }
-)
+setGeneric("apply_feature_info_parameters", function(object, data, ...) standardGeneric("apply_feature_info_parameters"))
+
+
+
+# task methods -----------------------------------------------------------------
+setGeneric(".set_file_name", function(object, ...) standardGeneric(".set_file_name"))
+
+setGeneric(".file_exists", function(object, ...) standardGeneric(".file_exists"))
+
+setGeneric(".perform_task", function(object, ...) standardGeneric(".perform_task"))
+
+setGeneric(".get_task_descriptor", function(object, ...) standardGeneric(".get_task_descriptor"))
