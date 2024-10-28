@@ -295,6 +295,13 @@ setMethod(
       novelty_features = novelty_features
     )
     
+    # Add fairness feature info.
+    if (is.null(fairness_features)) fairness_features <- settings$data$fairness_features
+    feature_info_list <- add_fairness_info(
+      feature_info_list = feature_info_list,
+      fairness_features = fairness_features
+    )
+    
     # Find currently available features.
     available_features <- get_available_features(feature_info_list = feature_info_list)
     

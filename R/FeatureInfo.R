@@ -276,6 +276,16 @@ add_novelty_info <- function(
 }
 
 
+add_fairness_info <- function(
+    feature_info_list,
+    fairness_features = NULL
+) {
+  if (is.null(fairness_features)) return(feature_info_list)
+  
+  # TODO: Implement fairness features.
+  browser()
+}
+
 
 add_missing_value_fractions <- function(
     cl = NULL,
