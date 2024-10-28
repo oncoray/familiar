@@ -1,8 +1,14 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+NULL
+
+
 # familiarTaskGenericFeatureInfo -----------------------------------------------
 setClass(
   "familiarTaskGenericFeatureInfo",
+  contains = "familiarTask",
   prototype = methods::prototype(
-    name = "create_generic_feature_info"
+    task_name = "create_generic_feature_info"
   )
 )
 
@@ -34,7 +40,7 @@ setMethod(
   ".get_task_descriptor",
   signature(object = "familiarTaskGenericFeatureInfo"),
   function(object, ...) {
-    return(object@name)
+    return(object@task_name)
   }
 )
 
@@ -78,8 +84,9 @@ setMethod(
 # familiarTaskFeatureInfo ------------------------------------------------------
 setClass(
   "familiarTaskFeatureInfo",
+  contains = "familiarTask",
   prototype = methods::prototype(
-    name = "create_feature_info"
+    task_name = "create_feature_info"
   )
 )
 
@@ -114,7 +121,7 @@ setMethod(
   ".get_task_descriptor",
   signature(object = "familiarTaskFeatureInfo"),
   function(object, ...) {
-    return(paste0(object@name, "_", object@data_id, "_", object@run_id))
+    return(paste0(object@task_name, "_", object@data_id, "_", object@run_id))
   }
 )
 
@@ -126,13 +133,15 @@ setMethod(
   signature(object = "familiarTaskFeatureInfo"),
   function(
     object,
-    data,
-    settings,
+    data = NULL,
+    settings = NULL,
     feature_info_list = NULL,
     project_info = NULL,
     message_indent = 0L,
     verbose = FALSE,
-    cl = NULL
+    cl = NULL,
+    signature_features = NULL,
+    novelty_features = NULL
   ) {
     
     logger_message(
@@ -145,27 +154,87 @@ setMethod(
       verbose = verbose
     )
     
+    # Load data, if not provided.
+    if (is.null(data)) {
+      if (is.null(project_info)) {
+        ..error_reached_unreachable_code("project_info is required for retrieving data from the backend.")
+      }
+      if (is.null(settings)) {
+        ..error_reached_unreachable_code("settings is required for retrieving data from the backend.")
+      }
+      
+      # Find the run list.
+      run_list <- .get_run_list(
+        iteration_list = project_info$iter_list,
+        data_id = object@data_id,
+        run_id = object@run_id
+      )
+      
+      # Select unique samples.
+      sample_identifiers <- .get_sample_identifiers(
+        run = run_list,
+        train_or_validate = "train"
+      )
+      sample_identifiers <- unique(sample_identifiers)
+      
+      # Create a dataObject.
+      data <- methods::new(
+        "dataObject",
+        data = get_data_from_backend(sample_identifiers = sample_identifiers),
+        preprocessing_level = "none",
+        outcome_type = settings$data$outcome_type
+      )
+    }
+    
     # Check that a feature info list is provided, otherwise create an ad-hoc
     # list as an template.
     if (is.null(feature_info_list)) {
       # Set up task, and explicitly don't write to file.
       generic_feature_info_task <- methods::new(
         "familiarTaskGenericFeatureInfo",
-        project_id = project_info$project_id,
+        project_id = object@project_id,
         file = NA_character_
       )
       
       # Execute the task.
-      feature_info_list <- .perform_task(generic_feature_info_task)
+      feature_info_list <- .perform_task(
+        object = generic_feature_info_task,
+        data = data
+      )
     }
     
-    # Update feature info list.
-    feature_info_list <- determine_preprocessing_parameters(
-      cl = cl,
+    # Add workflow control info.
+    feature_info_list <- add_control_info(
       feature_info_list = feature_info_list,
       data_id = object@data_id,
-      run_id = object@run_id,
-      project_info = project_info,
+      run_id = object@run_id
+    )
+    
+    # Add signature feature info.
+    if (is.null(signature_features)) signature_features <- settings$data$signature
+    feature_info_list <- add_signature_info(
+      feature_info_list = feature_info_list,
+      signature = signature_features
+    )
+    
+    # Add novelty feature info.
+    if (is.null(novelty_features)) novelty_features <- settings$data$novelty_features
+    feature_info_list <- add_novelty_info(
+      feature_info_list = feature_info_list,
+      novelty_features = novelty_features
+    )
+    
+    # Find currently available features.
+    available_features <- get_available_features(feature_info_list = feature_info_list)
+    
+    # Remove unavailable features from the data object.
+    data <- filter_features(data = data, available_features = available_features)
+    
+    # Use data to determine pre-processing parameters.
+    feature_info_list <- .determine_preprocessing_parameters(
+      cl = cl,
+      data = data,
+      feature_info_list = feature_info_list,
       settings = settings,
       message_indent = message_indent + 1L,
       verbose = verbose
