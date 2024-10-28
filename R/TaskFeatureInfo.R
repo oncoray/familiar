@@ -8,7 +8,9 @@ setClass(
   "familiarTaskGenericFeatureInfo",
   contains = "familiarTask",
   prototype = methods::prototype(
-    task_name = "create_generic_feature_info"
+    task_name = "create_generic_feature_info",
+    data_id = 1L,
+    run_id = 1L
   )
 )
 
@@ -46,26 +48,66 @@ setMethod(
 
 
 
-# .perform_task (generic feature info task) ------------------------------------
+# .perform_task (generic feature info task, NULL) ------------------------------
 setMethod(
   ".perform_task",
-  signature(object = "familiarTaskGenericFeatureInfo"),
+  signature(
+    object = "familiarTaskGenericFeatureInfo",
+    data = "NULL"
+  ),
   function(
     object,
     data,
-    outcome_type = NULL,
-    descriptor = NULL
+    settings = NULL,
+    ...
   ) {
-    if (is(data, "dataObject")) outcome_type <- data@outcome_type
-    if (is.null(outcome_type)) {
-      ..error_reached_unreachable_code("outcome_type is expected to be provided")
+    # This method is called when "data" is expected to be available somewhere in
+    # the backend.
+    
+    if (is.null(project_info)) {
+      ..error_reached_unreachable_code("project_info is required for retrieving data from the backend.")
+    }
+    if (is.null(settings)) {
+      ..error_reached_unreachable_code("settings is required for retrieving data from the backend.")
     }
     
+    # Create a dataObject.
+    data <- methods::new(
+      "dataObject",
+      data = get_data_from_backend(),
+      preprocessing_level = "none",
+      outcome_type = settings$data$outcome_type
+    )
+    
+    # Pass to .perform_task for dataObject.
+    return(.perform_task(
+      object = object,
+      data = data,
+      ...
+    ))
+  }
+)
+
+
+
+# .perform_task (generic feature info task, dataObject) ------------------------
+setMethod(
+  ".perform_task",
+  signature(
+    object = "familiarTaskGenericFeatureInfo",
+    data = "dataObject"
+  ),
+  function(
+    object,
+    data,
+    descriptor = NULL,
+    ...
+  ) {
     # Extract basic feature information from the data.
     feature_info_list <- .get_generic_feature_info(
       data = data,
-      outcome_type = outcome_type,
-      descriptor = NULL
+      outcome_type = data@outcome_type,
+      descriptor = descriptor
     )
     
     # Write to file or return.
@@ -127,21 +169,82 @@ setMethod(
 
 
 
-# .perform_task (feature info task) --------------------------------------------
+# .perform_task (feature info task , NULL) -------------------------------------
 setMethod(
   ".perform_task",
-  signature(object = "familiarTaskFeatureInfo"),
+  signature(
+    object = "familiarTaskFeatureInfo",
+    data = "NULL"
+  ),
   function(
     object,
-    data = NULL,
+    data,
+    settings = NULL,
+    project_info = NULL,
+    ...
+  ) {
+    # This method is called when "data" is expected to be available somewhere in
+    # the backend.
+    
+    if (is.null(project_info)) {
+      ..error_reached_unreachable_code("project_info is required for retrieving data from the backend.")
+    }
+    if (is.null(settings)) {
+      ..error_reached_unreachable_code("settings is required for retrieving data from the backend.")
+    }
+    
+    # Find the run list.
+    run_list <- .get_run_list(
+      iteration_list = project_info$iter_list,
+      data_id = object@data_id,
+      run_id = object@run_id
+    )
+    
+    # Select unique samples.
+    sample_identifiers <- .get_sample_identifiers(
+      run = run_list,
+      train_or_validate = "train"
+    )
+    sample_identifiers <- unique(sample_identifiers)
+    
+    # Create a dataObject.
+    data <- methods::new(
+      "dataObject",
+      data = get_data_from_backend(sample_identifiers = sample_identifiers),
+      preprocessing_level = "none",
+      outcome_type = settings$data$outcome_type
+    )
+    
+    # Pass to method that dispatches with dataObject for further processing.
+    return(.perform_task(
+      object = object,
+      data = data,
+      settings = settings,
+      ...
+    ))
+  }
+)
+
+
+# .perform_task (feature info task, dataObject) --------------------------------
+setMethod(
+  ".perform_task",
+  signature(
+    object = "familiarTaskFeatureInfo",
+    data = "dataObject"
+  ),
+  function(
+    object,
+    data,
     settings = NULL,
     feature_info_list = NULL,
-    project_info = NULL,
     message_indent = 0L,
     verbose = FALSE,
     cl = NULL,
     signature_features = NULL,
-    novelty_features = NULL
+    novelty_features = NULL,
+    fairness_features = NULL,
+    ...
   ) {
     
     logger_message(
@@ -153,38 +256,6 @@ setMethod(
       indent = message_indent,
       verbose = verbose
     )
-    
-    # Load data, if not provided.
-    if (is.null(data)) {
-      if (is.null(project_info)) {
-        ..error_reached_unreachable_code("project_info is required for retrieving data from the backend.")
-      }
-      if (is.null(settings)) {
-        ..error_reached_unreachable_code("settings is required for retrieving data from the backend.")
-      }
-      
-      # Find the run list.
-      run_list <- .get_run_list(
-        iteration_list = project_info$iter_list,
-        data_id = object@data_id,
-        run_id = object@run_id
-      )
-      
-      # Select unique samples.
-      sample_identifiers <- .get_sample_identifiers(
-        run = run_list,
-        train_or_validate = "train"
-      )
-      sample_identifiers <- unique(sample_identifiers)
-      
-      # Create a dataObject.
-      data <- methods::new(
-        "dataObject",
-        data = get_data_from_backend(sample_identifiers = sample_identifiers),
-        preprocessing_level = "none",
-        outcome_type = settings$data$outcome_type
-      )
-    }
     
     # Check that a feature info list is provided, otherwise create an ad-hoc
     # list as an template.
@@ -228,7 +299,10 @@ setMethod(
     available_features <- get_available_features(feature_info_list = feature_info_list)
     
     # Remove unavailable features from the data object.
-    data <- filter_features(data = data, available_features = available_features)
+    data <- filter_features(
+      data = data,
+      available_features = available_features
+    )
     
     # Use data to determine pre-processing parameters.
     feature_info_list <- .determine_preprocessing_parameters(
