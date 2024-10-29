@@ -62,6 +62,12 @@
   normalisation is performed, and warns if the outcome in any batch is 
   significantly different from others.
 
+- The `ensemble` method is now used as `detail_level` for evaluating models if 
+  the number of samples assessed for model is 10 or lower. This avoids an issue 
+  where the `hybrid` method used as a default in several evaluation steps would
+  lead to too few samples to allow for assessment. This affected 
+  Leave-One-Out-Cross-Validation (LOOCV) schemes in particular.
+
 ## Bug fixes
 
 - Fixed errors when creating feature or similarity plots caused by sample or 
