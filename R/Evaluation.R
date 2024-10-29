@@ -112,6 +112,7 @@ run_evaluation <- function(
       project_list = project_list,
       only_pooling = only_pooling
     ),
+    fill = TRUE,
     use.names = TRUE
   )
 
@@ -244,7 +245,14 @@ run_evaluation <- function(
       "pool_data_id", "pool_run_id", "pool_perturb_level", "is_validation"
     ))
   ])
-    
+  
+  # Specify detail_level.
+  detail_level <- settings$eval$detail_level
+  
+  # If there are too few samples for hybrid analysis -- computing data from
+  # bootstraps of data for single models -- force detail_level to ensemble.
+  if (any(data_sets$n_hybrid_samples <= 10L)) detail_level <- "ensemble"
+   
   if (!is_empty(new_data_table)) {
     
     # Select unique entries.
@@ -291,6 +299,7 @@ run_evaluation <- function(
       MoreArgs = list(
         "cl" = cl_inner,
         "dir_path" = file_paths$fam_data_dir,
+        "detail_level" = detail_level,
         "message_indent" = message_indent + 1L,
         "verbose" = verbose
       )
@@ -361,6 +370,18 @@ run_evaluation <- function(
   # Suppress NOTES due to non-standard evaluation in data.table
   perturb_level <- data_id <- run_id <- has_validation <- NULL
   pool_perturb_level <- data_perturb_level <- can_pre_process <- NULL
+  model_run_id <- is_validation <- NULL
+  
+  # Helper function for determining how many samples are seen by a single model
+  # during evaluation. Some evaluation steps may fail (gracefully) if they see 
+  # too few samples.
+  ..get_n_hybrid_samples <- function(run_id, is_validation, run_list) {
+    if (is_validation) {
+      return(nrow(run_list[[as.character(run_id)]]$valid_samples))
+    } else {
+      return(nrow(run_list[[as.character(run_id)]]$train_samples))
+    }
+  }
   
   # Create empty ensemble run list
   ensemble_run_list <- list()
@@ -561,7 +582,22 @@ run_evaluation <- function(
       )
     }
   }
-
+  
+  # Set the number of samples evaluated during hybrid evaluations.
+  for (data_set in data_sets) {
+    if (nrow(data_set) == 0L) next
+    
+    data_set[
+      ,
+      "n_hybrid_samples" := ..get_n_hybrid_samples(
+        run_id = model_run_id,
+        is_validation = is_validation,
+        run_list = run_list
+      ),
+      by = 1L:nrow(data_set)
+    ]
+  }
+  
   return(data_sets)
 }
 
@@ -616,6 +652,7 @@ run_evaluation <- function(
     cl = NULL,
     pool_data_table,
     dir_path,
+    detail_level = waiver(),
     message_indent = 0L,
     verbose = TRUE
 ) {
@@ -659,7 +696,7 @@ run_evaluation <- function(
     time_max = settings$eval$time_max,
     evaluation_times = settings$eval$eval_times,
     sample_limit = settings$eval$sample_limit,
-    detail_level = settings$eval$detail_level,
+    detail_level = detail_level,
     estimation_type = settings$eval$estimation_type,
     aggregate_results = settings$eval$aggregate_results,
     aggregation_method = settings$eval$aggregation,
