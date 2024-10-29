@@ -3530,6 +3530,10 @@
 #'  This parameter can be set for the following data elements: `auc_data`,
 #'  `decision_curve_analyis`, `model_performance`, `permutation_vimp`,
 #'  `ice_data`, `prediction_data` and `confusion_matrix`.
+#'  
+#'  If results are computed from 10 samples or fewer, `ensemble` is
+#'  automatically used. This prevents issues where evaluation steps do not have
+#'  a required minimum number of samples for `hybrid` or `model`.
 #'
 #' @param estimation_type (*optional*) Sets the type of estimation that should be
 #'  possible. This has the following options:
