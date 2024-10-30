@@ -23,12 +23,10 @@ setMethod(
     if (is.null(file_paths)) return(object)
     
     # Generate file name of pre-processing file
-    file_name <- paste0(object@project_id, "_generic_feature_info.RDS")
-    
-    # Add file path and normalise according to the OS
-    object@file <- normalizePath(
-      file.path(file_paths$process_data_dir, file_name),
-      mustWork = FALSE
+    object@file <- get_object_file_name(
+      object_type = "genericFeatureInfo",
+      project_id = object@project_id,
+      dir_path = file_paths$process_data_dir
     )
     
     return(object)
@@ -58,17 +56,14 @@ setMethod(
   function(
     object,
     data,
-    settings = NULL,
+    outcome_info = NULL,
     ...
   ) {
     # This method is called when "data" is expected to be available somewhere in
     # the backend.
-    
-    if (is.null(project_info)) {
-      ..error_reached_unreachable_code("project_info is required for retrieving data from the backend.")
-    }
-    if (is.null(settings)) {
-      ..error_reached_unreachable_code("settings is required for retrieving data from the backend.")
+
+    if (is.null(outcome_info)) {
+      ..error_reached_unreachable_code("outcome_info is required.")
     }
     
     # Create a dataObject.
@@ -76,7 +71,8 @@ setMethod(
       "dataObject",
       data = get_data_from_backend(),
       preprocessing_level = "none",
-      outcome_type = settings$data$outcome_type
+      outcome_type = outcome_info@outcome_type,
+      outcome_info = outcome_info
     )
     
     # Pass to .perform_task for dataObject.
@@ -141,15 +137,13 @@ setMethod(
   function(object, file_paths = NULL) {
     if (is.null(file_paths)) return(object)
     
-    # Generate file name of pre-processing file.
-    file_name <- paste0(
-      object@project_id, "_", object@data_id, "_", object@run_id, "_feature_info.RDS"
-    )
-    
-    # Add file path and normalise according to the OS
-    object@file <- normalizePath(
-      file.path(file_paths$process_data_dir, file_name),
-      mustWork = FALSE
+    # Generate file name of pre-processing file
+    object@file <- get_object_file_name(
+      object_type = "featureInfo",
+      project_id = object@project_id,
+      data_id = object@data_id,
+      run_id = object@run_id,
+      dir_path = file_paths$process_data_dir
     )
     
     return(object)
@@ -179,8 +173,8 @@ setMethod(
   function(
     object,
     data,
-    settings = NULL,
     project_info = NULL,
+    outcome_info = NULL,
     ...
   ) {
     # This method is called when "data" is expected to be available somewhere in
@@ -189,8 +183,8 @@ setMethod(
     if (is.null(project_info)) {
       ..error_reached_unreachable_code("project_info is required for retrieving data from the backend.")
     }
-    if (is.null(settings)) {
-      ..error_reached_unreachable_code("settings is required for retrieving data from the backend.")
+    if (is.null(outcome_info)) {
+      ..error_reached_unreachable_code("outcome_info is required.")
     }
     
     # Find the run list.
@@ -212,14 +206,14 @@ setMethod(
       "dataObject",
       data = get_data_from_backend(sample_identifiers = sample_identifiers),
       preprocessing_level = "none",
-      outcome_type = settings$data$outcome_type
+      outcome_type = outcome_info@outcome_type,
+      outcome_info = outcome_info
     )
     
     # Pass to method that dispatches with dataObject for further processing.
     return(.perform_task(
       object = object,
       data = data,
-      settings = settings,
       ...
     ))
   }

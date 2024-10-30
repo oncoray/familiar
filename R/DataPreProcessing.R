@@ -293,19 +293,19 @@ determine_preprocessing_parameters <- function(
 
 
 
-.get_feature_info_list <- function(run) {
-  
-  # Find pre-processing control element for the current run
-  pre_proc_id_list <- .get_preprocessing_iteration_identifiers(run = run)
-  
-  # Load feature info list from backend
-  feature_info_list <- get_feature_info_from_backend(
-    data_id = pre_proc_id_list$data,
-    run_id = pre_proc_id_list$run
-  )
-  
-  return(feature_info_list)
-}
+# .get_feature_info_list <- function(run) {
+#   
+#   # Find pre-processing control element for the current run
+#   pre_proc_id_list <- .get_preprocessing_iteration_identifiers(run = run)
+#   
+#   # Load feature info list from backend
+#   feature_info_list <- get_feature_info_from_backend(
+#     data_id = pre_proc_id_list$data,
+#     run_id = pre_proc_id_list$run
+#   )
+#   
+#   return(feature_info_list)
+# }
 
 
 

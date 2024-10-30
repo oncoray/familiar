@@ -377,3 +377,5 @@ setGeneric(".file_exists", function(object, ...) standardGeneric(".file_exists")
 setGeneric(".perform_task", function(object, data, ...) standardGeneric(".perform_task"))
 
 setGeneric(".get_task_descriptor", function(object, ...) standardGeneric(".get_task_descriptor"))
+
+setGeneric(".get_feature_info_list", function(object, ...) standardGeneric(".get_feature_info_list"))

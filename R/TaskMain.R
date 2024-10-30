@@ -15,6 +15,7 @@ setMethod(
 )
 
 
+
 .generate_trainer_tasks <- function(
     file_paths,
     project_id  
@@ -48,7 +49,7 @@ setMethod(
   # Add tasks related to data processing for learners.
   task_list <- c(
     task_list, 
-    .generate_learner_tasks(
+    .generate_learner_data_preprocessing_tasks(
       file_paths = file_paths,
       project_id = project_id
     )
@@ -58,46 +59,7 @@ setMethod(
 }
 
 
-.generate_vimp_tasks <- function(
-    file_paths,
-    project_id
-) {
-  
-  task_list <- list()
-  
-  # Check if vimp should be computed separately or is computed during 
-  # hyperparameter optimisation.
-  
-  for (data_id in data_ids) {
-    for (run_id in run_ids) {
-      for (vimp_method in vimp_methods) {
-        
-        # Check if the variable importance method requires any computation.
-        # For example, signature_only, none and random do not require
-        # computation.
-        
-        # Set up variable importance computation task.
-        
-        # Set up variable importance hyperparameter task.
-        
-      }
-    }
-  }
-  
-  # Check if any vimp-related tasks are required.
-  if (len(task_list) == 0L) return(NULL)
-  
-  # Add tasks related to data processing for vimp methods.
-  task_list <- c(
-    task_list, 
-    .generate_vimp_data_preprocessing_tasks(
-      file_paths = file_paths,
-      project_id = project_id
-    )
-  )
-  
-  return(task_list)
-}
+
 
 
 

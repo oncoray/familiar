@@ -752,11 +752,11 @@ get_id_columns <- function(id_depth = "repetition", single_column = NULL) {
 
 
 get_object_file_name <- function(
-    learner,
-    vimp_method,
     project_id,
     data_id,
     run_id,
+    learner = NULL,
+    vimp_method = NULL,
     pool_data_id = NULL,
     pool_run_id = NULL,
     object_type,
@@ -783,42 +783,83 @@ get_object_file_name <- function(
   if (object_type == "familiarModel") {
     # For familiarModel objects
 
-    output_str <- paste0(base_str, "_model")
+    if (is.null(learner) || is.null(vimp_method) || is.null(project_id)) {
+      ..error_reached_unreachable_code("missing arguments")
+    }
+    
+    output_str <- paste0(
+      project_id, "_", 
+      learner, "_", 
+      vimp_method, "_", 
+      data_id, "_", 
+      run_id,
+      "_model"
+    )
     
   } else if (object_type == "familiarEnsemble") {
     # For familiarEnsemble objects
 
-    if (is.null(is_ensemble)) {
-      ..error("The \"is_ensemble\" parameter is not set to TRUE or FALSE.")
+    if (is.null(learner) || is.null(vimp_method) || is.null(project_id) || is.null(is_ensemble)) {
+      ..error_reached_unreachable_code("missing arguments")
     }
 
     output_str <- paste0(
-      base_str, "_", 
+      project_id, "_", 
+      learner, "_", 
+      vimp_method, "_", 
+      data_id, "_", 
+      run_id, "_", 
       ifelse(is_ensemble, "ensemble", "pool")
     )
     
   } else if (object_type == "familiarData") {
     # For familiarData objects
 
-    if (is.null(is_ensemble)) {
-      ..error("The \"is_ensemble\" parameter is not set to TRUE or FALSE.")
-    }
-
-    if (is.null(is_validation)) {
-      ..error("The \"is_validation\" parameter is not set to TRUE or FALSE.")
-    }
-
-    if (is.null(pool_data_id) || is.null(pool_run_id)) {
-      ..error("pool_data_id and pool_run_id should be provided.")
+    if (
+      is.null(learner) || is.null(vimp_method) || is.null(project_id) ||
+      is.null(is_ensemble) || is.null(is_validation) || is.null(pool_data_id) ||
+      is.null(pool_run_id)
+    ) {
+      ..error_reached_unreachable_code("missing arguments")
     }
 
     output_str <- paste0(
-      base_str, "_",
+      project_id, "_", 
+      learner, "_", 
+      vimp_method, "_", 
+      data_id, "_", 
+      run_id, "_",
       ifelse(is_ensemble, "ensemble", "pool"), "_",
       pool_data_id, "_",
       pool_run_id, "_",
       ifelse(is_validation, "validation", "development"), "_data"
     )
+  
+  } else if (object_type == "featureInfo") {
+    # Complete feature info objects.
+    
+    if (is.null(project_id)) {
+      ..error_reached_unreachable_code("missing arguments")
+    }
+    
+    output_str <- paste0(
+      project_id, "_",
+      data_id, "_",
+      run_id, 
+      "_feature_info.RDS"
+    )
+    
+  } else if (object_type == "genericFeatureInfo") {
+    # Generic feature info objects.
+    
+    if (is.null(project_id)) {
+      ..error_reached_unreachable_code("missing arguments")
+    }
+    
+    output_str <- paste0(project_id, "_generic_feature_info")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown object_type: ", object_type))
   }
 
   # Add extension
