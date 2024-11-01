@@ -765,20 +765,6 @@ get_object_file_name <- function(
     with_extension = TRUE,
     dir_path = NULL
 ) {
-  # Generate file name for an object
-
-  if (!object_type %in% c("familiarModel", "familiarEnsemble", "familiarData")) {
-    ..error("The object type was not recognised.")
-  }
-
-  # Generate the basic string
-  base_str <- paste0(
-    project_id, "_", 
-    learner, "_", 
-    vimp_method, "_", 
-    data_id, "_", 
-    run_id
-  )
 
   if (object_type == "familiarModel") {
     # For familiarModel objects
@@ -835,6 +821,20 @@ get_object_file_name <- function(
       ifelse(is_validation, "validation", "development"), "_data"
     )
   
+  } else if (object_type == "vimpTable") {
+    
+    if (is.null(vimp_method) || is.null(project_id)) {
+      ..error_reached_unreachable_code("missing arguments")
+    }
+    
+    output_str <- paste0(
+      project_id, "_",
+      vimp_method, "_", 
+      data_id, "_", 
+      run_id,
+      "_vimp"
+    )
+    
   } else if (object_type == "featureInfo") {
     # Complete feature info objects.
     
@@ -846,7 +846,7 @@ get_object_file_name <- function(
       project_id, "_",
       data_id, "_",
       run_id, 
-      "_feature_info.RDS"
+      "_feature_info"
     )
     
   } else if (object_type == "genericFeatureInfo") {
