@@ -392,8 +392,7 @@ summon_familiar <- function(
 
   # Select and sort unique tasks.
   tasks <- .sort_tasks(tasks)
-  browser()
-  
+
   # Pre-processing -------------------------------------------------------------
   # Start pre-processing
   .run_preprocessing(
@@ -409,9 +408,9 @@ summon_familiar <- function(
   # Check if the process should be stopped at this point.
   if (.stop_after %in% c("preprocessing")) {
     return(create_experiment_data(
-      project_id = project_info$project_id,
-      experiment_setup = experiment_setup,
-      iteration_list = project_info$iter_list,
+      project_id = experiment_data@project_id,
+      experiment_setup = experiment_data@experiment_setup,
+      iteration_list = experiment_data@iteration_list,
       feature_info = get_feature_info_from_backend(
         data_id = waiver(),
         run_id = waiver()

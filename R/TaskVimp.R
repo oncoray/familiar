@@ -11,14 +11,12 @@ setClass(
   slots = list(
     "vimp_method" = "character",
     "hyperparameter_file" = "character",
-    "feature_info_file" = "character",
-    "run_table" = "ANY"
+    "feature_info_file" = "character"
   ),
   prototype = methods::prototype(
     vimp_method = NA_character_,
     hyperparameter_file = NA_character_,
     feature_info_file = NA_character_,
-    run_table = NULL,
     task_name = "compute_variable_importance"
   )
 )
@@ -35,6 +33,7 @@ setMethod(
     # Generate file name of variable importance table
     object@file <- get_object_file_name(
       object_type = "vimpTable",
+      vimp_method = object@vimp_method,
       project_id = object@project_id,
       dir_path = file_paths$vimp_dir
     )
@@ -224,76 +223,7 @@ setMethod(
 
 
 
-# .get_feature_info_list (vimp task) -------------------------------------------
-setMethod(
-  ".get_feature_info_list",
-  signature(object = "familiarTaskVimp"),
-  function(object, feature_info_list, ...) {
-    # Suppress NOTES due to non-standard evaluation in data.table
-    can_pre_process <- NULL
-    
-    # Attempt to get the feature info list from the backend.
-    if (is.null(feature_info_list) && !is.null(object@run_table)) {
-      # Find the last entry that is available for pre-processing
-      pre_processing_run <- tail(object@run_table[can_pre_process == TRUE, ], n = 1L)
-      
-      feature_info_list <- tryCatch(
-        get_feature_info_from_backend(
-          data_id = pre_processing_run$data_id[1L],
-          run_id = pre_processing_run$run_id[1L]
-        ),
-        error = NULL
-      )
-    }
-    
-    # If no feature list is present on the backend, check other options.
-    if (is.null(feature_info_list) && is.na(object@feature_info_file)) {
-      # Check that a feature info list is provided, otherwise create an ad-hoc
-      # list as an template.
-      
-      # Set up task, and explicitly don't write to file.
-      generic_feature_info_task <- methods::new(
-        "familiarTaskFeatureInfo",
-        project_id = object@project_id,
-        file = NA_character_
-      )
-      
-      # Execute the task.
-      feature_info_list <- .perform_task(
-        object = generic_feature_info_task,
-        ...
-      )
-      
-    } else if (is.null(feature_info_list)) {
-      # Assume that the feature info file attribute contains the path to the
-      # file containing feature info.
-      if (!file.exists(object@feature_info_file)) {
-        ..error(paste0("feature info file does not exist at location: ", object@feature_info_file))
-      }
-      feature_info_list <- readRDS(object@feature_info_file)
-      feature_info_list <- update_object(feature_info_list)
-      
-    } else if (is.character(feature_info_list)) {
-      # If the feature info list is a string, interpret this as a path to the
-      # file containing the feature info.
-      if (!file.exists(feature_info_list)) {
-        ..error(paste0("feature info file does not exist at location: ", feature_info_list))
-      }
-      feature_info_list <- readRDS(feature_info_list)
-      feature_info_list <- update_object(feature_info_list)
-    }
-    
-    if (!rlang::is_bare_list(feature_info_list)) {
-      ..error("no feature info objects were found.")
-    }
-    
-    return(feature_info_list)
-  }
-)
-
-
-
-# .get_hyperparameters ---------------------------------------------------------
+# .get_hyperparameters (vimp task) ---------------------------------------------
 setMethod(
   ".get_hyperparameters",
   signature(object = "familiarTaskVimp"),
@@ -305,7 +235,7 @@ setMethod(
   ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     can_pre_process <- NULL
-
+    
     if (is.null(hyperparameters) && !is.null(object@run_table)) {
       # This routine loads hyperparameters from disk, and is used when an
       # experiment is run using summon_familiar.
@@ -386,27 +316,56 @@ setMethod(
 
 
 .generate_vimp_tasks <- function(
+    experiment_data,
+    vimp_methods,
     file_paths,
-    project_id
+    skip_existing = FALSE
 ) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  vimp <- can_pre_process <- NULL
   
-  task_list <- list()
-  
-  # Check if vimp should be computed separately or is computed during 
+  # TODO: Check if vimp should be computed separately or is computed during 
   # hyperparameter optimisation.
   
-  for (data_id in data_ids) {
+  # Find the data_id related to computing variable importance.
+  data_id <- experiment_data@experiment_setup[vimp == TRUE, ]$main_data_id[1L]
+  if (is_empty(data_id)) return(NULL)
+  
+  # Initialise empty list.
+  task_list <- list()
+  ii <- 1L
+  
+  # vimp tasks -----------------------------------------------------------------
+  
+  # Get run ids.
+  run_ids <- names(experiment_data@iteration_list[[as.character(data_id)]]$run)
+  run_ids <- as.integer(run_ids)
+  
+  
+  # Set up variable importance computation task.
+  for (vimp_method in vimp_methods) {
     for (run_id in run_ids) {
-      for (vimp_method in vimp_methods) {
-        
-        # Check if the variable importance method requires any computation.
-        # For example, signature_only, none and random do not require
-        # computation.
-        
-        # Set up variable importance computation task.
-        
-        # Set up variable importance hyperparameter task.
-        
+      
+      # Create task to generate run-specific feature info.
+      vimp_task <- methods::new(
+        "familiarTaskVimp",
+        data_id = data_id,
+        run_id = run_id,
+        vimp_method = vimp_method,
+        run_table = data.table::copy(experiment_data@iteration_list[[as.character(data_id)]]$run[[as.character(run_id)]]$run_table),
+        project_id = experiment_data@project_id
+      )
+      
+      # Add file names.
+      vimp_task <- .set_file_name(
+        object = vimp_task,
+        file_paths = file_paths
+      )
+      
+      # Add to list, if the file does not exist on disk.
+      if (!skip_existing || !.file_exists(vimp_task)) {
+        task_list[[ii]] <- vimp_task
+        ii <- ii + 1L
       }
     }
   }
@@ -414,12 +373,48 @@ setMethod(
   # Check if any vimp-related tasks are required.
   if (length(task_list) == 0L) return(NULL)
   
+  # vimp hyperparameter tasks --------------------------------------------------
+  
+  # Set up variable importance hyperparameter task.
+  run_table <- experiment_data@iteration_list[[as.character(data_id)]]$run[[1L]]$run_table
+  vimp_hyperparameter_data_id <- tail(run_table[can_pre_process == TRUE, ], n = 1L)$data_id[1L]
+  
+  # Get run ids.
+  run_ids <- names(experiment_data@iteration_list[[as.character(vimp_hyperparameter_data_id)]]$run)
+  run_ids <- as.integer(run_ids)
+  
+  for (vimp_method in vimp_methods) {
+    for (run_id in run_ids) {
+      # Create task to generate run-specific feature info.
+      vimp_hyperparameter_task <- methods::new(
+        "familiarTaskVimpHyperparameters",
+        data_id = vimp_hyperparameter_data_id,
+        run_id = run_id,
+        vimp_method = vimp_method,
+        run_table = data.table::copy(experiment_data@iteration_list[[as.character(vimp_hyperparameter_data_id)]]$run[[as.character(run_id)]]$run_table),
+        project_id = experiment_data@project_id
+      )
+      
+      # Add file names.
+      vimp_hyperparameter_task <- .set_file_name(
+        object = vimp_hyperparameter_task,
+        file_paths = file_paths
+      )
+      
+      # Add to list, if the file does not exist on disk.
+      if (!skip_existing || !.file_exists(vimp_hyperparameter_task)) {
+        task_list[[ii]] <- vimp_hyperparameter_task
+        ii <- ii + 1L
+      }
+    }
+  }
+
   # Add tasks related to data processing for vimp methods.
   task_list <- c(
     task_list, 
     .generate_vimp_data_preprocessing_tasks(
-      file_paths = file_paths,
-      project_id = project_id
+      experiment_data = experiment_data,
+      file_paths = file_paths
     )
   )
   

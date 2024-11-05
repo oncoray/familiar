@@ -116,6 +116,17 @@ setMethod(
 
 
 
+# .get_feature_info_list (generic feature info task) ---------------------------
+setMethod(
+  ".get_feature_info_list",
+  signature(object = "familiarTaskGenericFeatureInfo"),
+  function(object, feature_info_list, ...) {
+    ..error_reached_unreachable_code(".get_feature_info_list does not exist for this task")
+  }
+)
+
+
+
 # familiarTaskFeatureInfo ------------------------------------------------------
 setClass(
   "familiarTaskFeatureInfo",
@@ -319,6 +330,15 @@ setMethod(
 )
 
 
+
+# .get_feature_info_list (feature info task) ---------------------------
+setMethod(
+  ".get_feature_info_list",
+  signature(object = "familiarTaskFeatureInfo"),
+  function(object, feature_info_list, ...) {
+    ..error_reached_unreachable_code(".get_feature_info_list does not exist for this task")
+  }
+)
 
 
 

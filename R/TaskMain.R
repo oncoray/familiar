@@ -15,6 +15,74 @@ setMethod(
 )
 
 
+# .get_feature_info_list (general task) ----------------------------------------
+setMethod(
+  ".get_feature_info_list",
+  signature(object = "familiarTask"),
+  function(object, feature_info_list, ...) {
+    # Suppress NOTES due to non-standard evaluation in data.table
+    can_pre_process <- NULL
+    
+    # Attempt to get the feature info list from the backend.
+    if (is.null(feature_info_list) && !is.null(object@run_table)) {
+      # Find the last entry that is available for pre-processing
+      pre_processing_run <- tail(object@run_table[can_pre_process == TRUE, ], n = 1L)
+      
+      feature_info_list <- tryCatch(
+        get_feature_info_from_backend(
+          data_id = pre_processing_run$data_id[1L],
+          run_id = pre_processing_run$run_id[1L]
+        ),
+        error = NULL
+      )
+    }
+    
+    # If no feature list is present on the backend, check other options.
+    if (is.null(feature_info_list) && is.na(object@feature_info_file)) {
+      # Check that a feature info list is provided, otherwise create an ad-hoc
+      # list as an template.
+      
+      # Set up task, and explicitly don't write to file.
+      generic_feature_info_task <- methods::new(
+        "familiarTaskFeatureInfo",
+        project_id = object@project_id,
+        file = NA_character_
+      )
+      
+      # Execute the task.
+      feature_info_list <- .perform_task(
+        object = generic_feature_info_task,
+        ...
+      )
+      
+    } else if (is.null(feature_info_list)) {
+      # Assume that the feature info file attribute contains the path to the
+      # file containing feature info.
+      if (!file.exists(object@feature_info_file)) {
+        ..error(paste0("feature info file does not exist at location: ", object@feature_info_file))
+      }
+      feature_info_list <- readRDS(object@feature_info_file)
+      feature_info_list <- update_object(feature_info_list)
+      
+    } else if (is.character(feature_info_list)) {
+      # If the feature info list is a string, interpret this as a path to the
+      # file containing the feature info.
+      if (!file.exists(feature_info_list)) {
+        ..error(paste0("feature info file does not exist at location: ", feature_info_list))
+      }
+      feature_info_list <- readRDS(feature_info_list)
+      feature_info_list <- update_object(feature_info_list)
+    }
+    
+    if (!rlang::is_bare_list(feature_info_list)) {
+      ..error("no feature info objects were found.")
+    }
+    
+    return(feature_info_list)
+  }
+)
+
+
 
 .generate_trainer_tasks <- function(
     file_paths,
@@ -41,8 +109,7 @@ setMethod(
   task_list <- c(
     task_list,
     .generate_vimp_tasks(
-      file_paths = file_paths,
-      project_id = project_id
+      experiment_data = experiment_data
     )
   )
   
@@ -50,8 +117,8 @@ setMethod(
   task_list <- c(
     task_list, 
     .generate_learner_data_preprocessing_tasks(
-      file_paths = file_paths,
-      project_id = project_id
+      experiment_data = experiment_data,
+      file_paths = file_paths
     )
   )
   

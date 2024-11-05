@@ -1572,13 +1572,14 @@ setClass(
 setClass(
   "familiarTask",
   slots = list(
-    task_name = "character",
-    task_id = "integer",
-    n_tasks = "integer",
-    data_id = "integer",
-    run_id = "integer",
-    file = "character",
-    project_id = "ANY"
+    "task_name" = "character",
+    "task_id" = "integer",
+    "n_tasks" = "integer",
+    "data_id" = "integer",
+    "run_id" = "integer",
+    "run_table" = "ANY",
+    "file" = "character",
+    "project_id" = "ANY"
   ),
   prototype = methods::prototype(
     task_name = NA_character_,
@@ -1586,6 +1587,7 @@ setClass(
     n_tasks = 1L,
     data_id = NA_integer_,
     run_id = NA_integer_,
+    run_table = NULL,
     file = NA_character_,
     project_id = NULL
   )
