@@ -130,8 +130,8 @@ extract_experimental_setup <- function(
   section_table[, ":="(
     "ref_data_id" = 0L,
     "main_data_id" = 0L,
-    "feat_sel" = FALSE,
-    "model_building" = FALSE,
+    "vimp" = FALSE,
+    "train" = FALSE,
     "external_validation" = FALSE,
     "perturb_method" = "none",
     "perturb_n_rep" = 0L,
@@ -289,12 +289,12 @@ extract_experimental_setup <- function(
 
       # Check if feature selection is included in the current section
       if (grepl(pattern = "fs", x = curr_data_id_str[1L])) {
-        section_table$feat_sel[ii] <- TRUE
+        section_table$vimp[ii] <- TRUE
       }
       
       # Check if model building is included in the current section
       if (grepl(pattern = "mb", x = curr_data_id_str[1L])) {
-        section_table$model_building[ii] <- TRUE
+        section_table$train[ii] <- TRUE
       }
       
       # Check if external validation is included in the current section
@@ -418,7 +418,7 @@ extract_experimental_setup <- function(
     verbose = TRUE
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  feat_sel <- model_building <- main_data_id <- NULL
+  vimp <- train <- main_data_id <- NULL
   
   # Report on validation data:
   if (any(section_table$external_validation)) {
@@ -437,11 +437,11 @@ extract_experimental_setup <- function(
   }
   
   # Report on model building and feature selection
-  if (any(section_table$feat_sel * section_table$model_building)) {
+  if (any(section_table$vimp * section_table$train)) {
     main_message <- "Setup report: Feature selection and model building on"
     
     # Iteratively append message
-    dt_sub <- section_table[feat_sel == TRUE & model_building == TRUE, ]
+    dt_sub <- section_table[vimp == TRUE & train == TRUE, ]
     curr_ref_data_id <- dt_sub$main_data_id[1L]
     while (curr_ref_data_id > 0L) {
       dt_sub <- section_table[main_data_id == curr_ref_data_id, ]
@@ -494,7 +494,7 @@ extract_experimental_setup <- function(
     main_message <- "Setup report: Feature selection on"
     
     # Iteratively append message
-    dt_sub <- section_table[feat_sel == TRUE, ]
+    dt_sub <- section_table[vimp == TRUE, ]
     curr_ref_data_id <- dt_sub$main_data_id[1L]
     
     while (curr_ref_data_id > 0L) {
@@ -548,7 +548,7 @@ extract_experimental_setup <- function(
     main_message <- "Setup report: Model building on"
     
     # Iteratively append message
-    dt_sub <- section_table[model_building == TRUE, ]
+    dt_sub <- section_table[train == TRUE, ]
     curr_ref_data_id <- dt_sub$main_data_id[1L]
     
     while (curr_ref_data_id > 0L) {
@@ -602,40 +602,40 @@ extract_experimental_setup <- function(
 
 
 .check_experimental_design_section_table <- function(section_table) {
-  if (sum(section_table$feat_sel) > 1L) {
+  if (sum(section_table$vimp) > 1L) {
     ..error(
       paste0(
-        "The fs component for feature selection may only be used once ",
+        "The fs component for variable importance computation may only be used once ",
         "in the experimental design."
       ),
       error_class = "input_argument_error"
     )
   }
   
-  if (sum(section_table$feat_sel) == 0L) {
+  if (sum(section_table$vimp) == 0L) {
     ..error(
       paste0(
-        "The fs component for feature selection must appear in the ",
+        "The fs component for variable importance computation must appear in the ",
         "experimental design. It was not found."
       ),
       error_class = "input_argument_error"
     )
   }
   
-  if (sum(section_table$model_building) > 1L) {
+  if (sum(section_table$train) > 1L) {
     ..error(
       paste0(
-        "The mb component for model building may only be used once ",
+        "The mb component for training may only be used once ",
         "in the experimental design."
       ),
       error_class = "input_argument_error"
     )
   }
   
-  if (sum(section_table$model_building) == 0L) {
+  if (sum(section_table$train) == 0L) {
     ..error(
       paste0(
-        "The mb component for model building must appear in the ",
+        "The mb component for training must appear in the ",
         "experimental design. It was not found."
       ),
       error_class = "input_argument_error"

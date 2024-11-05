@@ -201,6 +201,7 @@ Collate:
     'StringUtilities.R'
     'TaskFeatureInfo.R'
     'TaskMain.R'
+    'TaskVimp.R'
     'TestDataCreators.R'
     'TestFunctions.R'
     'TrainS4Methods.R'

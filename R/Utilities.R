@@ -857,6 +857,35 @@ get_object_file_name <- function(
     }
     
     output_str <- paste0(project_id, "_generic_feature_info")
+  
+  } else if (object_type == "hyperparametersVimp") {
+    
+    if (is.null(vimp_method) || is.null(project_id)) {
+      ..error_reached_unreachable_code("missing arguments")
+    }
+    
+    output_str <- paste0(
+      project_id, "_",
+      data_id, "_",
+      run_id, "_",
+      vimp_method,
+      "_vimp_hyperparameters"
+    )
+  
+  } else if (object_type == "hyperparametersLearner") {
+    
+    if (is.null(vimp_method) || is.null(learner) || is.null(project_id)) {
+      ..error_reached_unreachable_code("missing arguments")
+    }
+    
+    output_str <- paste0(
+      project_id, "_",
+      data_id, "_",
+      run_id, "_",
+      learner, "_",
+      vimp_method, "_",
+      "_learner_hyperparameters"
+    )
     
   } else {
     ..error_reached_unreachable_code(paste0("unknown object_type: ", object_type))

@@ -61,7 +61,6 @@ setMethod(
   ) {
     # This method is called when "data" is expected to be available somewhere in
     # the backend.
-
     if (is.null(outcome_info)) {
       ..error_reached_unreachable_code("outcome_info is required.")
     }
@@ -107,13 +106,11 @@ setMethod(
     )
     
     # Write to file or return.
-    if (!is.na(file)) {
+    if (!is.na(object@file)) {
       saveRDS(feature_info_list, file = object@file)
-    } else {
-      return(feature_info_list)
     }
     
-    return(invisible(TRUE))
+    return(feature_info_list)
   }
 )
 
@@ -173,14 +170,13 @@ setMethod(
   function(
     object,
     data,
-    project_info = NULL,
+    experiment_data = NULL,
     outcome_info = NULL,
     ...
   ) {
     # This method is called when "data" is expected to be available somewhere in
     # the backend.
-    
-    if (is.null(project_info)) {
+    if (is.null(experiment_data)) {
       ..error_reached_unreachable_code("project_info is required for retrieving data from the backend.")
     }
     if (is.null(outcome_info)) {
@@ -189,7 +185,7 @@ setMethod(
     
     # Find the run list.
     run_list <- .get_run_list(
-      iteration_list = project_info$iter_list,
+      iteration_list = experiment_data@iteration_list,
       data_id = object@data_id,
       run_id = object@run_id
     )
@@ -240,7 +236,6 @@ setMethod(
     fairness_features = NULL,
     ...
   ) {
-    
     logger_message(
       paste0(
         "\nPre-processing: Starting preprocessing for run ",
@@ -317,11 +312,9 @@ setMethod(
     
     if (!is.na(object@file)) {
       saveRDS(feature_info_list, file = object@file)
-    } else {
-      return(feature_info_list)
     }
     
-    return(invisible(TRUE))
+    return(feature_info_list)
   }
 )
 
@@ -329,11 +322,12 @@ setMethod(
 
 
 
-..generate_data_preprocessing_tasks <- function(
+.generate_data_preprocessing_tasks <- function(
     data_ids,
     run_ids,
     file_paths,
-    project_id
+    project_id,
+    skip_existing = FALSE
   ) {
   task_list <- list()
   
@@ -350,7 +344,7 @@ setMethod(
   )
   
   # Add to list, if the file does not exist on disk.
-  if (!.file_exists(generic_info_task)) {
+  if (!skip_existing || !.file_exists(generic_info_task)) {
     task_list[[1L]] <- generic_info_task
   }
   
@@ -372,7 +366,7 @@ setMethod(
       )
       
       # Add to list, if the file does not exist on disk.
-      if (!.file_exists(run_info_task)) {
+      if (!skip_existing || !.file_exists(run_info_task)) {
         task_list[[ii]] <- run_info_task
         ii <- ii + 1L
       }
@@ -380,4 +374,124 @@ setMethod(
   }
   
   return(task_list)
+}
+
+
+
+.run_preprocessing <- function(
+    tasks,
+    ...
+) {
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  data_id <- run_id <- list_name <- complete <- NULL
+  
+  # Create or load generic feature info.
+  if (!.file_exists(tasks$generic_feature_info[[1L]])) {
+    generic_feature_info <- .perform_task(
+      object = tasks$generic_feature_info[[1L]],
+      data = NULL,
+      ...
+    )
+    
+  } else {
+    generic_feature_info <- readRDS(tasks$generic_feature_info[[1L]]@file)
+  }
+  
+  # Determine which feature info objects need to be obtained.
+  finished_tasks <- sapply(tasks$feature_info, .file_exists)
+  unfinished_tasks <- tasks$feature_info[!finished_tasks]
+  finished_tasks <- tasks$feature_info[finished_tasks]
+  
+  # Process any unfinished tasks.
+  if (length(unfinished_tasks) > 0L) {
+    
+    # Update 
+    
+    ..run_preprocessing(
+      tasks = unfinished_tasks,
+      generic_feature_info <- generic_feature_info,
+      ...
+    )
+  }
+  
+  # Load processed data from files.
+  feature_info_list <- lapply(
+    tasks$feature_info,
+    function(x) (readRDS(x@file))
+  )
+  
+  # Set names.
+  names(feature_info_list) <- sapply(
+    tasks$feature_info,
+    function(x) (paste0(x@data_id, ".", x@run_id))
+  )
+  
+  # Attach generic feature information.
+  feature_info_list[["generic"]] <- generic_feature_info
+  
+  # Attach feature preprocessing information to the backend.
+  .assign_feature_info_to_backend(feature_info_list = feature_info_list)
+  
+  return(invisible(TRUE))
+}
+
+
+
+..run_preprocessing <- function(
+    tasks,
+    generic_feature_info,
+    settings,
+    cl,
+    message_indent = 0L,
+    verbose,
+    ...
+) {
+
+  # Determine how parallel processing takes place.
+  if (settings$prep$do_parallel %in% c("TRUE", "inner")) {
+    # Parallel processing in inner function, i.e. within each data subset.
+    cl_inner <- cl
+    cl_outer <- NULL
+    
+  } else if (settings$prep$do_parallel %in% c("outer")) {
+    # Parallel processing in outer loop, i.e. over all data subsets.
+    cl_inner <- NULL
+    cl_outer <- cl
+    
+    if (!is.null(cl_outer)) {
+      logger_message(
+        paste0(
+          "\nPre-processing: Load-balanced parallel processing is done in the outer loop. ",
+          "No progress can be displayed."
+        ),
+        indent = message_indent,
+        verbose = verbose
+      )
+    }
+    
+  } else {
+    # No parallel processing.
+    cl_inner <- cl_outer <- NULL
+  }
+  
+  # Iterate over data subsets for which parameters have not yet been set.
+  fam_mapply_lb(
+    cl = cl_outer,
+    assign = "data",
+    FUN = .perform_task,
+    progress_bar = !is.null(cl_outer),
+    object = tasks,
+    MoreArgs = list(
+      "cl" = cl_inner,
+      "data" = NULL,
+      "feature_info_list" = generic_feature_info,
+      "settings" = settings,
+      "message_indent" = message_indent,
+      "verbose" = verbose && is.null(cl_outer),
+      ...
+    )
+  )
+  
+  return(invisible(TRUE))
 }

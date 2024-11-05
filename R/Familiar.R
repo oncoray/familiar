@@ -357,23 +357,51 @@ summon_familiar <- function(
   # the familiar environment prior to shutting down the socket server process.
   on.exit(.clean_familiar_environment(), add = TRUE)
   
+  experiment_data <- create_experiment_data(
+    project_id = project_info$project_id,
+    experiment_setup = experiment_setup,
+    iteration_list = project_info$iter_list
+  )
+  
   if (.stop_after %in% c("setup")) {
-    return(create_experiment_data(
-      project_id = project_info$project_id,
-      experiment_setup = experiment_setup,
-      iteration_list = project_info$iter_list
-    ))
+    return(experiment_data)
   }
+
+  # Setup tasks
+  if (.stop_after == "training") {
+    tasks <- .generate_trainer_tasks()
+    
+  } else if (.stop_after == "vimp") {
+    tasks <- .generate_vimp_tasks()
+    
+  } else if (.stop_after == "preprocessing") {
+    tasks <- c(
+      .generate_vimp_data_preprocessing_tasks(
+        experiment_data = experiment_data,
+        file_paths = file_paths
+      ),
+      .generate_learner_data_preprocessing_tasks(
+        experiment_data = experiment_data,
+        file_paths = file_paths
+      )
+    )
+    
+  } else {
+    tasks <- .generate_evaluation_tasks()
+  }
+
+  # Select and sort unique tasks.
+  tasks <- .sort_tasks(tasks)
+  browser()
   
   # Pre-processing -------------------------------------------------------------
-  feature_info <- NULL
-  
   # Start pre-processing
-  run_preprocessing(
+  .run_preprocessing(
     cl = cl,
-    feature_info_list = feature_info,
-    project_info = project_info,
+    tasks = tasks,
+    experiment_data = experiment_data,
     settings = settings,
+    outcome_info = outcome_info,
     file_paths = file_paths,
     verbose = verbose
   )

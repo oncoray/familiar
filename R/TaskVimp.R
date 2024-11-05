@@ -1,3 +1,9 @@
+#' @include FamiliarS4Generics.R
+#' @include FamiliarS4Classes.R
+NULL
+
+
+
 # familiarTaskVimp -------------------------------------------------------------
 setClass(
   "familiarTaskVimp",
@@ -60,15 +66,15 @@ setMethod(
   function(
     object,
     data,
-    project_info = NULL,
+    experiment_data = NULL,
     outcome_info = NULL,
     ...
   ) {
     # This method is called when "data" is expected to be available somewhere in
     # the backend.
     
-    if (is.null(project_info)) {
-      ..error_reached_unreachable_code("project_info is required for retrieving data from the backend.")
+    if (is.null(experiment_data)) {
+      ..error_reached_unreachable_code("experiment_data is required for retrieving data from the backend.")
     }
     if (is.null(outcome_info)) {
       ..error_reached_unreachable_code("outcome_info is required.")
@@ -76,7 +82,7 @@ setMethod(
     
     # Find the run list.
     run_list <- .get_run_list(
-      iteration_list = project_info$iter_list,
+      iteration_list = experiment_data@iteration_list,
       data_id = object@data_id,
       run_id = object@run_id
     )
@@ -156,27 +162,19 @@ setMethod(
       ...
     )
     
+    # TODO: preprocess data
+    
     # Check and retrieve hyperparameters.
     hyperparameters <- .get_hyperparameters(
       object = object,
       hyperparameters = hyperparameters,
-      data = data
+      data = data,
+      settings = settings,
+      message_indent = message_indent,
+      verbose = verbose,
+      cl = cl,
+      ...
     )
-    
-    if (is.null(hyperparameters) && is.na(object@hyperparameter_file)) {
-      # Check that a list of hyperparameters is provided, otherwise create an ad-
-      # hoc list of hyperparameters.
-      browser()
-      
-    } else if (is.null(hyperparameters)) {
-      # Assume that the hyperparameter file attribute contains the path to the
-      # file containing hyperparameters.
-      
-    } else if (is.character(hyperparameters)) {
-      # If hyperparameters is a string, interpret this as a path to file
-      # containing the feature info.
-      
-    }
     
     # Create the variable importance method object or familiar model object to
     # compute variable importance with.
@@ -285,7 +283,7 @@ setMethod(
       feature_info_list <- update_object(feature_info_list)
     }
     
-    if (is.null(feature_info_list)) {
+    if (!rlang::is_bare_list(feature_info_list)) {
       ..error("no feature info objects were found.")
     }
     
@@ -295,58 +293,93 @@ setMethod(
 
 
 
+# .get_hyperparameters ---------------------------------------------------------
 setMethod(
   ".get_hyperparameters",
   signature(object = "familiarTaskVimp"),
-  function(object, hyperparameters, ...) {
-    
-    if (is.null(hyperparameters) && is.na(object@hyperparameter_file)) {
+  function(
+    object,
+    hyperparameters,
+    file_paths = NULL,
+    ...
+  ) {
+    # Suppress NOTES due to non-standard evaluation in data.table
+    can_pre_process <- NULL
+
+    if (is.null(hyperparameters) && !is.null(object@run_table)) {
+      # This routine loads hyperparameters from disk, and is used when an
+      # experiment is run using summon_familiar.
       
-      
-      
-    } else if (is.null(hyperparameters)) {
-      # Identify the right entry on hpo_list.
-      for (ii in rev(run$run_table$perturb_level)) {
-        run_id_list <- .get_iteration_identifiers(
-          run = run, 
-          perturb_level = ii
-        )
-        
-        # Check whether there are any matching data and run ids by determining the
-        # number of rows in the table after matching
-        match_hpo <- sapply(
-          hpo_list,
-          function(iter_hpo, run_id_list) {
-            # Determine if there are any rows in the run_table of the parameter list
-            # that match the data and run identifiers of the current level.
-            match_size <- nrow(iter_hpo@run_table[data_id == run_id_list$data & run_id == run_id_list$run])
-            
-            # Return TRUE if any matching rows are found.
-            return(match_size > 0L)
-          },
-          run_id_list = run_id_list
-        )
-        
-        # If there is a match, we step out of the loop
-        if (any(match_hpo)) break
+      # This check exists to make sure that the standard workflow passes the
+      # correct objects.
+      if (is.null(file_paths)) {
+        ..error_reached_unreachable_code("file_paths was expected, but not provided.")
       }
       
-      # Extract the table of parameters
-      if (allow_random_selection && sum(match_hpo) > 1L) {
-        random_set <- sample(which(match_hpo), size = 1L)
-        
-        object <- hpo_list[[random_set]]
-        
-      } else {
-        object <- hpo_list[match_hpo][[1L]]
-      }
+      # Find the last entry on the run table that is marked as available for
+      # pre-processing. This is what hyperparameters are based on.
+      hyperparameter_run <- tail(object@run_table[can_pre_process == TRUE, ], n = 1L)
       
-      if (as_list) {
-        return(object@hyperparameters)
-      } else {
-        return(object)
+      # Find the file name.
+      hyperparameter_file <- get_object_file_name(
+        project_id = object@project_id,
+        data_id = hyperparameter_run$data_id[1L],
+        run_id = hyperparameter_run$run_id[1L],
+        vimp_method = object@vimp_method,
+        object_type = "hyperparametersVimp",
+        dir_path = file_paths$vimp_dir
+      )
+      
+      if (file.exists(hyperparameter_file)) {
+        hyperparameter_object <- readRDS(hyperparameter_file)
+        hyperparameters <- hyperparameter_object@hyperparameters
       }
     }
+    
+    
+    if (is.null(hyperparameters) && is.na(object@hyperparameter_file)) {
+      # Create an ad-hoc list of hyperparameters
+      
+      # Set up task, and explicitly don't write to file.
+      hyperparameter_task <- methods::new(
+        "familiarTaskVimpHyperparameters",
+        project_id = object@project_id,
+        vimp_method = object@vimp_method,
+        file = NA_character_
+      )
+      
+      # Execute the task.
+      hyperparameter_object <- .perform_task(
+        object = hyperparameter_task,
+        ...
+      )
+      
+      hyperparameters <- hyperparameter_object@hyperparameters
+      
+    } else if (is.null(hyperparameters)) {
+      # Assume that the hyperparameter_file attribute contains the path to the
+      # file containing the vimp method hyperparameters.
+      if (!file.exists(object@hyperparameter_file)) {
+        ..error(paste0("hyperparameter file does not exist at location: ", object@hyperparameter_file))
+      }
+      hyperparameter_object <- readRDS(object@hyperparameter_file)
+      hyperparameters <- hyperparameter_object@hyperparameters
+      
+    } else if (is.character(hyperparameters)) {
+      # If hyperparameters is a string, interpret this as a path to the
+      # file containing the vimp method hyperparameters.
+      if (!file.exists(hyperparameters)) {
+        ..error(paste0("hyperparameter file does not exist at location: ", hyperparameters))
+      }
+      hyperparameter_object <- readRDS(hyperparameters)
+      hyperparameters <- update_object(hyperparameter_object)
+    }
+    
+    if (!rlang::is_bare_list(hyperparameters)) {
+      ..error("No hyperparameters were found.")
+    }
+    
+    return(hyperparameters)
   }
 )
 

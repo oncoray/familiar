@@ -379,3 +379,5 @@ setGeneric(".perform_task", function(object, data, ...) standardGeneric(".perfor
 setGeneric(".get_task_descriptor", function(object, ...) standardGeneric(".get_task_descriptor"))
 
 setGeneric(".get_feature_info_list", function(object, ...) standardGeneric(".get_feature_info_list"))
+
+setGeneric(".get_hyperparameters", function(object, ...) standardGeneric(".get_hyperparameters"))

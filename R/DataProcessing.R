@@ -110,7 +110,7 @@
   # Get the main data id for a step in the overall modelling process.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  feat_sel <- model_building <- external_validation <- NULL
+  vimp <- train <- external_validation <- NULL
   
   # Load experiment data table
   experiment_table <- project_info$experiment_setup
@@ -118,11 +118,11 @@
   if (process_step == "vimp") {
     # Find row on where feature selection takes place and extract the main data
     # id.
-    main_data_id <- experiment_table[feat_sel == TRUE, ]$main_data_id[1L]
+    main_data_id <- experiment_table[vimp == TRUE, ]$main_data_id[1L]
     
   } else if (process_step %in% c("mb")) {
     # Find row where model building takes place and extract the main data id.
-    main_data_id <- experiment_table[model_building == TRUE, ]$main_data_id[1L]
+    main_data_id <- experiment_table[train == TRUE, ]$main_data_id[1L]
     
   } else if (process_step == "ev") {
     # Check if external validation is present; otherwise return an illegal main
