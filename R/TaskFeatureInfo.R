@@ -96,8 +96,37 @@ setMethod(
     object,
     data,
     descriptor = NULL,
+    experiment_data = NULL,
+    return_results = TRUE,
     ...
   ) {
+    
+    # Check if the desired data already exist elsewhere.
+    results_exist <- FALSE
+    
+    if (is(experiment_data, "experimentData")) {
+      if (!is_empty(experiment_data@feature_info[["generic"]])) {
+        feature_info_list <- experiment_data@feature_info[["generic"]]
+        results_exist <- TRUE
+      }
+    }
+    
+    if (file.exists(object@file)) {
+      feature_info_list <- update_object(object = readRDS(object@file))
+      results_exist <- TRUE
+    }
+    
+    if (results_exist) {
+      if (!is.na(object@file)) {
+        saveRDS(feature_info_list, file = object@file)
+      }
+      
+      if (return_results) {
+        return(feature_info_list)
+      }
+    }
+    
+    # If this point is reached, results will be created de novo.
     # Extract basic feature information from the data.
     feature_info_list <- .get_generic_feature_info(
       data = data,
@@ -110,7 +139,11 @@ setMethod(
       saveRDS(feature_info_list, file = object@file)
     }
     
-    return(feature_info_list)
+    if (return_results) {
+      return(feature_info_list)
+    }
+    
+    return(invisible(TRUE))
   }
 )
 
@@ -221,6 +254,7 @@ setMethod(
     return(.perform_task(
       object = object,
       data = data,
+      experiment_data = experiment_data,
       ...
     ))
   }
@@ -237,6 +271,7 @@ setMethod(
   function(
     object,
     data,
+    experiment_data = NULL,
     settings = NULL,
     feature_info_list = NULL,
     message_indent = 0L,
@@ -245,6 +280,7 @@ setMethod(
     signature_features = NULL,
     novelty_features = NULL,
     fairness_features = NULL,
+    return_results = TRUE,
     ...
   ) {
     logger_message(
@@ -256,6 +292,31 @@ setMethod(
       indent = message_indent,
       verbose = verbose
     )
+    
+    # Check if the desired data already exist elsewhere.
+    results_exist <- FALSE
+    
+    if (is(experiment_data, "experimentData")) {
+      if (!is_empty(experiment_data@feature_info[[paste0(object@data_id, ".", object@run_id)]])) {
+        feature_info_list <- experiment_data@feature_info[[paste0(object@data_id, ".", object@run_id)]]
+        results_exist <- TRUE
+      }
+    }
+    
+    if (file.exists(object@file)) {
+      feature_info_list <- update_object(object = readRDS(object@file))
+      results_exist <- TRUE
+    }
+    
+    if (results_exist) {
+      if (!is.na(object@file)) {
+        saveRDS(feature_info_list, file = object@file)
+      }
+      
+      if (return_results) {
+        return(feature_info_list)
+      }
+    }
     
     # Check that a feature info list is provided, otherwise create an ad-hoc
     # list as an template.
@@ -325,13 +386,17 @@ setMethod(
       saveRDS(feature_info_list, file = object@file)
     }
     
-    return(feature_info_list)
+    if (return_results) {
+      return(feature_info_list)
+    }
+    
+    return(invisible(TRUE))
   }
 )
 
 
 
-# .get_feature_info_list (feature info task) ---------------------------
+# .get_feature_info_list (feature info task) -----------------------------------
 setMethod(
   ".get_feature_info_list",
   signature(object = "familiarTaskFeatureInfo"),
@@ -399,8 +464,7 @@ setMethod(
 
 
 .run_preprocessing <- function(
-    tasks,
-    ...
+    tasks
 ) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
@@ -425,12 +489,10 @@ setMethod(
   
   # Process any unfinished tasks.
   if (length(unfinished_tasks) > 0L) {
-    
-    # Update 
-    
     ..run_preprocessing(
       tasks = unfinished_tasks,
       generic_feature_info <- generic_feature_info,
+      experiment_data = experiment_data,
       ...
     )
   }
@@ -509,6 +571,7 @@ setMethod(
       "settings" = settings,
       "message_indent" = message_indent,
       "verbose" = verbose && is.null(cl_outer),
+      "return_results" = FALSE,
       ...
     )
   )

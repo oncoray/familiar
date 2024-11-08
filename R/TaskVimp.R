@@ -33,6 +33,8 @@ setMethod(
     # Generate file name of variable importance table
     object@file <- get_object_file_name(
       object_type = "vimpTable",
+      data_id = object@data_id,
+      run_id = object@run_id,
       vimp_method = object@vimp_method,
       project_id = object@project_id,
       dir_path = file_paths$vimp_dir
@@ -128,6 +130,7 @@ setMethod(
     message_indent = 0L,
     verbose = FALSE,
     cl = NULL,
+    return_results = TRUE,
     ...
   ) {
     
@@ -160,8 +163,6 @@ setMethod(
       cl = cl,
       ...
     )
-    
-    # TODO: preprocess data
     
     # Check and retrieve hyperparameters.
     hyperparameters <- .get_hyperparameters(
@@ -205,6 +206,12 @@ setMethod(
     vimp_object@required_features <- required_features
     vimp_object@feature_info <- feature_info_list[required_features]
     
+    # Make sure the input data is processed.
+    data <- process_input_data(
+      object = vimp_object,
+      data = data
+    )
+    
     # Compute variable importance.
     vimp_table <- .vimp(
       object = vimp_object, 
@@ -213,7 +220,9 @@ setMethod(
     
     if (!is.na(object@file)) {
       saveRDS(vimp_table, file = object@file)
-    } else {
+    }
+    
+    if (return_results) {
       return(vimp_table)
     }
     
@@ -323,7 +332,7 @@ setMethod(
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   vimp <- can_pre_process <- NULL
-  
+  browser()
   # TODO: Check if vimp should be computed separately or is computed during 
   # hyperparameter optimisation.
   
@@ -419,4 +428,113 @@ setMethod(
   )
   
   return(task_list)
+}
+
+
+
+.run_variable_importance_computation <- function(
+  cl,
+  tasks,
+  settings,
+  message_indent,
+  verbose,
+  ...
+) {
+
+  # Check that any tasks are available for processing.
+  if (is_empty(tasks$hyperparameters_vimp) || is_empty(tasks$vimp)) return(invisible(FALSE))
+  
+  # Determine which variable importance hyperparameters need to be found.
+  finished_tasks <- sapply(tasks$hyperparameters_vimp, .file_exists)
+  unfinished_tasks <- tasks$hyperparameters_vimp[!finished_tasks]
+  finished_tasks <- tasks$hyperparameters_vimp[finished_tasks]
+  
+  # Process any unfinished tasks.
+  if (length(unfinished_tasks) > 0L) {
+    ..run_variable_importance_computation_hyperparameters(
+      cl = cl,
+      tasks = unfinished_tasks,
+      metric = settings$hpo$hpo_metric,
+      hyperparameters = settings$vimp$param,
+      optimisation_function = settings$hpo$hpo_optimisation_function,
+      acquisition_function = settings$hpo$hpo_acquisition_function,
+      grid_initialisation_method = settings$hpo$hpo_grid_initialisation_method,
+      n_random_sets = settings$hpo$hpo_n_grid_initialisation_samples,
+      exploration_method = settings$hpo$hpo_exploration_method,
+      determine_vimp = settings$hpo$hpo_determine_vimp,
+      measure_time = TRUE,
+      hyperparameter_learner = settings$hpo$hpo_hyperparameter_learner,
+      n_max_bootstraps = settings$hpo$hpo_max_bootstraps,
+      n_initial_bootstraps = settings$hpo$hpo_initial_bootstraps,
+      n_intensify_step_bootstraps = settings$hpo$hpo_bootstraps,
+      n_max_optimisation_steps = settings$hpo$hpo_smbo_iter_max,
+      n_max_intensify_steps = settings$hpo$hpo_intensify_max_iter,
+      intensify_stop_p_value = settings$hpo$hpo_alpha,
+      convergence_tolerance = settings$hpo$hpo_convergence_tolerance,
+      convergence_stopping = settings$hpo$hpo_conv_stop,
+      time_limit = settings$hpo$hpo_time_limit,
+      message_indent = message_indent,
+      verbose = verbose,
+      ...
+    )
+  }
+  
+  # Determine which variable importance tasks are required.
+  finished_tasks <- sapply(tasks$vimp, .file_exists)
+  unfinished_tasks <- tasks$vimp[!finished_tasks]
+  finished_tasks <- tasks$vimp[finished_tasks]
+  
+  # Process any unfinished tasks.
+  if (length(unfinished_tasks) > 0L) {
+    ..run_variable_importance_computation(
+      tasks = unfinished_tasks,
+      ...
+    )
+  }
+  
+  return(invisible(TRUE))
+}
+
+
+
+..run_variable_importance_computation <- function(
+    tasks,
+    cl,
+    message_indent = 0L,
+    verbose,
+    ...
+) {
+  
+  # Message that variable importances computation is starting.
+  logger_message(
+    paste0(
+      "\nVariable importance: starting variable importance computation."
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+  
+  fam_mapply_lb(
+    cl = cl,
+    assign = "all",
+    FUN = .perform_task,
+    progress_bar = is.null(cl),
+    object = tasks,
+    MoreArgs = list(
+      "data" = NULL,
+      "return_results" = FALSE,
+      "message_indent" = message_indent + 1L,
+      "verbose" = verbose,
+      ...
+    )
+  )
+  
+  # Message that variable importances have been computed.
+  logger_message(
+    paste0(
+      "Variable importance: variable importance have been computed."
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
 }

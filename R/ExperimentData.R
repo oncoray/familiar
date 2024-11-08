@@ -115,33 +115,30 @@ load_experiment_data <- function(x, file_paths) {
 
 
 
-create_experiment_data <- function(
+set_experiment_data <- function(
+    x = NULL,
     project_id,
-    experiment_setup,
-    iteration_list,
+    experiment_setup = NULL,
+    iteration_list = NULL,
     feature_info = NULL,
-    vimp_table_list = NULL) {
-  
+    vimp_table_list = NULL
+) {
+
   # Create new object.
-  x <- methods::new(
-    "experimentData",
-    experiment_setup = experiment_setup,
-    iteration_list = iteration_list,
-    project_id = project_id
-  )
+  if (!is(x, "experimentData")) {
+    x <- methods::new(
+      "experimentData",
+      project_id = project_id
+    )
+    
+    # Add package version
+    x <- add_package_version(x)
+  }
   
-  # Add package version
-  x <- add_package_version(x)
-  
-  # Attach feature info, if present.
-  if (is.null(feature_info)) return(x)
-  
-  x@feature_info <- feature_info
-  
-  # Attach variable importance tables, if present.
-  if (is.null(vimp_table_list)) return(x)
-  
-  x@vimp_table_list <- vimp_table_list
+  if (is.null(x@experiment_setup) && !is.null(experiment_setup)) x@experiment_setup <- experiment_setup
+  if (is.null(x@iteration_list) && !is.null(iteration_list)) x@iteration_list <- iteration_list
+  if (is.null(x@feature_info) && !is.null(feature_info)) x@feature_info <- feature_info
+  if (is.null(x@vimp_table_list) && !is.null(vimp_table_list)) x@vimp_table_list <- vimp_table_list
   
   return(x)
 }

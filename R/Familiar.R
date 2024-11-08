@@ -231,8 +231,6 @@ summon_familiar <- function(
     )
   }
   
-  rm(experiment_data)
-  
   # Experimental setup and settings --------------------------------------------
   
   # Derive experimental design
@@ -356,8 +354,9 @@ summon_familiar <- function(
   # Clean familiar environment on exit. This is run last to avoid cleaning up
   # the familiar environment prior to shutting down the socket server process.
   on.exit(.clean_familiar_environment(), add = TRUE)
-  
-  experiment_data <- create_experiment_data(
+
+  experiment_data <- set_experiment_data(
+    x = experiment_data,
     project_id = project_info$project_id,
     experiment_setup = experiment_setup,
     iteration_list = project_info$iter_list
@@ -372,7 +371,11 @@ summon_familiar <- function(
     tasks <- .generate_trainer_tasks()
     
   } else if (.stop_after == "vimp") {
-    tasks <- .generate_vimp_tasks()
+    tasks <- .generate_vimp_tasks(
+      experiment_data = experiment_data,
+      vimp_methods = settings$vimp$vimp_methods,
+      file_paths = file_paths
+    )
     
   } else if (.stop_after == "preprocessing") {
     tasks <- c(
@@ -392,7 +395,7 @@ summon_familiar <- function(
 
   # Select and sort unique tasks.
   tasks <- .sort_tasks(tasks)
-
+browser()
   # Pre-processing -------------------------------------------------------------
   # Start pre-processing
   .run_preprocessing(
@@ -407,10 +410,8 @@ summon_familiar <- function(
   
   # Check if the process should be stopped at this point.
   if (.stop_after %in% c("preprocessing")) {
-    return(create_experiment_data(
-      project_id = experiment_data@project_id,
-      experiment_setup = experiment_data@experiment_setup,
-      iteration_list = experiment_data@iteration_list,
+    return(set_experiment_data(
+      x = experiment_data,
       feature_info = get_feature_info_from_backend(
         data_id = waiver(),
         run_id = waiver()
@@ -420,21 +421,31 @@ summon_familiar <- function(
   
   # Variable importance --------------------------------------------------------
   
-  # Start variable importance computation
-  run_variable_importance_computation(
+  .run_variable_importance_computation(
     cl = cl,
-    project_list = project_info,
+    tasks = tasks,
+    experiment_data = experiment_data,
     settings = settings,
+    outcome_info = outcome_info,
     file_paths = file_paths,
     verbose = verbose
   )
   
+  browser()
+  
+  # # Start variable importance computation
+  # run_variable_importance_computation(
+  #   cl = cl,
+  #   project_list = project_info,
+  #   settings = settings,
+  #   file_paths = file_paths,
+  #   verbose = verbose
+  # )
+  
   # Check if the process should be stopped at this point.
   if (.stop_after %in% c("vimp")) {
-    return(create_experiment_data(
-      project_id = project_info$project_id,
-      experiment_setup = experiment_setup,
-      iteration_list = project_info$iter_list,
+    return(set_experiment_data(
+      x = experiment_data,
       feature_info = get_feature_info_from_backend(
         data_id = waiver(),
         run_id = waiver()

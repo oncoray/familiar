@@ -31,6 +31,8 @@ setMethod(
     # Generate file name of variable importance table
     object@file <- get_object_file_name(
       object_type = "hyperparametersVimp",
+      data_id = object@data_id,
+      run_id = object@run_id,
       vimp_method = object@vimp_method,
       project_id = object@project_id,
       dir_path = file_paths$vimp_dir
@@ -110,11 +112,11 @@ setMethod(
 )
 
 
-# .perform_task (vimp task, dataObject) ----------------------------------------
+# .perform_task (vimp hyperparameters task, dataObject) ------------------------
 setMethod(
   ".perform_task",
   signature(
-    object = "familiarTaskVimp",
+    object = "familiarTaskVimpHyperparameters",
     data = "dataObject"
   ),
   function(
@@ -126,6 +128,7 @@ setMethod(
     message_indent = 0L,
     verbose = FALSE,
     cl = NULL,
+    return_results = TRUE,
     ...
   ) {
     
@@ -159,62 +162,142 @@ setMethod(
       ...
     )
     
-    # TODO: preprocess data
+    # Get user-provided hyperparameters.
+    if (is.null(hyperparameters)) {
+      hyperparameters <- settings$vimp$param[[object@vimp_method]]
+      
+    } else if (rlang::is_bare_list(hyperparameters)) {
+      if (object@vimp_method %in% names(hyperparameters)) {
+        hyperparameters <- hyperparameters[[object@vimp_method]]
+      }
+    }
     
-    # Check and retrieve hyperparameters.
-    hyperparameters <- .get_hyperparameters(
-      object = object,
-      hyperparameters = hyperparameters,
-      data = data,
-      settings = settings,
-      message_indent = message_indent,
-      verbose = verbose,
-      cl = cl,
-      ...
+    hyperparameter_object <- promote_vimp_method(
+      object = methods::new(
+        "familiarVimpMethod",
+        outcome_type = data@outcome_type,
+        hyperparameters = NULL,
+        vimp_method = object@vimp_method,
+        outcome_info = data@outcome_info,
+        run_table = object@run_table,
+        project_id = object@project_id
+      )
     )
-    
-    # Create the variable importance method object or familiar model object to
-    # compute variable importance with.
-    vimp_object <- methods::new(
-      "familiarVimpMethod",
-      outcome_type = data@outcome_type,
-      hyperparameters = hyperparameters,
-      vimp_method = object@vimp_method,
-      outcome_info = data@outcome_info,
-      run_table = object@run_table
-    )
-    
-    # Promote to the correct subclass.
-    vimp_object <- promote_vimp_method(object = vimp_object)
     
     # Set multivariate methods.
-    if (is(vimp_object, "familiarModel")) is_multivariate <- TRUE
-    if (is(vimp_object, "familiarVimpMethod")) is_multivariate <- vimp_object@multivariate
+    if (is(hyperparameter_object, "familiarModel")) is_multivariate <- TRUE
+    if (is(hyperparameter_object, "familiarVimpMethod")) is_multivariate <- hyperparameter_object@multivariate
     
-    # Find required features. Exclude the signature features at this point, as
-    # these will have been dropped from the variable importance table.
+    # Find required features.
     required_features <- get_required_features(
-      x = data,
-      feature_info_list = feature_info_list,
+      x = feature_info_list,
       exclude_signature = !is_multivariate
     )
     
-    # Limit to required features.
-    vimp_object@required_features <- required_features
-    vimp_object@feature_info <- feature_info_list[required_features]
+    # Limit to required features. This removes signature features which are not
+    # assessed through variable importance.
+    feature_info_list <- feature_info_list[required_features]
+    hyperparameter_object@required_features <- required_features
+    hyperparameter_object@feature_info <- feature_info_list
     
-    # Compute variable importance.
-    vimp_table <- .vimp(
-      object = vimp_object, 
+    # Make sure the input data is processed.
+    data <- process_input_data(
+      object = hyperparameter_object,
       data = data
     )
     
+    # Compute hyperparameters. Function arguments to optimise_hyperparameters
+    # are passed from the calling function.
+    hyperparameter_object <- optimise_hyperparameters(
+      object = hyperparameter_object,
+      data = data,
+      user_list = hyperparameters,
+      verbose = verbose,
+      message_indent = message_indent + 1L,
+      save_in_place = FALSE,
+      is_vimp = TRUE,
+      ...
+    )
+    
     if (!is.na(object@file)) {
-      saveRDS(vimp_table, file = object@file)
-    } else {
-      return(vimp_table)
+      saveRDS(hyperparameter_object, file = object@file)
+    }
+    
+    if (return_results) {
+      return(hyperparameter_object)
     }
     
     return(invisible(TRUE))
   }
 )
+
+
+..run_variable_importance_computation_hyperparameters <- function(
+    tasks,  
+    settings,
+    cl,
+    message_indent = 0L,
+    verbose,
+    ...
+) {
+  
+  logger_message(
+    paste0(
+      "Hyperparameter optimisation: Starting parameter optimisation variable importance methods."
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+  
+  # Determine how parallel processing takes place.
+  if (settings$hpo$do_parallel %in% c("TRUE", "inner")) {
+    cl_inner <- cl
+    cl_outer <- NULL
+    
+  } else if (settings$hpo$do_parallel %in% c("outer")) {
+    cl_inner <- NULL
+    cl_outer <- cl
+    
+    if (!is.null(cl_outer)) {
+      logger_message(
+        paste0(
+          "Hyperparameter optimisation: Load-balanced parallel processing ",
+          "is done in the outer loop. No progress can be displayed."
+        ),
+        indent = message_indent,
+        verbose = verbose
+      )
+    }
+    
+  } else {
+    cl_inner <- cl_outer <- NULL
+  }
+  
+  # Iterate over data subsets for which parameters have not yet been set.
+  fam_mapply_lb(
+    cl = cl_outer,
+    assign = "all",
+    FUN = .perform_task,
+    progress_bar = !is.null(cl_outer),
+    object = tasks,
+    MoreArgs = list(
+      "cl" = cl_inner,
+      "data" = NULL,
+      "settings" = settings,
+      "message_indent" = message_indent + 1L,
+      "verbose" = verbose && is.null(cl_outer),
+      "return_results" = FALSE,
+      ...
+    )
+  )
+  
+  logger_message(
+    paste0(
+      "\nHyperparameter optimisation: Completed parameter optimisation for variable importance methods."
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+  
+  return(invisible(TRUE))
+}

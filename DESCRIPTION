@@ -202,6 +202,7 @@ Collate:
     'TaskFeatureInfo.R'
     'TaskMain.R'
     'TaskVimp.R'
+    'TaskVimpHyperparameters.R'
     'TestDataCreators.R'
     'TestFunctions.R'
     'TrainS4Methods.R'
