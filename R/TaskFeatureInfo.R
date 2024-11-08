@@ -464,7 +464,9 @@ setMethod(
 
 
 .run_preprocessing <- function(
-    tasks
+    tasks,
+    experiment_data,
+    ...
 ) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
