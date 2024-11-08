@@ -332,7 +332,7 @@ setMethod(
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   vimp <- can_pre_process <- NULL
-  browser()
+  
   # TODO: Check if vimp should be computed separately or is computed during 
   # hyperparameter optimisation.
   
