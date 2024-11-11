@@ -124,6 +124,8 @@ setMethod(
       if (return_results) {
         return(feature_info_list)
       }
+      
+      return(invisible(TRUE))
     }
     
     # If this point is reached, results will be created de novo.
@@ -316,6 +318,8 @@ setMethod(
       if (return_results) {
         return(feature_info_list)
       }
+      
+      return(invisible(TRUE))
     }
     
     # Check that a feature info list is provided, otherwise create an ad-hoc
@@ -477,6 +481,7 @@ setMethod(
     generic_feature_info <- .perform_task(
       object = tasks$generic_feature_info[[1L]],
       data = NULL,
+      experiment_data = experiment_data,
       ...
     )
     
