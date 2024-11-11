@@ -131,10 +131,9 @@ setMethod(
     return_results = TRUE,
     ...
   ) {
-    
     logger_message(
       paste0(
-        "\nVariable importance: starting variable importance computation using the \"",
+        "\nHyperparameter optimisation: starting variable importance computation using the \"",
         object@vimp_method, "\" method for run ",
         object@task_id, " of ",
         object@n_tasks, "."
@@ -284,6 +283,25 @@ setMethod(
       "cl" = cl_inner,
       "data" = NULL,
       "settings" = settings,
+      "metric" = settings$hpo$hpo_metric,
+      "hyperparameters" = settings$vimp$param,
+      "optimisation_function" = settings$hpo$hpo_optimisation_function,
+      "acquisition_function" = settings$hpo$hpo_acquisition_function,
+      "grid_initialisation_method" = settings$hpo$hpo_grid_initialisation_method,
+      "n_random_sets" = settings$hpo$hpo_n_grid_initialisation_samples,
+      "exploration_method" = settings$hpo$hpo_exploration_method,
+      "determine_vimp" = settings$hpo$hpo_determine_vimp,
+      "measure_time" = TRUE,
+      "hyperparameter_learner" = settings$hpo$hpo_hyperparameter_learner,
+      "n_max_bootstraps" = settings$hpo$hpo_max_bootstraps,
+      "n_initial_bootstraps" = settings$hpo$hpo_initial_bootstraps,
+      "n_intensify_step_bootstraps" = settings$hpo$hpo_bootstraps,
+      "n_max_optimisation_steps" = settings$hpo$hpo_smbo_iter_max,
+      "n_max_intensify_steps" = settings$hpo$hpo_intensify_max_iter,
+      "intensify_stop_p_value" = settings$hpo$hpo_alpha,
+      "convergence_tolerance" = settings$hpo$hpo_convergence_tolerance,
+      "convergence_stopping" = settings$hpo$hpo_conv_stop,
+      "time_limit" = settings$hpo$hpo_time_limit,
       "message_indent" = message_indent + 1L,
       "verbose" = verbose && is.null(cl_outer),
       "return_results" = FALSE,
