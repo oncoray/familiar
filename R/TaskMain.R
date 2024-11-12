@@ -84,52 +84,6 @@ setMethod(
 
 
 
-.generate_trainer_tasks <- function(
-    file_paths,
-    project_id  
-) {
-  
-  for (data_id in data_ids) {
-    for (run_id in run_ids) {
-      for (vimp_method in vimp_methods) {
-        for (learner in learners) {
-          # Set up trainer task.
-          
-          # Set up hyperparameter extraction task.
-          
-        }
-      }
-    }
-  }
-  
-  # Check if any learner-related tasks are required.
-  if (len(task_list) == 0L) return(NULL)
-  
-  # Add tasks related to data processing for variable importance objects.
-  task_list <- c(
-    task_list,
-    .generate_vimp_tasks(
-      experiment_data = experiment_data
-    )
-  )
-  
-  # Add tasks related to data processing for learners.
-  task_list <- c(
-    task_list, 
-    .generate_learner_data_preprocessing_tasks(
-      experiment_data = experiment_data,
-      file_paths = file_paths
-    )
-  )
-  
-  return(task_list)
-}
-
-
-
-
-
-
 .generate_learner_data_preprocessing_tasks <- function(
     experiment_data,
     file_paths

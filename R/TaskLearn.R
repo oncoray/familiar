@@ -4,40 +4,46 @@ NULL
 
 
 
-# familiarTaskVimp -------------------------------------------------------------
+# familiarTaskTrain -------------------------------------------------------------
 setClass(
-  "familiarTaskVimp",
+  "familiarTaskTrain",
   contains = "familiarTask",
   slots = list(
     "vimp_method" = "character",
+    "learner" = "character",
+    "vimp_table_file" = "character",
     "hyperparameter_file" = "character",
     "feature_info_file" = "character"
   ),
   prototype = methods::prototype(
     vimp_method = NA_character_,
+    learner = NA_character_,
+    vimp_table_file = NA_character_,
     hyperparameter_file = NA_character_,
     feature_info_file = NA_character_,
-    task_name = "compute_variable_importance"
+    task_name = "train_model"
   )
 )
 
 
 
-# .set_file_name (vimp task) ---------------------------------------------------
+
+# .set_file_name (train task) --------------------------------------------------
 setMethod(
   ".set_file_name",
-  signature(object = "familiarTaskVimp"),
+  signature(object = "familiarTaskTrain"),
   function(object, file_paths = NULL) {
     if (is.null(file_paths)) return(object)
     
     # Generate file name of variable importance table
     object@file <- get_object_file_name(
-      object_type = "vimpTable",
+      object_type = "familiarModel",
       data_id = object@data_id,
       run_id = object@run_id,
+      learner = object@learner,
       vimp_method = object@vimp_method,
       project_id = object@project_id,
-      dir_path = file_paths$vimp_dir
+      dir_path = file_paths$mb_dir
     )
     
     return(object)
@@ -46,22 +52,22 @@ setMethod(
 
 
 
-# .get_task_descriptor (vimp task) ---------------------------------------------
+# .get_task_descriptor (train task) --------------------------------------------
 setMethod(
   ".get_task_descriptor",
-  signature(object = "familiarTaskVimp"),
+  signature(object = "familiarTaskTrain"),
   function(object, ...) {
-    return(paste0(object@task_name, "_", object@data_id, "_", object@run_id, "_", object@vimp_method))
+    return(paste0(object@task_name, "_", object@data_id, "_", object@run_id, "_", object@vimp_method, "_", object@learner))
   }
 )
 
 
 
-# .perform_task (vimp task , NULL) ---------------------------------------------
+# .perform_task (train task , NULL) --------------------------------------------
 setMethod(
   ".perform_task",
   signature(
-    object = "familiarTaskVimp",
+    object = "familiarTaskTrain",
     data = "NULL"
   ),
   function(
@@ -114,11 +120,11 @@ setMethod(
 )
 
 
-# .perform_task (vimp task, dataObject) ----------------------------------------
+# .perform_task (train task, dataObject) ---------------------------------------
 setMethod(
   ".perform_task",
   signature(
-    object = "familiarTaskVimp",
+    object = "familiarTaskTrain",
     data = "dataObject"
   ),
   function(
@@ -135,8 +141,9 @@ setMethod(
   ) {
     logger_message(
       paste0(
-        "Variable importance: Starting variable importance computation using the \"",
-        object@vimp_method, "\" method for run ",
+        "Model training: Starting model training for the \"", object@learner,
+        "\" learner and the \"", object@vimp_method,
+        "\" variable importance method for run ",
         object@task_id, " of ",
         object@n_tasks, "."
       ),
@@ -163,6 +170,17 @@ setMethod(
       ...
     )
     
+    # Check and retrieve variable importances.
+    vimp_table <- .get_variable_importance_table(
+      object = object,
+      data = data,
+      settings = settings,
+      message_indent = message_indent,
+      verbose = verbose,
+      cl = cl,
+      ...
+    )
+    
     # Check and retrieve hyperparameters.
     hyperparameters <- .get_hyperparameters(
       object = object,
@@ -175,55 +193,50 @@ setMethod(
       ...
     )
     
-    # Create the variable importance method object or familiar model object to
-    # compute variable importance with.
-    vimp_object <- methods::new(
-      "familiarVimpMethod",
+    # Create the raw model object for training..
+    model_object <- methods::new(
+      "familiarModel",
       outcome_type = data@outcome_type,
       hyperparameters = hyperparameters,
       vimp_method = object@vimp_method,
+      learner = object@learner,
       outcome_info = data@outcome_info,
       run_table = object@run_table,
       project_id = object@project_id
     )
     
     # Promote to the correct subclass.
-    vimp_object <- promote_vimp_method(object = vimp_object)
-    
-    # Set multivariate methods.
-    if (is(vimp_object, "familiarModel")) is_multivariate <- TRUE
-    if (is(vimp_object, "familiarVimpMethod")) is_multivariate <- vimp_object@multivariate
-    
+    model_object <- promote_learner(object = model_object)
+  
     # Find required features. Exclude the signature features at this point, as
     # these will have been dropped from the variable importance table.
     required_features <- get_required_features(
       x = data,
-      feature_info_list = feature_info_list,
-      exclude_signature = !is_multivariate
+      feature_info_list = feature_info_list
     )
     
     # Limit to required features.
-    vimp_object@required_features <- required_features
-    vimp_object@feature_info <- feature_info_list[required_features]
+    model_object@required_features <- required_features
+    model_object@feature_info <- feature_info_list[required_features]
     
     # Make sure the input data is processed.
     data <- process_input_data(
-      object = vimp_object,
+      object = model_object,
       data = data
     )
     
-    # Compute variable importance.
-    vimp_table <- .vimp(
-      object = vimp_object, 
+    # Train model..
+    model_object <- .train(
+      object = model_object,
       data = data
     )
     
     if (!is.na(object@file)) {
-      saveRDS(vimp_table, file = object@file)
+      saveRDS(model_object, file = object@file)
     }
     
     if (return_results) {
-      return(vimp_table)
+      return(model_object)
     }
     
     return(invisible(TRUE))
@@ -232,10 +245,10 @@ setMethod(
 
 
 
-# .get_hyperparameters (vimp task) ---------------------------------------------
+# .get_hyperparameters (train task) --------------------------------------------
 setMethod(
   ".get_hyperparameters",
-  signature(object = "familiarTaskVimp"),
+  signature(object = "familiarTaskTrain"),
   function(
     object,
     hyperparameters,
@@ -264,8 +277,9 @@ setMethod(
         project_id = object@project_id,
         data_id = hyperparameter_run$data_id[1L],
         run_id = hyperparameter_run$run_id[1L],
+        learner = object@learner,
         vimp_method = object@vimp_method,
-        object_type = "hyperparametersVimp",
+        object_type = "hyperparametersLearner",
         dir_path = file_paths$vimp_dir
       )
       
@@ -281,9 +295,10 @@ setMethod(
       
       # Set up task, and explicitly don't write to file.
       hyperparameter_task <- methods::new(
-        "familiarTaskVimpHyperparameters",
+        "familiarTaskLearnerHyperparameters",
         project_id = object@project_id,
         vimp_method = object@vimp_method,
+        learner = object@learner,
         file = NA_character_
       )
       
@@ -324,197 +339,121 @@ setMethod(
 
 
 
-.generate_vimp_tasks <- function(
+.generate_trainer_tasks <- function(
     experiment_data,
     vimp_methods,
+    learners,
     file_paths,
     skip_existing = FALSE
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  vimp <- can_pre_process <- NULL
+  train <- can_pre_process <- NULL
   
-  # Find the data_id related to computing variable importance.
-  data_id <- experiment_data@experiment_setup[vimp == TRUE, ]$main_data_id[1L]
+  # Find the data_id related to model training.
+  data_id <- experiment_data@experiment_setup[train == TRUE, ]$main_data_id[1L]
   if (is_empty(data_id)) return(NULL)
   
   # Initialise empty list.
   task_list <- list()
   ii <- 1L
   
-  # vimp tasks -----------------------------------------------------------------
+  # train tasks ----------------------------------------------------------------
   
   # Get run ids.
   run_ids <- names(experiment_data@iteration_list[[as.character(data_id)]]$run)
   run_ids <- as.integer(run_ids)
   
-  
   # Set up variable importance computation task.
-  for (vimp_method in vimp_methods) {
-    for (run_id in run_ids) {
-      
-      # Create task to generate run-specific feature info.
-      vimp_task <- methods::new(
-        "familiarTaskVimp",
-        data_id = data_id,
-        run_id = run_id,
-        vimp_method = vimp_method,
-        run_table = data.table::copy(experiment_data@iteration_list[[as.character(data_id)]]$run[[as.character(run_id)]]$run_table),
-        project_id = experiment_data@project_id
-      )
-      
-      # Add file names.
-      vimp_task <- .set_file_name(
-        object = vimp_task,
-        file_paths = file_paths
-      )
-      
-      # Add to list, if the file does not exist on disk.
-      if (!skip_existing || !.file_exists(vimp_task)) {
-        task_list[[ii]] <- vimp_task
-        ii <- ii + 1L
+  for (learner in learners) {
+    for (vimp_method in vimp_methods) {
+      for (run_id in run_ids) {
+        
+        # Create task to generate run-specific feature info.
+        train_task <- methods::new(
+          "familiarTaskTrain",
+          data_id = data_id,
+          run_id = run_id,
+          vimp_method = vimp_method,
+          learner = learner,
+          run_table = data.table::copy(experiment_data@iteration_list[[as.character(data_id)]]$run[[as.character(run_id)]]$run_table),
+          project_id = experiment_data@project_id
+        )
+        
+        # Add file names.
+        train_task <- .set_file_name(
+          object = train_task,
+          file_paths = file_paths
+        )
+        
+        # Add to list, if the file does not exist on disk.
+        if (!skip_existing || !.file_exists(train_task)) {
+          task_list[[ii]] <- train_task
+          ii <- ii + 1L
+        }
       }
     }
   }
   
-  # Check if any vimp-related tasks are required.
+  # Check if any train-related tasks are required.
   if (length(task_list) == 0L) return(NULL)
   
-  # vimp hyperparameter tasks --------------------------------------------------
+  # learner hyperparameter tasks -----------------------------------------------
   
   # Set up variable importance hyperparameter task.
   run_table <- experiment_data@iteration_list[[as.character(data_id)]]$run[[1L]]$run_table
-  vimp_hyperparameter_data_id <- tail(run_table[can_pre_process == TRUE, ], n = 1L)$data_id[1L]
+  learner_hyperparameter_data_id <- tail(run_table[can_pre_process == TRUE, ], n = 1L)$data_id[1L]
   
   # Get run ids.
-  run_ids <- names(experiment_data@iteration_list[[as.character(vimp_hyperparameter_data_id)]]$run)
+  run_ids <- names(experiment_data@iteration_list[[as.character(learner_hyperparameter_data_id)]]$run)
   run_ids <- as.integer(run_ids)
   
-  for (vimp_method in vimp_methods) {
-    for (run_id in run_ids) {
-      # Create task to generate run-specific feature info.
-      vimp_hyperparameter_task <- methods::new(
-        "familiarTaskVimpHyperparameters",
-        data_id = vimp_hyperparameter_data_id,
-        run_id = run_id,
-        vimp_method = vimp_method,
-        run_table = data.table::copy(experiment_data@iteration_list[[as.character(vimp_hyperparameter_data_id)]]$run[[as.character(run_id)]]$run_table),
-        project_id = experiment_data@project_id
-      )
-      
-      # Add file names.
-      vimp_hyperparameter_task <- .set_file_name(
-        object = vimp_hyperparameter_task,
-        file_paths = file_paths
-      )
-      
-      # Add to list, if the file does not exist on disk.
-      if (!skip_existing || !.file_exists(vimp_hyperparameter_task)) {
-        task_list[[ii]] <- vimp_hyperparameter_task
-        ii <- ii + 1L
+  for (learner in learners) {
+    for (vimp_method in vimp_methods) {
+      for (run_id in run_ids) {
+        # Create task to generate run-specific feature info.
+        learner_hyperparameter_task <- methods::new(
+          "familiarTaskLearnerHyperparameters",
+          data_id = learner_hyperparameter_data_id,
+          run_id = run_id,
+          vimp_method = vimp_method,
+          run_table = data.table::copy(experiment_data@iteration_list[[as.character(learner_hyperparameter_data_id)]]$run[[as.character(run_id)]]$run_table),
+          project_id = experiment_data@project_id
+        )
+        
+        # Add file names.
+        learner_hyperparameter_task <- .set_file_name(
+          object = learner_hyperparameter_task,
+          file_paths = file_paths
+        )
+        
+        # Add to list, if the file does not exist on disk.
+        if (!skip_existing || !.file_exists(learner_hyperparameter_task)) {
+          task_list[[ii]] <- learner_hyperparameter_task
+          ii <- ii + 1L
+        }
       }
     }
   }
-
-  # Add tasks related to data processing for vimp methods.
+  
+  # Add tasks related to data processing for learner methods.
   task_list <- c(
     task_list, 
-    .generate_vimp_data_preprocessing_tasks(
+    .generate_learner_data_preprocessing_tasks(
       experiment_data = experiment_data,
       file_paths = file_paths
     )
   )
   
+  # variable importance tasks --------------------------------------------------
+  task_list <- c(
+    task_list,
+    .generate_vimp_tasks(
+      experiment_data = experiment_data,
+      vimp_methods = vimp_methods,
+      file_paths = file_paths,
+      skip_existing = skip_existing
+    )
+  )
+  
   return(task_list)
-}
-
-
-
-.run_variable_importance_computation <- function(
-  cl,
-  tasks,
-  message_indent = 0L,
-  verbose,
-  ...
-) {
-
-  # Check that any tasks are available for processing.
-  if (is_empty(tasks$hyperparameters_vimp) || is_empty(tasks$vimp)) return(invisible(FALSE))
-  
-  # Determine which variable importance hyperparameters need to be found.
-  finished_tasks <- sapply(tasks$hyperparameters_vimp, .file_exists)
-  unfinished_tasks <- tasks$hyperparameters_vimp[!finished_tasks]
-  finished_tasks <- tasks$hyperparameters_vimp[finished_tasks]
-  
-  # Process any unfinished tasks.
-  if (length(unfinished_tasks) > 0L) {
-    ..run_variable_importance_computation_hyperparameters(
-      cl = cl,
-      tasks = unfinished_tasks,
-      message_indent = message_indent,
-      verbose = verbose,
-      ...
-    )
-  }
-  
-  # Determine which variable importance tasks are required.
-  finished_tasks <- sapply(tasks$vimp, .file_exists)
-  unfinished_tasks <- tasks$vimp[!finished_tasks]
-  finished_tasks <- tasks$vimp[finished_tasks]
-  
-  # Process any unfinished tasks.
-  if (length(unfinished_tasks) > 0L) {
-    ..run_variable_importance_computation(
-      cl = cl,
-      tasks = unfinished_tasks,
-      message_indent = message_indent,
-      verbose = verbose,
-      ...
-    )
-  }
-  
-  return(invisible(TRUE))
-}
-
-
-
-..run_variable_importance_computation <- function(
-    tasks,
-    cl,
-    message_indent = 0L,
-    verbose,
-    ...
-) {
-  
-  # Message that variable importances computation is starting.
-  logger_message(
-    paste0(
-      "Variable importance: Starting variable importance computation."
-    ),
-    indent = message_indent,
-    verbose = verbose
-  )
-  
-  fam_mapply_lb(
-    cl = cl,
-    assign = "all",
-    FUN = .perform_task,
-    progress_bar = FALSE,
-    object = tasks,
-    MoreArgs = list(
-      "data" = NULL,
-      "return_results" = FALSE,
-      "message_indent" = message_indent + 1L,
-      "verbose" = verbose,
-      ...
-    )
-  )
-  
-  # Message that variable importances have been computed.
-  logger_message(
-    paste0(
-      "Variable importance: Variable importances have been computed.\n"
-    ),
-    indent = message_indent,
-    verbose = verbose
-  )
 }
