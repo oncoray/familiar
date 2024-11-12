@@ -449,3 +449,15 @@ setMethod(
     return(object)
   }
 )
+
+
+
+# add_package_version ----------------------------------------------------------
+setMethod(
+  "add_package_version",
+  signature(object = "familiarVimpMethod"),
+  function(object) {
+    # Set version of familiar
+    return(.add_package_version(object = object))
+  }
+)

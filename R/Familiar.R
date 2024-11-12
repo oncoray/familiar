@@ -395,9 +395,8 @@ summon_familiar <- function(
 
   # Select and sort unique tasks.
   tasks <- .sort_tasks(tasks)
-browser()
+
   # Pre-processing -------------------------------------------------------------
-  # Start pre-processing
   .run_preprocessing(
     cl = cl,
     tasks = tasks,
@@ -420,7 +419,6 @@ browser()
   }
   
   # Variable importance --------------------------------------------------------
-  
   .run_variable_importance_computation(
     cl = cl,
     tasks = tasks,
@@ -431,31 +429,32 @@ browser()
     verbose = verbose
   )
   
-  browser()
-  
-  # # Start variable importance computation
-  # run_variable_importance_computation(
-  #   cl = cl,
-  #   project_list = project_info,
-  #   settings = settings,
-  #   file_paths = file_paths,
-  #   verbose = verbose
-  # )
-  
   # Check if the process should be stopped at this point.
   if (.stop_after %in% c("vimp")) {
-    return(set_experiment_data(
-      x = experiment_data,
-      feature_info = get_feature_info_from_backend(
-        data_id = waiver(),
-        run_id = waiver()
-      ),
-      vimp_table_list = .retrieve_variable_importance_data(
-        vimp_method = settings$vimp$vimp_method,
-        project_list = project_info,
-        file_paths = file_paths
+    if (is_empty(tasks$vimp)) {
+      experiment_data <- set_experiment_data(
+        x = experiment_data,
+        feature_info = get_feature_info_from_backend(
+          data_id = waiver(),
+          run_id = waiver()
+        )
       )
-    ))
+      
+    } else {
+      experiment_data <- set_experiment_data(
+        x = experiment_data,
+        feature_info = get_feature_info_from_backend(
+          data_id = waiver(),
+          run_id = waiver()
+        ),
+        vimp_table_list = lapply(
+          tasks$vimp,
+          function(x) readRDS(x@file)
+        )
+      )
+    }
+    
+    return(experiment_data)
   }
   
   # Training -------------------------------------------------------------------

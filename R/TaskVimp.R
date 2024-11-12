@@ -133,10 +133,9 @@ setMethod(
     return_results = TRUE,
     ...
   ) {
-    browser()
     logger_message(
       paste0(
-        "\nVariable importance: starting variable importance computation using the \"",
+        "Variable importance: Starting variable importance computation using the \"",
         object@vimp_method, "\" method for run ",
         object@task_id, " of ",
         object@n_tasks, "."
@@ -184,7 +183,8 @@ setMethod(
       hyperparameters = hyperparameters,
       vimp_method = object@vimp_method,
       outcome_info = data@outcome_info,
-      run_table = object@run_table
+      run_table = object@run_table,
+      project_id = object@project_id
     )
     
     # Promote to the correct subclass.
@@ -270,7 +270,7 @@ setMethod(
       )
       
       if (file.exists(hyperparameter_file)) {
-        hyperparameter_object <- readRDS(hyperparameter_file)
+        hyperparameter_object <- update_object(readRDS(hyperparameter_file))
         hyperparameters <- hyperparameter_object@hyperparameters
       }
     }
@@ -301,7 +301,7 @@ setMethod(
       if (!file.exists(object@hyperparameter_file)) {
         ..error(paste0("hyperparameter file does not exist at location: ", object@hyperparameter_file))
       }
-      hyperparameter_object <- readRDS(object@hyperparameter_file)
+      hyperparameter_object <- update_object(readRDS(object@hyperparameter_file))
       hyperparameters <- hyperparameter_object@hyperparameters
       
     } else if (is.character(hyperparameters)) {
@@ -310,8 +310,8 @@ setMethod(
       if (!file.exists(hyperparameters)) {
         ..error(paste0("hyperparameter file does not exist at location: ", hyperparameters))
       }
-      hyperparameter_object <- readRDS(hyperparameters)
-      hyperparameters <- update_object(hyperparameter_object)
+      hyperparameter_object <- update_object(readRDS(hyperparameters))
+      hyperparameters <- hyperparameter_object@hyperparameters
     }
     
     if (!rlang::is_bare_list(hyperparameters)) {
@@ -491,7 +491,7 @@ setMethod(
   # Message that variable importances computation is starting.
   logger_message(
     paste0(
-      "\nVariable importance: starting variable importance computation."
+      "Variable importance: Starting variable importance computation."
     ),
     indent = message_indent,
     verbose = verbose
@@ -501,7 +501,7 @@ setMethod(
     cl = cl,
     assign = "all",
     FUN = .perform_task,
-    progress_bar = is.null(cl),
+    progress_bar = FALSE,
     object = tasks,
     MoreArgs = list(
       "data" = NULL,
@@ -515,7 +515,7 @@ setMethod(
   # Message that variable importances have been computed.
   logger_message(
     paste0(
-      "Variable importance: variable importance have been computed."
+      "Variable importance: Variable importances have been computed.\n"
     ),
     indent = message_indent,
     verbose = verbose

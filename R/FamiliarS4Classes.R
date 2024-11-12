@@ -987,6 +987,8 @@ setClass("vimpTable",
 #'   outcomes. Currently unused.
 #' @slot normalisation_parameters Parameters used for normalising numeric
 #'   outcomes. Currently unused.
+#' @slot familiar_version Version of the familiar package used to create this
+#'   object.
 #'
 #' @export
 
@@ -1021,7 +1023,9 @@ setClass("outcomeInfo",
     # Transformation parameters for the outcome data.
     transformation_parameters = "ANY",
     # Normalisation parameters for the outcome data.
-    normalisation_parameters = "ANY"
+    normalisation_parameters = "ANY",
+    # Version of familiar used to create the object.
+    familiar_version = "ANY"
   ),
   prototype = list(
     name = NA_character_,
@@ -1038,7 +1042,8 @@ setClass("outcomeInfo",
     data_id = NA_integer_,
     run_id = NA_integer_,
     transformation_parameters = NULL,
-    normalisation_parameters = NULL
+    normalisation_parameters = NULL,
+    familiar_version = NULL
   )
 )
 
@@ -1071,6 +1076,8 @@ setClass("outcomeInfo",
 #'   importance method. Used internally.
 #' @slot project_id Identifier of the project that generated the
 #'   familiarVimpMethod object.
+#' @slot familiar_version Version of the familiar package used to create this
+#'   object.
 #'
 #' @export
 setClass("familiarVimpMethod",
@@ -1095,7 +1102,9 @@ setClass("familiarVimpMethod",
     # Run table for the current vimp method
     run_table = "ANY",
     # Project identifier for consistency tracking
-    project_id = "ANY"
+    project_id = "ANY",
+    # Version of familiar used to create the object.
+    familiar_version = "ANY"
   ),
   prototype = list(
     outcome_type = NA_character_,
@@ -1107,7 +1116,8 @@ setClass("familiarVimpMethod",
     required_features = NULL,
     package = NULL,
     run_table = NULL,
-    project_id = NULL
+    project_id = NULL,
+    familiar_version = NULL
   )
 )
 

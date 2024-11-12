@@ -133,7 +133,7 @@ setMethod(
   ) {
     logger_message(
       paste0(
-        "\nHyperparameter optimisation: starting variable importance computation using the \"",
+        "Hyperparameter optimisation: Starting variable importance computation using the \"",
         object@vimp_method, "\" method for run ",
         object@task_id, " of ",
         object@n_tasks, "."
@@ -218,6 +218,9 @@ setMethod(
       ...
     )
     
+    # Set familiar version.
+    hyperparameter_object <- add_package_version(hyperparameter_object)
+    
     if (!is.na(object@file)) {
       saveRDS(hyperparameter_object, file = object@file)
     }
@@ -239,10 +242,9 @@ setMethod(
     verbose,
     ...
 ) {
-  
   logger_message(
     paste0(
-      "Hyperparameter optimisation: Starting parameter optimisation variable importance methods."
+      "Hyperparameter optimisation: Starting parameter optimisation for variable importance methods."
     ),
     indent = message_indent,
     verbose = verbose
@@ -311,7 +313,8 @@ setMethod(
   
   logger_message(
     paste0(
-      "\nHyperparameter optimisation: Completed parameter optimisation for variable importance methods."
+      "Hyperparameter optimisation: Completed parameter optimisation for variable importance methods.",
+      "\n"
     ),
     indent = message_indent,
     verbose = verbose

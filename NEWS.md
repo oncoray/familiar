@@ -1,5 +1,10 @@
 # Version 2.0.0 (Development)
 
+## Breaking changes
+
+- Naming and on-disk location of variable importance tables and models has 
+  changed. These are no longer nested to limit path lengths.
+
 ## Major changes
 
 - Some functionality was deprecated because of redundancy and stability issues:
@@ -74,6 +79,10 @@
   feature names matching internal column names.
 
 - The `sample_similarity` evaluation element is now mentioned in the documentation.
+
+- Variable importance methods and outcome information objects were missing a 
+  familiar version attribute, which has now been added to ensure future 
+  compatibility.
 
 # Version 1.5.0 (Whole Whale)
 

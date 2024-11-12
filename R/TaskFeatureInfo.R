@@ -287,7 +287,7 @@ setMethod(
   ) {
     logger_message(
       paste0(
-        "\nPre-processing: Starting preprocessing for run ",
+        "Pre-processing: Starting preprocessing for run ",
         object@task_id, " of ",
         object@n_tasks, "."
       ),
@@ -536,7 +536,14 @@ setMethod(
     verbose,
     ...
 ) {
-
+  logger_message(
+    paste0(
+      "Pre-processing: Start identifying data processing parameters."
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+  
   # Determine how parallel processing takes place.
   if (settings$prep$do_parallel %in% c("TRUE", "inner")) {
     # Parallel processing in inner function, i.e. within each data subset.
@@ -551,7 +558,7 @@ setMethod(
     if (!is.null(cl_outer)) {
       logger_message(
         paste0(
-          "\nPre-processing: Load-balanced parallel processing is done in the outer loop. ",
+          "Pre-processing: Load-balanced parallel processing is done in the outer loop. ",
           "No progress can be displayed."
         ),
         indent = message_indent,
@@ -576,11 +583,20 @@ setMethod(
       "data" = NULL,
       "feature_info_list" = generic_feature_info,
       "settings" = settings,
-      "message_indent" = message_indent,
+      "message_indent" = message_indent + 1L,
       "verbose" = verbose && is.null(cl_outer),
       "return_results" = FALSE,
       ...
     )
+  )
+  
+  logger_message(
+    paste0(
+      "Pre-processing: Completed identifying data processing parameters.",
+      "\n"
+    ),
+    indent = message_indent,
+    verbose = verbose
   )
   
   return(invisible(TRUE))

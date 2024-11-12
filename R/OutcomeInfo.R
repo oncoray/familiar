@@ -37,6 +37,9 @@ create_outcome_info <- function(settings) {
     outcome_info@competing_risk <- as.character(settings$data$competing_risk_indicator)
   }
 
+  # Add familiar version.
+  outcome_info <- add_package_version(outcome_info)
+  
   return(outcome_info)
 }
 
@@ -93,6 +96,9 @@ setMethod(
       ))
     }
     
+    # Add familiar version.
+    outcome_info <- add_package_version(outcome_info)
+    
     return(outcome_info)
   }
 )
@@ -140,6 +146,9 @@ setMethod(
       ))
     }
     
+    # Add familiar version.
+    outcome_info <- add_package_version(outcome_info)
+    
     return(outcome_info)
   }
 )
@@ -174,6 +183,9 @@ setMethod(
     if (.hasSlot(object, "censored")) {
       outcome_info@censored <- object@censored
     }
+    
+    # Add familiar version.
+    outcome_info <- add_package_version(outcome_info)
     
     return(outcome_info)
   }
@@ -735,5 +747,17 @@ setMethod(
 
     # Print to terminal.
     cat(paste0(outcome_str))
+  }
+)
+
+
+
+# add_package_version (outcomeInfo) --------------------------------------------
+setMethod(
+  "add_package_version",
+  signature(object = "outcomeInfo"),
+  function(object) {
+    # Set version of familiar
+    return(.add_package_version(object = object))
   }
 )

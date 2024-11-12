@@ -46,5 +46,8 @@ outcomes. Currently unused.}
 
 \item{\code{normalisation_parameters}}{Parameters used for normalising numeric
 outcomes. Currently unused.}
+
+\item{\code{familiar_version}}{Version of the familiar package used to create this
+object.}
 }}
 

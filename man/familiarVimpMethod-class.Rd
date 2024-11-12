@@ -40,5 +40,8 @@ importance method. Used internally.}
 
 \item{\code{project_id}}{Identifier of the project that generated the
 familiarVimpMethod object.}
+
+\item{\code{familiar_version}}{Version of the familiar package used to create this
+object.}
 }}
 
