@@ -132,6 +132,7 @@ setMethod(
     data,
     settings = NULL,
     feature_info_list = NULL,
+    vimp_table = NULL,
     hyperparameters = NULL,
     message_indent = 0L,
     verbose = FALSE,
@@ -173,6 +174,7 @@ setMethod(
     # Check and retrieve variable importances.
     vimp_table <- .get_variable_importance_table(
       object = object,
+      vimp_table = vimp_table,
       data = data,
       settings = settings,
       message_indent = message_indent,
@@ -245,6 +247,128 @@ setMethod(
 
 
 
+# .get_variable_importance_table -----------------------------------------------
+setMethod(
+  ".get_variable_importance_table",
+  signature(object = "familiarTaskTrain"),
+  function(
+    object,
+    vimp_table,
+    file_paths = NULL,
+    ...
+  ) {
+    
+    if (is.null(vimp_table) && !is.null(object@run_table)) {
+      # This routine loads variable importances from disk, and is used when an
+      # experiment is run using summon_familiar.
+      
+      # This check exists to make sure that the standard workflow passes the
+      # correct objects.
+      if (is.null(file_paths)) {
+        ..error_reached_unreachable_code("file_paths was expected, but not provided.")
+      }
+      
+      # Find the data and run ids corresponding to variable importance tables..
+      ...
+      
+      # Get variable importance tables from disk.
+      vimp_table <- list()
+      for (ii in seq_along(vimp_run_ids)) {
+        vimp_table_file <- get_object_file_name(
+          project_id = object@project_id,
+          data_id = vimp_data_id,
+          run_id = vimp_run_ids[ii],
+          vimp_method = object@vimp_method,
+          object_type = "vimpTable",
+          dir_path = file_paths$vimp_dir
+        )
+        
+        if (file.exists(vimp_table_file)) {
+          vimp_table[[ii]] <- update_object(readRDS(vimp_table_file))
+          
+        } else {
+          ..error(paste0(
+            "A variable importance table object was expected on disk but was not found: ",
+            vimp_table_file
+          ))
+        }
+      }
+    }
+    
+    
+    if (is.null(vimp_table) && is.na(object@vimp_table_file)) {
+      # Create an ad-hoc list of hyperparameters
+      
+      # Set up task, and explicitly don't write to file.
+      vimp_task <- methods::new(
+        "familiarTaskVimp",
+        project_id = object@project_id,
+        vimp_method = object@vimp_method,
+        file = NA_character_
+      )
+      
+      # Execute the task.
+      vimp_table <- .perform_task(
+        object = vimp_task,
+        ...
+      )
+      
+    } else if (is.null(vimp_table)) {
+      # Assume that the vimp_table_file attribute contains the path to the
+      # file containing the variable importance table.
+      if (!file.exists(object@vimp_table_file)) {
+        ..error(paste0("variable importance table file does not exist at location: ", object@vimp_table_file))
+      }
+      vimp_table <- update_object(readRDS(object@vimp_table_file))
+
+    } else if (is.character(vimp_table)) {
+      # If hyperparameters is a string, interpret this as a path to the
+      # file containing the vimp method hyperparameters.
+      if (!file.exists(vimp_table)) {
+        ..error(paste0("variable importance table file does not exist at location: ", hyperparameters))
+      }
+      hyperparameter_object <- update_object(readRDS(hyperparameters))
+      hyperparameters <- hyperparameter_object@hyperparameters
+    }
+    
+    if (!rlang::is_bare_list(hyperparameters)) {
+      ..error("No hyperparameters were found.")
+    }
+    
+    # Collect all relevant variable importance
+    vimp_table_list <- collect_vimp_table(
+      x = vimp_table_list,
+      run_table = run$run_table
+    )
+    
+    # Update using reference cluster table to ensure that the data are correct
+    # locally.
+    vimp_table_list <- update_vimp_table_to_reference(
+      x = vimp_table_list,
+      reference_cluster_table = .create_clustering_table(
+        feature_info_list = feature_info_list
+      )
+    )
+    
+    # Recluster the data according to the clustering table corresponding to the
+    # model.
+    vimp_table_list <- recluster_vimp_table(vimp_table_list)
+    
+    # Get feature ranks
+    vimp_table <- aggregate_vimp_table(
+      vimp_table_list,
+      aggregation_method = settings$vimp$aggregation,
+      rank_threshold = settings$vimp$aggr_rank_threshold
+    )
+    
+    # Extract rank table.
+    rank_table <- get_vimp_table(vimp_table)
+    
+  }
+)
+
+
+
 # .get_hyperparameters (train task) --------------------------------------------
 setMethod(
   ".get_hyperparameters",
@@ -280,7 +404,7 @@ setMethod(
         learner = object@learner,
         vimp_method = object@vimp_method,
         object_type = "hyperparametersLearner",
-        dir_path = file_paths$vimp_dir
+        dir_path = file_paths$mb_dir
       )
       
       if (file.exists(hyperparameter_file)) {
@@ -347,7 +471,7 @@ setMethod(
     skip_existing = FALSE
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  train <- can_pre_process <- NULL
+  train <- main_data_id <- can_pre_process <- NULL
   
   # Find the data_id related to model training.
   data_id <- experiment_data@experiment_setup[train == TRUE, ]$main_data_id[1L]
@@ -356,12 +480,12 @@ setMethod(
   # Initialise empty list.
   task_list <- list()
   ii <- 1L
+  run_tables <- .collect_run_tables(iteration_list = experiment_data@iteration_list)
   
   # train tasks ----------------------------------------------------------------
   
   # Get run ids.
-  run_ids <- names(experiment_data@iteration_list[[as.character(data_id)]]$run)
-  run_ids <- as.integer(run_ids)
+  run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == data_id]$n_runs[1L])
   
   # Set up variable importance computation task.
   for (learner in learners) {
@@ -375,7 +499,7 @@ setMethod(
           run_id = run_id,
           vimp_method = vimp_method,
           learner = learner,
-          run_table = data.table::copy(experiment_data@iteration_list[[as.character(data_id)]]$run[[as.character(run_id)]]$run_table),
+          run_table = run_tables,
           project_id = experiment_data@project_id
         )
         
@@ -400,12 +524,13 @@ setMethod(
   # learner hyperparameter tasks -----------------------------------------------
   
   # Set up variable importance hyperparameter task.
-  run_table <- experiment_data@iteration_list[[as.character(data_id)]]$run[[1L]]$run_table
-  learner_hyperparameter_data_id <- tail(run_table[can_pre_process == TRUE, ], n = 1L)$data_id[1L]
+  learner_hyperparameter_data_id <- tail(
+    experiment_data@experiment_setup[main_data_id <= data_id & can_pre_process == TRUE, ],
+    n = 1L
+  )$main_data_id[1L]
   
   # Get run ids.
-  run_ids <- names(experiment_data@iteration_list[[as.character(learner_hyperparameter_data_id)]]$run)
-  run_ids <- as.integer(run_ids)
+  run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == learner_hyperparameter_data_id, ]$n_runs[1L])
   
   for (learner in learners) {
     for (vimp_method in vimp_methods) {
@@ -416,7 +541,8 @@ setMethod(
           data_id = learner_hyperparameter_data_id,
           run_id = run_id,
           vimp_method = vimp_method,
-          run_table = data.table::copy(experiment_data@iteration_list[[as.character(learner_hyperparameter_data_id)]]$run[[as.character(run_id)]]$run_table),
+          learner = learners,
+          run_table = run_tables,
           project_id = experiment_data@project_id
         )
         

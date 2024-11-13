@@ -462,7 +462,7 @@ summon_familiar <- function(
     
     return(experiment_data)
   }
-  
+  browser()
   # Training -------------------------------------------------------------------
   
   # Start model building

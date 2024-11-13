@@ -384,7 +384,10 @@ setMethod(
   # vimp hyperparameter tasks --------------------------------------------------
   
   # Identify which data id corresponds to computing hyperparameters.
-  vimp_hyperparameter_data_id <- tail(experiment_data@experiment_setup[main_data_id <= data_id & can_pre_process == TRUE, ], n = 1L)$main_data_id[1L]
+  vimp_hyperparameter_data_id <- tail(
+    experiment_data@experiment_setup[main_data_id <= data_id & can_pre_process == TRUE, ],
+    n = 1L
+  )$main_data_id[1L]
   
   # Get run ids.
   run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == vimp_hyperparameter_data_id, ]$n_runs[1L])
