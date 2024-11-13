@@ -381,3 +381,7 @@ setGeneric(".get_task_descriptor", function(object, ...) standardGeneric(".get_t
 setGeneric(".get_feature_info_list", function(object, ...) standardGeneric(".get_feature_info_list"))
 
 setGeneric(".get_hyperparameters", function(object, ...) standardGeneric(".get_hyperparameters"))
+
+setGeneric(".get_variable_importance_table", function(object, ...) standardGeneric(".get_variable_importance_table"))
+
+setGeneric(".get_current_run_table", function(object, ...) standardGeneric(".get_current_run_table"))

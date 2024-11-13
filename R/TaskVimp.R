@@ -257,7 +257,10 @@ setMethod(
       
       # Find the last entry on the run table that is marked as available for
       # pre-processing. This is what hyperparameters are based on.
-      hyperparameter_run <- tail(object@run_table[can_pre_process == TRUE, ], n = 1L)
+      hyperparameter_run <- tail(
+        object@run_table[[paste0(object@data_id, ".", object@run_id)]][can_pre_process == TRUE, ],
+        n = 1L
+      )
       
       # Find the file name.
       hyperparameter_file <- get_object_file_name(
@@ -331,7 +334,7 @@ setMethod(
     skip_existing = FALSE
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  vimp <- can_pre_process <- NULL
+  vimp <- main_data_id <- can_pre_process <- NULL
   
   # Find the data_id related to computing variable importance.
   data_id <- experiment_data@experiment_setup[vimp == TRUE, ]$main_data_id[1L]
@@ -340,13 +343,12 @@ setMethod(
   # Initialise empty list.
   task_list <- list()
   ii <- 1L
+  run_tables <- .collect_run_tables(iteration_list = experiment_data@iteration_list)
   
   # vimp tasks -----------------------------------------------------------------
   
   # Get run ids.
-  run_ids <- names(experiment_data@iteration_list[[as.character(data_id)]]$run)
-  run_ids <- as.integer(run_ids)
-  
+  run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == data_id]$n_runs[1L])
   
   # Set up variable importance computation task.
   for (vimp_method in vimp_methods) {
@@ -358,7 +360,7 @@ setMethod(
         data_id = data_id,
         run_id = run_id,
         vimp_method = vimp_method,
-        run_table = data.table::copy(experiment_data@iteration_list[[as.character(data_id)]]$run[[as.character(run_id)]]$run_table),
+        run_table = run_tables,
         project_id = experiment_data@project_id
       )
       
@@ -381,13 +383,11 @@ setMethod(
   
   # vimp hyperparameter tasks --------------------------------------------------
   
-  # Set up variable importance hyperparameter task.
-  run_table <- experiment_data@iteration_list[[as.character(data_id)]]$run[[1L]]$run_table
-  vimp_hyperparameter_data_id <- tail(run_table[can_pre_process == TRUE, ], n = 1L)$data_id[1L]
+  # Identify which data id corresponds to computing hyperparameters.
+  vimp_hyperparameter_data_id <- tail(experiment_data@experiment_setup[main_data_id <= data_id & can_pre_process == TRUE, ], n = 1L)$main_data_id[1L]
   
   # Get run ids.
-  run_ids <- names(experiment_data@iteration_list[[as.character(vimp_hyperparameter_data_id)]]$run)
-  run_ids <- as.integer(run_ids)
+  run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == vimp_hyperparameter_data_id, ]$n_runs[1L])
   
   for (vimp_method in vimp_methods) {
     for (run_id in run_ids) {
@@ -397,7 +397,7 @@ setMethod(
         data_id = vimp_hyperparameter_data_id,
         run_id = run_id,
         vimp_method = vimp_method,
-        run_table = data.table::copy(experiment_data@iteration_list[[as.character(vimp_hyperparameter_data_id)]]$run[[as.character(run_id)]]$run_table),
+        run_table = run_tables,
         project_id = experiment_data@project_id
       )
       

@@ -15,6 +15,24 @@ setMethod(
 )
 
 
+
+# .get_current_run_table (generic task) ----------------------------------------
+setMethod(
+  ".get_current_run_table",
+  signature(object = "familiarTask"),
+  function(object, ...) {
+    if (is_empty(object@run_table)) return(NULL)
+    if (is.na(object@data_id) || is.na(object@run_id)) return(NULL)
+    
+    run_table <- object@run_table[[paste0(object@data_id, ".", object@run_id)]]
+    if (!data.table::is.data.table(run_table)) return(NULL)
+    
+    return(run_table)
+  }
+)
+
+
+
 # .get_feature_info_list (general task) ----------------------------------------
 setMethod(
   ".get_feature_info_list",
@@ -26,7 +44,8 @@ setMethod(
     # Attempt to get the feature info list from the backend.
     if (is.null(feature_info_list) && !is.null(object@run_table)) {
       # Find the last entry that is available for pre-processing
-      pre_processing_run <- tail(object@run_table[can_pre_process == TRUE, ], n = 1L)
+      run_table <- object@run_table[[paste0(object@data_id, ".", object@run_id)]]
+      pre_processing_run <- tail(run_table[can_pre_process == TRUE, ], n = 1L)
       
       feature_info_list <- tryCatch(
         get_feature_info_from_backend(
@@ -90,24 +109,20 @@ setMethod(
 ) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  train <- can_pre_process <- NULL
+  train <- can_pre_process <- main_data_id <- NULL
   
   # Find the data_id related to training.
   train_data_id <- experiment_data@experiment_setup[train == TRUE, ]$main_data_id[1L]
   if (is_empty(train_data_id)) return(NULL)
   
-  # Find the corresponding data_id for pre-processing.
-  run_table <- experiment_data@iteration_list[[as.character(train_data_id)]]$run[[1L]]$run_table
-  pre_process_data_id <- tail(run_table[can_pre_process == TRUE, ], n = 1L)$data_id[1L]
-  
-  # Get run ids.
-  run_ids <- names(experiment_data@iteration_list[[as.character(pre_process_data_id)]]$run)
-  run_ids <- as.integer(run_ids)
+  # Find the data_id and run_ids for preprocessing.
+  pre_process_data_id <- tail(experiment_data@experiment_setup[main_data_id <= train_data_id & can_pre_process == TRUE], n = 1L)$main_data_id[1L]
+  pre_process_run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == pre_process_data_id]$n_runs[1L])
   
   # Set up tasks.
   task_list <- .generate_data_preprocessing_tasks(
     data_ids = pre_process_data_id,
-    run_ids = run_ids,
+    run_ids = pre_process_run_ids,
     file_paths = file_paths,
     project_id = experiment_data@project_id
   )
@@ -122,24 +137,20 @@ setMethod(
     file_paths
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  vimp <- can_pre_process <- NULL
+  vimp <- can_pre_process <- main_data_id <- NULL
   
   # Find the data_id related to computing variable importance.
   vimp_data_id <- experiment_data@experiment_setup[vimp == TRUE, ]$main_data_id[1L]
   if (is_empty(vimp_data_id)) return(NULL)
   
-  # Find the corresponding data_id for pre-processing.
-  run_table <- experiment_data@iteration_list[[as.character(vimp_data_id)]]$run[[1L]]$run_table
-  pre_process_data_id <- tail(run_table[can_pre_process == TRUE, ], n = 1L)$data_id[1L]
-  
-  # Get run ids.
-  run_ids <- names(experiment_data@iteration_list[[as.character(pre_process_data_id)]]$run)
-  run_ids <- as.integer(run_ids)
+  # Find the data_id and run_ids for preprocessing.
+  pre_process_data_id <- tail(experiment_data@experiment_setup[main_data_id <= vimp_data_id & can_pre_process == TRUE], n = 1L)$main_data_id[1L]
+  pre_process_run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == pre_process_data_id]$n_runs[1L])
   
   # Set up tasks.
   task_list <- .generate_data_preprocessing_tasks(
     data_ids = pre_process_data_id,
-    run_ids = run_ids,
+    run_ids = pre_process_run_ids,
     file_paths = file_paths,
     project_id = experiment_data@project_id
   )

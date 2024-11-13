@@ -2512,3 +2512,31 @@
     "valid_list" = valid_list
   ))
 }
+
+
+
+.collect_run_tables <- function(iteration_list) {
+  run_tables <- list()
+  ii <- 1L
+  for (iteration in iteration_list) {
+    for (run in iteration$run) {
+      run_tables[[ii]] <- run$run_table
+      ii <- ii + 1L
+    }
+  }
+  
+  # Add names.
+  names(run_tables) <- sapply(
+    run_tables,
+    function(x) {
+      data_id <- tail(x, n = 1L)$data_id[[1L]]
+      run_id <- tail(x, n = 1L)$run_id[[1L]]
+      
+      return(paste0(data_id, ".", run_id))
+    },
+    simplify = TRUE,
+    USE.NAMES = FALSE
+  )
+  
+  return(run_tables)
+}

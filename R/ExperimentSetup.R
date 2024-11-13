@@ -49,6 +49,11 @@ extract_experimental_setup <- function(
     section_table = section_table
   )
   
+  # Identify the experimental levels where pre-processing could occur.
+  .set_experimental_design_preprocessing(
+    section_table = section_table
+  )
+  
   # Report experimental design to the user.
   .report_experimental_design(
     section_table = section_table,
@@ -141,6 +146,8 @@ extract_experimental_setup <- function(
   return(section_table)
 }
 
+
+
 .get_available_subsample_methods <- function() {
   return(c(
     "main",
@@ -151,6 +158,46 @@ extract_experimental_setup <- function(
     "imbalance_partition"
   ))
 }
+
+
+
+.set_experimental_design_preprocessing <- function(section_table) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  perturb_method <- NULL
+
+  # Add can_preprocess column.
+  section_table[, "can_pre_process" := TRUE]
+  
+  # Set can_pre_process to FALSE for select perturbation methods.
+  section_table["limited_bootstrap" %in% perturb_method, "can_pre_process" := FALSE]
+  
+  return(section_table)
+}
+
+
+
+.set_experimental_design_n_runs <- function(
+    section_table,
+    iteration_list
+) {
+  # Determine the number of runs for each level in the experimental design based
+  # on the actually realised iterations. This ensures that the number of runs
+  # is consistent with the iteration list. Some perturbation methods, such as
+  # LOOCV, don't have a number of runs that can be determined without inspecting
+  # the data. Hence we set n_runs based off the iteration list.
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  main_data_id <- NULL
+  
+  section_table[, "n_runs" := 1L]
+  
+  for (data_id in section_table$main_data_id) {
+    section_table[main_data_id == data_id, "n_runs" := length(iteration_list[[as.character(data_id)]]$run)]
+  }
+  
+  return(section_table)
+}
+
 
 
 .complete_experimental_design_section_table <- function(
@@ -599,6 +646,7 @@ extract_experimental_setup <- function(
     )
   }
 }
+
 
 
 .check_experimental_design_section_table <- function(section_table) {

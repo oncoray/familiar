@@ -200,6 +200,7 @@ Collate:
     'SocketServer.R'
     'StringUtilities.R'
     'TaskFeatureInfo.R'
+    'TaskLearn.R'
     'TaskMain.R'
     'TaskVimp.R'
     'TaskVimpHyperparameters.R'

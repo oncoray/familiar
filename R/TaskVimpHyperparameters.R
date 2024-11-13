@@ -171,6 +171,7 @@ setMethod(
       }
     }
     
+    # Create a variable importance object to set hyperparameters.
     hyperparameter_object <- promote_vimp_method(
       object = methods::new(
         "familiarVimpMethod",
@@ -178,7 +179,7 @@ setMethod(
         hyperparameters = NULL,
         vimp_method = object@vimp_method,
         outcome_info = data@outcome_info,
-        run_table = object@run_table,
+        run_table = .get_current_run_table(object = object),
         project_id = object@project_id
       )
     )
@@ -232,6 +233,7 @@ setMethod(
     return(invisible(TRUE))
   }
 )
+
 
 
 ..run_variable_importance_computation_hyperparameters <- function(

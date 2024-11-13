@@ -283,6 +283,12 @@ summon_familiar <- function(
     )
   }
   
+  # Update the number of runs based on the iteration list.
+  experiment_setup <- .set_experimental_design_n_runs(
+    section_table = experiment_setup,
+    iteration_list = project_info$iter_list
+  )
+  
   # Backend and parallellisation -----------------------------------------------
   
   # Identify if an external cluster is provided, and required.
