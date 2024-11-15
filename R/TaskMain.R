@@ -109,15 +109,21 @@ setMethod(
 ) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  train <- can_pre_process <- main_data_id <- NULL
+  train <- can_pre_process <- perturbation_level <- main_data_id <- NULL
   
   # Find the data_id related to training.
   train_data_id <- experiment_data@experiment_setup[train == TRUE, ]$main_data_id[1L]
   if (is_empty(train_data_id)) return(NULL)
   
+  # Determine which parts of the experimental setup are used by training.
+  run_table <- .get_run_table_from_experiment_setup(
+    data_id = train_data_id,
+    experiment_setup = experiment_data@experiment_setup
+  )
+  
   # Find the data_id and run_ids for preprocessing.
-  pre_process_data_id <- tail(experiment_data@experiment_setup[main_data_id <= train_data_id & can_pre_process == TRUE], n = 1L)$main_data_id[1L]
-  pre_process_run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == pre_process_data_id]$n_runs[1L])
+  pre_process_data_id <- tail(run_table[main_data_id <= train_data_id & can_pre_process == TRUE], n = 1L)$main_data_id[1L]
+  pre_process_run_ids <- seq_len(run_table[main_data_id == pre_process_data_id]$n_runs[1L])
   
   # Set up tasks.
   task_list <- .generate_data_preprocessing_tasks(
@@ -143,9 +149,16 @@ setMethod(
   vimp_data_id <- experiment_data@experiment_setup[vimp == TRUE, ]$main_data_id[1L]
   if (is_empty(vimp_data_id)) return(NULL)
   
+  # Determine which parts of the experimental setup are used for assessing
+  # variable importance..
+  run_table <- .get_run_table_from_experiment_setup(
+    data_id = vimp_data_id,
+    experiment_setup = experiment_data@experiment_setup
+  )
+  
   # Find the data_id and run_ids for preprocessing.
-  pre_process_data_id <- tail(experiment_data@experiment_setup[main_data_id <= vimp_data_id & can_pre_process == TRUE], n = 1L)$main_data_id[1L]
-  pre_process_run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == pre_process_data_id]$n_runs[1L])
+  pre_process_data_id <- tail(run_table[main_data_id <= vimp_data_id & can_pre_process == TRUE], n = 1L)$main_data_id[1L]
+  pre_process_run_ids <- seq_len(run_table[main_data_id == pre_process_data_id]$n_runs[1L])
   
   # Set up tasks.
   task_list <- .generate_data_preprocessing_tasks(

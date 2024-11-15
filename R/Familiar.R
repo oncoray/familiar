@@ -374,7 +374,12 @@ summon_familiar <- function(
 
   # Setup tasks
   if (.stop_after == "training") {
-    tasks <- .generate_trainer_tasks()
+    tasks <- .generate_trainer_tasks(
+      experiment_data = experiment_data,
+      vimp_methods = settings$vimp$vimp_methods,
+      learners = settings$mb$learners,
+      file_paths = file_paths
+    )
     
   } else if (.stop_after == "vimp") {
     tasks <- .generate_vimp_tasks(
@@ -465,11 +470,12 @@ summon_familiar <- function(
   browser()
   # Training -------------------------------------------------------------------
   
-  # Start model building
-  run_model_development(
+  .run_learner(
     cl = cl,
-    project_list = project_info,
+    tasks = tasks,
+    experiment_data = experiment_data,
     settings = settings,
+    outcome_info = outcome_info,
     file_paths = file_paths,
     verbose = verbose
   )

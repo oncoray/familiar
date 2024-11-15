@@ -189,8 +189,14 @@ extract_experimental_setup <- function(
   # Suppress NOTES due to non-standard evaluation in data.table
   main_data_id <- NULL
   
-  section_table[, "n_runs" := 1L]
+  # Add perturbation level.
+  section_table[, "perturbation_level" := 1L]
+  for (data_id in section_table$main_data_id) {
+    section_table[main_data_id == data_id, "perturbation_level" := tail(iteration_list[[as.character(data_id)]]$run[["1"]]$run_table, n = 1L)$perturb_level]
+  }
   
+  # Add number of runs.
+  section_table[, "n_runs" := 1L]
   for (data_id in section_table$main_data_id) {
     section_table[main_data_id == data_id, "n_runs" := length(iteration_list[[as.character(data_id)]]$run)]
   }
@@ -701,4 +707,30 @@ extract_experimental_setup <- function(
   }
   
   return(invisible(TRUE))
+}
+
+
+
+.get_run_table_from_experiment_setup <- function(
+    data_id,
+    experiment_setup
+) {
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  perturbation_level <- main_data_id <- NULL
+  
+  # Get the data id chain.
+  data_id_chain <- reference_data_id <- data_id
+  while (reference_data_id != 0L) {
+    reference_data_id <- experiment_setup[main_data_id == reference_data_id, ]$ref_data_id
+    if (reference_data_id == 0L) break
+    data_id_chain <- c(data_id_chain, reference_data_id)
+  }
+  
+  # Reconstruct run table.
+  run_table <- data.table::copy(
+    experiment_setup[main_data_id %in% data_id_chain, ]
+  )[order(perturbation_level)]
+  
+  return(run_table)
 }

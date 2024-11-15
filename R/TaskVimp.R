@@ -108,6 +108,7 @@ setMethod(
     return(.perform_task(
       object = object,
       data = data,
+      experiment_data = experiment_data,
       ...
     ))
   }
@@ -124,6 +125,7 @@ setMethod(
   function(
     object,
     data,
+    experiment_data = NULL,
     settings = NULL,
     feature_info_list = NULL,
     hyperparameters = NULL,
@@ -143,6 +145,34 @@ setMethod(
       indent = message_indent,
       verbose = verbose
     )
+    
+    # Check if the desired data already exist elsewhere.
+    results_exist <- FALSE
+    browser()
+    if (is(experiment_data, "experimentData")) {
+      if (!is_empty(experiment_data@vimp_table_list)) {
+        # Identify if the corresponding vimp_table exists.
+        vimp_table <- experiment_data@vimp_table_list[[paste0(object@data_id, ".", object@run_id)]]
+        results_exist <- TRUE
+      }
+    }
+    
+    if (file.exists(object@file)) {
+      vimp_table <- update_object(object = readRDS(object@file))
+      results_exist <- TRUE
+    }
+    
+    if (results_exist) {
+      if (!is.na(object@file)) {
+        saveRDS(vimp_table, file = object@file)
+      }
+      
+      if (return_results) {
+        return(vimp_table)
+      }
+      
+      return(invisible(TRUE))
+    }
     
     # Check that outcome_info is present on data
     if (!is(data@outcome_info, "outcomeInfo")) {
@@ -384,13 +414,18 @@ setMethod(
   # vimp hyperparameter tasks --------------------------------------------------
   
   # Identify which data id corresponds to computing hyperparameters.
+  vimp_run_table <- .get_run_table_from_experiment_setup(
+    data_id = data_id,
+    experiment_setup = experiment_data@experiment_setup
+  )
+  
   vimp_hyperparameter_data_id <- tail(
-    experiment_data@experiment_setup[main_data_id <= data_id & can_pre_process == TRUE, ],
+    vimp_run_table[main_data_id <= data_id & can_pre_process == TRUE, ],
     n = 1L
   )$main_data_id[1L]
   
   # Get run ids.
-  run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == vimp_hyperparameter_data_id, ]$n_runs[1L])
+  run_ids <- seq_len(vimp_run_table[main_data_id == vimp_hyperparameter_data_id, ]$n_runs[1L])
   
   for (vimp_method in vimp_methods) {
     for (run_id in run_ids) {

@@ -57,7 +57,13 @@ setMethod(
   ".get_task_descriptor",
   signature(object = "familiarTaskTrain"),
   function(object, ...) {
-    return(paste0(object@task_name, "_", object@data_id, "_", object@run_id, "_", object@vimp_method, "_", object@learner))
+    return(paste0(
+      object@task_name, "_",
+      object@data_id, "_", 
+      object@run_id, "_", 
+      object@vimp_method, "_", 
+      object@learner
+    ))
   }
 )
 
@@ -114,6 +120,7 @@ setMethod(
     return(.perform_task(
       object = object,
       data = data,
+      experiment_data = experiment_data,
       ...
     ))
   }
@@ -142,7 +149,7 @@ setMethod(
   ) {
     logger_message(
       paste0(
-        "Model training: Starting model training for the \"", object@learner,
+        "Training: Starting model training for the \"", object@learner,
         "\" learner and the \"", object@vimp_method,
         "\" variable importance method for run ",
         object@task_id, " of ",
@@ -254,9 +261,14 @@ setMethod(
   function(
     object,
     vimp_table,
+    vimp_aggregation_method,
+    vimp_rank_threshold,
+    experiment_data = NULL,
     file_paths = NULL,
     ...
   ) {
+    # Suppress NOTES due to non-standard evaluation in data.table
+    vimp <- main_data_id <- data_id <- run_id <- NULL
     
     if (is.null(vimp_table) && !is.null(object@run_table)) {
       # This routine loads variable importances from disk, and is used when an
@@ -267,9 +279,38 @@ setMethod(
       if (is.null(file_paths)) {
         ..error_reached_unreachable_code("file_paths was expected, but not provided.")
       }
+      browser()
+      # Find the data and run ids corresponding to variable importance tables
+      # relevant to the current run. First we will figure out the data id and
+      # run id for ALL variable importance tables.
+      vimp_data_id <- experiment_data@experiment_setup[vimp == TRUE, ]$main_data_id[1L]
+      vimp_run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == vimp_data_id, ]$n_runs[1L])
       
-      # Find the data and run ids corresponding to variable importance tables..
-      ...
+      # Select all run tables related to variable importance computation.
+      vimp_run_tables <- object@run_table[paste(vimp_data_id, vimp_run_ids, sep = ".")]
+      
+      # Get the run table for training.
+      train_run_table <- object@run_table[[paste0(object@data_id, ".", object@run_id)]]
+      
+      # Iterate backwards on data ids for the train run table to find matching
+      # vimp run tables.
+      matching <- logical(length(vimp_run_tables))
+      train_data_chain_ids <- rev(train_run_table$data_id)
+      ii <- 1L
+      
+      while (!any(matching)) {
+        current_data_id <- train_data_chain_ids[ii]
+        current_run_id <- train_run_table[data_id == current_data_id, ]$run_id[1L]
+        
+        for (jj in seq_along(matching)) {
+          matching[jj] <- !is_empty(vimp_run_tables[jj][data_id == current_data_id & run_id == current_run_id])
+        }
+        ii <- ii + 1L
+      }
+      
+      # Select matching variable importance run tables.
+      vimp_run_tables <- vimp_run_tables[matching]
+      vimp_run_ids <- sapply(vimp_run_tables, function(x) (tail(x, n = 1L)$run_id), simplify = TRUE, USE.NAMES = FALSE)
       
       # Get variable importance tables from disk.
       vimp_table <- list()
@@ -295,9 +336,8 @@ setMethod(
       }
     }
     
-    
     if (is.null(vimp_table) && is.na(object@vimp_table_file)) {
-      # Create an ad-hoc list of hyperparameters
+      # Create an ad-hoc list of variable importances.
       
       # Set up task, and explicitly don't write to file.
       vimp_task <- methods::new(
@@ -325,45 +365,24 @@ setMethod(
       # If hyperparameters is a string, interpret this as a path to the
       # file containing the vimp method hyperparameters.
       if (!file.exists(vimp_table)) {
-        ..error(paste0("variable importance table file does not exist at location: ", hyperparameters))
+        ..error(paste0("variable importance table file does not exist at location: ", vimp_table))
       }
-      hyperparameter_object <- update_object(readRDS(hyperparameters))
-      hyperparameters <- hyperparameter_object@hyperparameters
+      vimp_table <- update_object(readRDS(vimp_table))
     }
     
-    if (!rlang::is_bare_list(hyperparameters)) {
-      ..error("No hyperparameters were found.")
+    if (!rlang::is_bare_list(vimp_table) || !is(vimp_table, "vimpTable")) {
+      ..error("No variable importance table was found.")
     }
     
-    # Collect all relevant variable importance
-    vimp_table_list <- collect_vimp_table(
-      x = vimp_table_list,
-      run_table = run$run_table
-    )
-    
-    # Update using reference cluster table to ensure that the data are correct
-    # locally.
-    vimp_table_list <- update_vimp_table_to_reference(
-      x = vimp_table_list,
-      reference_cluster_table = .create_clustering_table(
-        feature_info_list = feature_info_list
-      )
-    )
-    
-    # Recluster the data according to the clustering table corresponding to the
-    # model.
-    vimp_table_list <- recluster_vimp_table(vimp_table_list)
-    
-    # Get feature ranks
+    # Get aggregate variable importances
     vimp_table <- aggregate_vimp_table(
-      vimp_table_list,
-      aggregation_method = settings$vimp$aggregation,
-      rank_threshold = settings$vimp$aggr_rank_threshold
+      vimp_table,
+      aggregation_method = vimp_aggregation_method,
+      rank_threshold = vimp_rank_threshold
     )
     
     # Extract rank table.
-    rank_table <- get_vimp_table(vimp_table)
-    
+    return(get_vimp_table(vimp_table))
   }
 )
 
@@ -524,13 +543,17 @@ setMethod(
   # learner hyperparameter tasks -----------------------------------------------
   
   # Set up variable importance hyperparameter task.
+  train_run_table <- .get_run_table_from_experiment_setup(
+    data_id = data_id,
+    experiment_setup = experiment_data@experiment_setup
+  )
   learner_hyperparameter_data_id <- tail(
-    experiment_data@experiment_setup[main_data_id <= data_id & can_pre_process == TRUE, ],
+    train_run_table[main_data_id <= data_id & can_pre_process == TRUE, ],
     n = 1L
   )$main_data_id[1L]
   
   # Get run ids.
-  run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == learner_hyperparameter_data_id, ]$n_runs[1L])
+  run_ids <- seq_len(train_run_table[main_data_id == learner_hyperparameter_data_id, ]$n_runs[1L])
   
   for (learner in learners) {
     for (vimp_method in vimp_methods) {
@@ -541,7 +564,7 @@ setMethod(
           data_id = learner_hyperparameter_data_id,
           run_id = run_id,
           vimp_method = vimp_method,
-          learner = learners,
+          learner = learner,
           run_table = run_tables,
           project_id = experiment_data@project_id
         )
@@ -582,4 +605,100 @@ setMethod(
   )
   
   return(task_list)
+}
+
+
+
+.run_learner <- function(
+    cl,
+    tasks,
+    message_indent = 0L,
+    verbose,
+    ...
+) {
+  
+  # Check that any tasks are available for processing.
+  if (is_empty(tasks$hyperparameters_learner) || is_empty(tasks$train)) return(invisible(FALSE))
+  
+  # Determine which learner hyperparameter sets need to be found.
+  finished_tasks <- sapply(tasks$hyperparameters_learner, .file_exists)
+  unfinished_tasks <- tasks$hyperparameters_learner[!finished_tasks]
+  finished_tasks <- tasks$hyperparameters_learner[finished_tasks]
+  
+  # Process any unfinished tasks.
+  if (length(unfinished_tasks) > 0L) {
+    ..run_learner_computation_hyperparameters(
+      cl = cl,
+      tasks = unfinished_tasks,
+      message_indent = message_indent,
+      verbose = verbose,
+      ...
+    )
+  }
+  
+  # Determine which variable importance tasks are required.
+  finished_tasks <- sapply(tasks$train, .file_exists)
+  unfinished_tasks <- tasks$train[!finished_tasks]
+  finished_tasks <- tasks$train[finished_tasks]
+  
+  # Process any unfinished tasks.
+  if (length(unfinished_tasks) > 0L) {
+    ..run_learner(
+      cl = cl,
+      tasks = unfinished_tasks,
+      message_indent = message_indent,
+      verbose = verbose,
+      ...
+    )
+  }
+  
+  return(invisible(TRUE))
+}
+
+
+
+..run_learner <- function(
+    tasks,
+    cl,
+    settings,
+    message_indent = 0L,
+    verbose,
+    ...
+) {
+  
+  # Message that variable importances computation is starting.
+  logger_message(
+    paste0(
+      "Training: Starting model training."
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+  
+  fam_mapply_lb(
+    cl = cl,
+    assign = "all",
+    FUN = .perform_task,
+    progress_bar = FALSE,
+    object = tasks,
+    MoreArgs = list(
+      "data" = NULL,
+      "return_results" = FALSE,
+      "settings" = settings,
+      "vimp_aggregation_method" = settings$vimp$aggregation,
+      "vimp_rank_threshold" = settings$vimp$aggr_rank_threshold,
+      "message_indent" = message_indent + 1L,
+      "verbose" = verbose,
+      ...
+    )
+  )
+  
+  # Message that variable importances have been computed.
+  logger_message(
+    paste0(
+      "Training: Models were trained.\n"
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
 }

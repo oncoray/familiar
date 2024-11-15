@@ -201,6 +201,7 @@ Collate:
     'StringUtilities.R'
     'TaskFeatureInfo.R'
     'TaskLearn.R'
+    'TaskLearnerHyperparameters.R'
     'TaskMain.R'
     'TaskVimp.R'
     'TaskVimpHyperparameters.R'

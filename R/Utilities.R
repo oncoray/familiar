@@ -883,7 +883,7 @@ get_object_file_name <- function(
       data_id, "_",
       run_id, "_",
       learner, "_",
-      vimp_method, "_",
+      vimp_method,
       "_learner_hyperparameters"
     )
     
