@@ -210,7 +210,7 @@ setMethod(
       vimp_method = object@vimp_method,
       learner = object@learner,
       outcome_info = data@outcome_info,
-      run_table = object@run_table,
+      run_table = .get_current_run_table(object = object),
       project_id = object@project_id
     )
     

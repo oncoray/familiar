@@ -148,12 +148,35 @@ setMethod(
     
     # Check if the desired data already exist elsewhere.
     results_exist <- FALSE
-    browser()
     if (is(experiment_data, "experimentData")) {
       if (!is_empty(experiment_data@vimp_table_list)) {
-        # Identify if the corresponding vimp_table exists.
-        vimp_table <- experiment_data@vimp_table_list[[paste0(object@data_id, ".", object@run_id)]]
-        results_exist <- TRUE
+        # Identify if the intended vimp_table already exists. Variable
+        # importance tables are stored in a flat list in the vimp_table_list
+        # attribute. The intended variable importance table must match the
+        # variable importance method (vimp_method), data_id and run_id of the
+        # current task.
+        matching <- sapply(
+          experiment_data@vimp_table_list,
+          function(x, vimp_method, data_id, run_id) {
+            if (x@vimp_method != vimp_method) return(FALSE)
+            
+            run_data <- tail(x@run_table, n = 1L)
+            if (run_data$data_id != data_id) return(FALSE)
+            if (run_data$run_id != run_id) return(FALSE)
+            
+            return(TRUE)
+          },
+          vimp_method = object@vimp_method,
+          data_id = object@data_id,
+          run_id = object@run_id,
+          simplify = TRUE,
+          USE.NAMES = FALSE
+        )
+        
+        if (any(matching)) {
+          vimp_table <- experiment_data@vimp_table_list[matching][[1L]]
+          results_exist <- TRUE
+        }
       }
     }
     
@@ -213,7 +236,7 @@ setMethod(
       hyperparameters = hyperparameters,
       vimp_method = object@vimp_method,
       outcome_info = data@outcome_info,
-      run_table = object@run_table,
+      run_table = .get_current_run_table(object = object),
       project_id = object@project_id
     )
     
