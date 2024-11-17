@@ -136,6 +136,7 @@ setMethod(
     data,
     settings = NULL,
     feature_info_list = NULL,
+    vimp_table = NULL,
     hyperparameters = NULL,
     message_indent = 0L,
     verbose = FALSE,
@@ -172,10 +173,11 @@ setMethod(
       cl = cl,
       ...
     )
-    
+
     # Check and retrieve variable importances.
     vimp_table <- .get_variable_importance_table(
       object = object,
+      feature_info_list = feature_info_list,
       vimp_table = vimp_table,
       data = data,
       settings = settings,
@@ -184,7 +186,7 @@ setMethod(
       cl = cl,
       ...
     )
-    
+    browser()
     # Get user-provided hyperparameters.
     if (is.null(hyperparameters)) {
       hyperparameters <- settings$mb$hyper_param[[object@learner]]
@@ -195,10 +197,10 @@ setMethod(
       }
     }
     
-    # Create a variable importance object to set hyperparameters.
-    hyperparameter_object <- promote_vimp_method(
+    # Create a model object to set hyperparameters.
+    hyperparameter_object <- promote_learner(
       object = methods::new(
-        "familiarVimpMethod",
+        "familiarModel",
         outcome_type = data@outcome_type,
         hyperparameters = NULL,
         learner = object@learner,
@@ -309,6 +311,8 @@ setMethod(
       "cl" = cl_inner,
       "data" = NULL,
       "settings" = settings,
+      "vimp_aggregation_method" = settings$vimp$aggregation,
+      "vimp_rank_threshold" = settings$vimp$aggr_rank_threshold,
       "metric" = settings$hpo$hpo_metric,
       "hyperparameters" = settings$vimp$param,
       "optimisation_function" = settings$hpo$hpo_optimisation_function,

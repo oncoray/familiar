@@ -380,6 +380,21 @@ setMethod(
 
 
 
+# .get_variable_importance_table (vimp task) -----------------------------------
+setMethod(
+  ".get_variable_importance_table",
+  signature(object = "familiarTaskVimp"),
+  function(
+    object,
+    ...
+  ) {
+    ..error_reached_unreachable_code(".get_variable_importance_table does not exist for this task")
+  }
+)
+
+
+
+
 .generate_vimp_tasks <- function(
     experiment_data,
     vimp_methods,

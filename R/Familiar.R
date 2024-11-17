@@ -472,7 +472,7 @@ summon_familiar <- function(
     
     return(experiment_data)
   }
-  browser()
+  
   # Training -------------------------------------------------------------------
   
   .run_learner(

@@ -367,7 +367,14 @@
   ) {
     return(NULL)
   }
-
+  
+  # if (!determine_vimp) return(TODO)
+  
+  # Spawn task to determine variable importance hyperparameters.
+  
+  # Spawn task to obtain variable importance tables.
+  
+browser()
   # Check if the code is called downstream from summon_familiar.
   is_main_process <- !inherits(tryCatch(get_file_paths(), error = identity), "error")
 

@@ -291,6 +291,21 @@ setMethod(
 
 
 
+# .get_variable_importance_table (vimp hyperparameters task) -------------------
+setMethod(
+  ".get_variable_importance_table",
+  signature(object = "familiarTaskVimpHyperparameters"),
+  function(
+    object,
+    ...
+  ) {
+    ..error_reached_unreachable_code(".get_variable_importance_table does not exist for this task")
+  }
+)
+
+
+
+
 ..run_variable_importance_computation_hyperparameters <- function(
     tasks,  
     settings,
