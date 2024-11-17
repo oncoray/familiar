@@ -1505,6 +1505,9 @@ setClass(
 #' @slot feature_info Feature information objects. Only available if the
 #'   experimentData object was generated using the `precompute_feature_info` or
 #'   `precompute_vimp` functions.
+#' @slot vimp_hyperparameter_list List of hyperparameters for variable importance
+#'   objects.  Only available if the experimentData object was created using the
+#'   `precompute_vimp` function.
 #' @slot vimp_table_list List of variable importance table objects. Only
 #'   available if the experimentData object was created using the
 #'   `precompute_vimp` function.
@@ -1530,6 +1533,8 @@ setClass(
     iteration_list = "ANY",
     # List of feature information objects.
     feature_info = "ANY",
+    # List of variable importance hyperparameters.
+    vimp_hyperparameter_list = "ANY",
     # List of variable importance tables.
     vimp_table_list = "ANY",
     # Project identifier for consistency tracking
@@ -1541,6 +1546,7 @@ setClass(
     experiment_setup = NULL,
     iteration_list = NULL,
     feature_info = NULL,
+    vimp_hyperparameter_list = NULL,
     vimp_table_list = NULL,
     project_id = NULL,
     familiar_version = NULL

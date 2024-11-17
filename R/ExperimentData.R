@@ -121,6 +121,7 @@ set_experiment_data <- function(
     experiment_setup = NULL,
     iteration_list = NULL,
     feature_info = NULL,
+    vimp_hyperparameter_list = NULL,
     vimp_table_list = NULL
 ) {
 
@@ -138,6 +139,7 @@ set_experiment_data <- function(
   if (is.null(x@experiment_setup) && !is.null(experiment_setup)) x@experiment_setup <- experiment_setup
   if (is.null(x@iteration_list) && !is.null(iteration_list)) x@iteration_list <- iteration_list
   if (is.null(x@feature_info) && !is.null(feature_info)) x@feature_info <- feature_info
+  if (is.null(x@vimp_hyperparameter_list) && !is.null(vimp_hyperparameter_list)) x@vimp_hyperparameter_list <- vimp_hyperparameter_list
   if (is.null(x@vimp_table_list) && !is.null(vimp_table_list)) x@vimp_table_list <- vimp_table_list
   
   return(x)

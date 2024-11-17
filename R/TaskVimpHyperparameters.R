@@ -106,6 +106,7 @@ setMethod(
     return(.perform_task(
       object = object,
       data = data,
+      experiment_data = experiment_data,
       ...
     ))
   }
@@ -123,6 +124,7 @@ setMethod(
     object,
     data,
     settings = NULL,
+    experiment_data = NULL,
     feature_info_list = NULL,
     hyperparameters = NULL,
     message_indent = 0L,
@@ -141,6 +143,59 @@ setMethod(
       indent = message_indent,
       verbose = verbose
     )
+    
+    # Check if the desired data already exist elsewhere.
+    results_exist <- FALSE
+    if (is(experiment_data, "experimentData")) {
+      if (!is_empty(experiment_data@vimp_hyperparameter_list)) {
+        # Identify if the intended hyperparameter object already exists.
+        # Hyperparameters are stored in a flat list in the
+        # vimp_hyperparameter_list attribute. The intended hyperparameters must
+        # match the variable importance method (vimp_method), data_id and run_id
+        # of the current task.
+        matching <- sapply(
+          experiment_data@vimp_hyperparameter_list,
+          function(x, vimp_method, data_id, run_id) {
+            if (x@vimp_method != vimp_method) return(FALSE)
+            
+            run_data <- tail(x@run_table, n = 1L)
+            if (run_data$data_id != data_id) return(FALSE)
+            if (run_data$run_id != run_id) return(FALSE)
+            
+            return(TRUE)
+          },
+          vimp_method = object@vimp_method,
+          data_id = object@data_id,
+          run_id = object@run_id,
+          simplify = TRUE,
+          USE.NAMES = FALSE
+        )
+        
+        if (any(matching)) {
+          hyperparameter_object <- experiment_data@vimp_hyperparameter_list[matching][[1L]]
+          results_exist <- TRUE
+        }
+      }
+    }
+    
+    # Check if the associated file already exists.
+    if (file.exists(object@file)) {
+      hyperparameter_object <- update_object(object = readRDS(object@file))
+      results_exist <- TRUE
+    }
+    
+    # If results exists, exit the routine.
+    if (results_exist) {
+      if (!is.na(object@file)) {
+        saveRDS(hyperparameter_object, file = object@file)
+      }
+      
+      if (return_results) {
+        return(hyperparameter_object)
+      }
+      
+      return(invisible(TRUE))
+    }
     
     # Check that outcome_info is present on data
     if (!is(data@outcome_info, "outcomeInfo")) {

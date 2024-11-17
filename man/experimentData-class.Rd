@@ -27,6 +27,10 @@ are assigned to training, validation and test sets.}
 experimentData object was generated using the \code{precompute_feature_info} or
 \code{precompute_vimp} functions.}
 
+\item{\code{vimp_hyperparameter_list}}{List of hyperparameters for variable importance
+objects.  Only available if the experimentData object was created using the
+\code{precompute_vimp} function.}
+
 \item{\code{vimp_table_list}}{List of variable importance table objects. Only
 available if the experimentData object was created using the
 \code{precompute_vimp} function.}

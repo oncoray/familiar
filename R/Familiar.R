@@ -442,28 +442,33 @@ summon_familiar <- function(
   
   # Check if the process should be stopped at this point.
   if (.stop_after %in% c("vimp")) {
-    if (is_empty(tasks$vimp)) {
-      experiment_data <- set_experiment_data(
-        x = experiment_data,
-        feature_info = get_feature_info_from_backend(
-          data_id = waiver(),
-          run_id = waiver()
-        )
-      )
-      
-    } else {
-      experiment_data <- set_experiment_data(
-        x = experiment_data,
-        feature_info = get_feature_info_from_backend(
-          data_id = waiver(),
-          run_id = waiver()
-        ),
-        vimp_table_list = lapply(
-          tasks$vimp,
-          function(x) readRDS(x@file)
-        )
+    feature_info <- get_feature_info_from_backend(
+      data_id = waiver(),
+      run_id = waiver()
+    )
+    
+    vimp_hyperparameters <- NULL
+    if (!is_empty(tasks$hyperparameters_vimp)) {
+      vimp_hyperparameters <- lapply(
+        tasks$hyperparameters_vimp,
+        function(x) readRDS(x@file)
       )
     }
+    
+    vimp_tables <- NULL
+    if (!is_empty(tasks$vimp)) {
+      vimp_tables <- lapply(
+        tasks$vimp,
+        function(x) readRDS(x@file)
+      )
+    }
+    
+    experiment_data <- set_experiment_data(
+      x = experiment_data,
+      feature_info = feature_info,
+      vimp_hyperparameter_list = vimp_hyperparameters,
+      vimp_table_list = vimp_tables
+    )
     
     return(experiment_data)
   }
