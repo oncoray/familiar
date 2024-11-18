@@ -113,6 +113,7 @@ setMethod(
     vimp_aggregation_method,
     vimp_rank_threshold,
     experiment_data = NULL,
+    feature_info_list = NULL,
     file_paths = NULL,
     ...
   ) {
@@ -199,6 +200,7 @@ setMethod(
       # Execute the task.
       vimp_table <- .perform_task(
         object = vimp_task,
+        feature_info_list = feature_info_list,
         ...
       )
       
@@ -222,6 +224,23 @@ setMethod(
     if (!(rlang::is_bare_list(vimp_table) || is(vimp_table, "vimpTable"))) {
       ..error("No variable importance table was found.")
     }
+    
+    if (!is.null(feature_info_list)) {
+      # Update using reference cluster table to ensure that the data are correct
+      # locally. This clustering table can be derived from the provided feature
+      # info list.
+      vimp_table <- update_vimp_table_to_reference(
+        x = vimp_table,
+        reference_cluster_table = .create_clustering_table(
+          feature_info_list = feature_info_list
+        )
+      )
+    }
+    
+    # Recluster the data according to the clustering table corresponding to the
+    # model. This ensures that the variable importance table has the features
+    # that are seen by the model.
+    vimp_table <- recluster_vimp_table(vimp_table)
     
     # Get aggregate variable importances
     vimp_table <- aggregate_vimp_table(

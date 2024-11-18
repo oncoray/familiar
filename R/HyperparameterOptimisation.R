@@ -394,7 +394,10 @@ setMethod(
     )
     
     # Check that any parameters are present.
-    if (is_empty(parameter_list)) return(object)
+    if (is_empty(parameter_list)) {
+      object@hyperparameters <- list()
+      return(object)
+    }
     
     # Set the user_list if it is not present, or set through hyperparameter
     # attribute.

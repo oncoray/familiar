@@ -367,82 +367,35 @@
   ) {
     return(NULL)
   }
-  
-  # if (!determine_vimp) return(TODO)
-  
-  # Spawn task to determine variable importance hyperparameters.
+
+  logger_message(
+    paste0(
+      "Computing variable importance for ",
+      length(bootstraps), " bootstraps."
+    ),
+    indent = message_indent + 1L,
+    verbose = verbose
+  )
   
   # Spawn task to obtain variable importance tables.
+  vimp_task <- methods::new(
+    "familiarTaskVimp",
+    project_id = object@project_id,
+    vimp_method = object@vimp_method,
+    file = NA_character_
+  )
   
-browser()
-  # Check if the code is called downstream from summon_familiar.
-  is_main_process <- !inherits(tryCatch(get_file_paths(), error = identity), "error")
-
-  if (determine_vimp || !is_main_process) {
-    # Variable importance has to be computed for the bootstraps if expressly
-    # requested using determine_vimp or if the code is called outside of
-    # summon_familiar.
-
-    # Set up variable importance object.
-    vimp_object <- promote_vimp_method(methods::new("familiarVimpMethod",
-      outcome_type = object@outcome_type,
-      vimp_method = object@vimp_method,
-      outcome_info = object@outcome_info,
-      feature_info = object@feature_info,
-      required_features = object@required_features,
-      run_table = object@run_table
-    ))
-
-    if (is_main_process) {
-      # Load hyperparameters.
-      vimp_object <- run_hyperparameter_optimisation(
-        vimp_method = object@vimp_method,
-        data_id = tail(object@run_table, n = 1L)$data_id,
-        verbose = FALSE
-      )
-
-      # Select a suitable sets of hyperparameters.
-      vimp_object <- .find_hyperparameters_for_run(
-        run = list("run_table" = object@run_table),
-        hpo_list = vimp_object,
-        allow_random_selection = TRUE,
-        as_list = FALSE
-      )
-      
-    } else {
-      # Optimise hyperparameters.
-      vimp_object <- optimise_hyperparameters(
-        object = vimp_object,
-        data = data,
-        cl = cl,
-        determine_vimp = determine_vimp,
-        verbose = verbose,
-        message_indent = message_indent + 1L,
-        ...
-      )
-    }
-
-    logger_message(
-      paste0(
-        "Computing variable importance for ",
-        length(bootstraps), " bootstraps."
-      ),
-      indent = message_indent + 1L,
-      verbose = verbose
-    )
-
-    # Iterate over data.
-    vimp_list <- fam_lapply(
-      cl = cl,
-      assign = "all",
-      X = bootstraps,
-      FUN = ..compute_hyperparameter_variable_importance,
-      object = vimp_object,
-      data = data,
-      progress_bar = verbose,
-      chopchop = TRUE
-    )
-  }
+  vimp_list <- fam_lapply(
+    cl = cl,
+    assign = "all",
+    X = bootstraps,
+    FUN = ..compute_hyperparameter_variable_importance,
+    vimp_task = vimp_task,
+    data = data,
+    feature_info = object@feature_info,
+    progress_bar = verbose,
+    chopchop = TRUE
+  )
 
   return(vimp_list)
 }
@@ -451,24 +404,21 @@ browser()
 
 ..compute_hyperparameter_variable_importance <- function(
     train_samples, 
-    object, 
-    data
+    vimp_task, 
+    data,
+    feature_info
 ) {
-  
   # Select bootstrap data.
   data <- select_data_from_samples(
     data = data,
     samples = train_samples
   )
 
-  # Select a familiarVimpMethod object if multiple are present.
-  if (rlang::is_bare_list(object)) {
-    object <- object[[sample(x = seq_along(object), size = 1L)]]
-  }
-
-  # Compute variable importance.
-  vimp_table <- .vimp(
-    object = object,
+  # Execute the task to compute variable importance table for the current
+  # bootstrap.
+  vimp_table <- .perform_task(
+    object = vimp_task,
+    feature_info_list = feature_info,
     data = data
   )
 

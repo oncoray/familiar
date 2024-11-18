@@ -220,6 +220,7 @@ setMethod(
     hyperparameters <- .get_hyperparameters(
       object = object,
       hyperparameters = hyperparameters,
+      feature_info_list = feature_info_list,
       data = data,
       settings = settings,
       message_indent = message_indent,
@@ -370,7 +371,7 @@ setMethod(
       hyperparameters <- hyperparameter_object@hyperparameters
     }
     
-    if (!rlang::is_bare_list(hyperparameters)) {
+    if (!(rlang::is_bare_list(hyperparameters))) {
       ..error("No hyperparameters were found.")
     }
     

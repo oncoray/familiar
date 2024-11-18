@@ -1310,6 +1310,7 @@ setMethod(
     minimise_footprint = FALSE, 
     ...
   ) {
+    
     if (is.null(signature_features)) {
       # Get signature features using the table with ranked features. Those
       # features may be clustered.
@@ -1406,7 +1407,7 @@ setMethod(
   ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     name <- rank <- NULL
-
+    
     # Get signature size
     if (is_empty(parameter_list$sign_size)) {
       signature_size <- 0L

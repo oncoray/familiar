@@ -141,6 +141,8 @@ setMethod(
     feature_info_list = NULL,
     vimp_table = NULL,
     hyperparameters = NULL,
+    novelty_detector = NULL,
+    detector_parameters = NULL,
     message_indent = 0L,
     verbose = FALSE,
     cl = NULL,
@@ -195,6 +197,7 @@ setMethod(
     hyperparameters <- .get_hyperparameters(
       object = object,
       hyperparameters = hyperparameters,
+      feature_info_list = feature_info_list,
       data = data,
       settings = settings,
       message_indent = message_indent,
@@ -207,39 +210,42 @@ setMethod(
     model_object <- methods::new(
       "familiarModel",
       outcome_type = data@outcome_type,
-      hyperparameters = hyperparameters,
+      hyperparameters = hyperparameters$hyperparameters,
+      hyperparameter_data = hyperparameters$hyperparameter_data,
       vimp_method = object@vimp_method,
       learner = object@learner,
+      feature_info = feature_info_list,
       outcome_info = data@outcome_info,
       run_table = .get_current_run_table(object = object),
+      settings = settings$eval,
       project_id = object@project_id
     )
     
-    # Promote to the correct subclass.
-    model_object <- promote_learner(object = model_object)
-  
-    # Find required features. Exclude the signature features at this point, as
-    # these will have been dropped from the variable importance table.
-    required_features <- get_required_features(
-      x = data,
-      feature_info_list = feature_info_list
-    )
-    
-    # Limit to required features.
-    model_object@required_features <- required_features
-    model_object@feature_info <- feature_info_list[required_features]
-    
-    # Make sure the input data is processed.
-    data <- process_input_data(
+    # Select features based on variable importances.
+    model_object <- set_signature(
       object = model_object,
-      data = data
+      rank_table = vimp_table,
+      minimise_footprint = FALSE
     )
     
     # Train model..
     model_object <- .train(
       object = model_object,
-      data = data
+      data = data,
+      get_additional_info = TRUE
     )
+    
+    # Add novelty detector
+    model_object <- .train_novelty_detector(
+      object = model_object,
+      data = data,
+      detector = novelty_detector,
+      user_list = detector_parameters,
+      get_additional_info = TRUE
+    )
+    
+    # Add model name
+    fam_model <- set_object_name(model_object)
     
     if (!is.na(object@file)) {
       saveRDS(model_object, file = object@file)
@@ -268,6 +274,7 @@ setMethod(
     # Suppress NOTES due to non-standard evaluation in data.table
     can_pre_process <- NULL
     
+    hyperparameter_object <- NULL
     if (is.null(hyperparameters) && !is.null(object@run_table)) {
       # This routine loads hyperparameters from disk, and is used when an
       # experiment is run using summon_familiar.
@@ -280,7 +287,10 @@ setMethod(
       
       # Find the last entry on the run table that is marked as available for
       # pre-processing. This is what hyperparameters are based on.
-      hyperparameter_run <- tail(object@run_table[can_pre_process == TRUE, ], n = 1L)
+      hyperparameter_run <- tail(
+        object@run_table[[paste0(object@data_id, ".", object@run_id)]][can_pre_process == TRUE, ],
+        n = 1L
+      )
       
       # Find the file name.
       hyperparameter_file <- get_object_file_name(
@@ -295,12 +305,11 @@ setMethod(
       
       if (file.exists(hyperparameter_file)) {
         hyperparameter_object <- update_object(readRDS(hyperparameter_file))
-        hyperparameters <- hyperparameter_object@hyperparameters
       }
     }
     
     
-    if (is.null(hyperparameters) && is.na(object@hyperparameter_file)) {
+    if (is.null(hyperparameter_object) && is.na(object@hyperparameter_file)) {
       # Create an ad-hoc list of hyperparameters
       
       # Set up task, and explicitly don't write to file.
@@ -318,17 +327,14 @@ setMethod(
         ...
       )
       
-      hyperparameters <- hyperparameter_object@hyperparameters
-      
-    } else if (is.null(hyperparameters)) {
+    } else if (is.null(hyperparameter_object)) {
       # Assume that the hyperparameter_file attribute contains the path to the
       # file containing the vimp method hyperparameters.
       if (!file.exists(object@hyperparameter_file)) {
         ..error(paste0("hyperparameter file does not exist at location: ", object@hyperparameter_file))
       }
       hyperparameter_object <- update_object(readRDS(object@hyperparameter_file))
-      hyperparameters <- hyperparameter_object@hyperparameters
-      
+
     } else if (is.character(hyperparameters)) {
       # If hyperparameters is a string, interpret this as a path to the
       # file containing the vimp method hyperparameters.
@@ -336,10 +342,19 @@ setMethod(
         ..error(paste0("hyperparameter file does not exist at location: ", hyperparameters))
       }
       hyperparameter_object <- update_object(readRDS(hyperparameters))
-      hyperparameters <- hyperparameter_object@hyperparameters
     }
     
-    if (!rlang::is_bare_list(hyperparameters)) {
+    if (is(hyperparameter_object, "familiarModel")) {
+      hyperparameters <- list(
+        "hyperparameters" =  hyperparameter_object@hyperparameters,
+        "hyperparameter_data" = hyperparameter_object@hyperparameter_data
+      )
+      
+    } else {
+      hyperparameters <- list("hyperparameters" = hyperparameters)
+    }
+    
+    if (!rlang::is_bare_list(hyperparameters$hyperparameters)) {
       ..error("No hyperparameters were found.")
     }
     
@@ -552,6 +567,8 @@ setMethod(
       "data" = NULL,
       "return_results" = FALSE,
       "settings" = settings,
+      "novelty_detector" = settings$mb$novelty_detector,
+      "detector_paramaters" = settings$mb$detector_parameters[[settings$mb$novelty_detector]],
       "vimp_aggregation_method" = settings$vimp$aggregation,
       "vimp_rank_threshold" = settings$vimp$aggr_rank_threshold,
       "message_indent" = message_indent + 1L,

@@ -146,8 +146,9 @@ setMethod(
   ) {
     logger_message(
       paste0(
-        "Hyperparameter optimisation: Starting variable importance computation using the \"",
-        object@vimp_method, "\" method for run ",
+        "Hyperparameter optimisation: Starting hyperparameter optimisation for the \"",
+        object@learner, "\" learner with the \"",
+        object@vimp_method, "\" variable importance method for run ",
         object@task_id, " of ",
         object@n_tasks, "."
       ),
@@ -177,8 +178,8 @@ setMethod(
     # Check and retrieve variable importances.
     vimp_table <- .get_variable_importance_table(
       object = object,
-      feature_info_list = feature_info_list,
       vimp_table = vimp_table,
+      feature_info_list = feature_info_list,
       data = data,
       settings = settings,
       message_indent = message_indent,
@@ -186,7 +187,7 @@ setMethod(
       cl = cl,
       ...
     )
-    browser()
+    
     # Get user-provided hyperparameters.
     if (is.null(hyperparameters)) {
       hyperparameters <- settings$mb$hyper_param[[object@learner]]
@@ -245,7 +246,7 @@ setMethod(
     
     # Set familiar version.
     hyperparameter_object <- add_package_version(hyperparameter_object)
-    browser()
+    
     if (!is.na(object@file)) {
       saveRDS(hyperparameter_object, file = object@file)
     }
@@ -314,7 +315,7 @@ setMethod(
       "vimp_aggregation_method" = settings$vimp$aggregation,
       "vimp_rank_threshold" = settings$vimp$aggr_rank_threshold,
       "metric" = settings$hpo$hpo_metric,
-      "hyperparameters" = settings$vimp$param,
+      "hyperparameters" = settings$mb$param,
       "optimisation_function" = settings$hpo$hpo_optimisation_function,
       "acquisition_function" = settings$hpo$hpo_acquisition_function,
       "grid_initialisation_method" = settings$hpo$hpo_grid_initialisation_method,

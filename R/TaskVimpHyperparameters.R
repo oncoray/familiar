@@ -135,7 +135,7 @@ setMethod(
   ) {
     logger_message(
       paste0(
-        "Hyperparameter optimisation: Starting variable importance computation using the \"",
+        "Hyperparameter optimisation: Starting hyperparameter optimisation for the \"",
         object@vimp_method, "\" method for run ",
         object@task_id, " of ",
         object@n_tasks, "."
