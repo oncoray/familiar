@@ -26,6 +26,8 @@
 #'   detect out-of-distribution samples.
 #' @slot learner Learning algorithm used to create the model.
 #' @slot vimp_method Method used to determine variable importance for the model.
+#' @slot vimp_table Variable importance table or list of variable importance
+#'   tables for the model.
 #' @slot required_features The set of features required for complete
 #'   reproduction, i.e. with imputation.
 #' @slot model_features The set of features that is used to train the model,
@@ -80,6 +82,8 @@ setClass("familiarModel",
     learner = "character",
     # Name of variable importance method
     vimp_method = "character",
+    # Variable importance table
+    vimp_table = "ANY",
     # Required features for complete reconstruction, including imputation.
     required_features = "ANY",
     # Features that are required for the model.
@@ -123,6 +127,7 @@ setClass("familiarModel",
     novelty_detector = NULL,
     learner = NA_character_,
     vimp_method = NA_character_,
+    vimp_table = NA_character_,
     required_features = NULL,
     model_features = NULL,
     novelty_features = NULL,

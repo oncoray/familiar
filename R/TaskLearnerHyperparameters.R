@@ -11,12 +11,14 @@ setClass(
   slots = list(
     "learner" = "character",
     "vimp_method" = "character",
+    "use_vimp" = "character",
     "feature_info_file" = "character",
     "vimp_table_file" = "character"
   ),
   prototype = methods::prototype(
     learner = NA_character_,
     vimp_method = NA_character_,
+    use_vimp = "use_hpo_vimp",
     feature_info_file = NA_character_,
     vimp_table_file = NA_character_,
     task_name = "set_learner_hyperparameters"
@@ -174,19 +176,27 @@ setMethod(
       cl = cl,
       ...
     )
-
+    browser()
     # Check and retrieve variable importances.
-    vimp_table <- .get_variable_importance_table(
-      object = object,
-      vimp_table = vimp_table,
-      feature_info_list = feature_info_list,
-      data = data,
-      settings = settings,
-      message_indent = message_indent,
-      verbose = verbose,
-      cl = cl,
-      ...
-    )
+    if (object@use_vimp == "use_main_vimp") {
+      vimp_table <- .get_variable_importance_table(
+        object = object,
+        vimp_table = vimp_table,
+        feature_info_list = feature_info_list,
+        data = data,
+        settings = settings,
+        message_indent = message_indent,
+        verbose = verbose,
+        cl = cl,
+        ...
+      )
+      
+    } else if (object@use_vimp %in% c("use_hpo_vimp", "return_hpo_vimp")) {
+      vimp_table <- NULL
+      
+    } else {
+      ..error_reached_unreachable_code(paste0("use_vimp attribute has an unrecognised "))
+    }
     
     # Get user-provided hyperparameters.
     if (is.null(hyperparameters)) {
@@ -194,7 +204,7 @@ setMethod(
       
     } else if (rlang::is_bare_list(hyperparameters)) {
       if (object@vimp_method %in% names(hyperparameters)) {
-        hyperparameters <- hyperparameters[[object@vimp_method]]
+        hyperparameters <- hyperparameters[[object@learner]]
       }
     }
     
@@ -206,6 +216,7 @@ setMethod(
         hyperparameters = NULL,
         learner = object@learner,
         vimp_method = object@vimp_method,
+        vimp_table = vimp_table,
         outcome_info = data@outcome_info,
         run_table = .get_current_run_table(object = object),
         settings = settings,
@@ -243,6 +254,13 @@ setMethod(
       is_vimp = FALSE,
       ...
     )
+    
+    if (object@use_vimp != "return_hpo_vimp") {
+      # Variable importance should not be passed using the hyperparameter
+      # object, which means that any subsequent learner task will use the cached
+      # variable importance tables instead.
+      hyperparameter_object@vimp_table <- NULL
+    }
     
     # Set familiar version.
     hyperparameter_object <- add_package_version(hyperparameter_object)

@@ -110,8 +110,6 @@ setMethod(
   function(
     object,
     vimp_table,
-    vimp_aggregation_method,
-    vimp_rank_threshold,
     experiment_data = NULL,
     feature_info_list = NULL,
     file_paths = NULL,
@@ -225,32 +223,7 @@ setMethod(
       ..error("No variable importance table was found.")
     }
     
-    if (!is.null(feature_info_list)) {
-      # Update using reference cluster table to ensure that the data are correct
-      # locally. This clustering table can be derived from the provided feature
-      # info list.
-      vimp_table <- update_vimp_table_to_reference(
-        x = vimp_table,
-        reference_cluster_table = .create_clustering_table(
-          feature_info_list = feature_info_list
-        )
-      )
-    }
-    
-    # Recluster the data according to the clustering table corresponding to the
-    # model. This ensures that the variable importance table has the features
-    # that are seen by the model.
-    vimp_table <- recluster_vimp_table(vimp_table)
-    
-    # Get aggregate variable importances
-    vimp_table <- aggregate_vimp_table(
-      vimp_table,
-      aggregation_method = vimp_aggregation_method,
-      rank_threshold = vimp_rank_threshold
-    )
-    
-    # Extract rank table.
-    return(get_vimp_table(vimp_table))
+    return(vimp_table)
   }
 )
 

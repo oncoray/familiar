@@ -365,11 +365,30 @@ setMethod(
 
 
 
+# decluster_vimp_table (list) --------------------------------------------------
+setMethod(
+  "decluster_vimp_table",
+  signature(x = "list"),
+  function(x, ...) {
+    # If the list is empty, return NULL instead.
+    if (is_empty(x)) return(NULL)
+    
+    # Dispatch to method for single variable importance tables.
+    return(lapply(
+      x,
+      decluster_vimp_table
+    ))
+  }
+)
+
+
+
 # decluster_vimp_table (vimpTable) ---------------------------------------------
 setMethod(
   "decluster_vimp_table",
   signature(x = "vimpTable"),
   function(x, show_weights = FALSE, show_cluster_name = FALSE, ...) {
+    browser()
     # Check if the table has already been declustered.
     if (.as_vimp_table_state(x@state) >= "declustered") return(x)
 

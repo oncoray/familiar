@@ -543,59 +543,62 @@ extract_experimental_setup <- function(
     )
     
   } else {
-    # Feature selection first
-    main_message <- "Setup report: Feature selection on"
     
-    # Iteratively append message
-    dt_sub <- section_table[vimp == TRUE, ]
-    curr_ref_data_id <- dt_sub$main_data_id[1L]
-    
-    while (curr_ref_data_id > 0L) {
+    if (any(section_table$vimp)) {
+      # Feature selection first
+      main_message <- "Setup report: Feature selection on"
       
-      dt_sub <- section_table[main_data_id == curr_ref_data_id, ]
+      # Iteratively append message
+      dt_sub <- section_table[vimp == TRUE, ]
+      curr_ref_data_id <- dt_sub$main_data_id[1L]
       
-      if (dt_sub$perturb_method[1L] == "main") {
-        main_message <- c(
-          main_message,
-          "the training data."
-        )
+      while (curr_ref_data_id > 0L) {
         
-      } else if (dt_sub$perturb_method[1L] %in% c("limited_bootstrap", "full_bootstrap")) {
-        main_message <- c(
-          main_message,
-          paste0(dt_sub$perturb_n_rep[1L], " bootstraps of")
-        )
+        dt_sub <- section_table[main_data_id == curr_ref_data_id, ]
         
-      } else if (dt_sub$perturb_method[1L] == "cross_val") {
-        main_message <- c(
-          main_message,
-          paste0(
-            dt_sub$perturb_n_rep[1L], " repetitions of ",
-            dt_sub$perturb_n_folds, "-fold cross validation of"
+        if (dt_sub$perturb_method[1L] == "main") {
+          main_message <- c(
+            main_message,
+            "the training data."
           )
-        )
+          
+        } else if (dt_sub$perturb_method[1L] %in% c("limited_bootstrap", "full_bootstrap")) {
+          main_message <- c(
+            main_message,
+            paste0(dt_sub$perturb_n_rep[1L], " bootstraps of")
+          )
+          
+        } else if (dt_sub$perturb_method[1L] == "cross_val") {
+          main_message <- c(
+            main_message,
+            paste0(
+              dt_sub$perturb_n_rep[1L], " repetitions of ",
+              dt_sub$perturb_n_folds, "-fold cross validation of"
+            )
+          )
+          
+        } else if (dt_sub$perturb_method[1L] == "loocv") {
+          main_message <- c(
+            main_message,
+            "folds of leave-one-out-cross-validation of"
+          )
+          
+        } else if (dt_sub$perturb_method[1L] == "imbalance_partition") {
+          main_message <- c(
+            main_message,
+            "class-balanced partitions of"
+          )
+        }
         
-      } else if (dt_sub$perturb_method[1L] == "loocv") {
-        main_message <- c(
-          main_message,
-          "folds of leave-one-out-cross-validation of"
-        )
-        
-      } else if (dt_sub$perturb_method[1L] == "imbalance_partition") {
-        main_message <- c(
-          main_message,
-          "class-balanced partitions of"
-        )
+        curr_ref_data_id <- dt_sub$ref_data_id[1L]
       }
       
-      curr_ref_data_id <- dt_sub$ref_data_id[1L]
+      logger_message(
+        paste0(main_message, collapse = " "),
+        indent = message_indent,
+        verbose = verbose
+      )
     }
-    
-    logger_message(
-      paste0(main_message, collapse = " "),
-      indent = message_indent,
-      verbose = verbose
-    )
     
     # Model building second
     main_message <- "Setup report: Model building on"
@@ -666,15 +669,15 @@ extract_experimental_setup <- function(
     )
   }
   
-  if (sum(section_table$vimp) == 0L) {
-    ..error(
-      paste0(
-        "The fs component for variable importance computation must appear in the ",
-        "experimental design. It was not found."
-      ),
-      error_class = "input_argument_error"
-    )
-  }
+  # if (sum(section_table$vimp) == 0L) {
+  #   ..error(
+  #     paste0(
+  #       "The fs component for variable importance computation must appear in the ",
+  #       "experimental design. It was not found."
+  #     ),
+  #     error_class = "input_argument_error"
+  #   )
+  # }
   
   if (sum(section_table$train) > 1L) {
     ..error(

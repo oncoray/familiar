@@ -350,9 +350,10 @@
 
 .compute_hyperparameter_variable_importance <- function(
     cl = NULL,
-    determine_vimp = TRUE,
     object,
     data,
+    vimp_aggregation_method,
+    vimp_rank_threshold,
     bootstraps,
     verbose,
     message_indent,
@@ -366,38 +367,61 @@
     object@vimp_method %in% .get_available_no_features_vimp_methods()
   ) {
     return(NULL)
+    
+  } else if (is(object@vimp_table, "vimpTable") || rlang::is_bare_list(object@vimp_table)) {
+    # Existing vimp_tables.
+    vimp_table <- object@vimp_table
+    
+    vimp_table <- update_vimp_table_to_reference(
+      x = vimp_table,
+      reference_cluster_table = .create_clustering_table(
+        feature_info_list = object@feature_info
+      )
+    )
+    
+    # Form clusters.
+    vimp_table <- recluster_vimp_table(vimp_table)
+    
+    # Aggregate to single table.
+    vimp_table <- aggregate_vimp_table(
+      vimp_table,
+      aggregation_method = vimp_aggregation_method,
+      rank_threshold = vimp_rank_threshold
+    )
+    
+  } else {
+    
+    logger_message(
+      paste0(
+        "Computing variable importance for ",
+        length(bootstraps), " bootstraps."
+      ),
+      indent = message_indent + 1L,
+      verbose = verbose
+    )
+    
+    # Spawn task to obtain variable importance tables.
+    vimp_task <- methods::new(
+      "familiarTaskVimp",
+      project_id = object@project_id,
+      vimp_method = object@vimp_method,
+      file = NA_character_
+    )
+    
+    vimp_table <- fam_lapply(
+      cl = cl,
+      assign = "all",
+      X = bootstraps,
+      FUN = ..compute_hyperparameter_variable_importance,
+      vimp_task = vimp_task,
+      data = data,
+      feature_info = object@feature_info,
+      progress_bar = verbose,
+      chopchop = TRUE
+    )
   }
 
-  logger_message(
-    paste0(
-      "Computing variable importance for ",
-      length(bootstraps), " bootstraps."
-    ),
-    indent = message_indent + 1L,
-    verbose = verbose
-  )
-  
-  # Spawn task to obtain variable importance tables.
-  vimp_task <- methods::new(
-    "familiarTaskVimp",
-    project_id = object@project_id,
-    vimp_method = object@vimp_method,
-    file = NA_character_
-  )
-  
-  vimp_list <- fam_lapply(
-    cl = cl,
-    assign = "all",
-    X = bootstraps,
-    FUN = ..compute_hyperparameter_variable_importance,
-    vimp_task = vimp_task,
-    data = data,
-    feature_info = object@feature_info,
-    progress_bar = verbose,
-    chopchop = TRUE
-  )
-
-  return(vimp_list)
+  return(vimp_table)
 }
 
 
@@ -424,9 +448,6 @@
 
   # Form clusters.
   vimp_table <- recluster_vimp_table(vimp_table)
-
-  # Compute variable importance.
-  vimp_table <- get_vimp_table(vimp_table)
 
   return(vimp_table)
 }
@@ -475,13 +496,24 @@
     parameter_table = parameter_table
   )
 
-  # Generate variable importance sets (if any)
-  rank_table_list <- lapply(
-    run_table$run_id,
-    function(ii, rank_table_list) (rank_table_list[[ii]]),
-    rank_table_list = rank_table_list
-  )
-
+  # Replicate single variable importance features.
+  if (data.table::is.data.table(rank_table_list)) {
+    browser()
+    rank_table_list <- lapply(
+      run_table$run_id,
+      function(ii, x) (data.table::copy(x)),
+      x = rank_table_list
+    )
+    
+  } else {
+    # Generate variable importance sets (if any)
+    rank_table_list <- lapply(
+      run_table$run_id,
+      function(ii, rank_table_list) (rank_table_list[[ii]]),
+      rank_table_list = rank_table_list
+    )
+  }
+  
   if (is.null(time_optimisation_model)) {
     # Create a scoring table, with accompanying information.
     score_results <- fam_mapply_lb(

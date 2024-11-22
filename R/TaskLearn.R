@@ -137,6 +137,8 @@ setMethod(
   function(
     object,
     data,
+    vimp_aggregation_method = NULL,
+    vimp_rank_threshold = NULL,
     settings = NULL,
     feature_info_list = NULL,
     vimp_table = NULL,
@@ -168,6 +170,17 @@ setMethod(
       )
     }
     
+    # Set vimp aggregation method and vimp_rank_threshold based on settings.
+    if (!is.null(settings)) {
+      if (is.null(vimp_aggregation_method)) {
+        vimp_aggregation_method <- settings$vimp$aggregation
+      }
+      if (is.null(vimp_rank_threshold)) {
+        vimp_rank_threshold <- settings$vimp$aggr_rank_threshold
+      }
+    }
+    
+    
     # Check and retrieve feature info list.
     feature_info_list <- .get_feature_info_list(
       object = object,
@@ -180,10 +193,14 @@ setMethod(
       ...
     )
     
-    # Check and retrieve variable importances.
-    vimp_table <- .get_variable_importance_table(
+    # Check and retrieve hyperparameters. We do this prior to retrieving the
+    # variable importance tables, as these may be attached to hyperparameter
+    # object.
+    hyperparameters <- .get_hyperparameters(
       object = object,
-      vimp_table = vimp_table,
+      hyperparameters = hyperparameters,
+      vimp_aggregation_method = vimp_aggregation_method,
+      vimp_rank_threshold = vimp_rank_threshold,
       feature_info_list = feature_info_list,
       data = data,
       settings = settings,
@@ -193,17 +210,48 @@ setMethod(
       ...
     )
     
-    # Check and retrieve hyperparameters.
-    hyperparameters <- .get_hyperparameters(
-      object = object,
-      hyperparameters = hyperparameters,
-      feature_info_list = feature_info_list,
-      data = data,
-      settings = settings,
-      message_indent = message_indent,
-      verbose = verbose,
-      cl = cl,
-      ...
+    if (is_empty(hyperparameters$vimp_table)) {
+      # Check and retrieve variable importances from the drive, or generate in
+      # place, if the hyperparameter object did not contain a variable
+      # importance table.
+      vimp_table <- .get_variable_importance_table(
+        object = object,
+        vimp_table = vimp_table,
+        feature_info_list = feature_info_list,
+        data = data,
+        settings = settings,
+        message_indent = message_indent,
+        verbose = verbose,
+        cl = cl,
+        ...
+      )
+      
+    } else {
+      vimp_table <- hyperparameters$vimp_table
+    }
+    
+    if (!is.null(feature_info_list)) {
+      # Update using reference cluster table to ensure that the data are correct
+      # locally. This clustering table can be derived from the provided feature
+      # info list.
+      vimp_table <- update_vimp_table_to_reference(
+        x = vimp_table,
+        reference_cluster_table = .create_clustering_table(
+          feature_info_list = feature_info_list
+        )
+      )
+    }
+    
+    # Recluster the data according to the clustering table corresponding to the
+    # model. This ensures that the variable importance table has the features
+    # that are seen by the model.
+    vimp_table <- recluster_vimp_table(vimp_table)
+    
+    # Get aggregate variable importances
+    vimp_table <- aggregate_vimp_table(
+      vimp_table,
+      aggregation_method = vimp_aggregation_method,
+      rank_threshold = vimp_rank_threshold
     )
     
     # Create the raw model object for training..
@@ -213,6 +261,7 @@ setMethod(
       hyperparameters = hyperparameters$hyperparameters,
       hyperparameter_data = hyperparameters$hyperparameter_data,
       vimp_method = object@vimp_method,
+      vimp_table = vimp_table,
       learner = object@learner,
       feature_info = feature_info_list,
       outcome_info = data@outcome_info,
@@ -347,7 +396,8 @@ setMethod(
     if (is(hyperparameter_object, "familiarModel")) {
       hyperparameters <- list(
         "hyperparameters" =  hyperparameter_object@hyperparameters,
-        "hyperparameter_data" = hyperparameter_object@hyperparameter_data
+        "hyperparameter_data" = hyperparameter_object@hyperparameter_data,
+        "vimp_table" = hyperparameter_object@vimp_table
       )
       
     } else {

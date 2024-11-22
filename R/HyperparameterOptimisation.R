@@ -454,6 +454,8 @@ setMethod(
   function(
     object,
     data,
+    vimp_aggregation_method,
+    vimp_rank_threshold,
     cl = NULL,
     experiment_info = NULL,
     user_list = NULL,
@@ -463,7 +465,6 @@ setMethod(
     grid_initialisation_method = "fixed_subsample",
     exploration_method = "successive_halving",
     n_random_sets = 100L,
-    determine_vimp = TRUE,
     measure_time = TRUE,
     hyperparameter_learner = "gaussian_process",
     n_max_bootstraps = 20L,
@@ -728,11 +729,12 @@ setMethod(
     }
     
     ## Create or obtain variable importance ------------------------------------
-    rank_table_list <- .compute_hyperparameter_variable_importance(
+    vimp_table_list <- .compute_hyperparameter_variable_importance(
       cl = cl,
-      determine_vimp = determine_vimp,
       object = object,
       data = data,
+      vimp_aggregation_method = vimp_aggregation_method,
+      vimp_rank_threshold = vimp_rank_threshold,
       bootstraps = bootstraps$train_list,
       metric = metric,
       measure_time = measure_time,
@@ -759,7 +761,7 @@ setMethod(
       # Set signature size.
       user_list$sign_size <- .set_signature_size(
         object = object,
-        rank_table_list = rank_table_list,
+        rank_table_list = get_vimp_table(vimp_table_list),
         suggested_range = user_list$sign_size
       )
       
@@ -902,7 +904,7 @@ setMethod(
         run_table = run_table,
         bootstraps = bootstraps,
         data = data,
-        rank_table_list = rank_table_list,
+        rank_table_list = get_vimp_table(vimp_table_list),
         parameter_table = parameter_table,
         metric_objects = metric_object_list,
         iteration_id = 0L,
@@ -955,7 +957,7 @@ setMethod(
           run_table = run_table,
           bootstraps = bootstraps,
           data = data,
-          rank_table_list = rank_table_list,
+          rank_table_list = get_vimp_table(vimp_table_list),
           parameter_table = parameter_table,
           metric_objects = metric_object_list,
           iteration_id = 0L,
@@ -999,7 +1001,7 @@ setMethod(
         run_table = run_table,
         bootstraps = bootstraps,
         data = data,
-        rank_table_list = rank_table_list,
+        rank_table_list = get_vimp_table(vimp_table_list),
         parameter_table = parameter_table,
         iteration_id = 0L,
         metric_objects = metric_object_list,
@@ -1161,7 +1163,7 @@ setMethod(
           run_table = run_table,
           bootstraps = bootstraps,
           data = data,
-          rank_table_list = rank_table_list,
+          rank_table_list = get_vimp_table(vimp_table_list),
           parameter_table = parameter_table,
           metric_objects = metric_object_list,
           iteration_id = optimisation_step + 1L,
@@ -1406,6 +1408,9 @@ setMethod(
       "n_samples" = get_n_samples(data),
       "n_features" = get_n_features(data)
     )
+    
+    # Attach variable importance tables.
+    object@vimp_table <- decluster_vimp_table(vimp_table_list)
     
     return(object)
   }
