@@ -489,17 +489,25 @@ setMethod(
   data_id <- run_id <- list_name <- complete <- NULL
   
   # Create or load generic feature info.
-  if (!.file_exists(tasks$generic_feature_info[[1L]])) {
-    generic_feature_info <- .perform_task(
-      object = tasks$generic_feature_info[[1L]],
-      data = NULL,
-      experiment_data = experiment_data,
-      ...
-    )
+  if (!is_empty(tasks$generic_feature_info)) {
+    if (!.file_exists(tasks$generic_feature_info[[1L]])) {
+      generic_feature_info <- .perform_task(
+        object = tasks$generic_feature_info[[1L]],
+        data = NULL,
+        experiment_data = experiment_data,
+        ...
+      )
+      
+    } else {
+      generic_feature_info <- readRDS(tasks$generic_feature_info[[1L]]@file)
+    }
     
   } else {
-    generic_feature_info <- readRDS(tasks$generic_feature_info[[1L]]@file)
+    generic_feature_info <- NULL
   }
+  
+  # Check that any feature info tasks are required.
+  if (is_empty(tasks$feature_info)) return(invisible(FALSE))
   
   # Determine which feature info objects need to be obtained.
   finished_tasks <- sapply(tasks$feature_info, .file_exists)
@@ -510,7 +518,7 @@ setMethod(
   if (length(unfinished_tasks) > 0L) {
     ..run_preprocessing(
       tasks = unfinished_tasks,
-      generic_feature_info <- generic_feature_info,
+      generic_feature_info = generic_feature_info,
       experiment_data = experiment_data,
       ...
     )

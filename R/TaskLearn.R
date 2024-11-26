@@ -416,13 +416,14 @@ setMethod(
 
 .generate_trainer_tasks <- function(
     experiment_data,
+    optimisation_determine_vimp,
     vimp_methods,
     learners,
     file_paths,
     skip_existing = FALSE
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  train <- main_data_id <- can_pre_process <- NULL
+  train <- main_data_id <- can_pre_process <- vimp <- NULL
   
   # Find the data_id related to model training.
   data_id <- experiment_data@experiment_setup[train == TRUE, ]$main_data_id[1L]
@@ -474,6 +475,17 @@ setMethod(
   
   # learner hyperparameter tasks -----------------------------------------------
   
+  # Check how variable importance data should be handled.
+  if (is_empty(experiment_data@experiment_setup[vimp == TRUE, ])) {
+    use_vimp <- "return_hpo_vimp"
+    
+  } else if (optimisation_determine_vimp) {
+    use_vimp <- "use_hpo_vimp"
+    
+  } else {
+    use_vimp <- "use_main_vimp"
+  }
+  
   # Set up variable importance hyperparameter task.
   train_run_table <- .get_run_table_from_experiment_setup(
     data_id = data_id,
@@ -495,6 +507,7 @@ setMethod(
           "familiarTaskLearnerHyperparameters",
           data_id = learner_hyperparameter_data_id,
           run_id = run_id,
+          use_vimp = use_vimp,
           vimp_method = vimp_method,
           learner = learner,
           run_table = run_tables,

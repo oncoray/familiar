@@ -407,7 +407,7 @@ setMethod(
   
   # Find the data_id related to computing variable importance.
   data_id <- experiment_data@experiment_setup[vimp == TRUE, ]$main_data_id[1L]
-  if (is_empty(data_id)) return(NULL)
+  if (is.na(data_id)) return(NULL)
   
   # Initialise empty list.
   task_list <- list()

@@ -445,10 +445,7 @@
     feature_info_list = feature_info,
     data = data
   )
-
-  # Form clusters.
-  vimp_table <- recluster_vimp_table(vimp_table)
-
+  
   return(vimp_table)
 }
 

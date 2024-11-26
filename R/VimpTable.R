@@ -372,7 +372,7 @@ setMethod(
   function(x, ...) {
     # If the list is empty, return NULL instead.
     if (is_empty(x)) return(NULL)
-    
+    browser()
     # Dispatch to method for single variable importance tables.
     return(lapply(
       x,
@@ -388,7 +388,7 @@ setMethod(
   "decluster_vimp_table",
   signature(x = "vimpTable"),
   function(x, show_weights = FALSE, show_cluster_name = FALSE, ...) {
-    browser()
+    
     # Check if the table has already been declustered.
     if (.as_vimp_table_state(x@state) >= "declustered") return(x)
 

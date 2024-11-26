@@ -1410,7 +1410,7 @@ setMethod(
     )
     
     # Attach variable importance tables.
-    object@vimp_table <- decluster_vimp_table(vimp_table_list)
+    object@vimp_table <- vimp_table_list
     
     return(object)
   }
