@@ -325,7 +325,8 @@ setMethod(
     "hyperparameters_learner" = task_list[task_class == "familiarTaskLearnerHyperparameters"],
     "train" = task_list[task_class == "familiarTaskTrain"],
     "ensemble" = task_list[task_class == "familiarTaskEnsemble"],
-    "evaluate" = task_list[task_class == "familiarTaskEvaluate"]
+    "evaluate" = task_list[task_class == "familiarTaskEvaluate"],
+    "collect" = task_list[task_class == "familiarTaskCollect"]
   )
   
   # Update task_id and n_tasks attribute of the tasks.

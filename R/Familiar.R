@@ -402,7 +402,13 @@ summon_familiar <- function(
     )
     
   } else {
-    tasks <- .generate_evaluation_tasks()
+    tasks <- .generate_evaluation_tasks(
+      experiment_data = experiment_data,
+      optimisation_determine_vimp = settings$hpo$hpo_determine_vimp,
+      vimp_methods = settings$vimp$vimp_methods,
+      learners = settings$mb$learners,
+      file_paths = file_paths
+    )
   }
 
   # Select and sort unique tasks.
