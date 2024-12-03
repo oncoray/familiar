@@ -367,7 +367,7 @@
     object@vimp_method %in% .get_available_no_features_vimp_methods()
   ) {
     return(NULL)
-    
+    browser()
   } else if (is(object@vimp_table, "vimpTable") || rlang::is_bare_list(object@vimp_table)) {
     # Existing vimp_tables.
     vimp_table <- object@vimp_table
@@ -495,7 +495,6 @@
 
   # Replicate single variable importance features.
   if (data.table::is.data.table(rank_table_list)) {
-    browser()
     rank_table_list <- lapply(
       run_table$run_id,
       function(ii, x) (data.table::copy(x)),
@@ -1558,46 +1557,76 @@ get_best_hyperparameter_set <- function(
   
   if (is.null(suggested_range)) suggested_range <- c(1L, Inf)
 
-  # Update minimum signature size in object.
-  object@hyperparameters$sign_size <- min(suggested_range)
-
   # Some variable importance methods fail to produce a list (e.g. none,
   # signature_only, random). We create a single element list in that case.
   if (is_empty(rank_table_list)) rank_table_list <- list(NULL)
 
-  # Determine the lower range of the signature.
-  signature_list <- lapply(
-    rank_table_list,
-    function(rank_table, object) {
-      get_signature(
-        object = object,
-        rank_table = rank_table
-      )
-    },
-    object = object
-  )
-
-  # Find the minimum number of
-  min_signature_size <- min(lengths(signature_list))
+  # Update minimum signature size in object.
+  object@hyperparameters$sign_size <- min(suggested_range)
+  
+  # Determine the lower range of the signature. This includes any signature
+  # features that may exist.
+  if (data.table::is.data.table(rank_table_list)) {
+    signature_list <- get_signature(
+      object = object,
+      rank_table = rank_table_list
+    )
+    
+    min_signature_size <- length(signature_list)
+    
+  } else if (rlang::is_bare_list(rank_table_list)) {
+    signature_list <- lapply(
+      rank_table_list,
+      function(rank_table, object) {
+        get_signature(
+          object = object,
+          rank_table = rank_table
+        )
+      },
+      object = object
+    )
+    
+    min_signature_size <- min(lengths(signature_list))
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(
+      "unknown class of rank_table_list: ",
+      paste_s(class(rank_table_list))
+    ))
+  }
 
   # Update maximum signature size in the list.
   object@hyperparameters$sign_size <- max(suggested_range)
 
-  # Determine the lower range of the signature.
-  signature_list <- lapply(
-    rank_table_list,
-    function(rank_table, object) {
-      get_signature(
-        object = object,
-        rank_table = rank_table
-      )
-    },
-    object = object
-  )
-
-  # Update maximum signature size in the list.
-  max_signature_size <- max(lengths(signature_list))
-
+  if (data.table::is.data.table(rank_table_list)) {
+    signature_list <- get_signature(
+      object = object,
+      rank_table = rank_table_list
+    )
+    
+    max_signature_size <- length(signature_list)
+    
+  } else if (rlang::is_bare_list(rank_table_list)) {
+    signature_list <- lapply(
+      rank_table_list,
+      function(rank_table, object) {
+        get_signature(
+          object = object,
+          rank_table = rank_table
+        )
+      },
+      object = object
+    )
+    
+    max_signature_size <- max(lengths(signature_list))
+    
+  } else {
+    ..error_reached_unreachable_code(paste0(
+      "unknown class of rank_table_list: ",
+      paste_s(class(rank_table_list))
+    ))
+  }
+  
   # Add minimum and maximum signature size, if necessary.
   if (any(suggested_range < min_signature_size)) {
     suggested_range <- c(suggested_range, min_signature_size)

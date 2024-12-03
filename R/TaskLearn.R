@@ -273,7 +273,6 @@ setMethod(
     # Select features based on variable importances.
     model_object <- set_signature(
       object = model_object,
-      rank_table = vimp_table,
       minimise_footprint = FALSE
     )
     

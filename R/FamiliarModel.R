@@ -1379,6 +1379,10 @@ setMethod(
       ))
     }
 
+    if (is.null(rank_table) && !is.null(object@vimp_table)) {
+      rank_table <- get_vimp_table(object@vimp_table)
+    }
+    
     # Get signature based on the stored feature information.
     return(do.call(
       get_signature,

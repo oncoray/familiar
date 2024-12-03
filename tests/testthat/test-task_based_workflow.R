@@ -2,6 +2,8 @@
 testthat::skip_on_cran()
 testthat::skip_on_ci()
 
+verbose <- FALSE
+
 # Create data.table.
 data <- familiar:::test_create_good_data(
   outcome_type = "binomial",
@@ -18,7 +20,7 @@ experiment_data_assignment <- familiar::precompute_data_assignment(
   sample_id_column = "sample_id",
   series_id_column = "series_id",
   class_levels = c("red", "green"),
-  verbose = FALSE,
+  verbose = verbose,
   parallel = FALSE
 )
 
@@ -32,9 +34,14 @@ experiment_feature_info <- familiar::precompute_feature_info(
   sample_id_column = "sample_id",
   series_id_column = "series_id",
   class_levels = c("red", "green"),
-  verbose = TRUE,
+  verbose = verbose,
   parallel = FALSE
 )
+
+testthat::test_that("feature information is present", {
+  testthat::expect_false(familiar:::is_empty(experiment_feature_info@feature_info))
+})
+
 
 # Create variable importance
 experiment_vimp <- familiar::precompute_vimp(
@@ -47,9 +54,15 @@ experiment_vimp <- familiar::precompute_vimp(
   sample_id_column = "sample_id",
   series_id_column = "series_id",
   class_levels = c("red", "green"),
-  verbose = TRUE,
+  verbose = verbose,
   parallel = FALSE
 )
+
+testthat::test_that("variable importance data is present", {
+  testthat::expect_false(familiar:::is_empty(experiment_vimp@feature_info))
+  testthat::expect_false(familiar:::is_empty(experiment_vimp@vimp_table_list))
+})
+
 
 # Train model
 model <- familiar::train_familiar(
@@ -63,10 +76,14 @@ model <- familiar::train_familiar(
   sample_id_column = "sample_id",
   series_id_column = "series_id",
   class_levels = c("red", "green"),
-  verbose = TRUE,
+  verbose = verbose,
   parallel = FALSE
 )
 
+testthat::test_that("all models are present", {
+  testthat::expect_true(all(sapply(model, familiar:::model_is_trained)))
+  testthat::expect_false(any(sapply(model, function(x) (is.null(x@vimp_table)))))
+})
 
 # Check without explicit variable importance computation -----------------------
 # Create variable importance
@@ -80,7 +97,7 @@ experiment_vimp <- familiar::precompute_vimp(
   sample_id_column = "sample_id",
   series_id_column = "series_id",
   class_levels = c("red", "green"),
-  verbose = TRUE,
+  verbose = verbose,
   parallel = FALSE
 )
 
@@ -101,6 +118,54 @@ model <- familiar::train_familiar(
   sample_id_column = "sample_id",
   series_id_column = "series_id",
   class_levels = c("red", "green"),
-  verbose = TRUE,
+  verbose = verbose,
   parallel = FALSE
 )
+
+testthat::test_that("all models are present", {
+  testthat::expect_true(all(sapply(model, familiar:::model_is_trained)))
+  testthat::expect_false(any(sapply(model, function(x) (is.null(x@vimp_table)))))
+})
+
+
+# Check using variable importance from feature selection -----------------------
+experiment_vimp <- familiar::precompute_vimp(
+  data = data,
+  experimental_design = "bs(fs,3)+bs(mb,3)",
+  vimp_method = "mim",
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = verbose,
+  parallel = FALSE
+)
+
+testthat::test_that("variable importance data is present", {
+  testthat::expect_false(familiar:::is_empty(experiment_vimp@feature_info))
+  testthat::expect_false(familiar:::is_empty(experiment_vimp@vimp_table_list))
+})
+
+# Train model
+model <- familiar::train_familiar(
+  data = data,
+  experiment_data = experiment_vimp,
+  optimisation_determine_vimp = FALSE,
+  vimp_method = "mim",
+  learner = "glm_logistic",
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = verbose,
+  parallel = FALSE
+)
+
+testthat::test_that("all models are present", {
+  testthat::expect_true(all(sapply(model, familiar:::model_is_trained)))
+  testthat::expect_false(any(sapply(model, function(x) (is.null(x@vimp_table)))))
+})

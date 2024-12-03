@@ -176,7 +176,7 @@ setMethod(
       cl = cl,
       ...
     )
-    browser()
+
     # Check and retrieve variable importances.
     if (object@use_vimp == "use_main_vimp") {
       vimp_table <- .get_variable_importance_table(
