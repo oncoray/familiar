@@ -407,6 +407,7 @@ summon_familiar <- function(
       optimisation_determine_vimp = settings$hpo$hpo_determine_vimp,
       vimp_methods = settings$vimp$vimp_methods,
       learners = settings$mb$learners,
+      pool_only = settings$eval$pool_only,
       file_paths = file_paths
     )
   }

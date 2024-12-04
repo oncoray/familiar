@@ -757,11 +757,10 @@ get_object_file_name <- function(
     run_id,
     learner = NULL,
     vimp_method = NULL,
-    pool_data_id = NULL,
-    pool_run_id = NULL,
+    ensemble_data_id = NULL,
+    ensemble_run_id = NULL,
+    name = NULL,
     object_type,
-    is_ensemble = NULL,
-    is_validation = NULL,
     with_extension = TRUE,
     dir_path = NULL
 ) {
@@ -782,29 +781,13 @@ get_object_file_name <- function(
       "_model"
     )
     
-  } else if (object_type == "familiarEnsemble") {
-    # For familiarEnsemble objects
-
-    if (is.null(learner) || is.null(vimp_method) || is.null(project_id) || is.null(is_ensemble)) {
-      ..error_reached_unreachable_code("missing arguments")
-    }
-
-    output_str <- paste0(
-      project_id, "_", 
-      learner, "_", 
-      vimp_method, "_", 
-      data_id, "_", 
-      run_id, "_", 
-      ifelse(is_ensemble, "ensemble", "pool")
-    )
-    
   } else if (object_type == "familiarData") {
     # For familiarData objects
 
     if (
       is.null(learner) || is.null(vimp_method) || is.null(project_id) ||
-      is.null(is_ensemble) || is.null(is_validation) || is.null(pool_data_id) ||
-      is.null(pool_run_id)
+      is.null(data_id) || is.null(run_id) ||
+      is.null(ensemble_data_id) || is.null(ensemble_run_id) || is.null(name)
     ) {
       ..error_reached_unreachable_code("missing arguments")
     }
@@ -814,13 +797,36 @@ get_object_file_name <- function(
       learner, "_", 
       vimp_method, "_", 
       data_id, "_", 
-      run_id, "_",
-      ifelse(is_ensemble, "ensemble", "pool"), "_",
-      pool_data_id, "_",
-      pool_run_id, "_",
-      ifelse(is_validation, "validation", "development"), "_data"
+      run_id, "_ensemble_",
+      ensemble_data_id, "_",
+      ensemble_run_id, "_",
+      name, "_data"
     )
   
+  } else if (object_type == "familiarCollection") {
+    
+    if (
+      is.null(project_id) || ((is.null(data_id) || is.null(run_id)) && is.null(name))
+    ) {
+      ..error_reached_unreachable_code("missing arguments")
+    }
+    
+    if (!is.null(name)) {
+      output_str <- paste0(
+        project_id, "_",
+        name,
+        "_collection"
+      )
+      
+    } else {
+      output_str <- paste0(
+        project_id, "_",
+        data_id, "_",
+        run_id,
+        "_collection"
+      )
+    }
+    
   } else if (object_type == "vimpTable") {
     
     if (is.null(vimp_method) || is.null(project_id)) {

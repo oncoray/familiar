@@ -35,7 +35,7 @@ setMethod(
   function(object, file_paths = NULL) {
     if (is.null(file_paths)) return(object)
     
-    # Generate file name of variable importance table
+    # Generate file name of the model.
     object@file <- get_object_file_name(
       object_type = "familiarModel",
       data_id = object@data_id,

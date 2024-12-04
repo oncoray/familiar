@@ -201,6 +201,18 @@ extract_experimental_setup <- function(
     section_table[main_data_id == data_id, "n_runs" := length(iteration_list[[as.character(data_id)]]$run)]
   }
   
+  # Set the (max) number of available validation instances.
+  for (data_id in section_table$main_data_id) {
+    section_table[main_data_id == data_id, "max_validation_instances" := max(sapply(
+      iteration_list[[as.character(data_id)]]$run,
+      function(x) {
+        if (is_empty(x$valid_samples)) return(0L)
+        
+        return(nrow(x$valid_samples))
+      }
+    ))]
+  }
+
   return(section_table)
 }
 

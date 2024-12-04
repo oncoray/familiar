@@ -229,7 +229,6 @@ setMethod(
 
 
 
-
 .generate_learner_data_preprocessing_tasks <- function(
     experiment_data,
     file_paths
@@ -300,15 +299,6 @@ setMethod(
 
 
 
-.generate_evaluation_tasks <- function(
-    file_paths,
-    project_id
-) {
-  
-}
-
-
-
 .sort_tasks <- function(task_list) {
   # Select unique tasks.
   duplicate_tasks <- duplicated(sapply(task_list, FUN = .get_task_descriptor))
@@ -324,7 +314,6 @@ setMethod(
     "vimp" = task_list[task_class == "familiarTaskVimp"],
     "hyperparameters_learner" = task_list[task_class == "familiarTaskLearnerHyperparameters"],
     "train" = task_list[task_class == "familiarTaskTrain"],
-    "ensemble" = task_list[task_class == "familiarTaskEnsemble"],
     "evaluate" = task_list[task_class == "familiarTaskEvaluate"],
     "collect" = task_list[task_class == "familiarTaskCollect"]
   )

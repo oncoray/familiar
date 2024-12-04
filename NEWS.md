@@ -2,8 +2,12 @@
 
 ## Breaking changes
 
-- Naming and on-disk location of variable importance tables and models has 
-  changed. These are no longer nested to limit path lengths.
+- Naming and on-disk location of variable importance tables, models, evaluated
+  datasets and collections, have changed. These are no longer nested to reduce 
+  path lengths and avoid issues due to long path lengths, particularly on 
+  Windows OS.
+
+- Ensembles are now no longer explicitly stored, but are formed at run-time.
 
 ## Major changes
 
@@ -36,6 +40,13 @@
   - `fs_method_parameter` was renamed to `vimp_method_parameter`.
 
   - `parallel_feature_selection` was renamed to `parallel_vimp`.
+
+- It is now possible to build models without explicitly defining a variable 
+  importance (feature selection) step. For example, 
+  `experimental_design = mb + ev` is now valid and will result in training of a
+  single model on the development dataset with subsequent evaluation on an
+  external dataset. This is realised by using variable importance data obtained
+  during hyperparameter optimisation.
 
 ## Minor changes
 
@@ -73,7 +84,7 @@
   lead to too few samples to allow for assessment. This affected 
   Leave-One-Out-Cross-Validation (LOOCV) schemes in particular.
 
-## Bug fixes
+## Fixes
 
 - Fixed errors when creating feature or similarity plots caused by sample or 
   feature names matching internal column names.
@@ -83,6 +94,9 @@
 - Variable importance methods and outcome information objects were missing a 
   familiar version attribute, which has now been added to ensure future 
   compatibility.
+  
+- Some vignettes referred to `experiment_design` where `experimental_design` was
+  intended.
 
 # Version 1.5.0 (Whole Whale)
 

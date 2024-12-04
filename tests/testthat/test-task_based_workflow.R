@@ -169,3 +169,22 @@ testthat::test_that("all models are present", {
   testthat::expect_true(all(sapply(model, familiar:::model_is_trained)))
   testthat::expect_false(any(sapply(model, function(x) (is.null(x@vimp_table)))))
 })
+
+
+# Including evaluation ---------------------------------------------------------
+
+results <- familiar::summon_familiar(
+  data = data,
+  experimental_design = "bs(fs,3)+bs(mb,3)",
+  vimp_method = "mim",
+  learner = "glm_logistic",
+  evaluate_top_level_only = FALSE,
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = verbose,
+  parallel = FALSE
+)
