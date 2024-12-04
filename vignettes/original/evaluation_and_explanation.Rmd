@@ -84,7 +84,7 @@ plots, do not benefit from bootstraps as they are solely based on values
 predicted by the (ensemble) models. If you want to compute bias-corrected
 estimates or bootstrap confidence intervals for these analyses you should ensure
 that sufficient models are created. Experimental designs such as
-`experiment_design="bs(fs+mb,400)+ev"` allow for this, but are computationally
+`experimental_design="bs(fs+mb,400)+ev"` allow for this, but are computationally
 expensive.
 
 | Name                                     | Plot function                                                                     | Export function                       | Estimation type | Detail level | Sample limit | Stand-alone |

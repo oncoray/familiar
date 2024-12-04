@@ -494,14 +494,14 @@ Familiar implements the following subsampling methods:
 
 The `x` argument of subsample methods can contain one or more of the workflow
 components. Moreover, it is possible to nest subsample methods. For example,
-`experiment_design="cv(bt(fs,50)+mb,5)+ev"` would create a 5-fold
+`experimental_design="cv(bt(fs,50)+mb,5)+ev"` would create a 5-fold
 cross-validation of the development dataset, with each set of training folds
 again subsampled for computing variable importances. After aggregating variable 
 importance obtained over 50 bootstraps, a model is trained within each set of 
 training folds, resulting in 5 models overall. The ensemble of these models is 
 then evaluated on an external dataset.
 
-Other designs, such as `experiment_design="bs(fs+mb,400)+ev"` allow for building
+Other designs, such as `experimental_design="bs(fs+mb,400)+ev"` allow for building
 large ensembles, and capturing the posterior distribution of the model
 predictions.
 
