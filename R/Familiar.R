@@ -414,7 +414,7 @@ summon_familiar <- function(
 
   # Select and sort unique tasks.
   tasks <- .sort_tasks(tasks)
-
+browser()
   # Pre-processing -------------------------------------------------------------
   .run_preprocessing(
     cl = cl,
@@ -503,14 +503,24 @@ summon_familiar <- function(
   
   # Explanation and evaluation -------------------------------------------------
   
-  # Start evaluation
-  run_evaluation(
+  .run_evaluation(
     cl = cl,
-    project_list = project_info,
+    tasks = tasks,
+    experiment_data = experiment_data,
     settings = settings,
+    outcome_info = outcome_info,
     file_paths = file_paths,
     verbose = verbose
   )
+  
+  browser()
+#   run_evaluation(
+#     cl = cl,
+#     project_list = project_info,
+#     settings = settings,
+#     file_paths = file_paths,
+#     verbose = verbose
+#   )
   
   if (file_paths$is_temporary) {
     # Collect all familiarModels, familiarEnsemble, familiarData and

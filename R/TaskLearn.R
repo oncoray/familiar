@@ -27,7 +27,6 @@ setClass(
 
 
 
-
 # .set_file_name (train task) --------------------------------------------------
 setMethod(
   ".set_file_name",

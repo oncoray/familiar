@@ -16,6 +16,7 @@ setClass(
 )
 
 
+
 # .set_file_name (collection task) ---------------------------------------------
 setMethod(
   ".set_file_name",
@@ -59,6 +60,68 @@ setMethod(
 
 
 
+# .perform_task (collection task, NULL) ----------------------------------------
+setMethod(
+  ".perform_task",
+  signature(
+    object = "familiarTaskCollect",
+    data = "NULL"
+  ),
+  function(
+    object,
+    data,
+    return_results = TRUE,
+    ...
+  ) {
+    # Process collection.
+    collection_object <- suppressWarnings(
+      as_familiar_collection(
+        object = object@data_file
+      )
+    )
+    
+    if (!is.na(object@file)) {
+      saveRDS(collection_object, file = object@file)
+    }
+    
+    if (return_results) {
+      return(collection_object)
+    }
+  }
+)
+
+
+
+# .perform_task (collection task, ANY) -----------------------------------------
+setMethod(
+  ".perform_task",
+  signature(
+    object = "familiarTaskCollect",
+    data = "ANY"
+  ),
+  function(
+    object,
+    data,
+    return_results = TRUE,
+    ...
+  ) {
+    # Process collection.
+    collection_object <- suppressWarnings(
+      as_familiar_collection(
+        object = data
+      )
+    )
+    
+    if (!is.na(object@file)) {
+      saveRDS(collection_object, file = object@file)
+    }
+    
+    if (return_results) {
+      return(collection_object)
+    }
+  }
+)
+
 
 
 # familiarTaskEvaluate ---------------------------------------------------------
@@ -71,7 +134,8 @@ setClass(
     "ensemble_run_id" = "integer",
     "vimp_method" = "character",
     "learner" = "character",
-    "data_set_name" = "character"
+    "data_set_name" = "character",
+    "model_files" = "character"
   ),
   prototype = methods::prototype(
     validation = NA, 
@@ -82,6 +146,7 @@ setClass(
     vimp_method = NA_character_,
     learner = NA_character_,
     data_set_name = NA_character_,
+    model_files = NA_character_,
     task_name = "evaluate"
   )
 )
@@ -126,10 +191,94 @@ setMethod(
       object@run_id, "_", 
       object@vimp_method, "_", 
       object@learner, "_",
-      object@ensemble_data, "_",
+      object@ensemble_data_id, "_",
       object@ensemble_run_id, "_",
       object@data_set_name
     ))
+  }
+)
+
+
+
+# .perform_task (evaluation task, dataObject) ----------------------------------
+setMethod(
+  ".perform_task",
+  signature(
+    object = "familiarTaskEvaluate",
+    data = "dataObject"
+  ),
+  function(
+    object,
+    data,
+    settings,
+    cl = NULL,
+    message_indent = 0L,
+    return_results = TRUE,
+    ...
+  ) {
+    
+    # Signal evaluation start for the current task.
+    logger_message(
+      paste0(
+        "Evaluation: Starting evaluation for the \"", object@learner,
+        "\" learner and the \"", object@vimp_method,
+        "\" variable importance method for ",
+        object@data_set_name, " data (data_id: ",
+        object@data_id, "; run_id: ", object@run_id,
+        "). This is task ",
+        object@task_id, " of ",
+        object@n_tasks, "."
+      ),
+      indent = message_indent,
+      verbose = verbose
+    )
+    
+    # Form an ensemble using the associated or provided models.
+    
+    # Check which detail level should be provided based on the number of
+    # available instances for each model.
+    browser()
+    
+    # Compute evaluation data.
+    evaluation_data <- extract_data(
+      object = fam_ensemble,
+      data = data,
+      cl = cl,
+      data_element = settings$eval$evaluation_data_elements,
+      time_max = settings$eval$time_max,
+      evaluation_times = settings$eval$eval_times,
+      sample_limit = settings$eval$sample_limit,
+      detail_level = detail_level,
+      estimation_type = settings$eval$estimation_type,
+      aggregate_results = settings$eval$aggregate_results,
+      aggregation_method = settings$eval$aggregation,
+      rank_threshold = settings$eval$aggr_rank_threshold,
+      ensemble_method = settings$eval$ensemble_method,
+      stratification_method = settings$eval$strat_method,
+      metric = settings$eval$metric,
+      feature_cluster_method = settings$eval$feature_cluster_method,
+      feature_cluster_cut_method = settings$eval$feature_cluster_cut_method,
+      feature_linkage_method = settings$eval$feature_linkage_method,
+      feature_similarity_metric = settings$eval$feature_similarity_metric,
+      feature_similarity_threshold = settings$eval$feature_similarity_threshold,
+      sample_cluster_method = settings$eval$sample_cluster_method,
+      sample_linkage_method = settings$eval$sample_linkage_method,
+      sample_similarity_metric = settings$eval$sample_similarity_metric,
+      confidence_level = settings$eval$confidence_level,
+      bootstrap_ci_method = settings$eval$bootstrap_ci_method,
+      dynamic_model_loading = settings$eval$auto_detach,
+      icc_type = settings$eval$icc_type,
+      message_indent = message_indent + 1L,
+      verbose = verbose
+    )
+    
+    if (!is.na(object@file)) {
+      saveRDS(evaluation_data, file = object@file)
+    }
+    
+    if (return_results) {
+      return(evaluation_data)
+    }
   }
 )
 
@@ -147,6 +296,7 @@ setMethod(
   
   # Suppress NOTES due to non-standard evaluation in data.table
   train <- can_pre_process <- perturbation_level <- main_data_id <- NULL
+  data_id <- run_id <- NULL
   
   # collection tasks -----------------------------------------------------------
   
@@ -306,10 +456,13 @@ setMethod(
   
   # ensembles ------------------------------------------------------------------
   
-  # Obtain run tables related to models.
+  # Obtain run tables that directly refer to data on which models were trained.
+  # First select the data_id related to training.
   train_data_id <- experiment_data@experiment_setup[train == TRUE, ]$main_data_id[1L]
   if (is_empty(train_data_id)) return(NULL)
   
+  # Then select the run-tables which contain this data_id as their final
+  # (bottom) level.
   run_tables <- .collect_run_tables(iteration_list = experiment_data@iteration_list)
   run_tables <- run_tables[sapply(
     run_tables,
@@ -318,24 +471,209 @@ setMethod(
     },
     data_id = train_data_id
   )]
-  browser()
-  
+
   # Iterate over evaluation tasks and add corresponding models based on ensemble
   # data id and run id.
   for (ii in seq_along(evaluate_task_list)) {
-    ensemble_data_id <- evaluate_task_list[[ii]]@ensemble_data_id
-    ensemble_run_id <- evaluate_task_list[[ii]]@ensemble_run_id
     
+    # Select run tables where the ensemble data and run identifiers appear.
+    selected_run_tables <- run_tables[sapply(
+      run_tables,
+      function(x, ensemble_data_id, ensemble_run_id) {
+        return(!is_empty(x[data_id == ensemble_data_id & run_id == ensemble_run_id]))
+      },
+      ensemble_data_id = evaluate_task_list[[ii]]@ensemble_data_id,
+      ensemble_run_id = evaluate_task_list[[ii]]@ensemble_run_id
+    )]
     
+    # Create corresponding model object names.
+    evaluate_task_list[[ii]]@model_files <- unname(sapply(
+      selected_run_tables,
+      function(x, ...) {
+        get_object_file_name(
+          object_type = "familiarModel",
+          data_id = tail(x, n = 1L)$data_id,
+          run_id = tail(x, n = 1L)$run_id,
+          ...
+        )
+      },
+      learner = evaluate_task_list[[ii]]@learner,
+      vimp_method = evaluate_task_list[[ii]]@vimp_method,
+      project_id = evaluate_task_list[[ii]]@project_id,
+      dir_path = file_paths$mb_dir
+    ))
   }
   
-  browser()
   # train and variable importance tasks ----------------------------------------
   task_list <- .generate_trainer_tasks(
     experiment_data = experiment_data,
+    learners = learners,
     vimp_methods = vimp_methods,
     file_paths = file_paths,
     skip_existing = skip_existing,
     ...
+  )
+  
+  return(c(
+    task_list,
+    evaluate_task_list,
+    collect_task_list
+  ))
+}
+
+
+
+.run_evaluation <- function(
+    cl,
+    tasks,
+    message_indent = 0L,
+    verbose,
+    ...
+) {
+  
+  # Check that any tasks are available for processing.
+  if (is_empty(tasks$evaluate) || is_empty(tasks$collect)) return(invisible(FALSE))
+  
+  # Determine which evaluation tasks need to be performed.
+  finished_tasks <- sapply(tasks$evaluate, .file_exists)
+  unfinished_tasks <- tasks$evaluate[!finished_tasks]
+  finished_tasks <- tasks$evaluate[finished_tasks]
+  
+  # Process any unfinished tasks.
+  if (length(unfinished_tasks) > 0L) {
+    ..run_evaluation(
+      cl = cl,
+      tasks = unfinished_tasks,
+      message_indent = message_indent,
+      verbose = verbose,
+      ...
+    )
+  }
+  
+  # Determine which collection tasks are required.
+  finished_tasks <- sapply(tasks$train, .file_exists)
+  unfinished_tasks <- tasks$train[!finished_tasks]
+  finished_tasks <- tasks$train[finished_tasks]
+  
+  # Process any unfinished tasks.
+  if (length(unfinished_tasks) > 0L) {
+    ..run_collection(
+      tasks = unfinished_tasks,
+      message_indent = message_indent,
+      verbose = verbose,
+      ...
+    )
+  }
+  
+  return(invisible(TRUE))
+}
+
+
+
+..run_evaluation <- function(
+    tasks,
+    cl,
+    settings,
+    message_indent = 0L,
+    verbose,
+    ...
+) {
+  
+  # Message that evaluation is starting.
+  logger_message(
+    paste0(
+      "Evaluation: Starting model evaluation."
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+  
+  # Set outer vs. inner loop parallelisation.
+  if (settings$eval$do_parallel %in% c("TRUE", "inner")) {
+    cl_inner <- cl
+    cl_outer <- NULL
+    
+  } else if (settings$eval$do_parallel %in% c("outer")) {
+    cl_inner <- NULL
+    cl_outer <- cl
+    
+    logger_message(
+      paste0(
+        "Evaluation: Parallel processing is done in the outer loop. ",
+        "No progress can be displayed."
+      ),
+      indent = message_indent,
+      verbose = verbose && !is.null(cl_outer)
+    )
+    
+  } else {
+    cl_inner <- cl_outer <- NULL
+  }
+  
+  fam_mapply_lb(
+    cl = cl,
+    assign = "all",
+    FUN = .perform_task,
+    progress_bar = !is.null(cl_outer),
+    object = tasks,
+    MoreArgs = list(
+      "data" = NULL,
+      "return_results" = FALSE,
+      "settings" = settings,
+      "message_indent" = message_indent + 1L,
+      "verbose" = verbose && is.null(cl_outer),
+      ...
+    )
+  )
+
+  # Message that variable importances have been computed.
+  logger_message(
+    paste0(
+      "Evaluation: Models were evaluated.\n"
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+}
+
+
+
+..run_collection <- function(
+  tasks,
+  message_indent = 0L,
+  verbose,
+  ...
+) {
+  # Message that evaluation is starting.
+  logger_message(
+    paste0(
+      "Evaluation: Starting collection of evaluation datasets."
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+  
+  fam_mapply_lb(
+    cl = NULL,
+    assign = "all",
+    FUN = .perform_task,
+    progress_bar = verbose,
+    object = tasks,
+    MoreArgs = list(
+      "data" = NULL,
+      "return_results" = FALSE,
+      "message_indent" = message_indent + 1L,
+      "verbose" = verbose,
+      ...
+    )
+  )
+  
+  # Message that variable importances have been computed.
+  logger_message(
+    paste0(
+      "Evaluation: Evaluation datasets were collected.\n"
+    ),
+    indent = message_indent,
+    verbose = verbose
   )
 }
