@@ -414,7 +414,7 @@ summon_familiar <- function(
 
   # Select and sort unique tasks.
   tasks <- .sort_tasks(tasks)
-browser()
+  
   # Pre-processing -------------------------------------------------------------
   .run_preprocessing(
     cl = cl,

@@ -173,9 +173,11 @@ testthat::test_that("all models are present", {
 
 # Including evaluation ---------------------------------------------------------
 
+data <- familiar:::test_create_small_good_data("binomial")
+
 results <- familiar::summon_familiar(
   data = data,
-  experimental_design = "bs(fs,3)+bs(mb,3)",
+  experimental_design = "bs(fs,3)+bs(mb, 3)",
   vimp_method = "mim",
   learner = "glm_logistic",
   evaluate_top_level_only = FALSE,

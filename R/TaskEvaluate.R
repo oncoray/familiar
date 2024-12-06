@@ -132,6 +132,8 @@ setClass(
     "validation" = "logical",
     "ensemble_data_id" = "integer",
     "ensemble_run_id" = "integer",
+    "get_predictions_at_model_level" = "logical",
+    "force_ensemble_detail_level" = "logical",
     "vimp_method" = "character",
     "learner" = "character",
     "data_set_name" = "character",
@@ -139,10 +141,23 @@ setClass(
   ),
   prototype = methods::prototype(
     validation = NA, 
-    # Whereas data_id describes where the data comes from, the ensemble_data_id
-    # describes where ensembles are formed.
+    # Whereas data_id describes where the overall data comes from, the
+    # ensemble_data_id describes where ensembles are formed.
     ensemble_data_id = NA_integer_,
     ensemble_run_id = NA_integer_,
+    # This parameter determines which data is used for generating predictions.
+    # If FALSE, data will be obtained using data_id and run_id of the task. If
+    # TRUE, data will be obtained using the data_id and run_id associated with
+    # each model. In practice, for internal runs this will be set to TRUE except
+    # for external validation data, whereas for external tasks (e.g. on existing
+    # models) this will be FALSE, and the provided data will be used directly.
+    get_predictions_at_model_level = FALSE,
+    # If individual models do not have sufficient data to perform hybrid
+    # analysis (each model is used to compute part of the bootstraps when
+    # computing confidence intervals) for an evaluation step, that evaluation
+    # step may fail, even though over all models, sufficient data are present.
+    # In that case, we need to force an ensemble detail level.
+    force_ensemble_detail_level = FALSE,
     vimp_method = NA_character_,
     learner = NA_character_,
     data_set_name = NA_character_,
@@ -200,6 +215,54 @@ setMethod(
 
 
 
+# .perform_task (evaluation task , NULL) --------------------------------------------
+setMethod(
+  ".perform_task",
+  signature(
+    object = "familiarTaskEvaluate",
+    data = "NULL"
+  ),
+  function(
+    object,
+    data,
+    experiment_data = NULL,
+    outcome_info = NULL,
+    ...
+  ) {
+    # This method is called when "data" is expected to be available somewhere in
+    # the backend.
+    
+    if (is.null(experiment_data)) {
+      ..error_reached_unreachable_code("experiment_data is required for retrieving data from the backend.")
+    }
+    if (is.null(outcome_info)) {
+      ..error_reached_unreachable_code("outcome_info is required.")
+    }
+    
+    data <- methods::new(
+      "dataObject",
+      data = NULL,
+      preprocessing_level = "none",
+      outcome_type = outcome_info@outcome_type,
+      outcome_info = outcome_info,
+      load_validation = object@validation,
+      delay_loading = TRUE,
+      aggregate_on_load = FALSE
+    )
+    
+    # Pass to method that dispatches with dataObject for further processing.
+    return(.perform_task(
+      object = object,
+      data = data,
+      experiment_data = experiment_data,
+      ...
+    ))
+  }
+)
+
+
+
+
 # .perform_task (evaluation task, dataObject) ----------------------------------
 setMethod(
   ".perform_task",
@@ -237,7 +300,41 @@ setMethod(
     
     # Check which detail level should be provided based on the number of
     # available instances for each model.
-    browser()
+    fam_ensemble <- methods::new(
+      "familiarEnsemble",
+      model_list = as.list(object@model_files),
+      learner = object@learner,
+      vimp_method = object@vimp_method
+    )
+    
+    # Add package version.
+    fam_ensemble <- add_package_version(object = fam_ensemble)
+    
+    # Load models and prevent auto-detaching.
+    fam_ensemble <- load_models(
+      object = fam_ensemble,
+      suppress_auto_detach = TRUE
+    )
+    
+    # Create a run table
+    fam_ensemble@run_table <- list(
+      "run_table" = lapply(
+        fam_ensemble@model_list,
+        function(fam_model) fam_model@run_table
+      ),
+      "ensemble_data_id" = object@ensemble_data_id,
+      "ensemble_run_id" = object@ensemble_run_id
+    )
+    
+    # Complete the ensemble using information provided by the model
+    fam_ensemble <- complete_familiar_ensemble(object = fam_ensemble)
+    
+    # Set evaluation level.
+    if (object@force_ensemble_detail_level) {
+      detail_level <- "ensemble"
+    } else {
+      detail_level <- settings$eval$detail_level
+    }
     
     # Compute evaluation data.
     evaluation_data <- extract_data(
@@ -344,20 +441,56 @@ setMethod(
   
   # evaluation tasks -----------------------------------------------------------
   
+  data_file_names <- NULL
+  
+  n_min_model_instances <- Inf
+  evaluate_external_validation <- evaluate_internal_validation <- evaluate_development <- FALSE
+  
+  # External validation: the top level has associated validation data.
+  if (experiment_data@experiment_setup[main_data_id == 1L]$max_validation_instances > 0L) {
+    evaluate_external_validation <- TRUE
+    n_min_model_instances <- min(
+      c(experiment_data@experiment_setup[main_data_id == 1L]$max_validation_instances),
+      n_min_model_instances
+    )
+  }
+  
+  # Internal validation: the lowest model ensembling level has associated
+  # validation data.
+  if (experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_validation_instances > 0L) {
+    evaluate_internal_validation <- TRUE
+    n_min_model_instances <- min(
+      c(experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_validation_instances),
+      n_min_model_instances
+    )
+  }
+  
+  # Development data: the lowest model ensembling level has associated
+  # development data. NOTE: this should always be the case.
+  if (experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_training_instances > 0L) {
+    evaluate_development <- TRUE
+    n_min_model_instances <- min(
+      c(experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_training_instances),
+      n_min_model_instances
+    )
+  }
+  
+  # Check model instances and determine if we need to force ensemble detail
+  # level for evaluation.
+  force_ensemble_detail_level <- n_min_model_instances < 10L
+  
   # Use collection tasks to set up the evaluation tasks, including for internal
   # validation.
   evaluate_task_list <- list()
   ii <- 1L
+  
   for (jj in seq_along(collect_task_list)) {
-    data_file_names <- NULL
-    
     for (learner in learners) {
       for (vimp_method in vimp_methods) {
         
         ## external validation -------------------------------------------------
         
-        # External validation: the top level has associated validation data.
-        if (experiment_data@experiment_setup[main_data_id == 1L]$max_validation_instances > 0L) {
+        if (evaluate_external_validation) {
           # Initialise task.
           evaluate_task <- methods::new(
             "familiarTaskEvaluate",
@@ -366,6 +499,8 @@ setMethod(
             validation = TRUE,
             ensemble_data_id = collect_task_list[[jj]]@data_id,
             ensemble_run_id = collect_task_list[[jj]]@run_id,
+            get_predictions_at_model_level = FALSE,
+            force_ensemble_detail_level = force_ensemble_detail_level,
             learner = learner,
             vimp_method = vimp_method,
             data_set_name = "external_validation",
@@ -387,8 +522,6 @@ setMethod(
         
         # internal validation --------------------------------------------------
         
-        # Internal validation: the ensembling level has associated validation
-        # data.
         if (experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_validation_instances > 0L) {
           # Initialise task.
           evaluate_task <- methods::new(
@@ -398,6 +531,8 @@ setMethod(
             validation = TRUE,
             ensemble_data_id = collect_task_list[[jj]]@data_id,
             ensemble_run_id = collect_task_list[[jj]]@run_id,
+            get_predictions_at_model_level = TRUE,
+            force_ensemble_detail_level = force_ensemble_detail_level,
             learner = learner,
             vimp_method = vimp_method,
             data_set_name = "internal_validation",
@@ -418,31 +553,39 @@ setMethod(
         }
         
         # development ----------------------------------------------------------
-        # Development at the ensembling level.
-        evaluate_task <- methods::new(
-          "familiarTaskEvaluate",
-          data_id = collect_task_list[[jj]]@data_id,
-          run_id = collect_task_list[[jj]]@run_id,
-          validation = FALSE,
-          ensemble_data_id = collect_task_list[[jj]]@data_id,
-          ensemble_run_id = collect_task_list[[jj]]@run_id,
-          learner = learner,
-          vimp_method = vimp_method,
-          data_set_name = "development",
-          project_id = experiment_data@project_id
-        )
         
-        # Set file name.
-        evaluate_task <-.set_file_name(
-          object = evaluate_task,
-          file_paths = file_paths
-        )
-        
-        # Make task and associated file names available.
-        data_file_names <- c(data_file_names, evaluate_task@file)
-        evaluate_task_list[[ii]] <- evaluate_task
-        
-        ii <- ii + 1L
+        if (evaluate_development) {
+          # Initialise task.
+          evaluate_task <- methods::new(
+            "familiarTaskEvaluate",
+            data_id = collect_task_list[[jj]]@data_id,
+            run_id = collect_task_list[[jj]]@run_id,
+            validation = FALSE,
+            ensemble_data_id = collect_task_list[[jj]]@data_id,
+            ensemble_run_id = collect_task_list[[jj]]@run_id,
+            get_predictions_at_model_level = TRUE,
+            force_ensemble_detail_level = force_ensemble_detail_level,
+            learner = learner,
+            vimp_method = vimp_method,
+            data_set_name = "development",
+            project_id = experiment_data@project_id
+          )
+          
+          # Set file name.
+          evaluate_task <-.set_file_name(
+            object = evaluate_task,
+            file_paths = file_paths
+          )
+          
+          # Make task and associated file names available.
+          data_file_names <- c(data_file_names, evaluate_task@file)
+          evaluate_task_list[[ii]] <- evaluate_task
+          
+          ii <- ii + 1L
+          
+        } else {
+          ..error_reached_unreachable_code("development data are always present.")
+        }
       }
     }
     
@@ -475,7 +618,6 @@ setMethod(
   # Iterate over evaluation tasks and add corresponding models based on ensemble
   # data id and run id.
   for (ii in seq_along(evaluate_task_list)) {
-    
     # Select run tables where the ensemble data and run identifiers appear.
     selected_run_tables <- run_tables[sapply(
       run_tables,

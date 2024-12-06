@@ -25,21 +25,16 @@ information concerning the outcome, such as class levels.}
 
 \item{\code{data_column_info}}{Object containing column information.}
 
-\item{\code{delay_loading}}{logical. Allows delayed loading data, which enables data
-parsing downstream without additional workflow complexity or memory
-utilisation.}
+\item{\code{data_id}}{Data identifier for dataset. Set using internal routines if the
+\code{dataObject} was created from a \code{delayedDataObject}}
 
-\item{\code{perturb_level}}{numeric. This is the perturbation level for data which
-has not been loaded. Used for data retrieval by interacting with the run
-table of the accompanying model.}
+\item{\code{run_id}}{Run identifier for dataset. Set using internal routines if the
+\code{dataObject} was created from a \code{delayedDataObject}}
 
-\item{\code{load_validation}}{logical. This determines which internal data set will
-be loaded. If TRUE, the validation data will be loaded, whereas FALSE loads
-the development data.}
+\item{\code{validation}}{Identifies if validation or development samples were loaded.
+Set using internal routines if the \code{dataObject} was created from a
+\code{delayedDataObject}.}
 
-\item{\code{aggregate_on_load}}{logical. Determines whether data is aggregated after
-loading.}
-
-\item{\code{sample_set_on_load}}{NULL or vector of sample identifiers to be loaded.}
+\item{\code{sample_seed}}{Seed used for creating a bootstrap of the data.}
 }}
 

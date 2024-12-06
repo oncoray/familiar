@@ -642,20 +642,16 @@ setClass("familiarCollection",
 #' @slot outcome_info Outcome information object, which contains additional
 #'   information concerning the outcome, such as class levels.
 #' @slot data_column_info Object containing column information.
-#' @slot delay_loading logical. Allows delayed loading data, which enables data
-#'   parsing downstream without additional workflow complexity or memory
-#'   utilisation.
-#' @slot perturb_level numeric. This is the perturbation level for data which
-#'   has not been loaded. Used for data retrieval by interacting with the run
-#'   table of the accompanying model.
-#' @slot load_validation logical. This determines which internal data set will
-#'   be loaded. If TRUE, the validation data will be loaded, whereas FALSE loads
-#'   the development data.
-#' @slot aggregate_on_load logical. Determines whether data is aggregated after
-#'   loading.
-#' @slot sample_set_on_load NULL or vector of sample identifiers to be loaded.
-#' 
-setClass("dataObject",
+#' @slot data_id Data identifier for dataset. Set using internal routines if the
+#'   `dataObject` was created from a `delayedDataObject`
+#' @slot run_id Run identifier for dataset. Set using internal routines if the
+#'   `dataObject` was created from a `delayedDataObject`
+#' @slot validation Identifies if validation or development samples were loaded.
+#'   Set using internal routines if the `dataObject` was created from a
+#'   `delayedDataObject`.
+#' @slot sample_seed Seed used for creating a bootstrap of the data.
+setClass(
+  "dataObject",
   slots = list(
     # Data
     data = "ANY",
@@ -667,29 +663,81 @@ setClass("dataObject",
     outcome_info = "ANY",
     # Info related to the columns in the dataset.
     data_column_info = "ANY",
-    # Flag for delayed loading. This can only be meaningfully set using internal
-    # data.
-    delay_loading = "logical",
-    # Perturbation level for data which has not been loaded. Used for data
-    # retrieval in combination with the run table of the accompanying model.
-    perturb_level = "numeric",
-    # Determines which data should be loaded.
-    load_validation = "logical",
-    # Flag for aggregation after loading and pre-processing
-    aggregate_on_load = "logical",
-    # Samples to be loaded
-    sample_set_on_load = "ANY"
+    # Data id
+    data_id = "integer",
+    # Run id
+    run_id = "integer",
+    # Validation marker.
+    validation = "logical",
+    # Sample seed
+    sample_seed = "integer"
   ),
   prototype = list(
     data = NULL,
     preprocessing_level = "none",
     outcome_type = NA_character_,
     outcome_info = NULL,
-    delay_loading = FALSE,
-    perturb_level = NA_integer_,
-    load_validation = TRUE,
-    aggregate_on_load = FALSE,
-    sample_set_on_load = NULL
+    data_column_info = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
+    validation = NA,
+    sample_seed = NA_integer_
+  )
+)
+
+
+
+# delayedDataObject object -----------------------------------------------------
+
+#' Data object with delayed loading
+#'
+#' The delayed loading object provides an interface to the backend data. This
+#' data object is typically used within the evaluation pipeline to load data
+#' when needed.
+#'
+#' @slot data NULL or data table containing the data. If present (not `NULL`),
+#'   data is considered loaded.
+#' @slot preprocessing_level character indicating the level of pre-processing
+#'   already conducted. `"none"` by default.
+#' @slot outcome_type character, determines the outcome type.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
+#' @slot data_column_info Object containing column information.
+#' @slot data_id integer. Defines the data_id of the dataset that should be
+#'   loaded.
+#' @slot run_id integer. Defines the run_id of the dataset that should be load.
+#'   Together with data_id, run_id and validation allows for looking up the
+#'   sample set.
+#' @slot validation logical. This determines which internal data set will be
+#'   loaded. If TRUE, the validation data will be loaded, whereas FALSE loads
+#'   the development data.
+#' @slot aggregate_on_load logical. Determines whether data is aggregated after
+#'   loading.
+#' @slot sample_set_on_load NULL or vector of sample identifiers to be loaded.
+#'   Overrides any `sample_seed` that may have been provided.
+#' @slot defer_to_model_data_and_run_id logical. Determines whether the provided
+#'   data_id and run_id should be used (`FALSE`), or data_id and run_id of a
+#'   model (`TRUE`).
+setClass(
+  "delayedDataObject",
+  contains = "dataObject",
+  slots = list(
+    # Determines if validation or development data should be loaded.
+    validation = "logical",
+    # Flag for aggregation after loading and pre-processing
+    aggregate_on_load = "logical",
+    # Samples to be loaded. 
+    sample_set_on_load = "ANY",
+    # Flag for deferring loading of data depending on data_id and run_id of
+    # models. Used to ensure that development data and internal validation data
+    # are correctly handled. Overrides and data_id and run_id that may have been
+    # provided.
+    defer_to_model_data_and_run_id = "logical"
+  ),
+  prototype = list(
+    aggregate_on_load = NA,
+    sample_set_on_load = NULL,
+    defer_to_model_data_and_run_id = NA
   )
 )
 

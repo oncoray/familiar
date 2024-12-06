@@ -189,6 +189,12 @@ extract_experimental_setup <- function(
   # Suppress NOTES due to non-standard evaluation in data.table
   main_data_id <- NULL
   
+  ...get_n_samples <- function(x, type) {
+    if (is_empty(x[[type]])) return(0L)
+    
+    return(nrow(x[[type]]))
+  }
+  
   # Add perturbation level.
   section_table[, "perturbation_level" := 1L]
   for (data_id in section_table$main_data_id) {
@@ -201,16 +207,18 @@ extract_experimental_setup <- function(
     section_table[main_data_id == data_id, "n_runs" := length(iteration_list[[as.character(data_id)]]$run)]
   }
   
-  # Set the (max) number of available validation instances.
+  # Determine the number of instances available for development and validation.
   for (data_id in section_table$main_data_id) {
-    section_table[main_data_id == data_id, "max_validation_instances" := max(sapply(
-      iteration_list[[as.character(data_id)]]$run,
-      function(x) {
-        if (is_empty(x$valid_samples)) return(0L)
-        
-        return(nrow(x$valid_samples))
-      }
-    ))]
+    
+    n_run_training_samples <- sapply(iteration_list[[as.character(data_id)]]$run, ...get_n_samples, type = "train_samples")
+    n_run_validation_samples <- sapply(iteration_list[[as.character(data_id)]]$run, ...get_n_samples, type = "valid_samples")
+    
+    section_table[main_data_id == data_id, ":="(
+      "min_training_instances" = min(n_run_training_samples),
+      "max_training_instances" = max(n_run_training_samples),
+      "min_validation_instances" = min(n_run_validation_samples),
+      "max_validation_instances" = max(n_run_validation_samples)
+    )]
   }
 
   return(section_table)
