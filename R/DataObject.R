@@ -581,7 +581,7 @@ setMethod(
 
 # load_delayed_data methods ----------------------------------------------------
 
-## load_delayed_data (model) ---------------------------------------------------
+## load_delayed_data (dataObject, ANY) -----------------------------------------
 setMethod(
   "load_delayed_data",
   signature(
@@ -591,219 +591,140 @@ setMethod(
   function(
     data,
     object,
-    stop_at,
-    keep_novelty = FALSE
+    ...
   ) {
-    # Loads data from internal memory
-    
-    if (!(
-      is(object, "familiarModel") ||
-      is(object, "familiarVimpMethod") ||
-      is(object, "familiarNoveltyDetector")
-    )) {
-      ..error_reached_unreachable_code(paste0(
-        "load_delayed_data: object is expected to be a familiarModel, ",
-        "familiarVimpMethod or familiarNoveltyDetector."
-      ))
+    # If data is a dataObject, the data already was loaded.
+    return(data)
+  }
+)
+
+
+
+## load_delayed_data (dataObject, NULL) ----------------------------------------
+setMethod(
+  "load_delayed_data",
+  signature(
+    data = "delayedDataObject",
+    object = "NULL"
+  ),
+  function(
+    data,
+    object,
+    column_names = NULL,
+    ...
+  ) {
+    if (is.na(data@validation) && is_empty(data@sample_set_on_load)) {
+      ..error_reached_unreachable_code("validation attribute was not set")
     }
     
-    # Check if loading was actually delayed
-    if (!data@delay_loading) return(data)
+    # Determine which samples are required.
+    if (is_empty(data@sample_set_on_load)) {
+      # Check if data_id and run_id were set.
+      if (is.na(data@data_id)) {
+        ..error_reached_unreachable_code("data_id attribute was not set")
+      }
+      if (is.na(data@run_id)) {
+        ..error_reached_unreachable_code("run_id attribute was not set")
+      }
+      
+      # From iteration list.
+      sample_identifiers <- .get_sample_identifiers(
+        iteration_list = get_project_list()$iter_list,
+        data_id = data@data_id,
+        run_id = data@run_id,
+        train_or_validate = ifelse(data@validation, "valid", "train")
+      )
+      
+    } else {
+      # From data object.
+      sample_identifiers <- data@sample_set_on_load
+    }
     
-    # Read project list and settings
-    iteration_list <- get_project_list()$iter_list
+    # Resample sample identifiers.
+    if (!is.na(data@sample_seed)) {
+      sample_identifiers <- fam_sample(
+        x = sample_identifiers,
+        seed = data@sample_seed
+      )
+    }
     
-    # Read required features
-    required_features <- object@required_features
-    
-    # Get columns in data frame which are not features, but identifiers and
-    # outcome instead.
-    non_feature_cols <- get_non_feature_columns(x = object)
-    
-    # Find the identifiers for the current run.
-    run_id_list <- .get_iteration_identifiers(
-      run = list("run_table" = object@run_table),
-      perturb_level = data@perturb_level
+    # Initialise dataObject
+    new_data <- methods::new(
+      "dataObject",
+      data = NULL,
+      preprocessing_level = "none",
+      outcome_type = data@outcome_type,
+      outcome_info = data@outcome_info,
+      data_column_info = data@data_column_info,
+      data_id = data@data_id,
+      run_id = data@run_id,
+      validation = data@validation,
+      sample_seed = data@sample_seed
     )
     
-    # Derive sample identifiers based on the selected iteration data.
-    sample_identifiers <- .get_sample_identifiers(
-      iteration_list = iteration_list,
-      data_id = run_id_list$data,
-      run_id = run_id_list$run,
-      train_or_validate = ifelse(data@load_validation, "valid", "train")
-    )
-    
-    # Currently select only unique samples from the backend.
+    # Select only unique samples from the backend.
     if (!is_empty(sample_identifiers)) {
       unique_sample_identifiers <- unique(sample_identifiers)
       
     } else {
-      # Return an updated data object, but without data
-      return(methods::new(
-        "dataObject",
-        data = NULL,
-        preprocessing_level = "none",
-        outcome_type = data@outcome_type,
-        aggregate_on_load = data@aggregate_on_load
-      ))
+      # Return the dataObject placeholder.
+      return(new_data)
     }
     
-    # Prepare a new data object
-    new_data <- methods::new(
-      "dataObject",
-      data = get_data_from_backend(
-        sample_identifiers = unique_sample_identifiers,
-        column_names = c(non_feature_cols, required_features)
-      ),
-      preprocessing_level = "none",
-      outcome_type = data@outcome_type,
-      delay_loading = FALSE,
-      perturb_level = NA_integer_,
-      load_validation = data@load_validation,
-      aggregate_on_load = data@aggregate_on_load,
-      sample_set_on_load = data@sample_set_on_load
+    # Attach data.
+    new_data@data <- get_data_from_backend(
+      sample_identifiers = unique_sample_identifiers,
+      column_names = column_names
     )
-    
-    # Preprocess data
-    new_data <- preprocess_data(
-      data = new_data,
-      object = object,
-      stop_at = stop_at,
-      keep_novelty = keep_novelty
-    )
-    
+
     # Recreate iteration. Note that we here also use duplicate samples to
     # recreate e.g. bootstraps.
     new_data <- select_data_from_samples(
       data = new_data,
       samples = sample_identifiers
     )
-    
-    if (new_data@aggregate_on_load) {
-      
-      # Aggregate data if required
-      new_data <- aggregate_data(data = new_data)
-      
-      # Reset flag to FALSE, as data has been loaded
-      new_data@aggregate_on_load <- FALSE
-    }
-    
+
     return(new_data)
   }
 )
 
 
-
-## load_delayed_data (ensemble) ------------------------------------------------
+## load_delayed_data (delayedDataObject, model) --------------------------------
 setMethod(
   "load_delayed_data",
   signature(
-    data = "dataObject",
-    object = "familiarEnsemble"
+    data = "delayedDataObject",
+    object = "familiarModel"
   ),
   function(
     data,
     object,
-    stop_at = "clustering",
-    keep_novelty = FALSE
+    stop_at,
+    keep_novelty = FALSE,
+    ...
   ) {
-    # Loads data from internal memory -- for familiarEnsemble objects
     
-    # Suppress NOTES due to non-standard evaluation in data.table
-    perturb_level <- NULL
+    # Check whether model data- and run-ids should be used.
+    if (data@defer_to_model_data_and_run_id) {
+      data@data_id <- object@data_id
+      data@run_id <- object@run_id
+    }
     
-    # Check if loading was actually delayed
-    if (!data@delay_loading) return(data)
-    
-    # Read project list
-    iteration_list <- get_project_list()$iter_list
-    
-    # Read required features
+    # Read required features.
     required_features <- object@required_features
     
-    # Get columns in data frame which are not features, but identifiers and outcome instead
-    non_feature_cols <- get_non_feature_columns(x = object)
+    # Get columns in data frame which are not features, but identifiers and
+    # outcome instead.
+    non_feature_columns <- get_non_feature_columns(x = object)
     
-    # Join run tables to identify the runs that should be evaluated.
-    combined_run_table <- lapply(
-      object@run_table$run_table,
-      function(model_run_table, data_perturb_level) {
-        return(model_run_table[perturb_level == data_perturb_level])
-      },
-      data_perturb_level = data@perturb_level
+    # Explicitly refer to the method for object = NULL.
+    new_data <- load_delayed_data(
+      data = data,
+      object = NULL,
+      column_names = c(non_feature_columns, required_features)
     )
     
-    # Merge to single table
-    combined_run_table <- data.table::rbindlist(combined_run_table)
-    
-    # Remove duplicate rows
-    combined_run_table <- unique(combined_run_table)
-    
-    # Check length and extract sample identifiers.
-    if (nrow(combined_run_table) == 1L) {
-      sample_identifiers <- .get_sample_identifiers(
-        iteration_list = iteration_list,
-        data_id = combined_run_table$data_id,
-        run_id = combined_run_table$run_id,
-        train_or_validate = ifelse(data@load_validation, "valid", "train")
-      )
-      
-    } else {
-      # Extract all sample identifiers. This happens if the the data is pooled.
-      sample_identifiers <- data.table::rbindlist(lapply(
-        seq_len(nrow(combined_run_table)),
-        function(ii, run_table, iteration_list, train_or_validate) {
-          sample_identifiers <- .get_sample_identifiers(
-            iteration_list = iteration_list,
-            data_id = run_table$data_id[ii],
-            run_id = run_table$run_id[ii],
-            train_or_validate = train_or_validate
-          )
-          
-          return(sample_identifiers)
-        },
-        run_table = combined_run_table,
-        iteration_list = iteration_list,
-        train_or_validate = ifelse(data@load_validation, "valid", "train")
-      ))
-      
-      # Select only unique sample identifiers.
-      sample_identifiers <- unique(sample_identifiers)
-    }
-    
-    # Currently select only unique samples from the backend.
-    if (!is_empty(sample_identifiers)) {
-      unique_sample_identifiers <- unique(sample_identifiers)
-      
-    } else {
-      # Return an updated data object, but without data
-      return(methods::new(
-        "dataObject",
-        data = NULL,
-        preprocessing_level = "none",
-        outcome_type = data@outcome_type,
-        aggregate_on_load = data@aggregate_on_load
-      ))
-    }
-    
-    # Prepare a new data object
-    new_data <- methods::new(
-      "dataObject",
-      data = get_data_from_backend(
-        sample_identifiers = unique_sample_identifiers,
-        column_names = c(non_feature_cols, required_features)
-      ),
-      preprocessing_level = "none",
-      outcome_type = data@outcome_type,
-      delay_loading = FALSE,
-      perturb_level = NA_integer_,
-      load_validation = data@load_validation,
-      aggregate_on_load = data@aggregate_on_load,
-      sample_set_on_load = data@sample_set_on_load
-    )
-    
-    # Preprocess data
+    # Pre-process data, if needed.
     new_data <- preprocess_data(
       data = new_data,
       object = object,
@@ -811,21 +732,9 @@ setMethod(
       keep_novelty = keep_novelty
     )
     
-    # Recreate iteration. Note that we here also use duplicate samples
-    # to recreate e.g. bootstraps.
-    new_data <- select_data_from_samples(
-      data = new_data,
-      samples = sample_identifiers
-    )
-    
-    # Aggregate data if required
-    if (new_data@aggregate_on_load) {
-      
-      # Aggregate
+    # Aggregate data, if needed.
+    if (data@aggregate_on_load) {
       new_data <- aggregate_data(data = new_data)
-      
-      # Reset flag to FALSE, as data has been loaded
-      new_data@aggregate_on_load <- FALSE
     }
     
     return(new_data)
@@ -834,7 +743,459 @@ setMethod(
 
 
 
+## load_delayed_data (delayedDataObject, novelty detector) ---------------------
+setMethod(
+  "load_delayed_data",
+  signature(
+    data = "delayedDataObject",
+    object = "familiarNoveltyDetector"
+  ),
+  function(
+    data,
+    object,
+    stop_at,
+    ...
+  ) {
+    
+    # Check whether model data- and run-ids should be used.
+    if (data@defer_to_model_data_and_run_id) {
+      data@data_id <- object@data_id
+      data@run_id <- object@run_id
+    }
+    
+    # Read required features.
+    required_features <- object@required_features
+    
+    # Get columns in data frame which are not features, but identifiers instead.
+    non_feature_columns <- get_non_feature_columns(x = object)
+    
+    # Explicitly refer to the method for object = NULL.
+    new_data <- load_delayed_data(
+      data = data,
+      object = NULL,
+      column_names = c(non_feature_columns, required_features)
+    )
+    
+    # Pre-process data, if needed.
+    new_data <- preprocess_data(
+      data = new_data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = TRUE
+    )
+    
+    # Aggregate data, if needed.
+    if (data@aggregate_on_load) {
+      new_data <- aggregate_data(data = new_data)
+    }
+    
+    return(new_data)
+  }
+)
+
+
+
+## load_delayed_data (delayedDataObject, vimp method) --------------------------
+setMethod(
+  "load_delayed_data",
+  signature(
+    data = "delayedDataObject",
+    object = "familiarVimpMethod"
+  ),
+  function(
+    data,
+    object,
+    stop_at,
+    keep_novelty = FALSE,
+    ...
+  ) {
+    
+    # Check whether model data- and run-ids should be used.
+    if (data@defer_to_model_data_and_run_id) {
+      data@data_id <- object@data_id
+      data@run_id <- object@run_id
+    }
+    
+    # Read required features.
+    required_features <- object@required_features
+    
+    # Get columns in data frame which are not features, but identifiers and
+    # outcome instead.
+    non_feature_columns <- get_non_feature_columns(x = object)
+    
+    # Explicitly refer to the method for object = NULL.
+    new_data <- load_delayed_data(
+      data = data,
+      object = NULL,
+      column_names = c(non_feature_columns, required_features)
+    )
+    
+    # Pre-process data, if needed.
+    new_data <- preprocess_data(
+      data = new_data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = keep_novelty
+    )
+    
+    # Aggregate data, if needed.
+    if (data@aggregate_on_load) {
+      new_data <- aggregate_data(data = new_data)
+    }
+    
+    return(new_data)
+  }
+)
+
+
+
+## load_delayed_data (delayedDataObject, ensemble) -----------------------------
+setMethod(
+  "load_delayed_data",
+  signature(
+    data = "delayedDataObject",
+    object = "familiarEnsemble"
+  ),
+  function(
+    data,
+    object,
+    stop_at,
+    keep_novelty = FALSE,
+    ...
+  ) {
+    
+    # Check whether model data- and run-ids should be used.
+    if (data@defer_to_model_data_and_run_id) {
+      data@data_id <- object@data_id
+      data@run_id <- object@run_id
+    }
+    
+    # Read required features.
+    required_features <- object@required_features
+    
+    # Get columns in data frame which are not features, but identifiers and
+    # outcome instead.
+    non_feature_columns <- get_non_feature_columns(x = object)
+    
+    # Explicitly refer to the method for object = NULL.
+    new_data <- load_delayed_data(
+      data = data,
+      object = NULL,
+      column_names = c(non_feature_columns, required_features)
+    )
+    
+    # Pre-process data, if needed.
+    new_data <- preprocess_data(
+      data = new_data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = keep_novelty
+    )
+    
+    # Aggregate data, if needed.
+    if (data@aggregate_on_load) {
+      new_data <- aggregate_data(data = new_data)
+    }
+    
+    return(new_data)
+  }
+)
+
+# 
+# 
+# ## load_delayed_data (model) ---------------------------------------------------
+# setMethod(
+#   "load_delayed_data",
+#   signature(
+#     data = "delayedDataObject",
+#     object = "ANY"
+#   ),
+#   function(
+#     data,
+#     object,
+#     stop_at,
+#     keep_novelty = FALSE
+#   ) {
+#     # Loads data from internal memory
+#     
+#     if (!(
+#       is(object, "familiarModel") ||
+#       is(object, "familiarVimpMethod") ||
+#       is(object, "familiarNoveltyDetector")
+#     )) {
+#       ..error_reached_unreachable_code(paste0(
+#         "load_delayed_data: object is expected to be a familiarModel, ",
+#         "familiarVimpMethod or familiarNoveltyDetector."
+#       ))
+#     }
+#     
+#     # Check if loading was actually delayed
+#     if (!data@delay_loading) return(data)
+#     
+#     # Read project list and settings
+#     iteration_list <- get_project_list()$iter_list
+#     
+#     # Read required features
+#     required_features <- object@required_features
+#     
+#     # Get columns in data frame which are not features, but identifiers and
+#     # outcome instead.
+#     non_feature_cols <- get_non_feature_columns(x = object)
+#     
+#     # Find the identifiers for the current run.
+#     run_id_list <- .get_iteration_identifiers(
+#       run = list("run_table" = object@run_table),
+#       perturb_level = data@perturb_level
+#     )
+#     
+#     # Derive sample identifiers based on the selected iteration data.
+#     sample_identifiers <- .get_sample_identifiers(
+#       iteration_list = iteration_list,
+#       data_id = run_id_list$data,
+#       run_id = run_id_list$run,
+#       train_or_validate = ifelse(data@load_validation, "valid", "train")
+#     )
+#     
+#     # Currently select only unique samples from the backend.
+#     if (!is_empty(sample_identifiers)) {
+#       unique_sample_identifiers <- unique(sample_identifiers)
+#       
+#     } else {
+#       # Return an updated data object, but without data
+#       return(methods::new(
+#         "dataObject",
+#         data = NULL,
+#         preprocessing_level = "none",
+#         outcome_type = data@outcome_type,
+#         aggregate_on_load = data@aggregate_on_load
+#       ))
+#     }
+#     
+#     # Prepare a new data object
+#     new_data <- methods::new(
+#       "dataObject",
+#       data = get_data_from_backend(
+#         sample_identifiers = unique_sample_identifiers,
+#         column_names = c(non_feature_cols, required_features)
+#       ),
+#       preprocessing_level = "none",
+#       outcome_type = data@outcome_type,
+#       delay_loading = FALSE,
+#       perturb_level = NA_integer_,
+#       load_validation = data@load_validation,
+#       aggregate_on_load = data@aggregate_on_load,
+#       sample_set_on_load = data@sample_set_on_load
+#     )
+#     
+#     # Preprocess data
+#     new_data <- preprocess_data(
+#       data = new_data,
+#       object = object,
+#       stop_at = stop_at,
+#       keep_novelty = keep_novelty
+#     )
+#     
+#     # Recreate iteration. Note that we here also use duplicate samples to
+#     # recreate e.g. bootstraps.
+#     new_data <- select_data_from_samples(
+#       data = new_data,
+#       samples = sample_identifiers
+#     )
+#     
+#     if (new_data@aggregate_on_load) {
+#       
+#       # Aggregate data if required
+#       new_data <- aggregate_data(data = new_data)
+#       
+#       # Reset flag to FALSE, as data has been loaded
+#       new_data@aggregate_on_load <- FALSE
+#     }
+#     
+#     return(new_data)
+#   }
+# )
+# 
+# 
+# 
+# ## load_delayed_data (ensemble) ------------------------------------------------
+# setMethod(
+#   "load_delayed_data",
+#   signature(
+#     data = "dataObject",
+#     object = "familiarEnsemble"
+#   ),
+#   function(
+#     data,
+#     object,
+#     stop_at = "clustering",
+#     keep_novelty = FALSE
+#   ) {
+#     # Loads data from internal memory -- for familiarEnsemble objects
+#     
+#     # Suppress NOTES due to non-standard evaluation in data.table
+#     perturb_level <- NULL
+#     
+#     # Check if loading was actually delayed
+#     if (!data@delay_loading) return(data)
+#     
+#     # Read project list
+#     iteration_list <- get_project_list()$iter_list
+#     
+#     # Read required features
+#     required_features <- object@required_features
+#     
+#     # Get columns in data frame which are not features, but identifiers and outcome instead
+#     non_feature_cols <- get_non_feature_columns(x = object)
+#     
+#     # Join run tables to identify the runs that should be evaluated.
+#     combined_run_table <- lapply(
+#       object@run_table$run_table,
+#       function(model_run_table, data_perturb_level) {
+#         return(model_run_table[perturb_level == data_perturb_level])
+#       },
+#       data_perturb_level = data@perturb_level
+#     )
+#     
+#     # Merge to single table
+#     combined_run_table <- data.table::rbindlist(combined_run_table)
+#     
+#     # Remove duplicate rows
+#     combined_run_table <- unique(combined_run_table)
+#     
+#     # Check length and extract sample identifiers.
+#     if (nrow(combined_run_table) == 1L) {
+#       sample_identifiers <- .get_sample_identifiers(
+#         iteration_list = iteration_list,
+#         data_id = combined_run_table$data_id,
+#         run_id = combined_run_table$run_id,
+#         train_or_validate = ifelse(data@load_validation, "valid", "train")
+#       )
+#       
+#     } else {
+#       # Extract all sample identifiers. This happens if the the data is pooled.
+#       sample_identifiers <- data.table::rbindlist(lapply(
+#         seq_len(nrow(combined_run_table)),
+#         function(ii, run_table, iteration_list, train_or_validate) {
+#           sample_identifiers <- .get_sample_identifiers(
+#             iteration_list = iteration_list,
+#             data_id = run_table$data_id[ii],
+#             run_id = run_table$run_id[ii],
+#             train_or_validate = train_or_validate
+#           )
+#           
+#           return(sample_identifiers)
+#         },
+#         run_table = combined_run_table,
+#         iteration_list = iteration_list,
+#         train_or_validate = ifelse(data@load_validation, "valid", "train")
+#       ))
+#       
+#       # Select only unique sample identifiers.
+#       sample_identifiers <- unique(sample_identifiers)
+#     }
+#     
+#     # Currently select only unique samples from the backend.
+#     if (!is_empty(sample_identifiers)) {
+#       unique_sample_identifiers <- unique(sample_identifiers)
+#       
+#     } else {
+#       # Return an updated data object, but without data
+#       return(methods::new(
+#         "dataObject",
+#         data = NULL,
+#         preprocessing_level = "none",
+#         outcome_type = data@outcome_type,
+#         aggregate_on_load = data@aggregate_on_load
+#       ))
+#     }
+#     
+#     # Prepare a new data object
+#     new_data <- methods::new(
+#       "dataObject",
+#       data = get_data_from_backend(
+#         sample_identifiers = unique_sample_identifiers,
+#         column_names = c(non_feature_cols, required_features)
+#       ),
+#       preprocessing_level = "none",
+#       outcome_type = data@outcome_type,
+#       delay_loading = FALSE,
+#       perturb_level = NA_integer_,
+#       load_validation = data@load_validation,
+#       aggregate_on_load = data@aggregate_on_load,
+#       sample_set_on_load = data@sample_set_on_load
+#     )
+#     
+#     # Preprocess data
+#     new_data <- preprocess_data(
+#       data = new_data,
+#       object = object,
+#       stop_at = stop_at,
+#       keep_novelty = keep_novelty
+#     )
+#     
+#     # Recreate iteration. Note that we here also use duplicate samples
+#     # to recreate e.g. bootstraps.
+#     new_data <- select_data_from_samples(
+#       data = new_data,
+#       samples = sample_identifiers
+#     )
+#     
+#     # Aggregate data if required
+#     if (new_data@aggregate_on_load) {
+#       
+#       # Aggregate
+#       new_data <- aggregate_data(data = new_data)
+#       
+#       # Reset flag to FALSE, as data has been loaded
+#       new_data@aggregate_on_load <- FALSE
+#     }
+#     
+#     return(new_data)
+#   }
+# )
+# 
+
+
 # preprocess_data methods ------------------------------------------------------
+
+## preprocess_data (delayedDataObject, ANY) ------------------------------------
+setMethod(
+  "preprocess_data",
+  signature(
+    data = "delayedDataObject",
+    object = "ANY"
+  ),
+  function(
+    data,
+    object,
+    stop_at = "clustering",
+    keep_novelty = FALSE,
+    ...
+  ) {
+    
+    # Load data. This automatically pre-processes the data.
+    data <- load_delayed_data(
+      data = data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = keep_novelty,
+      ...
+    )
+    
+    # Perform any object-specific processing.
+    data <- preprocess_data(
+      data = data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = keep_novelty,
+      ...
+    )
+    
+    return(data)
+  }
+)
+
+
 
 ## preprocess_data (vimp method) -----------------------------------------------
 setMethod(
@@ -1335,7 +1696,16 @@ setMethod(
 ) {
   
   # Check whether data is a dataObject, and create one otherwise
-  if (!is(data, "dataObject")) {
+  if (is(data, "delayedDataObject")) {
+    data <- load_delayed_data(
+      data = data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = keep_novelty,
+      ...
+    )
+    
+  } else if (!is(data, "dataObject")) {
     data <- as_data_object(
       data = data,
       object = object
@@ -1343,16 +1713,6 @@ setMethod(
     
     # Set pre-processing level.
     data@preprocessing_level <- ifelse(is_pre_processed, "clustering", "none")
-  }
-  
-  # Load data from internal memory, if not provided otherwise
-  if (data@delay_loading) {
-    data <- load_delayed_data(
-      data = data,
-      object = object,
-      stop_at = stop_at,
-      keep_novelty = keep_novelty
-    )
   }
   
   # Pre-process data in case it has not been pre-processed
@@ -1370,7 +1730,7 @@ setMethod(
 
 
 
-# select_data_from_samples -----------------------------------------------------
+# select_data_from_samples (dataObject) ----------------------------------------
 setMethod(
   "select_data_from_samples",
   signature(
@@ -1379,86 +1739,53 @@ setMethod(
   ),
   function(data, samples = NULL) {
     
-    # Check if data is loaded
-    if (data@delay_loading) {
-      # Store samples until the data is loaded.
-      data@sample_set_on_load <- samples
+    # Determine the names of the id-columns, up to the series level.
+    id_columns <- get_id_columns(id_depth = "series")
+    
+    if (is_empty(samples)) {
+      # Return an empty data set if no samples are provided
+      data@data <- head(data@data, n = 0L)
       
     } else {
-      # Determine the names of the id-columns, up to the series level.
-      id_columns <- get_id_columns(id_depth = "series")
-      
-      if (is_empty(samples) && is.null(data@sample_set_on_load)) {
-        # Return an empty data set if no samples are provided
-        data@data <- head(data@data, n = 0L)
-        
-      } else if (is_empty(samples) && !is.null(data@sample_set_on_load)) {
-        # Use samples in the sample_set_on_load attribute.
+      # Use samples from the samples function argument. allow.cartesian is set
+      # to true to allow use with repeated measurements.
+      if (all(id_columns %in% colnames(samples))) {
         data@data <- merge(
-          x = data@sample_set_on_load,
+          x = samples,
           y = data@data,
           by = id_columns,
           all = FALSE,
           allow.cartesian = TRUE
         )
         
-      } else if (!is_empty(samples) && is.null(data@sample_set_on_load)) {
-        # Use samples from the samples function argument. allow.cartesian is set
-        # to true to allow use with repeated measurements.
-        if (all(id_columns %in% colnames(samples))) {
-          data@data <- merge(
-            x = samples,
-            y = data@data,
-            by = id_columns,
-            all = FALSE,
-            allow.cartesian = TRUE
-          )
-          
-        } else {
-          data@data <- merge(
-            x = samples,
-            y = data@data,
-            by = get_id_columns(id_depth = "sample"),
-            all = FALSE,
-            allow.cartesian = TRUE
-          )
-        }
-        
       } else {
-        # Use samples that appear both as function argument and within the
-        # sample_set_on_load attribute. The sample_set_on_load attribute is used
-        # as a filter. allow.cartesian is set to true to allow use with repeated
-        # measurements.
-        samples <- data.table::fintersect(samples, data@sample_set_on_load)
-        
-        if (is_empty(samples)) {
-          # Return an empty data set if no samples are left.
-          data@data <- head(data@data, n = 0L)
-          
-        } else {
-          # Check if series identifiers are present. They may be absent if
-          # samples were generated using fam_sample
-          if (all(id_columns %in% colnames(sample))) {
-            data@data <- merge(
-              x = samples,
-              y = data@data,
-              by = id_columns,
-              all = FALSE,
-              allow.cartesian = TRUE
-            )
-            
-          } else {
-            data@data <- merge(
-              x = samples,
-              y = data@data,
-              by = get_id_columns(id_depth = "sample"),
-              all = FALSE,
-              allow.cartesian = TRUE
-            )
-          }
-        }
+        data@data <- merge(
+          x = samples,
+          y = data@data,
+          by = get_id_columns(id_depth = "sample"),
+          all = FALSE,
+          allow.cartesian = TRUE
+        )
       }
-    }
+    } 
+
+    return(data)
+  }
+)
+
+
+
+# select_data_from_samples (delayedDataObject) ---------------------------------
+setMethod(
+  "select_data_from_samples",
+  signature(
+    data = "dataObject",
+    samples = "ANY"
+  ),
+  function(data, samples = NULL) {
+    
+    # Set the sample set that should be loaded.
+    data@sample_set_on_load <- samples
     
     return(data)
   }
@@ -1466,22 +1793,12 @@ setMethod(
 
 
 
-# aggregate_data ---------------------------------------------------------------
+
+# aggregate_data (dataObject) --------------------------------------------------
 setMethod(
   "aggregate_data",
   signature(data = "dataObject"),
   function(data) {
-    
-    # Check if loading of the data object was delayed
-    if (data@delay_loading) {
-      # Mark for future aggregation after loading the data
-      data@aggregate_on_load <- TRUE
-      return(data)
-      
-    } else {
-      # Set aggregation flag to FALSE and continue
-      data@aggregate_on_load <- FALSE
-    }
     
     # Check if the data is empty
     if (is_empty(data)) return(data)
@@ -1568,6 +1885,20 @@ setMethod(
     return(data)
   }
 )
+
+
+
+# aggregate_data (delayedDataObject) --------------------------------------------------
+setMethod(
+  "aggregate_data",
+  signature(data = "delayedDataObject"),
+  function(data) {
+    # Mark for future aggregation after loading the data.
+    data@aggregate_on_load <- TRUE
+    return(data)
+  }
+)
+
 
 
 # filter_features --------------------------------------------------------------
@@ -2188,21 +2519,49 @@ setMethod(
     # Check if features are provided externally.
     is_external <- !is.null(features)
     
-    # Create features from columns in the dataset, if unset.
-    if (!is_external && x@delay_loading) {
-      # Get features from the feature info list.
-      features <- get_available_features(
-        feature_info_list = feature_info_list,
-        exclude_signature = exclude_signature,
-        exclude_novelty = exclude_novelty
-      )
-      
-    } else if (!is_external) {
+    if (!is_external) {
       # Get features directly.
       features <- get_feature_columns(x)
     }
     
     # Pass to underlying function.
+    return(.get_required_features(
+      features = features,
+      feature_info_list,
+      is_clustered = .as_preprocessing_level(x@preprocessing_level) == "clustering",
+      is_external = is_external,
+      exclude_signature = exclude_signature,
+      exclude_novelty = exclude_novelty
+    ))
+  }
+)
+
+
+## get_required_features (delayedDataObject) -----------------------------------
+setMethod(
+  "get_required_features",
+  signature(x = "delayedDataObject"),
+  function(
+    x,
+    feature_info_list,
+    features = NULL,
+    exclude_signature = FALSE,
+    exclude_novelty = FALSE,
+    ...
+  ) {
+    # Check if features are provided externally.
+    is_external <- !is.null(features)
+
+    if (is_external) {
+      ..error_reached_unreachable_code("features should remain unset (NULL).")
+    }
+    
+    features <- get_available_features(
+      feature_info_list = feature_info_list,
+      exclude_signature = exclude_signature,
+      exclude_novelty = exclude_novelty
+    )
+    
     return(.get_required_features(
       features = features,
       feature_info_list,
@@ -2399,6 +2758,8 @@ setMethod(
   return(required_features)
 }
 
+
+
 # get_model_features methods ---------------------------------------------------
 
 ## get_model_features (dataObject) ---------------------------------------------
@@ -2417,16 +2778,7 @@ setMethod(
     # Check if features are provided externally.
     is_external <- !is.null(features)
     
-    # Create features from columns in the dataset, if unset.
-    if (!is_external && x@delay_loading) {
-      # Get features from the feature info list.
-      features <- get_available_features(
-        feature_info_list = x,
-        exclude_signature = exclude_signature,
-        exclude_novelty = exclude_novelty
-      )
-      
-    } else if (!is_external) {
+    if (!is_external) {
       # Get features directly.
       features <- get_feature_columns(x)
     }
@@ -2444,6 +2796,47 @@ setMethod(
     ))
   }
 )
+
+
+
+## get_model_features (delayedDataObject) --------------------------------------
+setMethod(
+  "get_model_features",
+  signature(x = "delayedDataObject"),
+  function(
+    x,
+    feature_info_list,
+    features = NULL,
+    exclude_signature = FALSE,
+    exclude_novelty = FALSE,
+    ...
+  ) {
+    # Check if features are provided externally.
+    is_external <- !is.null(features)
+    
+    if (is_external) {
+      ..error_reached_unreachable_code("features should remain unset (NULL).")
+    }
+    
+    features <- get_available_features(
+      feature_info_list = feature_info_list,
+      exclude_signature = exclude_signature,
+      exclude_novelty = exclude_novelty
+    )
+    
+    return(.get_required_features(
+      features = features,
+      feature_info_list,
+      is_clustered = .as_preprocessing_level(x@preprocessing_level) == "clustering",
+      is_external = is_external,
+      exclude_signature = exclude_signature,
+      exclude_novelty = exclude_novelty,
+      exclude_imputation = TRUE,
+      ...
+    ))
+  }
+)
+
 
 
 

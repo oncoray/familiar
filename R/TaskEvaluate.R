@@ -245,7 +245,7 @@ setMethod(
       preprocessing_level = "none",
       outcome_type = outcome_info@outcome_type,
       outcome_info = outcome_info,
-      load_validation = object@validation,
+      validation = object@validation,
       delay_loading = TRUE,
       aggregate_on_load = FALSE
     )

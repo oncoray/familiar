@@ -37,10 +37,7 @@ setMethod(
   "is_empty",
   signature(x = "dataObject"),
   function(x, allow_no_features = FALSE, ...) {
-    if (x@delay_loading) {
-      # Data is not empty until is has been properly loaded
-      return(FALSE)
-    } else if (is.null(x@data)) {
+    if (is.null(x@data)) {
       # Data is empty if it is NULL
       return(TRUE)
     } else if (nrow(x@data) == 0L) {
@@ -53,6 +50,15 @@ setMethod(
       # Data is present otherwise
       return(FALSE)
     }
+  }
+)
+
+setMethod(
+  "is_empty",
+  signature(x = "delayedDataObject"),
+  function(x, ...) {
+    # Data is not empty until is has been properly loaded
+    return(FALSE)
   }
 )
 

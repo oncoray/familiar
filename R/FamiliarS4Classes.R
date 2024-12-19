@@ -722,8 +722,6 @@ setClass(
   "delayedDataObject",
   contains = "dataObject",
   slots = list(
-    # Determines if validation or development data should be loaded.
-    validation = "logical",
     # Flag for aggregation after loading and pre-processing
     aggregate_on_load = "logical",
     # Samples to be loaded. 
