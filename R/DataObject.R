@@ -1779,7 +1779,7 @@ setMethod(
 setMethod(
   "select_data_from_samples",
   signature(
-    data = "dataObject",
+    data = "delayedDataObject",
     samples = "ANY"
   ),
   function(data, samples = NULL) {
