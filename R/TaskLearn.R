@@ -253,7 +253,7 @@ setMethod(
       rank_threshold = vimp_rank_threshold
     )
     
-    # Create the raw model object for training..
+    # Create the raw model object for training.
     model_object <- methods::new(
       "familiarModel",
       outcome_type = data@outcome_type,
@@ -264,6 +264,8 @@ setMethod(
       learner = object@learner,
       feature_info = feature_info_list,
       outcome_info = data@outcome_info,
+      data_id = object@data_id,
+      run_id = object@run_id,
       run_table = .get_current_run_table(object = object),
       settings = settings$eval,
       project_id = object@project_id

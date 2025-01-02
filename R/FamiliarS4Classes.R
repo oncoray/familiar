@@ -36,6 +36,9 @@
 #' @slot calibration_info Calibration information, e.g. baseline survival in the
 #'   development cohort.
 #' @slot km_info Data concerning stratification into risk groups.
+#' @slot data_id Internal identifier for the dataset used to train the model.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   used to train the model.
 #' @slot run_table Run table for the data used to train the model. Used
 #'   internally.
 #' @slot settings A copy of the evaluation configuration parameters used at
@@ -90,6 +93,10 @@ setClass("familiarModel",
     model_features = "ANY",
     # Features that are required for novelty detection.
     novelty_features = "ANY",
+    # data_id for the data used to train the model.
+    data_id = "integer",
+    # run_id for the data used to train the model.
+    run_id = "integer",
     # Run table for the current model
     run_table = "ANY",
     # Information required to assess model calibrations (e.g. baseline survival)
@@ -133,6 +140,8 @@ setClass("familiarModel",
     novelty_features = NULL,
     calibration_info = NULL,
     km_info = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
     run_table = NULL,
     settings = NULL,
     is_trimmed = FALSE,
@@ -172,6 +181,9 @@ setClass("familiarModel",
 #'   models in the ensemble,
 #' @slot novelty_features The combined set of features that is used to train all
 #'   novelty detectors in the ensemble.
+#' @slot data_id Internal identifier for the dataset used to train the ensemble.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   used to train the ensemble.
 #' @slot run_table Run table for the data used to train the ensemble. Used
 #'   internally.
 #' @slot calibration_info Calibration information, e.g. baseline survival in the
@@ -214,6 +226,10 @@ setClass("familiarEnsemble",
     model_features = "ANY",
     # Features that are required for novelty detection.
     novelty_features = "ANY",
+    # data_id for the data used to train the model.
+    data_id = "integer",
+    # run_id for the data used to train the model.
+    run_id = "integer",
     # Set of run tables for the current ensemble. This is only required for
     # processing internal data.
     run_table = "ANY",
@@ -246,6 +262,8 @@ setClass("familiarEnsemble",
     required_features = NULL,
     model_features = NULL,
     novelty_features = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
     run_table = NULL,
     calibration_info = NULL,
     model_dir_path = NA_character_,

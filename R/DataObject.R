@@ -703,7 +703,7 @@ setMethod(
     keep_novelty = FALSE,
     ...
   ) {
-    
+    browser()
     # Check whether model data- and run-ids should be used.
     if (data@defer_to_model_data_and_run_id) {
       data@data_id <- object@data_id

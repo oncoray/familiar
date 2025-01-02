@@ -239,16 +239,29 @@ setMethod(
       ..error_reached_unreachable_code("outcome_info is required.")
     }
     
+    # Set up a delayed 
     data <- methods::new(
-      "dataObject",
+      "delayedDataObject",
       data = NULL,
       preprocessing_level = "none",
       outcome_type = outcome_info@outcome_type,
       outcome_info = outcome_info,
       validation = object@validation,
-      delay_loading = TRUE,
       aggregate_on_load = FALSE
     )
+    
+    # Set the data_id and run_id for the data itself.
+    if (object@force_ensemble_detail_level) {
+      data@data_id <- object@ensemble_data_id
+      data@run_id <- object@ensemble_run_id
+      
+    } else {
+      data@data_id <- object@data_id
+      data@run_id <- object@run_id
+    }
+    
+    # Determine whether model data and run ids should be used for predictions.
+    data@defer_to_model_data_and_run_id <- object@get_predictions_at_model_level
     
     # Pass to method that dispatches with dataObject for further processing.
     return(.perform_task(

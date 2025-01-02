@@ -60,6 +60,11 @@ development cohort.}
 
 \item{\code{km_info}}{Data concerning stratification into risk groups.}
 
+\item{\code{data_id}}{Internal identifier for the dataset used to train the model.}
+
+\item{\code{run_id}}{Internal identifier for the specific subset of the dataset used
+used to train the model.}
+
 \item{\code{run_table}}{Run table for the data used to train the model. Used
 internally.}
 

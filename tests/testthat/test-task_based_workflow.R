@@ -178,6 +178,7 @@ data <- familiar:::test_create_small_good_data("binomial")
 results <- familiar::summon_familiar(
   data = data,
   experimental_design = "bs(fs,3)+bs(mb, 3)",
+  evaluation_elements = "auc_data",
   vimp_method = "mim",
   learner = "glm_logistic",
   evaluate_top_level_only = FALSE,

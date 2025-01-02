@@ -497,6 +497,7 @@ setMethod(
     verbose = FALSE,
     ...
 ) {
+  browser()
   ## Compute distance between features ---------------------------------------
   feature_similarity <- NULL
   if (any(c("model_vimp", "feature_similarity", "univariate_analysis",
