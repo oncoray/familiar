@@ -91,8 +91,11 @@ setMethod(
     ...
   ) {
 
+    # Check n_samples, and then ensure that n_samples is equal to the number
+    # of rows in the dataset.
     n_samples <- get_n_samples(data)
     if (n_samples == 0L) return(callNextMethod())
+    n_samples <- nrow(data@data)
     
     if (type == "default") {
       # default ----------------------------------------------------------------
@@ -184,8 +187,11 @@ setMethod(
     ...
   ) {
     
+    # Check n_samples, and then ensure that n_samples is equal to the number
+    # of rows in the dataset.
     n_samples <- get_n_samples(data)
     if (n_samples == 0L) return(callNextMethod())
+    n_samples <- nrow(data@data)
 
     if (object@outcome_type == "survival" && type == "default") {
       # For survival outcomes based on survival times, predict the average
@@ -268,8 +274,11 @@ setMethod(
     ...
   ) {
     
+    # Check n_samples, and then ensure that n_samples is equal to the number
+    # of rows in the dataset.
     n_samples <- get_n_samples(data)
     if (n_samples == 0L) return(callNextMethod())
+    n_samples <- nrow(data@data)
 
     if (object@outcome_type %in% c("survival") &&  type == "default") {
       # For survival outcomes based on survival times, predict the average

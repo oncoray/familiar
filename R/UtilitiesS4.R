@@ -463,20 +463,40 @@ setMethod(
 
 
 # get_n_samples ----------------------------------------------------------------
-setMethod("get_n_samples", signature(x = "data.table"), function(x, id_depth = "sample") {
-  return(.get_n_samples(x = x, id_depth = id_depth))
-})
+setMethod(
+  "get_n_samples",
+  signature(x = "data.table"),
+  function(x, id_depth = "sample", count_unique = TRUE) {
+    return(.get_n_samples(
+      x = x,
+      id_depth = id_depth, 
+      count_unique = count_unique
+    ))
+  }
+)
 
-setMethod("get_n_samples", signature(x = "dataObject"), function(x, id_depth = "sample") {
-  return(.get_n_samples(x = x@data, id_depth = id_depth))
-})
+setMethod(
+  "get_n_samples",
+  signature(x = "dataObject"),
+  function(x, id_depth = "sample", count_unique = TRUE) {
+    return(.get_n_samples(
+      x = x@data,
+      id_depth = id_depth,
+      count_unique = count_unique
+    ))
+  }
+)
 
-setMethod("get_n_samples", signature(x = "NULL"), function(x, id_depth = "sample") {
-  return(0L)
-})
+setMethod(
+  "get_n_samples",
+  signature(x = "NULL"),
+  function(x, id_depth = "sample", ...) {
+    return(0L)
+  }
+)
 
 
-.get_n_samples <- function(x, id_depth) {
+.get_n_samples <- function(x, id_depth, count_unique) {
   # Check if x is empty.
   if (is_empty(x)) {
     return(0L)
@@ -487,7 +507,12 @@ setMethod("get_n_samples", signature(x = "NULL"), function(x, id_depth = "sample
 
   # Return the number of rows with unique values for the combination of
   # identifier columns.
-  return(nrow(unique(x[, mget(id_columns)])))
+  if (count_unique) {
+    return(nrow(unique(x[, mget(id_columns)])))
+    
+  } else {
+    return(nrow(x[, mget(id_columns)]))
+  }
 }
 
 

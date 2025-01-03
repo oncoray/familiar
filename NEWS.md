@@ -97,6 +97,9 @@
   
 - Some vignettes referred to `experiment_design` where `experimental_design` was
   intended.
+  
+- Fixed an error where naive models would yield an incorrect number of predicted
+  values when samples appear multiple times (e.g. in bootstraps).
 
 # Version 1.5.0 (Whole Whale)
 
