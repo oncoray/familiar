@@ -497,7 +497,7 @@ setMethod(
     verbose = FALSE,
     ...
 ) {
-  browser()
+  
   ## Compute distance between features ---------------------------------------
   feature_similarity <- NULL
   if (any(c("model_vimp", "feature_similarity", "univariate_analysis",
@@ -808,30 +808,9 @@ setMethod(
     )
   }
   
-  # Set up a placeholder pooling table.
-  if (is(object, "familiarEnsemble")) {
-    pooling_table <- data.table::data.table(
-      "ensemble_data_id" = object@run_table$ensemble_data_id,
-      "ensemble_run_id" = object@run_table$ensemble_run_id,
-      "data_perturb_level" = ifelse(is.na(data@perturb_level), 0L, data@perturb_level),
-      "pool_data_id" = 0L,
-      "pool_run_id" = 0L,
-      "pool_perturb_level" = 0L
-    )
-  } else {
-    pooling_table <- data.table::data.table(
-      "ensemble_data_id" = 0L,
-      "ensemble_run_id" = 0L,
-      "data_perturb_level" = 0L,
-      "pool_data_id" = 0L,
-      "pool_run_id" = 0L,
-      "pool_perturb_level" = 0L
-    )
-  }
-  
   # Set up outcome information object.
   outcome_info <- .create_outcome_info(object)
-  
+
   # Create a familiarData object
   fam_data <- methods::new(
     "familiarData",
@@ -846,7 +825,6 @@ setMethod(
     model_features = .optional_from_slot(object, "model_features", alternative = NULL),
     learner = object@learner,
     vimp_method = object@vimp_method,
-    pooling_table = pooling_table,
     prediction_data = prediction_data,
     confusion_matrix = confusion_matrix_info,
     decision_curve_data = decision_curve_data,
@@ -860,10 +838,7 @@ setMethod(
     feature_expressions = expression_info,
     feature_similarity = feature_similarity,
     sample_similarity = sample_similarity,
-    ice_data = ice_data,
-    is_validation = .optional_from_slot(data, "validation", alternative = FALSE),
-    generating_ensemble = get_object_name(object = object, abbreviated = FALSE),
-    project_id = .optional_from_slot(object, "project_id", alternative = 0L)
+    ice_data = ice_data
   )
   
   # Add package version to the data set 

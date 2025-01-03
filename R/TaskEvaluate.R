@@ -317,7 +317,9 @@ setMethod(
       "familiarEnsemble",
       model_list = as.list(object@model_files),
       learner = object@learner,
-      vimp_method = object@vimp_method
+      vimp_method = object@vimp_method,
+      data_id = object@ensemble_data_id,
+      run_id = object@ensemble_run_id
     )
     
     # Add package version.
@@ -381,6 +383,10 @@ setMethod(
       message_indent = message_indent + 1L,
       verbose = verbose
     )
+    
+    # Add additional details.
+    evaluation_data@name <- object@data_set_name
+    evaluation_data@project_id <- object@project_id
     
     if (!is.na(object@file)) {
       saveRDS(evaluation_data, file = object@file)
@@ -454,8 +460,6 @@ setMethod(
   
   # evaluation tasks -----------------------------------------------------------
   
-  data_file_names <- NULL
-  
   n_min_model_instances <- Inf
   evaluate_external_validation <- evaluate_internal_validation <- evaluate_development <- FALSE
   
@@ -498,6 +502,8 @@ setMethod(
   ii <- 1L
   
   for (jj in seq_along(collect_task_list)) {
+    # Initialise file names.
+    data_file_names <- NULL
     for (learner in learners) {
       for (vimp_method in vimp_methods) {
         
@@ -658,7 +664,7 @@ setMethod(
       dir_path = file_paths$mb_dir
     ))
   }
-  
+
   # train and variable importance tasks ----------------------------------------
   task_list <- .generate_trainer_tasks(
     experiment_data = experiment_data,
@@ -706,9 +712,9 @@ setMethod(
   }
   
   # Determine which collection tasks are required.
-  finished_tasks <- sapply(tasks$train, .file_exists)
-  unfinished_tasks <- tasks$train[!finished_tasks]
-  finished_tasks <- tasks$train[finished_tasks]
+  finished_tasks <- sapply(tasks$collect, .file_exists)
+  unfinished_tasks <- tasks$collect[!finished_tasks]
+  finished_tasks <- tasks$collect[finished_tasks]
   
   # Process any unfinished tasks.
   if (length(unfinished_tasks) > 0L) {
@@ -799,6 +805,7 @@ setMethod(
   verbose,
   ...
 ) {
+  
   # Message that evaluation is starting.
   logger_message(
     paste0(

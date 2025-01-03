@@ -372,7 +372,7 @@ setMethod(
   function(x, ...) {
     # If the list is empty, return NULL instead.
     if (is_empty(x)) return(NULL)
-    browser()
+    
     # Dispatch to method for single variable importance tables.
     return(lapply(
       x,

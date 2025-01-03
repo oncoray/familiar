@@ -191,3 +191,10 @@ results <- familiar::summon_familiar(
   verbose = verbose,
   parallel = FALSE
 )
+
+testthat::test_that("all output is present", {
+  testthat::expect_true(all(sapply(results$familiarModel, familiar:::model_is_trained)))
+  testthat::expect_length(results$familiarModel, 3L)
+  testthat::expect_length(results$familiarData, 8L)
+  testthat::expect_length(results$familiarCollection, 4L)
+})

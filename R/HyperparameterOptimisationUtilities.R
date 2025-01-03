@@ -367,7 +367,7 @@
     object@vimp_method %in% .get_available_no_features_vimp_methods()
   ) {
     return(NULL)
-    browser()
+    
   } else if (is(object@vimp_table, "vimpTable") || rlang::is_bare_list(object@vimp_table)) {
     # Existing vimp_tables.
     vimp_table <- object@vimp_table

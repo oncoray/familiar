@@ -513,18 +513,8 @@ summon_familiar <- function(
     verbose = verbose
   )
   
-  browser()
-#   run_evaluation(
-#     cl = cl,
-#     project_list = project_info,
-#     settings = settings,
-#     file_paths = file_paths,
-#     verbose = verbose
-#   )
-  
   if (file_paths$is_temporary) {
-    # Collect all familiarModels, familiarEnsemble, familiarData and
-    # familiarCollection objects.
+    # Collect all familiarModels, familiarData and familiarCollection objects.
     familiar_list <- .import_all_familiar_objects(file_paths = file_paths)
     
     # Return list with objects
@@ -1300,6 +1290,7 @@ get_project_list <- function() {
 }
 
 
+
 .import_all_familiar_objects <- function(file_paths) {
   familiar_list <- list()
   
@@ -1307,58 +1298,24 @@ get_project_list <- function() {
   model_files <- list.files(
     path = file_paths$mb_dir,
     pattern = "model.RDS",
-    recursive = TRUE
+    full.names = TRUE
   )
-  model_files <- sapply(
-    model_files,
-    function(x, dir_path) (file.path(dir_path, x)),
-    dir_path = file_paths$mb_dir
-  )
-  
-  # Load familiarModel files and add to list
   familiar_list$familiarModel <- load_familiar_object(model_files)
-  
-  # Find familiarEnsemble files
-  ensemble_files <- list.files(
-    path = file_paths$mb_dir,
-    pattern = "ensemble.RDS",
-    recursive = TRUE
-  )
-  ensemble_files <- sapply(
-    ensemble_files,
-    function(x, dir_path) (file.path(dir_path, x)),
-    dir_path = file_paths$mb_dir
-  )
-  
-  # Load familiarEnsemble files and add to list
-  familiar_list$familiarEnsemble <- load_familiar_object(ensemble_files)
   
   # Find familiarData files
   data_files <- list.files(
     path = file_paths$fam_data_dir,
-    pattern = "data.RDS"
+    pattern = "data.RDS",
+    full.names = TRUE
   )
-  data_files <- sapply(
-    data_files,
-    function(x, dir_path) (file.path(dir_path, x)),
-    dir_path = file_paths$fam_data_dir
-  )
-  
-  # Load familiarData files and add to list
   familiar_list$familiarData <- load_familiar_object(data_files)
   
   # Find familiarCollection files
   coll_files <- list.files(
     path = file_paths$fam_coll_dir,
-    pattern = "ensemble_data_|pooled_data.RDS"
+    pattern = "collection.RDS",
+    full.names = TRUE
   )
-  coll_files <- sapply(
-    coll_files,
-    function(x, dir_path) (file.path(dir_path, x)),
-    dir_path = file_paths$fam_coll_dir
-  )
-  
-  # Load familiarCollection files and add to list
   familiar_list$familiarCollection <- load_familiar_object(coll_files)
   
   return(familiar_list)
