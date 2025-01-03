@@ -13,22 +13,11 @@ setMethod(
     object <- update_object(object = object)
     
     # Create an initial descriptor.
-    data_str <- paste0(
+    cat(paste0(
       "A dataset (", object@name, "; ",
-      .familiar_version_string(object), ")"
-    )
-    
-    # Add the generating ensemble, if available.
-    if (length(object@generating_ensemble) > 0L) {
-      data_str <- paste0(
-        data_str, " created using ",
-        object@generating_ensemble, ".\n"
-      )
-      
-    } else {
-      data_str <- paste0(data_str, ".\n")
-    }
-    cat(data_str)
+      .familiar_version_string(object),
+      ").\n"
+    ))
     
     # Details concerning the generating ensemble.
     cat(paste0(

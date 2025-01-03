@@ -90,9 +90,6 @@ dataset.}
 \item{\code{is_validation}}{Signifies whether the underlying data forms a validation
 dataset. Used internally.}
 
-\item{\code{generating_ensemble}}{Name of the ensemble that was used to generate the
-familiarData object.}
-
 \item{\code{project_id}}{Identifier of the project that generated the familiarData
 object.}
 

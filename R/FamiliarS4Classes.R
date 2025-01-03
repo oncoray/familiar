@@ -339,8 +339,6 @@ setClassUnion(
 #'   dataset.
 #' @slot is_validation Signifies whether the underlying data forms a validation
 #'   dataset. Used internally.
-#' @slot generating_ensemble Name of the ensemble that was used to generate the
-#'   familiarData object.
 #' @slot project_id Identifier of the project that generated the familiarData
 #'   object.
 #' @slot familiar_version Version of the familiar package.
@@ -410,8 +408,6 @@ setClass("familiarData",
     # Flag to signal whether the data concerns validation data (TRUE) or
     # development data (FALSE)
     is_validation = "logical",
-    # Name of the model ensemble used to generate this data
-    generating_ensemble = "character",
     # Project identifier
     project_id = "ANY",
     # Package version for backward compatibility
@@ -446,7 +442,6 @@ setClass("familiarData",
     sample_similarity = NULL,
     ice_data = NULL,
     is_validation = FALSE,
-    generating_ensemble = character(0L),
     project_id = NULL,
     familiar_version = NULL
   )
