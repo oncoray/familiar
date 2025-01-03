@@ -161,7 +161,6 @@ Collate:
     'MetricS4ConcordanceIndex.R'
     'MetricS4ConfusionMatrixMetrics.R'
     'MetricS4Regression.R'
-    'ModelBuilding.R'
     'NoveltyDetectorMain.R'
     'NoveltyDetectorS4IsolationTree.R'
     'NoveltyDetectorS4NoneNoveltyDetector.R'
