@@ -73,12 +73,56 @@ setMethod(
     return_results = TRUE,
     ...
   ) {
+    # Suppress NOTES due to non-standard evaluation in data.table
+    internal <- label_order <- NULL
+    
+    # Set collection name.
+    if (!is.na(object@data_id) && !is.na(object@run_id)) {
+      name <- NULL
+      if (object@data_id == 1L && object@run_id == 1L) {
+        name <- "pooled"
+      }
+      
+      # Generate file name of the model.
+      collection_name <- get_object_file_name(
+        object_type = "familiarCollection",
+        data_id = object@data_id,
+        run_id = object@run_id,
+        name = name,
+        project_id = object@project_id,
+        with_extension = FALSE
+      )
+      
+    } else {
+      collection_name <- "collection"
+    }
+    
     # Process collection.
     collection_object <- suppressWarnings(
       as_familiar_collection(
-        object = object@data_file
+        object = object@data_file,
+        collection_name = collection_name
       )
     )
+    
+    # Update labels of datasets, which affect how datasets are ordered in
+    # plots and tables. Labels are only updated and ordered when the internal
+    # naming system is used.
+    standard_names <- data.table::data.table(
+      "internal" = c("development", "internal_validation", "external_validation"),
+      "label" = c("development", "int. validation", "ext. validation"),
+      "label_order" = seq_len(3L)
+    )
+    old_names <- get_data_set_names(collection_object)
+    if (all(old_names %in% standard_names$internal)) {
+      standard_names <- standard_names[internal %in% old_names][order(label_order)]
+      collection_object <- set_data_set_names(
+        x = collection_object,
+        old = standard_names$internal,
+        new = standard_names$label,
+        order = standard_names$label
+      )
+    }
     
     if (!is.na(object@file)) {
       saveRDS(collection_object, file = object@file)
