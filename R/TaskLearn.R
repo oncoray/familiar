@@ -404,10 +404,6 @@ setMethod(
       hyperparameters <- list("hyperparameters" = hyperparameters)
     }
     
-    if (!rlang::is_bare_list(hyperparameters$hyperparameters)) {
-      ..error("No hyperparameters were found.")
-    }
-    
     return(hyperparameters)
   }
 )

@@ -2579,7 +2579,7 @@ theme_familiar <- function(
   # Check if directory exists
   if (is.encapsulated_path(dir_path)) {
     file_dir <- normalizePath(
-      file.path(dir_path, object@name, type),
+      file.path(dir_path, type),
       mustWork = FALSE
     )
     

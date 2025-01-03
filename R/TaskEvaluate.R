@@ -289,6 +289,7 @@ setMethod(
     settings,
     cl = NULL,
     message_indent = 0L,
+    verbose = FALSE,
     return_results = TRUE,
     ...
   ) {
@@ -834,6 +835,57 @@ setMethod(
   logger_message(
     paste0(
       "Evaluation: Evaluation datasets were collected.\n"
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+}
+
+
+
+.run_export <- function(
+    tasks,
+    message_indent = 0L,
+    verbose,
+    file_paths
+) {
+  # Message start of export.
+  logger_message(
+    paste0(
+      "Export: exporting collected evaluation data to plots and tables."
+    ),
+    indent = message_indent,
+    verbose = verbose
+  )
+  
+  for (task in tasks$collect) {
+    # Set path for directory where data are exported to.
+    dir_path <- file.path(
+      file_paths$results_dir,
+      tools::file_path_sans_ext(basename(task@file))
+    )
+    
+    # Load collection locally.
+    fam_collection <- load_familiar_object(task@file)
+    
+    # Export tables.
+    export_all(
+      object = fam_collection,
+      dir_path = dir_path
+    )
+    
+    # Export plots.
+    plot_all(
+      object = fam_collection,
+      dir_path = dir_path
+    )
+  }
+  
+  logger_message(
+    paste0(
+      "Export: all plots and tables were exported to ",
+      file_paths$results_dir,
+      ".\n"
     ),
     indent = message_indent,
     verbose = verbose

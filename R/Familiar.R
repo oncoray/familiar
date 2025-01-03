@@ -97,7 +97,7 @@ summon_familiar <- function(
     config = NULL,
     config_id = 1L,
     verbose = TRUE,
-    .stop_after = "evaluation",
+    .stop_after = "export",
     ...
 ) {
   
@@ -115,7 +115,7 @@ summon_familiar <- function(
   .check_parameter_value_is_valid(
     x = .stop_after,
     var_name = ".stop_after",
-    values = c("setup", "preprocessing", "vimp", "training", "evaluation")
+    values = c("setup", "preprocessing", "vimp", "training", "evaluation", "export")
   )
   
   
@@ -513,16 +513,20 @@ summon_familiar <- function(
     verbose = verbose
   )
   
-  if (file_paths$is_temporary) {
-    # Collect all familiarModels, familiarData and familiarCollection objects.
-    familiar_list <- .import_all_familiar_objects(file_paths = file_paths)
-    
-    # Return list with objects
-    return(familiar_list)
-    
-  } else {
-    return(invisible(TRUE))
+  # Check if the process should be stopped at this point.
+  if (.stop_after %in% c("evaluation") || file_paths$is_temporary) {
+    return(.import_all_familiar_objects(file_paths = file_paths))
   }
+  
+  # Export ---------------------------------------------------------------------
+  
+  .run_export(
+    tasks = tasks,
+    file_paths = file_paths,
+    verbose = verbose
+  )
+  
+  return(invisible(TRUE))
 }
 
 

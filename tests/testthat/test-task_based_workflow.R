@@ -173,10 +173,14 @@ testthat::test_that("all models are present", {
 
 # Including evaluation ---------------------------------------------------------
 
+# Defining an experiment directory ensures that models and other data are
+# stored for inspection.
 data <- familiar:::test_create_small_good_data("binomial")
+exp_dir <- tempdir()
 
-results <- familiar::summon_familiar(
+familiar::summon_familiar(
   data = data,
+  experiment_dir = exp_dir,
   experimental_design = "bs(fs,3)+bs(mb, 3)",
   evaluation_elements = "auc_data",
   vimp_method = "mim",
@@ -193,8 +197,31 @@ results <- familiar::summon_familiar(
 )
 
 testthat::test_that("all output is present", {
-  testthat::expect_true(all(sapply(results$familiarModel, familiar:::model_is_trained)))
-  testthat::expect_length(results$familiarModel, 3L)
-  testthat::expect_length(results$familiarData, 8L)
-  testthat::expect_length(results$familiarCollection, 4L)
+  # Models
+  model_files <- list.files(
+    file.path(exp_dir, "trained_models"),
+    pattern = "model.RDS"
+  )
+  testthat::expect_length(model_files, 3L)
+  
+  # Evaluation data
+  data_files <- list.files(
+    file.path(exp_dir, "familiar_data"),
+    pattern = "data.RDS"
+  )
+  testthat::expect_length(data_files, 8L)
+  
+  # Collections
+  collection_files <- list.files(
+    file.path(exp_dir, "familiar_collections"),
+    pattern = "collection.RDS"
+  )
+  testthat::expect_length(collection_files, 4L)
+  
+  # Collection export
+  export_dirs <- list.dirs(
+    file.path(exp_dir, "results"),
+    recursive = FALSE
+  )
+  testthat::expect_length(export_dirs, 4L)
 })
