@@ -758,13 +758,10 @@ setMethod(
   "get_object_name",
   signature(object = "familiarModel"),
   function(object, abbreviated = FALSE) {
-    # Extract data and run id
-    model_data_id <- tail(object@run_table, n = 1L)$data_id
-    model_run_id <- tail(object@run_table, n = 1L)$run_id
-
+    
     if (abbreviated) {
       # Create an abbreviated name
-      model_name <- paste0("model.", model_data_id, ".", model_run_id)
+      model_name <- paste0("model.", object@data_id, ".", object@run_id)
       
     } else {
       # Create the full name of the model
@@ -772,8 +769,8 @@ setMethod(
         learner = object@learner,
         vimp_method = object@vimp_method,
         project_id = object@project_id,
-        data_id = model_data_id,
-        run_id = model_run_id,
+        data_id = object@data_id,
+        run_id = object@run_id,
         object_type = "familiarModel",
         with_extension = FALSE
       )

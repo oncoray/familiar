@@ -911,14 +911,11 @@ setMethod(
   "get_object_name",
   signature(object = "familiarEnsemble"),
   function(object, abbreviated = FALSE) {
-    # Extract data and run id
-    ensemble_data_id <- object@run_table$ensemble_data_id
-    ensemble_run_id <- object@run_table$ensemble_run_id
 
     if (abbreviated) {
       # Create an abbreviated name
       model_name <- paste0(
-        "ensemble", ".", ensemble_data_id, ".", ensemble_run_id
+        "ensemble", ".", object@data_id, ".", object@run_id
       )
       
     } else {
@@ -927,10 +924,9 @@ setMethod(
         learner = object@learner,
         vimp_method = object@vimp_method,
         project_id = object@project_id,
-        data_id = ensemble_data_id,
-        run_id = ensemble_run_id,
+        data_id = object@data_id,
+        run_id = object@run_id,
         object_type = "familiarEnsemble",
-        is_ensemble = TRUE,
         with_extension = FALSE
       )
     }
@@ -938,6 +934,8 @@ setMethod(
     return(model_name)
   }
 )
+
+
 
 # model_is_trained (ensemble) --------------------------------------------------
 setMethod(
