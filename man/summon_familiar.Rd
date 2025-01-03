@@ -12,7 +12,7 @@ summon_familiar(
   config = NULL,
   config_id = 1L,
   verbose = TRUE,
-  .stop_after = "evaluation",
+  .stop_after = "export",
   ...
 )
 }

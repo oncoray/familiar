@@ -92,7 +92,6 @@ Collate:
     'DataProcessing.R'
     'DataServerBackend.R'
     'ErrorMessages.R'
-    'Evaluation.R'
     'ExperimentData.R'
     'ExperimentSetup.R'
     'Familiar.R'
