@@ -9,29 +9,20 @@ config <- familiar:::.load_configuration_file(config)
 config_node_names <- names(config)
 expected_node_names <- familiar:::.get_all_configuration_parent_node_names()
 
-testthat::test_that("1. All parent nodes are present in the configuration file.", {
-  testthat::expect_equal(all(config_node_names %in% expected_node_names), TRUE)
-  testthat::expect_equal(all(expected_node_names %in% config_node_names), TRUE)
-})
-
-testthat::test_that("2. All parameters are specified.", {
-  config_args <- unique(unlist(sapply(config, names)))
-
-  testthat::expect_equal(all(config_args %in% familiar:::.get_all_parameter_names()), TRUE)
-  testthat::expect_equal(all(familiar:::.get_all_parameter_names() %in% config_args), TRUE)
-
-  if (!all(familiar:::.get_all_parameter_names() %in% config_args)) {
-    warning(paste0(
-      "The following parameters are not specified in the configuration file: ",
-      paste0(setdiff(familiar:::.get_all_parameter_names(), config_args), collapse = ", ")))
+testthat::test_that(
+  "1. All parent nodes are present in the configuration file.", 
+  {
+    testthat::expect_setequal(config_node_names, expected_node_names)
   }
+)
 
-  if (!all(config_args %in% familiar:::.get_all_parameter_names())) {
-    warning(paste0(
-      "The following parameters are specified in the configuration file, but not familiar: ",
-      paste0(setdiff(config_args, familiar:::.get_all_parameter_names()), collapse = ", ")))
+testthat::test_that(
+  "2. All parameters are specified.",
+  {
+    config_args <- unique(unlist(sapply(config, names)))
+    testthat::expect_setequal(config_args, familiar:::.get_all_parameter_names())
   }
-})
+)
 
 for (parent_node in expected_node_names) {
   # Identify the parsing function for the node.
@@ -40,7 +31,7 @@ for (parent_node in expected_node_names) {
     data = familiar:::.parse_experiment_settings,
     run = familiar:::.parse_setup_settings,
     preprocessing = familiar:::.parse_preprocessing_settings,
-    feature_selection = familiar:::.parse_variable_importance_settings,
+    variable_importance = familiar:::.parse_variable_importance_settings,
     model_development = familiar:::.parse_model_development_settings,
     hyperparameter_optimisation = familiar:::.parse_hyperparameter_optimisation_settings,
     evaluation = familiar:::.parse_evaluation_settings
@@ -76,22 +67,10 @@ for (parent_node in expected_node_names) {
   # Find the argument names.
   config_args <- names(config[[parent_node]])
 
-  testthat::test_that(paste0("3. All parameters are specified for the \"", parent_node, "\" node."), {
-    testthat::expect_equal(all(config_args %in% expected_config_args), TRUE)
-    testthat::expect_equal(all(expected_config_args %in% config_args), TRUE)
-
-    if (!all(expected_config_args %in% config_args)) {
-      warning(paste0(
-        "The following parameters are not specified in the configuration file under node \"",
-        parent_node, "\": ",
-        paste0(setdiff(expected_config_args, config_args), collapse = ", ")))
+  testthat::test_that(
+    paste0("3. All parameters are specified for the \"", parent_node, "\" node."),
+    {
+      testthat::expect_setequal(config_args, expected_config_args)
     }
-
-    if (!all(config_args %in% expected_config_args)) {
-      warning(paste0(
-        "The following parameters are specified in the configuration file under node \"",
-        parent_node, "\" but not familiar: ",
-        paste0(setdiff(config_args, expected_config_args), collapse = ", ")))
-    }
-  })
+  )
 }
