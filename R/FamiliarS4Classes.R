@@ -989,7 +989,7 @@ setClass("vimpTable",
     # Variable importance method that generated the current variable
     # importance table.
     vimp_method = "character",
-    # Run table for the current model
+    # Run table for the current table.
     run_table = "ANY",
     # Set how scores from encoded features should be aggregated.
     score_aggregation = "character",

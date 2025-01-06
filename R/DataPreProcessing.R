@@ -1,14 +1,14 @@
-.get_feature_info_file_name <- function(file_paths, project_id) {
-  # Generate file name of pre-processing file
-  file_name <- paste0(project_id, "_feature_info.RDS")
-  
-  # Add file path and normalise according to the OS
-  file_name <- normalizePath(file.path(
-    file_paths$process_data_dir, file_name
-  ), mustWork = FALSE)
-  
-  return(file_name)
-}
+# .get_feature_info_file_name <- function(file_paths, project_id) {
+#   # Generate file name of pre-processing file
+#   file_name <- paste0(project_id, "_feature_info.RDS")
+#   
+#   # Add file path and normalise according to the OS
+#   file_name <- normalizePath(file.path(
+#     file_paths$process_data_dir, file_name
+#   ), mustWork = FALSE)
+#   
+#   return(file_name)
+# }
 
 
 

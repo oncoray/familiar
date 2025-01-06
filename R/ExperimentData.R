@@ -74,30 +74,49 @@ load_experiment_data <- function(x, file_paths) {
   # Start writing feature information.
   if (!is.null(x@feature_info)) {
     
-    # Set file name
-    file_name <- .get_feature_info_file_name(
-      file_paths = file_paths,
-      project_id = x@project_id
-    )
+    for (feature_info_name in names(x@feature_info)) {
+      feature_info <- x@feature_info[[feature_info_name]]
+      
+      # Set file name.
+      if (feature_info_name == "generic") {
+        file_name <- get_object_file_name(
+          object_type = "genericFeatureInfo",
+          project_id = feature_info@project_id,
+          dir_path = file_paths$process_data_dir
+        )
+        
+      } else {
+        file_name <- get_object_file_name(
+          object_type = "featureInfo",
+          project_id = feature_info@project_id,
+          data_id = feature_info@data_id,
+          run_id = feature_info@run_id,
+          dir_path = file_paths$process_data_dir
+        )
+      }
+      
+      # Check if the directory exists, and create it otherwise.
+      if (!dir.exists(file_paths$process_data_dir)) {
+        dir.create(file_paths$process_data_dir, recursive = TRUE)
+      } 
     
-    # Check if the directory exists, and create it otherwise.
-    if (!dir.exists(dirname(file_name))) {
-      dir.create(dirname(file_name), recursive = TRUE)
-    } 
-    
-    # Write to file.
-    saveRDS(x@feature_info, file = file_name)
+      # Write to file.
+      saveRDS(feature_info, file = file_name)
+    }
   }
   
   # Write variable importance information.
   if (!is.null(x@vimp_table_list)) {
-    for (vimp_method in names(x@vimp_table_list)) {
+    for (vimp_table in names(x@vimp_table_list)) {
       
       # Set file name
-      file_name <- .get_variable_importance_data_filename(
-        project_id = x@project_id,
-        vimp_method = vimp_method,
-        file_paths = file_paths
+      file_name <- get_object_file_name(
+        object_type = "vimpTable",
+        data_id = vimp_table@data_id,
+        run_id = vimp_table@run_id,
+        vimp_method = vimp_table@vimp_method,
+        project_id = vimp_table@project_id,
+        dir_path = file_paths$vimp_dir
       )
       
       # Check if the directory exists, and create it otherwise.
@@ -106,7 +125,7 @@ load_experiment_data <- function(x, file_paths) {
       } 
       
       # Write to file.
-      saveRDS(x@vimp_table_list[[vimp_method]], file = file_name)
+      saveRDS(vimp_table, file = file_name)
     }
   }
   

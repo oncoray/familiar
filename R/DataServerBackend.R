@@ -401,7 +401,7 @@ get_feature_info_from_backend <- function(
   } else if (!is.null(data_id) && !is.null(run_id)) {
     # Retrieve run-specific feature information.
     x <- get("master_feature_info_list", envir = data_env)[[
-      .get_feature_info_list_name(data_id = data_id, run_id = run_id)
+      paste0(data_id, ".", run_id)
     ]]
     
   } else {
