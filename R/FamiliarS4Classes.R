@@ -926,6 +926,10 @@ setClass("featureInfoParameters",
 #' @slot vimp_table Table containing features with corresponding scores.
 #' @slot vimp_method Method used to compute variable importance scores for each
 #'   feature.
+#' @slot data_id Internal identifier for the dataset used to derive the variable
+#'   importance table.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   to derive the variable importance table.
 #' @slot run_table Run table for the data used to compute variable importances
 #'   from. Used internally.
 #' @slot score_aggregation Method used to aggregate the score of contrasts for
@@ -989,6 +993,8 @@ setClass("vimpTable",
     # Variable importance method that generated the current variable
     # importance table.
     vimp_method = "character",
+    data_id = "integer",
+    run_id = "integer",
     # Run table for the current table.
     run_table = "ANY",
     # Set how scores from encoded features should be aggregated.
@@ -1010,6 +1016,8 @@ setClass("vimpTable",
   prototype = list(
     vimp_table = NULL,
     vimp_method = NA_character_,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
     run_table = NULL,
     score_aggregation = NA_character_,
     encoding_table = NULL,

@@ -272,6 +272,10 @@ setMethod(
       data = data
     )
     
+    # Set data id and run id.
+    vimp_table@data_id <- object@data_id
+    vimp_table@run_id <- object@run_id
+    
     if (!is.na(object@file)) {
       saveRDS(vimp_table, file = object@file)
     }
