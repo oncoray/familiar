@@ -64,7 +64,7 @@
   }
 
   # Add file name.
-  if (object@project_id == 0L && length(object@name) > 0L) {
+  if (is.null(object@project_id) && length(object@name) > 0L) {
     file_name <- object@name
   } else {
     file_name <- get_object_name(object = object)

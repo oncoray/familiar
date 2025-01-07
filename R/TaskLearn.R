@@ -277,11 +277,12 @@ setMethod(
       minimise_footprint = FALSE
     )
     
-    # Train model..
+    # Train model.
     model_object <- .train(
       object = model_object,
       data = data,
-      get_additional_info = TRUE
+      get_additional_info = TRUE,
+      ...
     )
     
     # Add novelty detector
@@ -290,7 +291,8 @@ setMethod(
       data = data,
       detector = novelty_detector,
       user_list = detector_parameters,
-      get_additional_info = TRUE
+      get_additional_info = TRUE,
+      ...
     )
     
     # Add model name

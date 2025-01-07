@@ -107,7 +107,7 @@ load_experiment_data <- function(x, file_paths) {
   
   # Write variable importance information.
   if (!is.null(x@vimp_table_list)) {
-    for (vimp_table in names(x@vimp_table_list)) {
+    for (vimp_table in x@vimp_table_list) {
       
       # Set file name
       file_name <- get_object_file_name(

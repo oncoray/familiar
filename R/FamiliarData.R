@@ -200,7 +200,7 @@ setMethod(
   signature(x = "familiarData"),
   function(x, new = NULL) {
     
-    if (x@project_id == 0L && is.null(new)) {
+    if (is.null(x@project_id) && is.null(new)) {
       # Generate a random object name. A project_id of 0 means that the objects
       # was auto-generated (i.e. through object conversion). We randomly
       # generate chracters and add a time stamp, so that collision is
