@@ -22,7 +22,7 @@ familiar:::test_all_vimp_methods_parallel(
 data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "spearman",
   vimp_method_parameter_list = NULL,
@@ -44,7 +44,7 @@ testthat::test_that(paste0("Spearman correlation correctly ranks continuous data
 data <- familiar:::test_create_good_data("survival")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "spearman",
   vimp_method_parameter_list = NULL,

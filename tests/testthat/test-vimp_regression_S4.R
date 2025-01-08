@@ -43,7 +43,7 @@ familiar:::test_all_vimp_methods_parallel(
 data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "multivariate_regression",
   vimp_method_parameter_list = NULL,
@@ -74,7 +74,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks continuous d
 data <- familiar:::test_create_good_data("binomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "multivariate_regression",
   vimp_method_parameter_list = NULL,
@@ -105,7 +105,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks binomial dat
 data <- familiar:::test_create_good_data("multinomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "multivariate_regression",
   vimp_method_parameter_list = NULL,
@@ -136,7 +136,7 @@ testthat::test_that(paste0("Multivariate regression correctly ranks multinomial 
 data <- familiar:::test_create_good_data("survival")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "multivariate_regression",
   vimp_method_parameter_list = NULL,

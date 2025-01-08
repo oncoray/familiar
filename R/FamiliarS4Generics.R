@@ -234,7 +234,7 @@ setGeneric(".vimp", function(object, ...) standardGeneric(".vimp"))
 
 setGeneric("promote_vimp_method", function(object, ...) standardGeneric("promote_vimp_method"))
 
-setGeneric("prepare_vimp_object", function(data, ...) standardGeneric("prepare_vimp_object"))
+setGeneric("test_create_vimp_method", function(data, ...) standardGeneric("test_create_vimp_method"))
 
 
 

@@ -23,12 +23,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
       batch_ids <- unique(data_copy@data[[familiar:::get_id_columns("batch")]])
       
       # Create a list of featureInfo objects.
-      feature_info_list <- familiar:::.get_feature_info_data(
-        data = data_copy@data,
-        file_paths = NULL,
-        project_id = character(),
-        outcome_type = outcome_type
-      )[[1]]
+      feature_info_list <- test_create_generic_info(data = data_copy)
 
       # Combat requires global standardisation
       if (batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")) {
@@ -256,12 +251,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
       batch_ids <- unique(data_copy@data[[familiar:::get_id_columns("batch")]])
 
       # Create a list of featureInfo objects.
-      feature_info_list <- familiar:::.get_feature_info_data(
-        data = data_copy@data,
-        file_paths = NULL,
-        project_id = character(),
-        outcome_type = outcome_type
-      )[[1]]
+      feature_info_list <- test_create_generic_info(data = data_copy)
 
       # Combat requires global standardisation
       if (batch_normalisation_method %in% 
@@ -432,12 +422,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
       batch_ids <- unique(data_copy@data[[familiar:::get_id_columns("batch")]])
 
       # Create a list of featureInfo objects.
-      feature_info_list <- familiar:::.get_feature_info_data(
-        data = data_copy@data,
-        file_paths = NULL,
-        project_id = character(),
-        outcome_type = outcome_type
-      )[[1]]
+      feature_info_list <- test_create_generic_info(data = data_copy)
 
       # Combat requires global standardisation
       if (batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")) {
@@ -626,12 +611,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
       batch_ids <- unique(data_copy@data[[familiar:::get_id_columns("batch")]])
 
       # Create a list of featureInfo objects.
-      feature_info_list <- familiar:::.get_feature_info_data(
-        data = data_copy@data,
-        file_paths = NULL,
-        project_id = character(),
-        outcome_type = outcome_type
-      )[[1]]
+      feature_info_list <- test_create_generic_info(data = data_copy)
 
       # Combat requires global standardisation
       if (batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")) {
@@ -777,12 +757,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
       batch_ids <- unique(data_copy@data[[familiar:::get_id_columns("batch")]])
 
       # Create a list of featureInfo objects.
-      feature_info_list <- familiar:::.get_feature_info_data(
-        data = data_copy@data,
-        file_paths = NULL,
-        project_id = character(),
-        outcome_type = outcome_type
-      )[[1]]
+      feature_info_list <- test_create_generic_info(data = data_copy)
 
       # Combat requires global standardisation
       if (batch_normalisation_method %in% 
@@ -970,13 +945,8 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
       batch_ids <- unique(data_copy@data[[familiar:::get_id_columns("batch")]])
 
       # Create a list of featureInfo objects.
-      feature_info_list <- familiar:::.get_feature_info_data(
-        data = data_copy@data,
-        file_paths = NULL,
-        project_id = character(),
-        outcome_type = outcome_type
-      )[[1]]
-
+      feature_info_list <- test_create_generic_info(data = data_copy)
+      
       # Combat requires global standardisation
       if (batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")) {
         # Create normalisation skeletons.
@@ -1122,12 +1092,7 @@ for (batch_normalisation_method in familiar:::.get_available_batch_normalisation
     batch_ids <- unique(data_copy@data[[familiar:::get_id_columns("batch")]])
 
     # Create a list of featureInfo objects.
-    feature_info_list <- familiar:::.get_feature_info_data(
-      data = data_copy@data,
-      file_paths = NULL,
-      project_id = character(),
-      outcome_type = outcome_type
-    )[[1]]
+    feature_info_list <- test_create_generic_info(data = data_copy)
 
     # Combat requires global standardisation
     if (batch_normalisation_method %in% 

@@ -804,17 +804,19 @@
     data_column_info = create_data_column_info(settings = settings)
   )
   
+  # Add generic feature information.
+  generic_feature_info_task <- new("familiarTaskGenericFeatureInfo")
+  generic_feature_info <- .perform_task(
+    object = generic_feature_info_task,
+    data = data
+  )
+  
   # Set up vimp object and promote to concordance.
   vimp_object <- promote_vimp_method(methods::new(
     "familiarVimpMethod",
     outcome_type = data@outcome_type,
     outcome_info = data@outcome_info,
-    feature_info = .get_feature_info_data(
-      data = data@data,
-      file_paths = NULL,
-      project_id = character(),
-      outcome_type = settings$data$outcome_type
-    )[["generic"]],
+    feature_info = generic_feature_info,
     vimp_method = "concordance"
   ))
   

@@ -101,7 +101,7 @@ familiar:::test_all_vimp_methods_parallel(
 data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_minimum_depth",
   vimp_method_parameter_list = list(
@@ -135,7 +135,7 @@ testthat::test_that(
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_permutation",
   vimp_method_parameter_list = list(
@@ -168,7 +168,7 @@ testthat::test_that(
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_holdout",
   vimp_method_parameter_list = list(
@@ -207,7 +207,7 @@ testthat::test_that(
 data <- familiar:::test_create_good_data("binomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_minimum_depth",
   vimp_method_parameter_list = list(
@@ -240,7 +240,7 @@ testthat::test_that(
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_permutation",
   vimp_method_parameter_list = list(
@@ -274,7 +274,7 @@ testthat::test_that(
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_holdout",
   vimp_method_parameter_list = list(
@@ -311,7 +311,7 @@ testthat::test_that(
 data <- familiar:::test_create_good_data("multinomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_minimum_depth",
   vimp_method_parameter_list = list(
@@ -344,7 +344,7 @@ testthat::test_that(
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_permutation",
   vimp_method_parameter_list = list(
@@ -377,7 +377,7 @@ testthat::test_that(
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_holdout",
   vimp_method_parameter_list = list(
@@ -414,7 +414,7 @@ testthat::test_that(
 data <- familiar:::test_create_good_data("survival")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_minimum_depth",
   vimp_method_parameter_list = list(
@@ -447,7 +447,7 @@ testthat::test_that(
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_permutation",
   vimp_method_parameter_list = list(
@@ -480,7 +480,7 @@ testthat::test_that(
 
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_rfsrc_holdout",
   vimp_method_parameter_list = list(

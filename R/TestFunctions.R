@@ -2139,7 +2139,7 @@ test_all_vimp_methods <- function(
       # Full dataset -----------------------------------------------------------
       
       # Process dataset.
-      vimp_object <- prepare_vimp_object(
+      vimp_object <- test_create_vimp_method(
         data = full_data,
         vimp_method = vimp_method,
         vimp_method_parameter_list = hyperparameters,
@@ -2250,7 +2250,7 @@ test_all_vimp_methods <- function(
       # One-feature dataset ----------------------------------------------------
       
       # Process dataset.
-      vimp_object <- prepare_vimp_object(
+      vimp_object <- test_create_vimp_method(
         data = one_feature_data,
         vimp_method = vimp_method,
         vimp_method_parameter_list = hyperparameters,
@@ -2317,7 +2317,7 @@ test_all_vimp_methods <- function(
         no_censoring_data <- test_create_good_data_without_censoring(outcome_type)
         
         # Process dataset.
-        vimp_object <- prepare_vimp_object(
+        vimp_object <- test_create_vimp_method(
           data = no_censoring_data,
           vimp_method = vimp_method,
           vimp_method_parameter_list = hyperparameters,
@@ -2354,7 +2354,7 @@ test_all_vimp_methods <- function(
         one_censored_data <- test_create_good_data_one_censored(outcome_type)
         
         # Process dataset.
-        vimp_object <- prepare_vimp_object(
+        vimp_object <- test_create_vimp_method(
           data = one_censored_data,
           vimp_method = vimp_method,
           vimp_method_parameter_list = hyperparameters,
@@ -2390,7 +2390,7 @@ test_all_vimp_methods <- function(
         few_censored_data <- test_create_good_data_few_censored(outcome_type)
         
         # Process dataset.
-        vimp_object <- prepare_vimp_object(
+        vimp_object <- test_create_vimp_method(
           data = few_censored_data,
           vimp_method = vimp_method,
           vimp_method_parameter_list = hyperparameters,
@@ -2426,7 +2426,7 @@ test_all_vimp_methods <- function(
       # Fully prospective dataset ----------------------------------------------
       
       # Set up the vimp object.
-      vimp_object <- prepare_vimp_object(
+      vimp_object <- test_create_vimp_method(
         data = full_data,
         vimp_method = vimp_method,
         vimp_method_parameter_list = hyperparameters,
@@ -2553,7 +2553,7 @@ test_all_vimp_methods_parallel <- function(
           "1" = full_data, 
           "2" = full_data
         ),
-        prepare_vimp_object,
+        test_create_vimp_method,
         vimp_method = vimp_method,
         vimp_method_parameter_list = hyperparameters,
         outcome_type = outcome_type,
@@ -5253,7 +5253,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
   }
   
   # Create feature info list.
-  feature_info_list <- create_feature_info(
+  feature_info_list <- test_create_feature_info(
     data = data,
     vimp_method = vimp_method,
     learner = learner,

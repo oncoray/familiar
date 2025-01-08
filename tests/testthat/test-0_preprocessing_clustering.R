@@ -117,12 +117,7 @@ while (TRUE) {
     cluster_size = cluster_size)
 
   # Create a list of featureInfo objects.
-  feature_info_list <- familiar:::.get_feature_info_data(
-    data = data@data,
-    file_paths = NULL,
-    project_id = character(),
-    outcome_type = parameters$outcome_type
-  )[[1]]
+  feature_info_list <- test_create_generic_info(data = data)
 
   # Create cluster skeletons
   feature_info_list <- familiar:::create_cluster_parameter_skeleton(
@@ -331,12 +326,7 @@ while (TRUE) {
     features = "feature_1")
 
   # Create a list of featureInfo objects.
-  feature_info_list <- familiar:::.get_feature_info_data(
-    data = data@data,
-    file_paths = NULL,
-    project_id = character(),
-    outcome_type = parameters$outcome_type
-  )[[1]]
+  feature_info_list <- test_create_generic_info(data = data)
 
   # Create cluster skeletons
   feature_info_list <- familiar:::create_cluster_parameter_skeleton(
@@ -419,12 +409,7 @@ while (TRUE) {
     features = c("feature_1", "feature_2"))
 
   # Create a list of featureInfo objects.
-  feature_info_list <- familiar:::.get_feature_info_data(
-    data = data@data,
-    file_paths = NULL,
-    project_id = character(),
-    outcome_type = parameters$outcome_type
-  )[[1]]
+  feature_info_list <- test_create_generic_info(data = data)
 
   # Create cluster skeletons
   feature_info_list <- familiar:::create_cluster_parameter_skeleton(
@@ -515,13 +500,8 @@ while (TRUE) {
     features = c("feature_1_A", "feature_1_B"))
 
   # Create a list of featureInfo objects.
-  feature_info_list <- familiar:::.get_feature_info_data(
-    data = data@data,
-    file_paths = NULL,
-    project_id = character(),
-    outcome_type = parameters$outcome_type
-  )[[1]]
-
+  feature_info_list <- test_create_generic_info(data = data)
+  
   # Create cluster skeletons
   feature_info_list <- familiar:::create_cluster_parameter_skeleton(
     feature_info_list,
@@ -594,12 +574,7 @@ while (TRUE) {
     cluster_size = cluster_size)
 
   # Create a list of featureInfo objects.
-  feature_info_list <- familiar:::.get_feature_info_data(
-    data = data@data,
-    file_paths = NULL,
-    project_id = character(),
-    outcome_type = parameters$outcome_type
-  )[[1]]
+  feature_info_list <- test_create_generic_info(data = data)
 
   # Set signature features
   feature_info_list <- familiar:::add_signature_info(
@@ -710,12 +685,7 @@ while (TRUE) {
     cluster_size = cluster_size)
 
   # Create a list of featureInfo objects.
-  feature_info_list <- familiar:::.get_feature_info_data(
-    data = data@data,
-    file_paths = NULL,
-    project_id = character(),
-    outcome_type = parameters$outcome_type
-  )[[1]]
+  feature_info_list <- test_create_generic_info(data = data)
 
   # Create cluster skeletons
   feature_info_list <- familiar:::create_cluster_parameter_skeleton(
@@ -819,12 +789,7 @@ while (TRUE) {
     cluster_size = cluster_size)
 
   # Create a list of featureInfo objects.
-  feature_info_list <- familiar:::.get_feature_info_data(
-    data = data@data,
-    file_paths = NULL,
-    project_id = character(),
-    outcome_type = parameters$outcome_type
-  )[[1]]
+  feature_info_list <- test_create_generic_info(data = data)
 
   # Create cluster skeletons
   feature_info_list <- familiar:::create_cluster_parameter_skeleton(feature_info_list,
@@ -896,12 +861,7 @@ while (TRUE) {
     cluster_size = cluster_size)
 
   # Create a list of featureInfo objects.
-  feature_info_list <- familiar:::.get_feature_info_data(
-    data = data@data,
-    file_paths = NULL,
-    project_id = character(),
-    outcome_type = parameters$outcome_type
-  )[[1]]
+  feature_info_list <- test_create_generic_info(data = data)
 
   # Create cluster skeletons
   feature_info_list <- familiar:::create_cluster_parameter_skeleton(

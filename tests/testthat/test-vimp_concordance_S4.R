@@ -20,7 +20,7 @@ familiar:::test_all_vimp_methods_parallel(
 data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "concordance",
   vimp_method_parameter_list = NULL,
@@ -48,7 +48,7 @@ testthat::test_that(paste0("The concordance method correctly ranks continuous da
 data <- familiar:::test_create_good_data("binomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "concordance",
   vimp_method_parameter_list = NULL,
@@ -75,7 +75,7 @@ testthat::test_that(paste0("The concordance method correctly ranks binomial data
 data <- familiar:::test_create_good_data("multinomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "concordance",
   vimp_method_parameter_list = NULL,
@@ -102,7 +102,7 @@ testthat::test_that(paste0("The concordance method correctly ranks multinomial o
 data <- familiar:::test_create_good_data("survival")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "concordance",
   vimp_method_parameter_list = NULL,

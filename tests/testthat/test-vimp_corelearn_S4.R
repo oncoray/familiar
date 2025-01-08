@@ -54,7 +54,7 @@ familiar:::test_all_vimp_methods_parallel(
 data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "relieff_exp_rank",
   vimp_method_parameter_list = NULL,
@@ -83,7 +83,7 @@ testthat::test_that(paste0(
 data <- familiar:::test_create_good_data("binomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "relieff_exp_rank",
   vimp_method_parameter_list = NULL,
@@ -108,7 +108,7 @@ testthat::test_that(paste0(
 })
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "gini",
   vimp_method_parameter_list = NULL,
@@ -132,7 +132,7 @@ testthat::test_that(paste0("The Gini method correctly ranks binomial data."), {
 })
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "gain_ratio",
   vimp_method_parameter_list = NULL,
@@ -157,7 +157,7 @@ testthat::test_that(paste0("The gain ratio method correctly ranks binomial data.
 })
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "mdl",
   vimp_method_parameter_list = NULL,
@@ -185,7 +185,7 @@ testthat::test_that(paste0("The MDL method correctly ranks binomial data."), {
 data <- familiar:::test_create_good_data("multinomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "relieff_exp_rank",
   vimp_method_parameter_list = NULL,
@@ -210,7 +210,7 @@ testthat::test_that(paste0(
 })
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "gini",
   vimp_method_parameter_list = NULL,
@@ -234,7 +234,7 @@ testthat::test_that(paste0("The Gini method correctly ranks multinomial outcome 
 })
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "gain_ratio",
   vimp_method_parameter_list = NULL,
@@ -258,7 +258,7 @@ testthat::test_that(paste0("The gain ratio method correctly ranks multinomial ou
 })
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "mdl",
   vimp_method_parameter_list = NULL,
