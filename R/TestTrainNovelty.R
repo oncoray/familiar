@@ -190,28 +190,12 @@ setMethod(
       function(hyperparameter_entry) hyperparameter_entry$init_config
     )
     
-    # Prepare model and data ---------------------------------------------------
+    # Create novelty detector --------------------------------------------------
     
-    # Create familiar model
-    object <- methods::new(
-      "familiarNoveltyDetector",
+    detector_task <- methods::new(
+      "familiarTaskTrainNovelty",
       learner = detector,
-      hyperparameters = param_list,
-      required_features = required_features,
-      model_features = model_features,
-      feature_info = feature_info_list,
-      run_table = get_placeholder_run_table(),
-      project_id = 0L
-    )
-    
-    # Add package version/
-    object <- add_package_version(object = object)
-    
-    # Process data.
-    data <- process_input_data(
-      object = object,
-      data = data,
-      stop_at = "clustering"
+      vimp_method = "none"
     )
     
     # Create bootstraps.
@@ -225,13 +209,15 @@ setMethod(
       )
     }
     
-    # Train model.
-    object <- .train(
-      object = object,
+    # Train novelty detector and add to model.
+    object <- .perform_task(
+      object = detector_task,
       data = data,
-      get_additional_info = TRUE,
-      trim_model = trim_model,
-      timeout = Inf
+      selected_features = model_features,
+      settings = settings,
+      feature_info_list = feature_info_list,
+      hyperparameters = param_list,
+      trim_model = trim_model
     )
     
     return(object)

@@ -415,3 +415,162 @@ setMethod(
     return(object)
   }
 )
+
+
+
+# set_signature (familiarNoveltyDetector)---------------------------------------
+setMethod(
+  "set_signature",
+  signature(object = "familiarNoveltyDetector"),
+  function(
+    object, 
+    rank_table = NULL, 
+    signature_features = NULL, 
+    minimise_footprint = FALSE, 
+    ...
+  ) {
+    
+    if (is.null(signature_features)) {
+      # Get signature features using the table with ranked features. Those
+      # features may be clustered.
+      signature_features <- get_signature(
+        object = object,
+        rank_table = rank_table
+      )
+    }
+    
+    # Find novelty features.
+    novelty_features <- find_novelty_features(
+      model_features = signature_features,
+      feature_info_list = object@feature_info
+    )
+    
+    if (minimise_footprint) {
+      # Find only features that are required for running the model.
+      required_features <- novelty_features
+      
+    } else {
+      # Find features that are required for processing the data.
+      required_features <- get_required_features(
+        x = novelty_features,
+        is_clustered = FALSE,
+        feature_info_list = object@feature_info
+      )
+    }
+    
+    # Select only necessary feature info objects.
+    available_feature_info <- names(object@feature_info) %in% required_features
+    object@feature_info <- object@feature_info[available_feature_info]
+    
+    # Set feature-related attribute slots
+    object@required_features <- required_features
+    object@model_features <- novelty_features
+    
+    return(object)
+  }
+)
+
+
+
+# get_signature (familiarNoveltyDetector)---------------------------------------
+setMethod(
+  "get_signature",
+  signature(object = "familiarNoveltyDetector"),
+  function(
+    object,
+    rank_table = NULL, 
+    ...
+  ) {
+    # Attempt to get signature directly from the object.
+    if (!is_empty(object@model_features)) {
+      return(features_after_clustering(
+        features = object@model_features,
+        feature_info_list = object@feature_info
+      ))
+    }
+    
+    if (is.null(rank_table) && !is.null(object@vimp_table)) {
+      rank_table <- get_vimp_table(object@vimp_table)
+    }
+    
+    # Get signature based on the stored feature information.
+    return(do.call(
+      get_signature,
+      args = list(
+        "object" = object@feature_info,
+        "vimp_method" = object@vimp_method,
+        "parameter_list" = object@hyperparameters,
+        "rank_table" = rank_table
+      )
+    ))
+  }
+)
+
+
+
+# set_object_name (familiarNoveltyDetector) ------------------------------------
+
+#' @title Set the name of a `familiarNoveltyDetector` object.
+#'
+#' @description Set the `name` slot using the object name.
+#'
+#' @param x A `familiarNoveltyDetector` object.
+#'
+#' @return A `familiarNoveltyDetector` object with a generated or a provided name.
+#' @md
+#' @keywords internal
+setMethod(
+  "set_object_name",
+  signature(x = "familiarNoveltyDetector"),
+  function(x, new = NULL) {
+    
+    if (is.null(x@project_id) && is.null(new)) {
+      # Generate a random object name. A project_id of 0 means that the objects
+      # was auto-generated (i.e. through object conversion). We randomly
+      # generate characters and add a time stamp, so that collision is
+      # practically impossible.
+      slot(object = x, name = "name") <- paste0(
+        as.character(as.numeric(format(Sys.time(), "%H%M%S"))),
+        "_", rstring(n = 20L)
+      )
+      
+    } else if (is.null(new)) {
+      # Generate a sensible object name.
+      slot(object = x, name = "name") <- get_object_name(object = x)
+      
+    } else {
+      slot(object = x, name = "name") <- new
+    }
+    
+    return(x)
+  }
+)
+
+
+
+# get_object_name (model) ------------------------------------------------------
+setMethod(
+  "get_object_name",
+  signature(object = "familiarNoveltyDetector"),
+  function(object, abbreviated = FALSE) {
+    
+    if (abbreviated) {
+      # Create an abbreviated name
+      model_name <- paste0("model.", object@data_id, ".", object@run_id)
+      
+    } else {
+      # Create the full name of the model
+      model_name <- get_object_file_name(
+        learner = object@learner,
+        vimp_method = object@vimp_method,
+        project_id = object@project_id,
+        data_id = object@data_id,
+        run_id = object@run_id,
+        object_type = "familiarNoveltyDetector",
+        with_extension = FALSE
+      )
+    }
+    
+    return(model_name)
+  }
+)

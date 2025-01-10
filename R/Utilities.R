@@ -781,6 +781,22 @@ get_object_file_name <- function(
       "_model"
     )
     
+  } else if (object_type == "familiarNoveltyDetector") {
+      # For familiarNoveltyDetector objects
+      
+      if (is.null(learner) || is.null(vimp_method) || is.null(project_id)) {
+        ..error_reached_unreachable_code("missing arguments")
+      }
+      
+      output_str <- paste0(
+        project_id, "_", 
+        learner, "_", 
+        vimp_method, "_", 
+        data_id, "_", 
+        run_id,
+        "_detector"
+      )
+    
   } else if (object_type == "familiarData") {
     # For familiarData objects
 

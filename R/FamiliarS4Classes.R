@@ -1204,7 +1204,6 @@ setClass("familiarVimpMethod",
 #' dataset.
 #'
 #' @slot name Name of the familiarNoveltyDetector object.
-#' @slot learner Learning algorithm used to create the novelty detector.
 #' @slot model The actual novelty detector trained using a specific algorithm,
 #'   e.g. a isolation forest from the `isotree` package.
 #' @slot feature_info List of objects containing feature information, e.g.,
@@ -1212,18 +1211,29 @@ setClass("familiarVimpMethod",
 #'   parameters.
 #' @slot data_column_info Data information object containing information
 #'   regarding identifier column names.
-#' @slot conversion_parameters Parameters used to convert raw output to
-#'   statistical probability of being out-of-distribution. Currently unused.
 #' @slot hyperparameters Set of hyperparameters used to train the detector.
+#' @slot hyperparameter_data Information generated during hyperparameter
+#'   optimisation. Currently not used.
+#' @slot calibration_model Model used to convert raw output to statistical
+#'   probability of being out-of-distribution. Currently not used.
+#' @slot learner Learning algorithm used to create the novelty detector.
+#' @slot vimp_method Method used to determine variable importance for the
+#'   novelty detector.
+#' @slot vimp_table Variable importance table or list of variable importance
+#'   tables for the model.
 #' @slot required_features The set of features required for complete
 #'   reproduction, i.e. with imputation.
 #' @slot model_features The set of features that is used to train the detector.
+#' @slot data_id Internal identifier for the dataset used to train the detector.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   used to train the detector.
 #' @slot run_table Run table for the data used to train the detector. Used
 #'   internally.
 #' @slot is_trimmed Flag that indicates whether the detector, stored in the
 #'   `model` slot, has been trimmed.
 #' @slot trimmed_function List of functions whose output has been captured prior
 #'   to trimming the model.
+#' @slot messages List of warning and error messages generated during training.
 #' @slot project_id Identifier of the project that generated the
 #'   familiarNoveltyDetector object.
 #' @slot familiar_version Version of the familiar package.
@@ -1239,35 +1249,46 @@ setClass("familiarVimpMethod",
 
 setClass("familiarNoveltyDetector",
   slots = list(
+    
     # Model name.
     name = "character",
-    # Detector
-    learner = "character",
     # Model container
     model = "ANY",
-    # Info related to the columns in the dataset.
-    data_column_info = "ANY",
-    # Parameters needed to convert raw novelty scores into p-values.
-    conversion_parameters = "ANY",
-    # Hyperparameters used to create the novelty detector.
-    hyperparameters = "ANY",
     # Data required for feature pre-processing
     feature_info = "ANY",
-    # Required features for complete reconstruction, including
-    # imputation.
+    # Info related to the columns in the dataset.
+    data_column_info = "ANY",
+    # Hyper-parameters (typically stored in the model as well)
+    hyperparameters = "ANY",
+    # Hyperparameter data, e.g. for visualising the hyperparameter space.
+    hyperparameter_data = "ANY",
+    # Models used for recalibration
+    calibration_model = "ANY",
+    # Name of learner
+    learner = "character",
+    # Name of variable importance method
+    vimp_method = "character",
+    # Variable importance table
+    vimp_table = "ANY",
+    # Required features for complete reconstruction, including imputation.
     required_features = "ANY",
-    # Features that are required for novelty detection.
+    # Features that are required for the model.
     model_features = "ANY",
+    # data_id for the data used to train the model.
+    data_id = "integer",
+    # run_id for the data used to train the model.
+    run_id = "integer",
     # Run table for the current model
     run_table = "ANY",
-    # Flags trimming of the novelty detector.
+    # Flags trimming of the model
     is_trimmed = "logical",
-    # Restores functions lost due to model trimming, such as coef or
-    # vcov.
+    # Restores functions lost due to model trimming, such as coef or vcov.
     trimmed_function = "list",
+    # List of warning and error messages encountered during training.
+    messages = "list",
     # Project identifier for consistency tracking
     project_id = "ANY",
-    # Package version for backward compatibility.
+    # Package version for backward compatibility
     familiar_version = "ANY",
     # Name of the package required to train the learner.
     package = "ANY",
@@ -1276,17 +1297,23 @@ setClass("familiarNoveltyDetector",
   ),
   prototype = list(
     name = character(0L),
-    learner = NA_character_,
     model = NULL,
-    data_column_info = NULL,
-    conversion_parameters = NULL,
-    hyperparameters = NULL,
     feature_info = NULL,
+    data_column_info = NULL,
+    hyperparameters = NULL,
+    hyperparameter_data = NULL,
+    calibration_model = NULL,
+    learner = NA_character_,
+    vimp_method = NA_character_,
+    vimp_table = NA_character_,
     required_features = NULL,
     model_features = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
     run_table = NULL,
     is_trimmed = FALSE,
     trimmed_function = list(),
+    messages = list(),
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,

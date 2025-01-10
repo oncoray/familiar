@@ -285,18 +285,30 @@ setMethod(
       ...
     )
     
-    # Add novelty detector
-    model_object <- .train_novelty_detector(
-      object = model_object,
+    # Set up task to train novelty detector
+    detector_task <- methods::new(
+      "familiarTaskTrainNovelty",
+      learner = novelty_detector,
+      vimp_method = object@vimp_method,
+      data_id = object@data_id,
+      run_id = object@run_id,
+      project_id = object@project_id
+    )
+    
+    # Train novelty detector and add to model.
+    model_object@novelty_detector <- .perform_task(
+      object = detector_task,
       data = data,
-      detector = novelty_detector,
-      user_list = detector_parameters,
-      get_additional_info = TRUE,
-      ...
+      selected_features = model_object@novelty_features,
+      settings = settings,
+      feature_info_list = feature_info_list,
+      vimp_table = vimp_table,
+      hyperparameters = detector_parameters,
+      return_results = TRUE
     )
     
     # Add model name
-    fam_model <- set_object_name(model_object)
+    model_object <- set_object_name(model_object)
     
     if (!is.na(object@file)) {
       saveRDS(model_object, file = object@file)

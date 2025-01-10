@@ -201,6 +201,7 @@ Collate:
     'TaskLearn.R'
     'TaskLearnerHyperparameters.R'
     'TaskMain.R'
+    'TaskNoveltyDetector.R'
     'TaskVimp.R'
     'TaskVimpHyperparameters.R'
     'TestDataCreators.R'

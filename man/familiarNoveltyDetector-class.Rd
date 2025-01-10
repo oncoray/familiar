@@ -18,8 +18,6 @@ as this not relevant for (prospective) out-of-distribution detection.
 \describe{
 \item{\code{name}}{Name of the familiarNoveltyDetector object.}
 
-\item{\code{learner}}{Learning algorithm used to create the novelty detector.}
-
 \item{\code{model}}{The actual novelty detector trained using a specific algorithm,
 e.g. a isolation forest from the \code{isotree} package.}
 
@@ -30,15 +28,31 @@ parameters.}
 \item{\code{data_column_info}}{Data information object containing information
 regarding identifier column names.}
 
-\item{\code{conversion_parameters}}{Parameters used to convert raw output to
-statistical probability of being out-of-distribution. Currently unused.}
-
 \item{\code{hyperparameters}}{Set of hyperparameters used to train the detector.}
+
+\item{\code{hyperparameter_data}}{Information generated during hyperparameter
+optimisation. Currently not used.}
+
+\item{\code{calibration_model}}{Model used to convert raw output to statistical
+probability of being out-of-distribution. Currently not used.}
+
+\item{\code{learner}}{Learning algorithm used to create the novelty detector.}
+
+\item{\code{vimp_method}}{Method used to determine variable importance for the
+novelty detector.}
+
+\item{\code{vimp_table}}{Variable importance table or list of variable importance
+tables for the model.}
 
 \item{\code{required_features}}{The set of features required for complete
 reproduction, i.e. with imputation.}
 
 \item{\code{model_features}}{The set of features that is used to train the detector.}
+
+\item{\code{data_id}}{Internal identifier for the dataset used to train the detector.}
+
+\item{\code{run_id}}{Internal identifier for the specific subset of the dataset used
+used to train the detector.}
 
 \item{\code{run_table}}{Run table for the data used to train the detector. Used
 internally.}
@@ -48,6 +62,8 @@ internally.}
 
 \item{\code{trimmed_function}}{List of functions whose output has been captured prior
 to trimming the model.}
+
+\item{\code{messages}}{List of warning and error messages generated during training.}
 
 \item{\code{project_id}}{Identifier of the project that generated the
 familiarNoveltyDetector object.}
