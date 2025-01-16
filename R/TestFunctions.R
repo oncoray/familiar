@@ -930,27 +930,22 @@ test_all_learners_train_predict_vimp <- function(
       )
       
       # Bad dataset without features -------------------------------------------
-      # Train the model.
-      model <- suppressWarnings(test_train(
-        data = no_feature_data,
-        data_bypass = full_data,
-        cluster_method = "none",
-        imputation_method = "simple",
-        hyperparameter_list = hyperparameters,
-        learner = learner,
-        time_max = 3.5
-      ))
       
-      # Test that models can be created.
-      test_fun(
-        paste0(
-          "Model for ", outcome_type, " can not be created using ", 
-          learner, " using a dataset for ."
-        ), 
-        {
-          # Test that the model could not be successfully created.
-          testthat::expect_false(model_is_trained(model))
-        }
+      # Note that since version 2.0.0, the training process can no longer be
+      # forced with a feature-less dataset -- the discrepancy between the
+      # expected full dataset and the training data (no_feature_data) is picked
+      # up when trying to process the data.
+      testthat::expect_error(
+        suppressWarnings(test_train(
+          data = no_feature_data,
+          data_bypass = full_data,
+          cluster_method = "none",
+          imputation_method = "simple",
+          hyperparameter_list = hyperparameters,
+          learner = learner,
+          time_max = 3.5
+        )),
+        "Not all features were found in the data set"
       )
       
       # Dataset without censored instances -------------------------------------
@@ -1911,26 +1906,21 @@ test_all_novelty_detectors <- function(
       }
     )
     
-    # Bad dataset without features -----------------------------------------------
-    # Train the novelty detector.
-    model <- suppressWarnings(test_train_novelty_detector(
-      data = no_feature_data,
-      data_bypass = full_data,
-      imputation_method = "simple",
-      hyperparameter_list = hyperparameter_list,
-      detector = detector
-    ))
+    # Bad dataset without features ---------------------------------------------
     
-    # Test that the novelty detector can be created.
-    test_fun(
-      paste0(
-        "Detector can not be created using the ", detector,
-        " algorithm using a dataset without features."
-      ), 
-      {
-        # Test that the novelty detector was successfully created.
-        testthat::expect_false(model_is_trained(model))
-      }
+    # Note that since version 2.0.0, the training process can no longer be
+    # forced with a feature-less dataset -- the discrepancy between the expected
+    # full dataset and the training data (no_feature_data) is picked up when
+    # trying to process the data.
+    testthat::expect_error(
+      suppressWarnings(test_train_novelty_detector(
+        data = no_feature_data,
+        data_bypass = full_data,
+        imputation_method = "simple",
+        hyperparameter_list = hyperparameter_list,
+        detector = detector
+      )),
+      "Not all features were found in the data set"
     )
   }
 }
