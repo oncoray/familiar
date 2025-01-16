@@ -3,50 +3,6 @@
 NULL
 
 
-.get_feature_info_data <- function(
-    data,
-    file_paths, 
-    project_id,
-    outcome_type
-) {
-  # Create path to the feature info file
-  feature_info_file <- .get_feature_info_file_name(
-    file_paths = file_paths,
-    project_id = project_id
-  )
-
-  if (is.null(file_paths)) {
-    # Create, but do not store to disk.
-    feature_info_list <- list()
-    feature_info_list[["generic"]] <- .get_generic_feature_info(
-      data = data,
-      outcome_type = outcome_type,
-      descriptor = NULL
-    )
-    
-  } else if (!file.exists(feature_info_file)) {
-    # Generate feature information
-    feature_info_list <- list()
-    feature_info_list[["generic"]] <- .get_generic_feature_info(
-      data = data,
-      outcome_type = outcome_type,
-      descriptor = NULL
-    )
-
-    # Write to file
-    saveRDS(feature_info_list, file = feature_info_file)
-    
-  } else {
-    # Read from file.
-    feature_info_list <- readRDS(feature_info_file)
-
-    # Update to current standard.
-    feature_info_list <- update_object(feature_info_list)
-  }
-
-  return(feature_info_list)
-}
-
 
 
 .get_generic_feature_info <- function(

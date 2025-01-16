@@ -114,46 +114,6 @@ setMethod(
     # Push settings to the backend.
     .assign_settings_to_global(settings = settings)
     
-    # Prepare featureInfo objects ----------------------------------------------
-    
-    # Create a list of featureInfo objects.
-    feature_info_list <- .get_feature_info_data(
-      data = data_bypass@data,
-      file_paths = NULL,
-      project_id = character(),
-      outcome_type = settings$data$outcome_type
-    )
-    
-    # Extract the generic data.
-    feature_info_list <- feature_info_list[["generic"]]
-    
-    # Perform some pre-processing (i.e. remove singular features)
-    feature_info_list <- .determine_preprocessing_parameters(
-      cl = cl,
-      data = data_bypass,
-      feature_info_list = feature_info_list,
-      settings = settings,
-      verbose = FALSE
-    )
-    
-    # Remove invariant features from the data
-    data <- filter_features(
-      data = data,
-      available_features = get_available_features(feature_info_list = feature_info_list)
-    )
-    
-    # Find features that are required for processing the data.
-    required_features <- get_required_features(
-      x = data,
-      feature_info_list = feature_info_list
-    )
-    
-    # Find important features, i.e. those that constitute the signature either
-    # individually or as part of a cluster.
-    model_features <- get_model_features(
-      x = data,
-      feature_info_list = feature_info_list
-    )
     
     # Prepare hyperparameters --------------------------------------------------
     
@@ -190,6 +150,21 @@ setMethod(
       function(hyperparameter_entry) hyperparameter_entry$init_config
     )
     
+    
+    # Create feature information list ------------------------------------------
+    
+    feature_info_task <- methods::new(
+      "familiarTaskFeatureInfo"
+    )
+    
+    # Feature information objects are created from the bypass dataset.
+    feature_info <- .perform_task(
+      object = feature_info_task,
+      data = data_bypass,
+      settings = settings
+    )
+    
+    
     # Create novelty detector --------------------------------------------------
     
     detector_task <- methods::new(
@@ -213,9 +188,8 @@ setMethod(
     object <- .perform_task(
       object = detector_task,
       data = data,
-      selected_features = model_features,
       settings = settings,
-      feature_info_list = feature_info_list,
+      feature_info_list = feature_info,
       hyperparameters = param_list,
       trim_model = trim_model
     )

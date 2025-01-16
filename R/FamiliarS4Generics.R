@@ -14,8 +14,6 @@ setGeneric(".predict_risk_stratification", function(object, data, ...) standardG
 
 setGeneric(".train", function(object, data, ...) standardGeneric(".train"))
 
-setGeneric(".train_novelty_detector", function(object, data, ...) standardGeneric(".train_novelty_detector"))
-
 setGeneric("require_package", function(x, ...) standardGeneric("require_package"))
 
 setGeneric("set_package_version", function(object, ...) standardGeneric("set_package_version"))

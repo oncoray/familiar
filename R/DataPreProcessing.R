@@ -1,39 +1,3 @@
-# .get_feature_info_file_name <- function(file_paths, project_id) {
-#   # Generate file name of pre-processing file
-#   file_name <- paste0(project_id, "_feature_info.RDS")
-#   
-#   # Add file path and normalise according to the OS
-#   file_name <- normalizePath(file.path(
-#     file_paths$process_data_dir, file_name
-#   ), mustWork = FALSE)
-#   
-#   return(file_name)
-# }
-
-
-
-# .get_feature_info_list_name <- function(data_id, run_id) {
-#   return(paste0(data_id, ".", run_id))
-# }
-
-
-
-# .get_feature_info_list <- function(run) {
-#   
-#   # Find pre-processing control element for the current run
-#   pre_proc_id_list <- .get_preprocessing_iteration_identifiers(run = run)
-#   
-#   # Load feature info list from backend
-#   feature_info_list <- get_feature_info_from_backend(
-#     data_id = pre_proc_id_list$data,
-#     run_id = pre_proc_id_list$run
-#   )
-#   
-#   return(feature_info_list)
-# }
-
-
-
 .determine_preprocessing_parameters <- function(
     cl = NULL,
     data,

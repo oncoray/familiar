@@ -203,15 +203,3 @@ setMethod(
     return(object)
   }
 )
-
-
-
-get_placeholder_run_table <- function() {
-  return(data.table::data.table(
-    "run_id" = 1L,
-    "data_id" = 1L, 
-    "can_pre_process" = TRUE,
-    "perturbation" = "main",
-    "perturb_level" = 1L
-  ))
-}
