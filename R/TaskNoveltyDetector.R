@@ -21,7 +21,7 @@ setClass(
     vimp_table_file = NA_character_,
     hyperparameter_file = NA_character_,
     feature_info_file = NA_character_,
-    task_name = "train_model"
+    task_name = "train_novelty_detector"
   )
 )
 
@@ -164,6 +164,7 @@ setMethod(
     # object.
     hyperparameters <- .get_hyperparameters(
       object = object,
+      selected_features = selected_features,
       hyperparameters = hyperparameters,
       vimp_aggregation_method = vimp_aggregation_method,
       vimp_rank_threshold = vimp_rank_threshold,
@@ -176,7 +177,8 @@ setMethod(
       ...
     )
     
-    # If selected features are not provided, create the hyperparameter table.
+    # If selected features are not provided, create the variable importance
+    # table.
     if (is.null(selected_features)) {
       if (is_empty(hyperparameters$vimp_table)) {
         # Check and retrieve variable importances from the drive, or generate in
@@ -321,7 +323,7 @@ setMethod(
         run_id = hyperparameter_run$run_id[1L],
         learner = object@learner,
         vimp_method = object@vimp_method,
-        object_type = "hyperparametersLearner",
+        object_type = "hyperparametersNoveltyDetector",
         dir_path = file_paths$mb_dir
       )
       
@@ -336,7 +338,7 @@ setMethod(
       
       # Set up task, and explicitly don't write to file.
       hyperparameter_task <- methods::new(
-        "familiarTaskLearnerHyperparameters",
+        "familiarTaskNoveltyDetectorHyperparameters",
         project_id = object@project_id,
         vimp_method = object@vimp_method,
         learner = object@learner,
@@ -366,7 +368,7 @@ setMethod(
       hyperparameter_object <- update_object(readRDS(hyperparameters))
     }
     
-    if (is(hyperparameter_object, "familiarModel")) {
+    if (is(hyperparameter_object, "familiarNoveltyDetector")) {
       hyperparameters <- list(
         "hyperparameters" =  hyperparameter_object@hyperparameters,
         "hyperparameter_data" = hyperparameter_object@hyperparameter_data,

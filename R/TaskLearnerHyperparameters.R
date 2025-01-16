@@ -203,7 +203,7 @@ setMethod(
       hyperparameters <- settings$mb$hyper_param[[object@learner]]
       
     } else if (rlang::is_bare_list(hyperparameters)) {
-      if (object@vimp_method %in% names(hyperparameters)) {
+      if (object@learner %in% names(hyperparameters)) {
         hyperparameters <- hyperparameters[[object@learner]]
       }
     }

@@ -19,7 +19,7 @@ setMethod(
     ...
   ) {
     # Train method for novelty detectors.
-    
+    browser()
     # Check if the class of object is a subclass of familiarNoveltyDetector..
     if (!is_subclass(class(object)[1L], "familiarNoveltyDetector")) {
       object <- promote_detector(object)
