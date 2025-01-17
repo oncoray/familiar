@@ -106,6 +106,7 @@ test_all_learners_train_predict_vimp <- function(
       # list of hyperparameters.
       hyperparameters <- hyperparameters[intersect(learner_hyperparameters, names(hyperparameters))]
       
+      
       # Full dataset -----------------------------------------------------------
       
       # Train the model.
@@ -3782,18 +3783,60 @@ test_hyperparameter_optimisation <- function(
       
       # Full data set-----------------------------------------------------------
       
-      # Create object
-      object <- .test_create_hyperparameter_object(
-        data = full_data,
-        vimp_method = vimp_method,
-        learner = learner,
-        is_vimp = is_vimp,
-        set_signature_feature = TRUE
-      )
+      if (is_vimp) {
+        object <- promote_vimp_method(
+          methods::new(
+            "familiarVimpMethod",
+            outcome_type = outcome_type,
+            vimp_method = vimp_method
+          )
+        )
+        
+        task <- task <- methods::new(
+          "familiarTaskVimpHyperparameters",
+          vimp_method = vimp_method
+        )
+          
+      } else {
+        object <- promote_learner(
+          methods::new(
+            "familiarModel",
+            outcome_type = outcome_type,
+            vimp_method = vimp_method,
+            learner = learner
+          )
+        )
+        
+        task <- methods::new(
+          "familiarTaskLearnerHyperparameters",
+          vimp_method = vimp_method,
+          learner = learner
+        )
+      }
       
-      # Check that object is available for the outcome.
       if (!is_available(object)) next
       
+      # Reconstitute settings from the data.
+      settings <- extract_settings_from_data(data = full_data)
+      
+      # Update some missing settings that can be fixed within this method.
+      settings$data$train_cohorts <- unique(full_data@data[[get_id_columns(single_column = "batch")]])
+      settings$data$signature <- get_feature_columns(full_data)[1L:2L]
+      
+      # Parse the remaining settings that are important.
+      settings <- do.call(
+        .parse_general_settings,
+        args = c(
+          list(
+            "settings" = settings,
+            "data" = full_data@data,
+            "vimp_method" = vimp_method,
+            "learner" = learner
+          ),
+          list(...)
+        )
+      )
+    
       .not_available_invariant_data <- FALSE
       .no_hyperparameters <- FALSE
       
@@ -3825,12 +3868,12 @@ test_hyperparameter_optimisation <- function(
         ))
       }
       
-      # Hyperparameter optimisation on a full dataset.
+      # Create object
       new_object <- do.call(
-        optimise_hyperparameters,
+        .perform_task,
         args = c(
           list(
-            "object" = object,
+            "object" = task,
             "data" = full_data,
             "cl" = cl,
             "n_max_bootstraps" = n_max_bootstraps,
@@ -3838,8 +3881,8 @@ test_hyperparameter_optimisation <- function(
             "n_max_intensify_steps" = n_max_intensify_steps,
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
-            "is_vimp" = is_vimp,
-            "verbose" = verbose
+            "verbose" = verbose,
+            "settings" = settings
           ),
           dots
         )
