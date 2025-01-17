@@ -242,6 +242,9 @@ setMethod(
       data = data
     )
     
+    # Ensure that available data have associated outcome data.
+    data <- filter_missing_outcome(data = data)
+    
     # Compute hyperparameters. Function arguments to optimise_hyperparameters
     # are passed from the calling function.
     hyperparameter_object <- optimise_hyperparameters(

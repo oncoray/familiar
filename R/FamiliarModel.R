@@ -25,7 +25,7 @@ setMethod(
 
     # Check if the class of object is a subclass of familiarModel.
     if (!is_subclass(class(object)[1L], "familiarModel")) object <- promote_learner(object)
-
+    
     # Process data, if required.
     data <- process_input_data(
       object = object,
