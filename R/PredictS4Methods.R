@@ -199,7 +199,7 @@ setMethod(
       predictions@data <- merge(
         x = data@data[, mget(get_id_columns())],
         y = predictions@data,
-        on = c(familiar:::get_id_columns()),
+        by = c(familiar:::get_id_columns()),
         all.x = TRUE,
         sort = FALSE
       )
