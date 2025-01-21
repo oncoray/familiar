@@ -3898,11 +3898,12 @@ test_hyperparameter_optimisation <- function(
         {
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set.
-            testthat::expect_true(is.null(new_object@hyperparameters))
+            testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+            testthat::expect_true(is_empty(new_object@hyperparameters))
             
           } else if (!.no_hyperparameters || !not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_false(is.null(new_object@hyperparameters))
+            testthat::expect_false(is_empty(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
@@ -3991,10 +3992,12 @@ test_hyperparameter_optimisation <- function(
           if (.no_hyperparameters || .not_available_invariant_data) {
             # Test that no hyperparameters are set. Models cannot
             # train on completely invariant data.
-            testthat::expect_true(is.null(new_object@hyperparameters))
+            testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+            testthat::expect_true(is_empty(new_object@hyperparameters))
+            
           } else if (!.not_available_invariant_data) {
             # Test that hyperparameters are set.
-            testthat::expect_false(is.null(new_object@hyperparameters))
+            testthat::expect_false(is_empty(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
@@ -4077,11 +4080,12 @@ test_hyperparameter_optimisation <- function(
             # Test that no hyperparameters are set. Single entry data cannot be
             # used to generate hyperparameter sets unless they are always
             # available.
-            testthat::expect_true(is.null(new_object@hyperparameters))
+            testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+            testthat::expect_true(is_empty(new_object@hyperparameters))
             
           } else if (!not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_false(is.null(new_object@hyperparameters))
+            testthat::expect_false(is_empty(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
@@ -4126,7 +4130,7 @@ test_hyperparameter_optimisation <- function(
             # randomised hyperparameters depend only on the number of features.
             # Therefore, this is a softer check.
             
-            if (!is.null(new_object@hyperparameters)) {
+            if (!is_empty(new_object@hyperparameters)) {
               # Test that all hyperparameters are set.
               testthat::expect_setequal(
                 names(new_object@hyperparameters), 
@@ -4145,7 +4149,8 @@ test_hyperparameter_optimisation <- function(
               
             } else {
               # Bogus test to prevent skipping.
-              testthat::expect_true(is.null(new_object@hyperparameters))
+              testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+              testthat::expect_true(is_empty(new_object@hyperparameters))
             }
           }
         }
@@ -4193,11 +4198,12 @@ test_hyperparameter_optimisation <- function(
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set. Empty datasets cannot be
             # used to create hyperparameters.
-            testthat::expect_true(is.null(new_object@hyperparameters))
+            testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+            testthat::expect_true(is_empty(new_object@hyperparameters))
             
           } else if (!not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_false(is.null(new_object@hyperparameters))
+            testthat::expect_false(is_empty(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
@@ -4211,7 +4217,7 @@ test_hyperparameter_optimisation <- function(
             # randomised hyperparameters depend only on the number of features.
             # Therefore, this is a softer check.
             
-            if (!is.null(new_object@hyperparameters)) {
+            if (!is_empty(new_object@hyperparameters)) {
               # Test that all hyperparameters are set.
               testthat::expect_setequal(
                 names(new_object@hyperparameters),
@@ -4228,7 +4234,8 @@ test_hyperparameter_optimisation <- function(
               
             } else {
               # Bogus test to prevent skipping.
-              testthat::expect_true(is.null(new_object@hyperparameters))
+              testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+              testthat::expect_true(is_empty(new_object@hyperparameters))
             }
           }
         }
@@ -4293,10 +4300,12 @@ test_hyperparameter_optimisation <- function(
         {
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set.
-            testthat::expect_true(is.null(new_object@hyperparameters))
+            testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+            testthat::expect_true(is_empty(new_object@hyperparameters))
+            
           } else if (!.no_hyperparameters || !not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_false(is.null(new_object@hyperparameters))
+            testthat::expect_false(is_empty(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
@@ -4358,11 +4367,12 @@ test_hyperparameter_optimisation <- function(
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set. Hyperparameters cannot be
             # set for datasets with only a single sample.
-            testthat::expect_true(is.null(new_object@hyperparameters))
+            testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+            testthat::expect_true(is_empty(new_object@hyperparameters))
             
           } else if (!not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_false(is.null(new_object@hyperparameters))
+            testthat::expect_false(is_empty(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
@@ -4385,7 +4395,7 @@ test_hyperparameter_optimisation <- function(
             # randomised hyperparameters depend only on the number of features.
             # Therefore, this is a softer check.
             
-            if (!is.null(new_object@hyperparameters)) {
+            if (!is_empty(new_object@hyperparameters)) {
               # Test that all hyperparameters are set.
               testthat::expect_setequal(
                 names(new_object@hyperparameters),
@@ -4402,7 +4412,8 @@ test_hyperparameter_optimisation <- function(
               }
             } else {
               # Bogus test to prevent skipping.
-              testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+              testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+              testthat::expect_true(is_empty(new_object@hyperparameters))
             }
           }
         }
@@ -4449,11 +4460,12 @@ test_hyperparameter_optimisation <- function(
           if (.no_hyperparameters) {
             # Test that no hyperparameters are set. Hyperparameters cannot be
             # set for datasets with invariant features.
-            testthat::expect_true(is.null(new_object@hyperparameters))
+            testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+            testthat::expect_true(is_empty(new_object@hyperparameters))
             
           } else if (!not_available_no_samples) {
             # Test that hyperparameters are set.
-            testthat::expect_false(is.null(new_object@hyperparameters))
+            testthat::expect_false(is_empty(new_object@hyperparameters))
             
             # Test that all hyperparameters are set.
             testthat::expect_setequal(
@@ -4476,7 +4488,7 @@ test_hyperparameter_optimisation <- function(
             # randomised hyperparameters depend only on the number of features.
             # Therefore, this is a softer check.
             
-            if (!is.null(new_object@hyperparameters)) {
+            if (!is_empty(new_object@hyperparameters)) {
               # Test that all hyperparameters are set.
               testthat::expect_setequal(
                 names(new_object@hyperparameters),
@@ -4493,7 +4505,8 @@ test_hyperparameter_optimisation <- function(
               }
             } else {
               # Bogus test to prevent skipping.
-              testthat::expect_equal(is.null(new_object@hyperparameters), TRUE)
+              testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
+              testthat::expect_true(is_empty(new_object@hyperparameters))
             }
           }
         }
