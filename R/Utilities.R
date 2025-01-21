@@ -768,151 +768,94 @@ get_object_file_name <- function(
   if (object_type == "familiarModel") {
     # For familiarModel objects
 
-    if (is.null(learner) || is.null(vimp_method) || is.null(project_id)) {
+    if (is.null(learner) || is.null(vimp_method)) {
       ..error_reached_unreachable_code("missing arguments")
     }
     
-    output_str <- paste0(
-      project_id, "_", 
-      learner, "_", 
-      vimp_method, "_", 
-      data_id, "_", 
-      run_id,
-      "_model"
-    )
+    output_str <- c(project_id, learner, vimp_method, data_id, run_id, "model")
     
   } else if (object_type == "familiarNoveltyDetector") {
-      # For familiarNoveltyDetector objects
-      
-      if (is.null(learner) || is.null(vimp_method) || is.null(project_id)) {
-        ..error_reached_unreachable_code("missing arguments")
-      }
-      
-      output_str <- paste0(
-        project_id, "_", 
-        learner, "_", 
-        vimp_method, "_", 
-        data_id, "_", 
-        run_id,
-        "_detector"
-      )
+    # For familiarNoveltyDetector objects
+    
+    if (is.null(learner) || is.null(vimp_method)) {
+      ..error_reached_unreachable_code("missing arguments")
+    }
+    
+    output_str <- c(project_id, learner, vimp_method, data_id, run_id, "detector")
     
   } else if (object_type == "familiarData") {
     # For familiarData objects
 
     if (
-      is.null(learner) || is.null(vimp_method) || is.null(project_id) ||
+      is.null(learner) || is.null(vimp_method) ||
       is.null(data_id) || is.null(run_id) ||
       is.null(ensemble_data_id) || is.null(ensemble_run_id) || is.null(name)
     ) {
       ..error_reached_unreachable_code("missing arguments")
     }
 
-    output_str <- paste0(
-      project_id, "_", 
-      learner, "_", 
-      vimp_method, "_", 
-      data_id, "_", 
-      run_id, "_ensemble_",
-      ensemble_data_id, "_",
-      ensemble_run_id, "_",
-      name, "_data"
+    output_str <- c(
+      project_id, learner, vimp_method, data_id, run_id, "ensemble",
+      ensemble_data_id, ensemble_run_id, name, "data"
     )
   
   } else if (object_type == "familiarCollection") {
     
     if (
-      is.null(project_id) || ((is.null(data_id) || is.null(run_id)) && is.null(name))
+      ((is.null(data_id) || is.null(run_id)) && is.null(name))
     ) {
       ..error_reached_unreachable_code("missing arguments")
     }
     
-    if (!is.null(name)) {
-      output_str <- paste0(
-        project_id, "_",
-        name,
-        "_collection"
-      )
-      
+    output_str <- c(project_id)
+    if (is.null(name)) {
+      output_str <- c(output_str, data_id, run_id)
     } else {
-      output_str <- paste0(
-        project_id, "_",
-        data_id, "_",
-        run_id,
-        "_collection"
-      )
+      output_str <- c(output_str, name)
     }
+    
+    output_str <- c(output_str, "collection")
     
   } else if (object_type == "vimpTable") {
     
-    if (is.null(vimp_method) || is.null(project_id)) {
+    if (is.null(vimp_method)) {
       ..error_reached_unreachable_code("missing arguments")
     }
     
-    output_str <- paste0(
-      project_id, "_",
-      vimp_method, "_", 
-      data_id, "_", 
-      run_id,
-      "_vimp"
-    )
+    output_str <- c(project_id, vimp_method, data_id, run_id, "vimp")
     
   } else if (object_type == "featureInfo") {
     # Complete feature info objects.
-    
-    if (is.null(project_id)) {
-      ..error_reached_unreachable_code("missing arguments")
-    }
-    
-    output_str <- paste0(
-      project_id, "_",
-      data_id, "_",
-      run_id, 
-      "_feature_info"
-    )
+    output_str <- c(project_id, data_id, run_id, "feature_info")
     
   } else if (object_type == "genericFeatureInfo") {
     # Generic feature info objects.
-    
-    if (is.null(project_id)) {
-      ..error_reached_unreachable_code("missing arguments")
-    }
-    
-    output_str <- paste0(project_id, "_generic_feature_info")
+    output_str <- c(project_id, "generic_feature_info")
   
   } else if (object_type == "hyperparametersVimp") {
     
-    if (is.null(vimp_method) || is.null(project_id)) {
+    if (is.null(vimp_method)) {
       ..error_reached_unreachable_code("missing arguments")
     }
     
-    output_str <- paste0(
-      project_id, "_",
-      data_id, "_",
-      run_id, "_",
-      vimp_method,
-      "_vimp_hyperparameters"
-    )
-  
+    output_str <- c(project_id, data_id, run_id, vimp_method, "vimp_hyperparameters")
+    
   } else if (object_type == "hyperparametersLearner") {
     
-    if (is.null(vimp_method) || is.null(learner) || is.null(project_id)) {
+    if (is.null(vimp_method) || is.null(learner)) {
       ..error_reached_unreachable_code("missing arguments")
     }
     
-    output_str <- paste0(
-      project_id, "_",
-      data_id, "_",
-      run_id, "_",
-      learner, "_",
-      vimp_method,
-      "_learner_hyperparameters"
-    )
+    output_str <- c(project_id, data_id, run_id, learner, vimp_method, "learner_hyperparameters")
     
   } else {
     ..error_reached_unreachable_code(paste0("unknown object_type: ", object_type))
   }
 
+  # Strip any NA entries, and collapse to single string.
+  output_str <- output_str[!is.na(output_str)]
+  output_str <- paste(output_str, collapse = "_")
+  
   # Add extension
   if (with_extension) {
     output_str <- paste0(output_str, ".RDS")
