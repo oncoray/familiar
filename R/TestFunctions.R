@@ -3956,21 +3956,25 @@ test_hyperparameter_optimisation <- function(
         ))
       }
       
+      # Extract feature information.
+      feature_info <- new_object@feature_info
+      
       # Optimise for data that are completely identical.
       new_object <- do.call(
-        optimise_hyperparameters,
+        .perform_task,
         args = c(
           list(
-            "object" = object,
+            "object" = task,
             "data" = identical_sample_data,
             "cl" = cl,
+            "feature_info_list" = feature_info,
             "n_max_bootstraps" = n_max_bootstraps,
             "n_max_optimisation_steps" = n_max_optimisation_steps,
             "n_max_intensify_steps" = n_max_intensify_steps,
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
-            "is_vimp" = is_vimp,
-            "verbose" = verbose
+            "verbose" = verbose,
+            "settings" = settings
           ),
           dots
         )
@@ -4042,19 +4046,20 @@ test_hyperparameter_optimisation <- function(
       
       # Optimise for data that consist of only one sample.
       new_object <- do.call(
-        optimise_hyperparameters,
+        .perform_task,
         args = c(
           list(
-            "object" = object,
+            "object" = task,
             "data" = full_one_sample_data,
             "cl" = cl,
+            "feature_info_list" = feature_info,
             "n_max_bootstraps" = n_max_bootstraps,
             "n_max_optimisation_steps" = n_max_optimisation_steps,
             "n_max_intensify_steps" = n_max_intensify_steps,
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
-            "is_vimp" = is_vimp,
-            "verbose" = verbose
+            "verbose" = verbose,
+            "settings" = settings
           ),
           dots
         )
@@ -4156,19 +4161,20 @@ test_hyperparameter_optimisation <- function(
       
       # Optimise when data is missing.
       new_object <- do.call(
-        optimise_hyperparameters,
+        .perform_task,
         args = c(
           list(
-            "object" = object,
+            "object" = task,
             "data" = empty_data,
             "cl" = cl,
+            "feature_info_list" = feature_info,
             "n_max_bootstraps" = n_max_bootstraps,
             "n_max_optimisation_steps" = n_max_optimisation_steps,
             "n_max_intensify_steps" = n_max_intensify_steps,
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
-            "is_vimp" = is_vimp,
-            "verbose" = verbose
+            "verbose" = verbose,
+            "settings" = settings
           ),
           dots
         )
@@ -4229,13 +4235,25 @@ test_hyperparameter_optimisation <- function(
       )
       
       # One-feature data set ---------------------------------------------------
-      # Create object
-      object <- .test_create_hyperparameter_object(
-        data = one_feature_data,
-        vimp_method = vimp_method,
-        learner = learner,
-        is_vimp = is_vimp,
-        set_signature_feature = FALSE
+      
+      # Reconstitute settings from the data.
+      settings <- extract_settings_from_data(data = one_feature_data)
+      
+      # Update some missing settings that can be fixed within this method.
+      settings$data$train_cohorts <- unique(full_data@data[[get_id_columns(single_column = "batch")]])
+      
+      # Parse the remaining settings that are important.
+      settings <- do.call(
+        .parse_general_settings,
+        args = c(
+          list(
+            "settings" = settings,
+            "data" = one_feature_data@data,
+            "vimp_method" = vimp_method,
+            "learner" = learner
+          ),
+          list(...)
+        )
       )
       
       if (verbose) {
@@ -4248,10 +4266,10 @@ test_hyperparameter_optimisation <- function(
       
       # Optimise parameters for a dataset with only one feature.
       new_object <- do.call(
-        optimise_hyperparameters,
+        .perform_task,
         args = c(
           list(
-            "object" = object,
+            "object" = task,
             "data" = one_feature_data,
             "cl" = cl,
             "n_max_bootstraps" = n_max_bootstraps,
@@ -4259,8 +4277,8 @@ test_hyperparameter_optimisation <- function(
             "n_max_intensify_steps" = n_max_intensify_steps,
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
-            "is_vimp" = is_vimp,
-            "verbose" = verbose
+            "verbose" = verbose,
+            "settings" = settings
           ),
           dots
         )
@@ -4298,6 +4316,9 @@ test_hyperparameter_optimisation <- function(
         }
       )
       
+      # Extract feature info.
+      feature_info <- new_object@feature_info
+      
       if (verbose) {
         message(paste0(
           "\nComputing hyperparameters for ", current_method,
@@ -4308,19 +4329,20 @@ test_hyperparameter_optimisation <- function(
       
       # Optimise parameters for a dataset with only one feature and sample.
       new_object <- do.call(
-        optimise_hyperparameters,
+        .perform_task,
         args = c(
           list(
-            "object" = object,
+            "object" = task,
             "data" = one_feature_one_sample_data,
             "cl" = cl,
+            "feature_info_list" = feature_info,
             "n_max_bootstraps" = n_max_bootstraps,
             "n_max_optimisation_steps" = n_max_optimisation_steps,
             "n_max_intensify_steps" = n_max_intensify_steps,
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
-            "is_vimp" = is_vimp,
-            "verbose" = verbose
+            "verbose" = verbose,
+            "settings" = settings
           ),
           dots
         )
@@ -4396,23 +4418,25 @@ test_hyperparameter_optimisation <- function(
       
       # Optimise parameters for a dataset with only one, invariant feature.
       new_object <- do.call(
-        optimise_hyperparameters,
+        .perform_task,
         args = c(
           list(
-            "object" = object,
+            "object" = task,
             "data" = one_feature_invariant_data,
             "cl" = cl,
+            "feature_info_list" = feature_info,
             "n_max_bootstraps" = n_max_bootstraps,
             "n_max_optimisation_steps" = n_max_optimisation_steps,
             "n_max_intensify_steps" = n_max_intensify_steps,
             "n_random_sets" = n_random_sets,
             "n_challengers" = n_challengers,
-            "is_vimp" = is_vimp,
-            "verbose" = verbose
+            "verbose" = verbose,
+            "settings" = settings
           ),
           dots
         )
       )
+      
       
       test_fun(
         paste0(
