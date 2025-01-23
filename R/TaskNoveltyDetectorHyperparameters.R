@@ -112,6 +112,8 @@ setMethod(
   function(
     object,
     data,
+    vimp_aggregation_method = NULL,
+    vimp_rank_threshold = NULL,
     selected_features = NULL,
     settings = NULL,
     feature_info_list = NULL,
@@ -182,6 +184,16 @@ setMethod(
       }
     }
     
+    # Set vimp aggregation method and vimp_rank_threshold based on settings.
+    if (!is.null(settings)) {
+      if (is.null(vimp_aggregation_method)) {
+        vimp_aggregation_method <- settings$vimp$aggregation
+      }
+      if (is.null(vimp_rank_threshold)) {
+        vimp_rank_threshold <- settings$vimp$aggr_rank_threshold
+      }
+    }
+    
     # Create the novelty detector object to set hyperparameters.
     hyperparameter_object <- promote_detector(
       object = methods::new(
@@ -190,6 +202,8 @@ setMethod(
         learner = object@learner,
         vimp_method = object@vimp_method,
         vimp_table = vimp_table,
+        vimp_aggregation_method = vimp_aggregation_method,
+        vimp_rank_threshold = vimp_rank_threshold,
         feature_info = feature_info_list,
         data_id = object@data_id,
         run_id = object@run_id,

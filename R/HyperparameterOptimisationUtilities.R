@@ -372,22 +372,22 @@
     # Existing vimp_tables.
     vimp_table <- object@vimp_table
     
-    vimp_table <- update_vimp_table_to_reference(
-      x = vimp_table,
-      reference_cluster_table = .create_clustering_table(
-        feature_info_list = object@feature_info
-      )
-    )
-    
-    # Form clusters.
-    vimp_table <- recluster_vimp_table(vimp_table)
-    
-    # Aggregate to single table.
-    vimp_table <- aggregate_vimp_table(
-      vimp_table,
-      aggregation_method = vimp_aggregation_method,
-      rank_threshold = vimp_rank_threshold
-    )
+    # vimp_table <- update_vimp_table_to_reference(
+    #   x = vimp_table,
+    #   reference_cluster_table = .create_clustering_table(
+    #     feature_info_list = object@feature_info
+    #   )
+    # )
+    # 
+    # # Form clusters.
+    # vimp_table <- recluster_vimp_table(vimp_table)
+    # 
+    # # Aggregate to single table.
+    # vimp_table <- aggregate_vimp_table(
+    #   vimp_table,
+    #   aggregation_method = vimp_aggregation_method,
+    #   rank_threshold = vimp_rank_threshold
+    # )
     
   } else {
     
@@ -414,6 +414,8 @@
       X = bootstraps,
       FUN = ..compute_hyperparameter_variable_importance,
       vimp_task = vimp_task,
+      vimp_aggregation_method = object@vimp_aggregation_method,
+      vimp_rank_threshold = object@vimp_rank_threshold,
       data = data,
       feature_info = object@feature_info,
       progress_bar = verbose,
@@ -430,6 +432,8 @@
     train_samples, 
     vimp_task, 
     data,
+    vimp_aggregation_method,
+    vimp_rank_threshold,
     feature_info
 ) {
   # Select bootstrap data.
@@ -443,6 +447,8 @@
   vimp_table <- .perform_task(
     object = vimp_task,
     feature_info_list = feature_info,
+    vimp_aggregation_method = vimp_aggregation_method,
+    vimp_rank_threshold = vimp_rank_threshold,
     data = data
   )
   
@@ -624,9 +630,8 @@
   object@hyperparameters <- parameter_list
 
   # Set signature.
-  object <- set_signature(
+  object <- set_model_features(
     object = object,
-    rank_table = rank_table,
     minimise_footprint = TRUE
   )
 
@@ -1551,81 +1556,47 @@ get_best_hyperparameter_set <- function(
 
 .set_signature_size <- function(
     object,
-    rank_table_list,
+    vimp_table_list,
     suggested_range = NULL
 ) {
-  
   if (is.null(suggested_range)) suggested_range <- c(1L, Inf)
 
   # Some variable importance methods fail to produce a list (e.g. none,
   # signature_only, random). We create a single element list in that case.
-  if (is_empty(rank_table_list)) rank_table_list <- list(NULL)
+  if (is(vimp_table_list, "vimpTable")) vimp_table_list <- list(vimp_table_list)
+  if (is_empty(vimp_table_list)) vimp_table_list <- list(NULL)
 
   # Update minimum signature size in object.
   object@hyperparameters$sign_size <- min(suggested_range)
   
   # Determine the lower range of the signature. This includes any signature
   # features that may exist.
-  if (data.table::is.data.table(rank_table_list)) {
-    signature_list <- get_signature(
-      object = object,
-      rank_table = rank_table_list
-    )
-    
-    min_signature_size <- length(signature_list)
-    
-  } else if (rlang::is_bare_list(rank_table_list)) {
-    signature_list <- lapply(
-      rank_table_list,
-      function(rank_table, object) {
-        get_signature(
-          object = object,
-          rank_table = rank_table
-        )
-      },
-      object = object
-    )
-    
-    min_signature_size <- min(lengths(signature_list))
-    
-  } else {
-    ..error_reached_unreachable_code(paste0(
-      "unknown class of rank_table_list: ",
-      paste_s(class(rank_table_list))
-    ))
-  }
-
+  signature_list <- lapply(
+    vimp_table_list,
+    function(vimp_table, object) {
+      object@vimp_table <- vimp_table
+      return(get_signature(object))
+    },
+    object = object
+  )
+  
+  # Determine minimum signature size.
+  min_signature_size <- min(lengths(signature_list))
+  
   # Update maximum signature size in the list.
   object@hyperparameters$sign_size <- max(suggested_range)
 
-  if (data.table::is.data.table(rank_table_list)) {
-    signature_list <- get_signature(
-      object = object,
-      rank_table = rank_table_list
-    )
-    
-    max_signature_size <- length(signature_list)
-    
-  } else if (rlang::is_bare_list(rank_table_list)) {
-    signature_list <- lapply(
-      rank_table_list,
-      function(rank_table, object) {
-        get_signature(
-          object = object,
-          rank_table = rank_table
-        )
-      },
-      object = object
-    )
-    
-    max_signature_size <- max(lengths(signature_list))
-    
-  } else {
-    ..error_reached_unreachable_code(paste0(
-      "unknown class of rank_table_list: ",
-      paste_s(class(rank_table_list))
-    ))
-  }
+  signature_list <- lapply(
+    vimp_table_list,
+    function(vimp_table, object) {
+      object@vimp_table <- vimp_table
+      return(get_signature(object))
+    },
+    object = object
+  )
+  
+  # Determine maximum signature size.  
+  max_signature_size <- max(lengths(signature_list))
   
   # Add minimum and maximum signature size, if necessary.
   if (any(suggested_range < min_signature_size)) {

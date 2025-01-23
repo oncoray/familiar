@@ -229,29 +229,29 @@ setMethod(
       vimp_table <- hyperparameters$vimp_table
     }
     
-    if (!is.null(feature_info_list)) {
-      # Update using reference cluster table to ensure that the data are correct
-      # locally. This clustering table can be derived from the provided feature
-      # info list.
-      vimp_table <- update_vimp_table_to_reference(
-        x = vimp_table,
-        reference_cluster_table = .create_clustering_table(
-          feature_info_list = feature_info_list
-        )
-      )
-    }
-    
-    # Recluster the data according to the clustering table corresponding to the
-    # model. This ensures that the variable importance table has the features
-    # that are seen by the model.
-    vimp_table <- recluster_vimp_table(vimp_table)
-    
-    # Get aggregate variable importances
-    vimp_table <- aggregate_vimp_table(
-      vimp_table,
-      aggregation_method = vimp_aggregation_method,
-      rank_threshold = vimp_rank_threshold
-    )
+    # if (!is.null(feature_info_list)) {
+    #   # Update using reference cluster table to ensure that the data are correct
+    #   # locally. This clustering table can be derived from the provided feature
+    #   # info list.
+    #   vimp_table <- update_vimp_table_to_reference(
+    #     x = vimp_table,
+    #     reference_cluster_table = .create_clustering_table(
+    #       feature_info_list = feature_info_list
+    #     )
+    #   )
+    # }
+    # 
+    # # Recluster the data according to the clustering table corresponding to the
+    # # model. This ensures that the variable importance table has the features
+    # # that are seen by the model.
+    # vimp_table <- recluster_vimp_table(vimp_table)
+    # 
+    # # Get aggregate variable importances
+    # vimp_table <- aggregate_vimp_table(
+    #   vimp_table,
+    #   aggregation_method = vimp_aggregation_method,
+    #   rank_threshold = vimp_rank_threshold
+    # )
     
     # Create the raw model object for training.
     model_object <- methods::new(
@@ -261,6 +261,8 @@ setMethod(
       hyperparameter_data = hyperparameters$hyperparameter_data,
       vimp_method = object@vimp_method,
       vimp_table = vimp_table,
+      vimp_aggregation_method = vimp_aggregation_method,
+      vimp_rank_threshold = vimp_rank_threshold,
       learner = object@learner,
       feature_info = feature_info_list,
       outcome_info = data@outcome_info,
@@ -272,7 +274,7 @@ setMethod(
     )
     
     # Select features based on variable importances.
-    model_object <- set_signature(
+    model_object <- set_model_features(
       object = model_object,
       minimise_footprint = FALSE
     )
@@ -299,10 +301,14 @@ setMethod(
     model_object@novelty_detector <- .perform_task(
       object = detector_task,
       data = data,
-      selected_features = model_object@novelty_features,
+      selected_features = features_after_clustering(
+        features = model_object@novelty_features,
+        feature_info_list = feature_info_list),
       settings = settings,
       feature_info_list = feature_info_list,
       vimp_table = vimp_table,
+      vimp_aggregation_method = vimp_aggregation_method,
+      vimp_rank_threshold = vimp_rank_threshold,
       hyperparameters = detector_parameters,
       return_results = TRUE
     )

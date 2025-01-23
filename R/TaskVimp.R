@@ -125,6 +125,8 @@ setMethod(
   function(
     object,
     data,
+    vimp_aggregation_method = NULL,
+    vimp_rank_threshold = NULL,
     experiment_data = NULL,
     settings = NULL,
     feature_info_list = NULL,
@@ -135,17 +137,7 @@ setMethod(
     return_results = TRUE,
     ...
   ) {
-    logger_message(
-      paste0(
-        "Variable importance: Starting variable importance computation using the \"",
-        object@vimp_method, "\" method for run ",
-        object@task_id, " of ",
-        object@n_tasks, "."
-      ),
-      indent = message_indent,
-      verbose = verbose
-    )
-    
+
     # Check if the desired data already exist elsewhere.
     results_exist <- FALSE
     if (is(experiment_data, "experimentData")) {
@@ -204,6 +196,16 @@ setMethod(
       )
     }
     
+    # Set vimp aggregation method and vimp_rank_threshold based on settings.
+    if (!is.null(settings)) {
+      if (is.null(vimp_aggregation_method)) {
+        vimp_aggregation_method <- settings$vimp$aggregation
+      }
+      if (is.null(vimp_rank_threshold)) {
+        vimp_rank_threshold <- settings$vimp$aggr_rank_threshold
+      }
+    }
+    
     # Check and retrieve feature info list.
     feature_info_list <- .get_feature_info_list(
       object = object,
@@ -221,6 +223,8 @@ setMethod(
       object = object,
       hyperparameters = hyperparameters,
       feature_info_list = feature_info_list,
+      vimp_aggregation_method = vimp_aggregation_method,
+      vimp_rank_threshold = vimp_rank_threshold,
       data = data,
       settings = settings,
       message_indent = message_indent,
@@ -236,6 +240,8 @@ setMethod(
       outcome_type = data@outcome_type,
       hyperparameters = hyperparameters,
       vimp_method = object@vimp_method,
+      vimp_aggregation_method = vimp_aggregation_method,
+      vimp_rank_threshold = vimp_rank_threshold,
       outcome_info = data@outcome_info,
       run_table = .get_current_run_table(object = object),
       project_id = object@project_id
@@ -264,6 +270,17 @@ setMethod(
     data <- process_input_data(
       object = vimp_object,
       data = data
+    )
+    
+    logger_message(
+      paste0(
+        "Variable importance: Starting variable importance computation using the \"",
+        object@vimp_method, "\" method for run ",
+        object@task_id, " of ",
+        object@n_tasks, "."
+      ),
+      indent = message_indent,
+      verbose = verbose
     )
     
     # Compute variable importance.

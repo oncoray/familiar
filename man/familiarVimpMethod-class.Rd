@@ -19,6 +19,12 @@ method.}
 \item{\code{vimp_method}}{The character string indicating the variable importance
 method.}
 
+\item{\code{vimp_aggregation_method}}{Method used for aggregating variable importance
+tables if more than one is present.)}
+
+\item{\code{vimp_rank_threshold}}{Threshold used for some variable importance
+aggregation methods.}
+
 \item{\code{multivariate}}{Flags whether the variable importance method is
 multivariate vs. univariate.}
 

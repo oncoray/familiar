@@ -139,6 +139,8 @@ setMethod(
     settings = NULL,
     feature_info_list = NULL,
     vimp_table = NULL,
+    vimp_aggregation_method = NULL,
+    vimp_rank_threshold = NULL,
     hyperparameters = NULL,
     message_indent = 0L,
     verbose = FALSE,
@@ -146,18 +148,7 @@ setMethod(
     return_results = TRUE,
     ...
   ) {
-    logger_message(
-      paste0(
-        "Hyperparameter optimisation: Starting hyperparameter optimisation for the \"",
-        object@learner, "\" learner with the \"",
-        object@vimp_method, "\" variable importance method for run ",
-        object@task_id, " of ",
-        object@n_tasks, "."
-      ),
-      indent = message_indent,
-      verbose = verbose
-    )
-    
+
     # Check that outcome_info is present on data
     if (!is(data@outcome_info, "outcomeInfo")) {
       ..error_reached_unreachable_code(
@@ -198,6 +189,16 @@ setMethod(
       ..error_reached_unreachable_code(paste0("use_vimp attribute has an unrecognised "))
     }
     
+    # Set vimp aggregation method and vimp_rank_threshold based on settings.
+    if (!is.null(settings)) {
+      if (is.null(vimp_aggregation_method)) {
+        vimp_aggregation_method <- settings$vimp$aggregation
+      }
+      if (is.null(vimp_rank_threshold)) {
+        vimp_rank_threshold <- settings$vimp$aggr_rank_threshold
+      }
+    }
+    
     # Get user-provided hyperparameters.
     if (is.null(hyperparameters)) {
       hyperparameters <- settings$mb$hyper_param[[object@learner]]
@@ -217,6 +218,8 @@ setMethod(
         learner = object@learner,
         vimp_method = object@vimp_method,
         vimp_table = vimp_table,
+        vimp_aggregation_method = vimp_aggregation_method,
+        vimp_rank_threshold = vimp_rank_threshold,
         outcome_info = data@outcome_info,
         run_table = .get_current_run_table(object = object),
         settings = settings,
@@ -244,6 +247,18 @@ setMethod(
     
     # Ensure that available data have associated outcome data.
     data <- filter_missing_outcome(data = data)
+    
+    logger_message(
+      paste0(
+        "Hyperparameter optimisation: Starting hyperparameter optimisation for the \"",
+        object@learner, "\" learner with the \"",
+        object@vimp_method, "\" variable importance method for run ",
+        object@task_id, " of ",
+        object@n_tasks, "."
+      ),
+      indent = message_indent,
+      verbose = verbose
+    )
     
     # Compute hyperparameters. Function arguments to optimise_hyperparameters
     # are passed from the calling function.

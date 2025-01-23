@@ -123,6 +123,8 @@ setMethod(
   function(
     object,
     data,
+    vimp_aggregation_method = NULL,
+    vimp_rank_threshold = NULL,
     settings = NULL,
     experiment_data = NULL,
     feature_info_list = NULL,
@@ -204,6 +206,16 @@ setMethod(
       )
     }
     
+    # Set vimp aggregation method and vimp_rank_threshold based on settings.
+    if (!is.null(settings)) {
+      if (is.null(vimp_aggregation_method)) {
+        vimp_aggregation_method <- settings$vimp$aggregation
+      }
+      if (is.null(vimp_rank_threshold)) {
+        vimp_rank_threshold <- settings$vimp$aggr_rank_threshold
+      }
+    }
+    
     # Check and retrieve feature info list.
     feature_info_list <- .get_feature_info_list(
       object = object,
@@ -233,6 +245,8 @@ setMethod(
         outcome_type = data@outcome_type,
         hyperparameters = NULL,
         vimp_method = object@vimp_method,
+        vimp_aggregation_method = vimp_aggregation_method,
+        vimp_rank_threshold = vimp_rank_threshold,
         outcome_info = data@outcome_info,
         run_table = .get_current_run_table(object = object),
         project_id = object@project_id

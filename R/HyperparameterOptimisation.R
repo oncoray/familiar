@@ -454,8 +454,6 @@ setMethod(
   function(
     object,
     data,
-    vimp_aggregation_method,
-    vimp_rank_threshold,
     cl = NULL,
     experiment_info = NULL,
     user_list = NULL,
@@ -733,8 +731,6 @@ setMethod(
       cl = cl,
       object = object,
       data = data,
-      vimp_aggregation_method = vimp_aggregation_method,
-      vimp_rank_threshold = vimp_rank_threshold,
       bootstraps = bootstraps$train_list,
       metric = metric,
       measure_time = measure_time,
@@ -761,9 +757,10 @@ setMethod(
       # Set signature size.
       user_list$sign_size <- .set_signature_size(
         object = object,
-        rank_table_list = get_vimp_table(vimp_table_list),
+        vimp_table_list = vimp_table_list,
         suggested_range = user_list$sign_size
       )
+      browser()
       
       # Update the parameter list With user-defined variables.
       parameter_list <- .update_hyperparameters(
@@ -792,7 +789,7 @@ setMethod(
         return(object)
       }
     }
-    
+    browser()
     ## Create metric objects ---------------------------------------------------
     
     # Update the outcome_info attribute of the familiar model. This is required

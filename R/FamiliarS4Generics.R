@@ -22,8 +22,6 @@ setGeneric("check_package_version", function(object, ...) standardGeneric("check
 
 setGeneric("get_signature", function(object, ...) standardGeneric("get_signature"))
 
-setGeneric("set_signature", function(object, ...) standardGeneric("set_signature"))
-
 setGeneric("model_is_trained", function(object, ...) standardGeneric("model_is_trained"))
 
 setGeneric("complete_familiar_ensemble", function(object, ...) standardGeneric("complete_familiar_ensemble"))
@@ -93,6 +91,8 @@ setGeneric("set_object_parameters", function(object, ...) standardGeneric("set_o
 setGeneric("get_required_features", function(x, ...) standardGeneric("get_required_features"))
 
 setGeneric("get_model_features", function(x, ...) standardGeneric("get_model_features"))
+
+setGeneric("set_model_features", function(object, ...) standardGeneric("set_model_features"))
 
 
 

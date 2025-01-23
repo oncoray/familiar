@@ -28,6 +28,10 @@
 #' @slot vimp_method Method used to determine variable importance for the model.
 #' @slot vimp_table Variable importance table or list of variable importance
 #'   tables for the model.
+#' @slot vimp_aggregation_method Method used for aggregating variable importance
+#'   tables if more than one is present.)
+#' @slot vimp_rank_threshold Threshold used for some variable importance
+#'   aggregation methods.
 #' @slot required_features The set of features required for complete
 #'   reproduction, i.e. with imputation.
 #' @slot model_features The set of features that is used to train the model,
@@ -87,6 +91,10 @@ setClass("familiarModel",
     vimp_method = "character",
     # Variable importance table
     vimp_table = "ANY",
+    # Vimp aggregation method.
+    vimp_aggregation_method = "character",
+    # Vimp rank threshold.
+    vimp_rank_threshold = "integer",
     # Required features for complete reconstruction, including imputation.
     required_features = "ANY",
     # Features that are required for the model.
@@ -135,6 +143,8 @@ setClass("familiarModel",
     learner = NA_character_,
     vimp_method = NA_character_,
     vimp_table = NULL,
+    vimp_aggregation_method = NA_character_,
+    vimp_rank_threshold = NA_integer_,
     required_features = NULL,
     model_features = NULL,
     novelty_features = NULL,
@@ -1133,6 +1143,10 @@ setClass("outcomeInfo",
 #'   method.
 #' @slot vimp_method The character string indicating the variable importance
 #'   method.
+#' @slot vimp_aggregation_method Method used for aggregating variable importance
+#'   tables if more than one is present.)
+#' @slot vimp_rank_threshold Threshold used for some variable importance
+#'   aggregation methods.
 #' @slot multivariate Flags whether the variable importance method is
 #'   multivariate vs. univariate.
 #' @slot outcome_info Outcome information object, which contains additional
@@ -1160,6 +1174,10 @@ setClass("familiarVimpMethod",
     hyperparameters = "ANY",
     # Name of variable importance method
     vimp_method = "character",
+    # Vimp aggregation method.
+    vimp_aggregation_method = "character",
+    # Vimp rank threshold.
+    vimp_rank_threshold = "integer",
     # Indicates whether the method is a univariate or multivariate
     # method.
     multivariate = "logical",
@@ -1182,6 +1200,8 @@ setClass("familiarVimpMethod",
     outcome_type = NA_character_,
     hyperparameters = NULL,
     vimp_method = NA_character_,
+    vimp_aggregation_method = NA_character_,
+    vimp_rank_threshold = NA_integer_,
     multivariate = FALSE,
     outcome_info = NULL,
     feature_info = NULL,
@@ -1221,6 +1241,10 @@ setClass("familiarVimpMethod",
 #'   novelty detector.
 #' @slot vimp_table Variable importance table or list of variable importance
 #'   tables for the model.
+#' @slot vimp_aggregation_method Method used for aggregating variable importance
+#'   tables if more than one is present.)
+#' @slot vimp_rank_threshold Threshold used for some variable importance
+#'   aggregation methods.
 #' @slot required_features The set of features required for complete
 #'   reproduction, i.e. with imputation.
 #' @slot model_features The set of features that is used to train the detector.
@@ -1270,6 +1294,10 @@ setClass("familiarNoveltyDetector",
     vimp_method = "character",
     # Variable importance table
     vimp_table = "ANY",
+    # Vimp aggregation method.
+    vimp_aggregation_method = "character",
+    # Vimp rank threshold.
+    vimp_rank_threshold = "integer",
     # Required features for complete reconstruction, including imputation.
     required_features = "ANY",
     # Features that are required for the model.
@@ -1306,6 +1334,8 @@ setClass("familiarNoveltyDetector",
     learner = NA_character_,
     vimp_method = NA_character_,
     vimp_table = NULL,
+    vimp_aggregation_method = NA_character_,
+    vimp_rank_threshold = NA_integer_,
     required_features = NULL,
     model_features = NULL,
     data_id = NA_integer_,

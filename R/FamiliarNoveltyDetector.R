@@ -418,28 +418,24 @@ setMethod(
 
 
 
-# set_signature (familiarNoveltyDetector)---------------------------------------
+# set_model_features (familiarNoveltyDetector)----------------------------------
 setMethod(
-  "set_signature",
+  "set_model_features",
   signature(object = "familiarNoveltyDetector"),
   function(
     object, 
-    rank_table = NULL, 
     signature_features = NULL, 
     minimise_footprint = FALSE, 
     ...
   ) {
     
     if (is.null(signature_features)) {
-      # Get signature features using the table with ranked features. Those
-      # features may be clustered.
-      signature_features <- get_signature(
-        object = object,
-        rank_table = rank_table
-      )
+      # Get signature features. This is a list features after clustering.
+      signature_features <- get_signature(object = object)
     }
     
-    # Find novelty features.
+    # Find novelty features. The resulting list of features are features prior
+    # to clustering.
     novelty_features <- find_novelty_features(
       model_features = signature_features,
       feature_info_list = object@feature_info

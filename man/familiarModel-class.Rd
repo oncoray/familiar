@@ -47,6 +47,12 @@ detect out-of-distribution samples.}
 \item{\code{vimp_table}}{Variable importance table or list of variable importance
 tables for the model.}
 
+\item{\code{vimp_aggregation_method}}{Method used for aggregating variable importance
+tables if more than one is present.)}
+
+\item{\code{vimp_rank_threshold}}{Threshold used for some variable importance
+aggregation methods.}
+
 \item{\code{required_features}}{The set of features required for complete
 reproduction, i.e. with imputation.}
 

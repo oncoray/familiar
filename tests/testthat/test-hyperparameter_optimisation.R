@@ -57,175 +57,185 @@ familiar:::test_hyperparameter_optimisation(
   debug = FALSE,
   parallel = FALSE)
 
+
+# Test that "none" feature selection keeps all features ------------------------
+..generate_hyperparameters <- function(
+    data,
+    learner,
+    vimp_method,
+    set_signature = FALSE,
+    cluster_method = "none",
+    cluster_similarity_metric = "mcfadden_r2",
+    cluster_similarity_threshold = 0.90,
+    ...
+) {
+  # Reconstitute settings from the data.
+  settings <- familiar:::extract_settings_from_data(data = data)
+  
+  # Update some missing settings that can be fixed within this method.
+  settings$data$train_cohorts <- unique(data@data[[familiar:::get_id_columns(single_column = "batch")]])
+  if (set_signature) {
+    settings$data$signature <- familiar:::get_feature_columns(data)[1L:2L]
+  }
+  
+  # Parse the remaining settings that are important.
+  settings <- do.call(
+    familiar:::.parse_general_settings,
+    args = c(
+      list(
+        "settings" = settings,
+        "data" = data@data,
+        "vimp_method" = vimp_method,
+        "learner" = learner,
+        "cluster_method" = cluster_method,
+        "cluster_similarity_metric" = cluster_similarity_metric,
+        "cluster_similarity_threshold" = cluster_similarity_threshold
+      )
+    )
+  )
+  
+  # Create task.
+  task <- methods::new(
+    "familiarTaskLearnerHyperparameters",
+    vimp_method = vimp_method,
+    learner = learner
+  )
+  
+  # Optimise hyperparameters.
+  new_object <- familiar:::.perform_task(
+    object = task,
+    data = data,
+    settings = settings,
+    ...
+  )
+  
+  return(new_object)
+}
+
 # Create dataset.
 data <- familiar:::test_create_good_data(outcome_type = "binomial")
 
-# Test that "none" feature selection keeps all features ------------------------
-
-# Create object.
-object <- familiar:::.test_create_hyperparameter_object(
+# Optimise hyperparameters.
+new_object <- ..generate_hyperparameters(
   data = data,
   vimp_method = "none",
   learner = "elastic_net",
-  is_vimp = FALSE,
-  set_signature_feature = FALSE)
-
-# Hyperparameter optimisation.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
-  data = data,
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 3L,
   n_max_intensify_steps = 2L,
   n_random_sets = 20L,
   n_challengers = 10L,
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
 testthat::test_that("Test that \"none\" feature selection keeps all features.", {
-  testthat::expect_equal(
-    all(new_object@hyperparameter_data$parameter_table$sign_size == familiar:::get_n_features(data)),
-    TRUE)
+  testthat::expect_true(all(new_object@hyperparameter_data$parameter_table$sign_size == familiar:::get_n_features(data)))
 })
 
 
 
 # Test that "random" feature selection can select up to the maximum number of features ------
-object <- familiar:::.test_create_hyperparameter_object(
+
+# Optimise hyperparameters.
+new_object <- ..generate_hyperparameters(
   data = data,
   vimp_method = "random",
   learner = "elastic_net",
-  is_vimp = FALSE,
-  set_signature_feature = FALSE)
-
-# Hyperparameter optimisation.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
-  data = data,
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 3L,
   n_max_intensify_steps = 2L,
   n_random_sets = 20L,
   n_challengers = 10L,
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
 testthat::test_that("Test that \"random\" feature selection can select up to the maximum number of features.", {
-  testthat::expect_equal(
-    all(new_object@hyperparameter_data$parameter_table$sign_size >= 1L &
-          new_object@hyperparameter_data$parameter_table$sign_size <= familiar:::get_n_features(data)),
-    TRUE)
+  testthat::expect_true(all(new_object@hyperparameter_data$parameter_table$sign_size >= 1L))
+  testthat::expect_true(all(new_object@hyperparameter_data$parameter_table$sign_size <= familiar:::get_n_features(data)))
 })
+
 
 
 # Test that "signature_only" keeps only signature features ---------------------
-object <- familiar:::.test_create_hyperparameter_object(
+
+# Optimise hyperparameters.
+new_object <- ..generate_hyperparameters(
   data = data,
   vimp_method = "signature_only",
   learner = "elastic_net",
-  is_vimp = FALSE,
-  set_signature_feature = TRUE)
-
-# Hyperparameter optimisation.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
-  data = data,
+  set_signature = TRUE,
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 3L,
   n_max_intensify_steps = 2L,
   n_random_sets = 20L,
   n_challengers = 10L,
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
 testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.", {
-  testthat::expect_equal(
-    all(new_object@hyperparameter_data$parameter_table$sign_size == 2L),
-    TRUE)
+  testthat::expect_true(all(new_object@hyperparameter_data$parameter_table$sign_size == 2L))
 })
 
 
+
 # Test that a range of signature sizes can be provided -------------------------
-object <- familiar:::.test_create_hyperparameter_object(
+
+# Optimise hyperparameters.
+new_object <- ..generate_hyperparameters(
   data = data,
   vimp_method = "mim",
   learner = "elastic_net",
-  is_vimp = FALSE,
-  set_signature_feature = TRUE)
-
-# Hyperparameter optimisation.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
-  data = data,
-  user_list = list("sign_size" = c(2, 5)),
+  set_signature = FALSE,
+  hyperparameters = list("sign_size" = c(2, 5)),
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 3L,
   n_max_intensify_steps = 2L,
   n_random_sets = 20L,
   n_challengers = 10L,
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
-testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.", {
-  testthat::expect_equal(
-    all(new_object@hyperparameter_data$parameter_table$sign_size >= 2L &
-          new_object@hyperparameter_data$parameter_table$sign_size <= 5L),
-    TRUE)
-  testthat::expect_equal(
-    all(new_object@hyperparameter_data$parameter_table$sign_size %in% 2:5),
-    TRUE)
-  testthat::expect_equal(
-    length(setdiff(unique(new_object@hyperparameter_data$parameter_table$sign_size), c(2, 5))) >= 1,
-    TRUE)
+testthat::test_that("Test that setting a range of signature sizes works correctly.", {
+  testthat::expect_true(all(new_object@hyperparameter_data$parameter_table$sign_size >= 2L))
+  testthat::expect_true(all(new_object@hyperparameter_data$parameter_table$sign_size <= 5L))
+  testthat::expect_true(all(unique(new_object@hyperparameter_data$parameter_table$sign_size) %in% 2L:5L))
 })
 
 
+
 # Test that a range of signature sizes can be provided -------------------------
-object <- familiar:::.test_create_hyperparameter_object(
+
+# Optimise hyperparameters.
+new_object <- ..generate_hyperparameters(
   data = data,
   vimp_method = "mim",
   learner = "elastic_net",
-  is_vimp = FALSE,
-  set_signature_feature = FALSE)
-
-
-# Hyperparameter optimisation.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
-  data = data,
-  user_list = list("sign_size" = c(1, 4, 6)),
+  set_signature = FALSE,
+  hyperparameters = list("sign_size" = c(1, 4, 6)),
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 3L,
   n_max_intensify_steps = 2L,
   n_random_sets = 20L,
   n_challengers = 10L,
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
 testthat::test_that("Test that \"signature_only\" feature selection keeps only signature features.", {
   testthat::expect_setequal(
     unique(new_object@hyperparameter_data$parameter_table$sign_size),
-    c(1, 4, 6))
+    c(1, 4, 6)
+  )
 })
 
 
 # Test exploration methods -----------------------------------------------------
 
-# Create dataset.
-data <- familiar:::test_create_good_data(outcome_type = "binomial")
-
-# Create object.
-object <- familiar:::.test_create_hyperparameter_object(
+# Optimise hyperparameters.
+new_object <- ..generate_hyperparameters(
   data = data,
   vimp_method = "mim",
   learner = "elastic_net",
-  is_vimp = FALSE,
-  set_signature_feature = FALSE)
-
-# Hyperparameter optimisation without pruning.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
-  data = data,
+  set_signature = FALSE,
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 1L,
   n_max_intensify_steps = 4L,
@@ -233,8 +243,8 @@ new_object <- familiar:::optimise_hyperparameters(
   n_random_sets = 16L,
   n_challengers = 10L,
   exploration_method = "none",
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
 # Set expected range of rows. Upper and lower boundary are the same, as all runs
 # are executed simultaneously.
@@ -249,12 +259,15 @@ testthat::test_that(paste0(
 )
 
 
+
 # Hyperparameter optimisation using successive_halving for pruning. Note that
 # n_max_intensify_steps is 5, but only 4 will be steps are possible. Just as a
 # test.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
+new_object <- ..generate_hyperparameters(
   data = data,
+  vimp_method = "mim",
+  learner = "elastic_net",
+  set_signature = FALSE,
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 1L,
   n_max_intensify_steps = 5L,
@@ -262,8 +275,8 @@ new_object <- familiar:::optimise_hyperparameters(
   n_random_sets = 16L,
   n_challengers = 10L,
   exploration_method = "successive_halving",
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
 # Set expected range of rows. 10 initial challengers decrease to 5, 2 and 1 in
 # subsequent rounds. Upper and lower boundary are the same because here
@@ -279,10 +292,14 @@ testthat::test_that(paste0(
   }
 )
 
+
+
 # Hyperparameter optimisation using stochastic_reject for pruning.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
+new_object <- ..generate_hyperparameters(
   data = data,
+  vimp_method = "mim",
+  learner = "elastic_net",
+  set_signature = FALSE,
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 1L,
   n_max_intensify_steps = 4L,
@@ -291,8 +308,8 @@ new_object <- familiar:::optimise_hyperparameters(
   n_random_sets = 16L,
   n_challengers = 10L,
   exploration_method = "stochastic_reject",
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
 # Set expected range of rows. The lowest boundary occurs when all challengers
 # are rejected after one round, and only one new run is sampled. The upper
@@ -309,11 +326,15 @@ testthat::test_that(paste0(
   }
 )
 
+
+
 # Single-shot hyperparameter optimisation. Note that n_intensify_step_bootstraps
 # and n_max_intensify_steps should be set to 1L internally.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
+new_object <- ..generate_hyperparameters(
   data = data,
+  vimp_method = "mim",
+  learner = "elastic_net",
+  set_signature = FALSE,
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 1L,
   n_max_intensify_steps = 4L,
@@ -321,8 +342,8 @@ new_object <- familiar:::optimise_hyperparameters(
   n_random_sets = 16L,
   n_challengers = 10L,
   exploration_method = "single_shot",
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
 # Set expected range of rows. Upper and lower boundary are the same, as all runs
 # are executed simultaneously.
@@ -337,24 +358,16 @@ testthat::test_that(paste0(
 )
 
 
+
 # Test time truncation ---------------------------------------------------------
-
-# Create dataset.
-data <- familiar:::test_create_good_data(outcome_type = "binomial")
-
-# Create object.
-object <- familiar:::.test_create_hyperparameter_object(
-  data = data,
-  vimp_method = "mim",
-  learner = "elastic_net",
-  is_vimp = FALSE,
-  set_signature_feature = FALSE)
 
 # Hyperparameter optimisation without pruning and marginal time limit. This
 # should just complete the initial step.
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
+new_object <- ..generate_hyperparameters(
   data = data,
+  vimp_method = "mim",
+  learner = "elastic_net",
+  set_signature = FALSE,
   time_limit = 0.000001,
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 1L,
@@ -363,37 +376,33 @@ new_object <- familiar:::optimise_hyperparameters(
   n_random_sets = 16L,
   n_challengers = 10L,
   exploration_method = "none",
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
 
 testthat::test_that("Time limits are respected and only the initial bootstraps are run.", {
   testthat::expect_gte(new_object@hyperparameter_data$time_taken, 0.000001)
-  testthat::expect_equal(all(new_object@hyperparameter_data$score_table$iteration_id == 0), TRUE)
+  testthat::expect_true(all(new_object@hyperparameter_data$score_table$iteration_id == 0))
 })
 
 
 
 # Test that clustered data are correctly handled -------------------------------
+
 # Create data,
 data <- familiar:::test_create_synthetic_correlated_data(
   outcome_type = "continuous",
   n_numeric = 4,
-  cluster_size = c(3, 3, 3, 3))
+  cluster_size = c(3, 3, 3, 3)
+)
 
-# Create object.
-object <- familiar:::.test_create_hyperparameter_object(
+# Optimise hyperparameters.
+new_object <- ..generate_hyperparameters(
   data = data,
   vimp_method = "mim",
   learner = "elastic_net",
-  is_vimp = FALSE,
   cluster_method = "hclust",
   cluster_similarity_metric = "mcfadden_r2",
   cluster_similarity_threshold = 0.90,
-  set_signature_feature = FALSE)
-
-new_object <- familiar:::optimise_hyperparameters(
-  object = object,
-  data = data,
   n_max_bootstraps = 25L,
   n_max_optimisation_steps = 1L,
   n_max_intensify_steps = 5L,
@@ -401,14 +410,15 @@ new_object <- familiar:::optimise_hyperparameters(
   n_random_sets = 16L,
   n_challengers = 10L,
   exploration_method = "successive_halving",
-  is_vimp = FALSE,
-  verbose = verbose)
+  verbose = verbose
+)
+
 
 testthat::test_that("One to four features are assessed for clustered features.", {
   testthat::expect(
     all(new_object@hyperparameter_data$parameter_table$sign_size >= 1 &
           new_object@hyperparameter_data$parameter_table$sign_size <= 4),
     TRUE)
-  testthat::expect(any(new_object@hyperparameter_data$parameter_table$sign_size == 1), TRUE)
-  testthat::expect(any(new_object@hyperparameter_data$parameter_table$sign_size == 4), TRUE)
+  testthat::expect_true(any(new_object@hyperparameter_data$parameter_table$sign_size == 1))
+  testthat::expect_true(any(new_object@hyperparameter_data$parameter_table$sign_size == 4))
 })

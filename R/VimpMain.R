@@ -48,6 +48,8 @@ setMethod(
       object <- methods::new(
         "familiarModel",
         vimp_method = "none",
+        vimp_aggregation_method = object@vimp_aggregation_method,
+        vimp_rank_threshold = object@vimp_rank_threshold,
         learner = method,
         outcome_type = object@outcome_type,
         hyperparameters = object@hyperparameters,
@@ -68,6 +70,8 @@ setMethod(
       object <- methods::new(
         "familiarModel",
         vimp_method = "none",
+        vimp_aggregation_method = object@vimp_aggregation_method,
+        vimp_rank_threshold = object@vimp_rank_threshold,
         learner = method,
         outcome_type = object@outcome_type,
         hyperparameters = object@hyperparameters,
@@ -87,6 +91,8 @@ setMethod(
       # Create a familiarModel and promote to the right class.
       object <- methods::new("familiarModel",
         vimp_method = "none",
+        vimp_aggregation_method = object@vimp_aggregation_method,
+        vimp_rank_threshold = object@vimp_rank_threshold,
         learner = method,
         outcome_type = object@outcome_type,
         hyperparameters = object@hyperparameters,
@@ -109,6 +115,8 @@ setMethod(
       # Create a familiarModel and promote to the right class.
       object <- methods::new("familiarModel",
         vimp_method = "none",
+        vimp_aggregation_method = object@vimp_aggregation_method,
+        vimp_rank_threshold = object@vimp_rank_threshold,
         learner = ifelse(method %in% .get_available_rfsrc_vimp_methods(),
           "random_forest_rfsrc",
           "random_forest_rfsrc_default"
@@ -137,6 +145,8 @@ setMethod(
       # Create a familiarModel and promote to the right class.
       object <- methods::new("familiarModel",
         vimp_method = "none",
+        vimp_aggregation_method = object@vimp_aggregation_method,
+        vimp_rank_threshold = object@vimp_rank_threshold,
         learner = ifelse(
           method %in% .get_available_ranger_vimp_methods(),
           "random_forest_ranger",
