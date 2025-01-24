@@ -246,42 +246,26 @@ setMethod(
       )
     }
     
-    # Load project list and file_paths
-    file_paths <- tryCatch(get_file_paths(), error = identity)
-    project_list <- tryCatch(get_project_list(), error = identity)
-    
-    if (inherits(file_paths, "error") || inherits(project_list, "error")) return(NULL)
-    
-    # Message extraction start
-    logger_message(
-      paste0("Extracting variable importance obtained during feature selection."),
-      indent = message_indent,
-      verbose = verbose
+    # Extract variable importance tables from models.
+    vimp_table_list <- unlist(
+      lapply(
+        object@model_list,
+        function(x) (x@vimp_table)
+      ),
+      use.names = FALSE
     )
+    if (!rlang::is_bare_list(vimp_table_list)) vimp_table_list <- list(vimp_table_list)
     
-    # Retrieve variable importance table objects.
-    vimp_table_list <- .retrieve_variable_importance_data(
-      vimp_method = object@vimp_method,
-      project_list = project_list,
-      file_paths = file_paths
-    )[[object@vimp_method]]
+    # Remove missing entries.
+    vimp_table_list <- vimp_table_list[sapply(vimp_table_list, is, class2 = "vimpTable")]
+    if (length(vimp_table_list) == 0L) return(NULL)
     
-    # Define the run table -> at the pooling level
-    run <- .get_run_list(
-      iteration_list = project_list$iter_list,
-      data_id = object@run_table$ensemble_data_id,
-      run_id = object@run_table$ensemble_run_id
+    # Select only non-duplicate variable importance tables.
+    table_identifiers <- sapply(
+      vimp_table_list,
+      function(x) paste(x@project_id, x@data_id, x@run_id, x@vimp_method, sep = "_")
     )
-    
-    # Collect the correct vimp tables from the full list.
-    vimp_table_list <- collect_vimp_table(
-      x = vimp_table_list,
-      run_table = run$run_table
-    )
-    
-    # Check if the variable importance table has been set.
-    if (is_empty(vimp_table_list)) return(NULL)
-    if (all(sapply(vimp_table_list, is_empty))) return(NULL)
+    vimp_table_list <- vimp_table_list[!duplicated(table_identifiers)]
     
     # Create list of data elements.
     data_element_list <- lapply(

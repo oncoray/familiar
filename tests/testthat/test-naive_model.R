@@ -11,4 +11,5 @@ familiar:::integrated_test(
   imputation_method = "simple",
   estimation_type = "point",
   parallel = FALSE,
-  debug = debug_flag)
+  debug = debug_flag
+)
