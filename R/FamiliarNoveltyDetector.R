@@ -431,7 +431,7 @@ setMethod(
     
     if (is.null(signature_features)) {
       # Get signature features. This is a list features after clustering.
-      signature_features <- get_signature(object = object)
+      signature_features <- get_signature_features(object = object)
     }
     
     # Find novelty features. The resulting list of features are features prior
@@ -468,37 +468,26 @@ setMethod(
 
 
 
-# get_signature (familiarNoveltyDetector)---------------------------------------
+# get_signature_features (familiarNoveltyDetector)------------------------------
 setMethod(
-  "get_signature",
+  "get_signature_features",
   signature(object = "familiarNoveltyDetector"),
   function(
-    object,
-    rank_table = NULL, 
-    ...
+    object
   ) {
     # Attempt to get signature directly from the object.
     if (!is_empty(object@model_features)) {
+      # If model features have been set (i.e. using set_model_features), 
+      # return those features instead. Since the model_features attribute stores
+      # feature names prior to clustering, make sure to update these.
       return(features_after_clustering(
         features = object@model_features,
         feature_info_list = object@feature_info
       ))
     }
     
-    if (is.null(rank_table) && !is.null(object@vimp_table)) {
-      rank_table <- get_vimp_table(object@vimp_table)
-    }
-    
     # Get signature based on the stored feature information.
-    return(do.call(
-      get_signature,
-      args = list(
-        "object" = object@feature_info,
-        "vimp_method" = object@vimp_method,
-        "parameter_list" = object@hyperparameters,
-        "rank_table" = rank_table
-      )
-    ))
+    return(.get_signature_features(object))
   }
 )
 

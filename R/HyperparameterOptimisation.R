@@ -760,8 +760,7 @@ setMethod(
         vimp_table_list = vimp_table_list,
         suggested_range = user_list$sign_size
       )
-      browser()
-      
+
       # Update the parameter list With user-defined variables.
       parameter_list <- .update_hyperparameters(
         parameter_list = parameter_list,
@@ -789,7 +788,7 @@ setMethod(
         return(object)
       }
     }
-    browser()
+    
     ## Create metric objects ---------------------------------------------------
     
     # Update the outcome_info attribute of the familiar model. This is required
@@ -901,7 +900,7 @@ setMethod(
         run_table = run_table,
         bootstraps = bootstraps,
         data = data,
-        rank_table_list = get_vimp_table(vimp_table_list),
+        vimp_table_list = vimp_table_list,
         parameter_table = parameter_table,
         metric_objects = metric_object_list,
         iteration_id = 0L,
@@ -954,7 +953,7 @@ setMethod(
           run_table = run_table,
           bootstraps = bootstraps,
           data = data,
-          rank_table_list = get_vimp_table(vimp_table_list),
+          vimp_table_list = vimp_table_list,
           parameter_table = parameter_table,
           metric_objects = metric_object_list,
           iteration_id = 0L,
@@ -998,7 +997,7 @@ setMethod(
         run_table = run_table,
         bootstraps = bootstraps,
         data = data,
-        rank_table_list = get_vimp_table(vimp_table_list),
+        vimp_table_list = vimp_table_list,
         parameter_table = parameter_table,
         iteration_id = 0L,
         metric_objects = metric_object_list,
@@ -1160,7 +1159,7 @@ setMethod(
           run_table = run_table,
           bootstraps = bootstraps,
           data = data,
-          rank_table_list = get_vimp_table(vimp_table_list),
+          vimp_table_list = vimp_table_list,
           parameter_table = parameter_table,
           metric_objects = metric_object_list,
           iteration_id = optimisation_step + 1L,

@@ -464,7 +464,7 @@
     parameter_table,
     bootstraps,
     data,
-    rank_table_list,
+    vimp_table_list,
     metric_objects,
     iteration_id,
     time_optimisation_model = NULL,
@@ -478,7 +478,7 @@
   # Check that the run table is not empty. This may occur if, for instance, the
   # initial search turned up nothing.
   if (is_empty(run_table)) return(NULL)
-
+  
   # Prepare training and validation samples for the separate runs.
   training_list <- lapply(
     run_table$run_id,
@@ -499,22 +499,14 @@
     parameter_table = parameter_table
   )
 
-  # Replicate single variable importance features.
-  if (data.table::is.data.table(rank_table_list)) {
-    rank_table_list <- lapply(
-      run_table$run_id,
-      function(ii, x) (data.table::copy(x)),
-      x = rank_table_list
-    )
-    
-  } else {
-    # Generate variable importance sets (if any)
-    rank_table_list <- lapply(
-      run_table$run_id,
-      function(ii, rank_table_list) (rank_table_list[[ii]]),
-      rank_table_list = rank_table_list
-    )
-  }
+  # Replicate variable importance table objects.
+  if (is(vimp_table_list, "vimpTable")) vimp_table_list <- list(vimp_table_list)
+  
+  vimp_table_list <- lapply(
+    run_table$run_id,
+    function(ii, vimp_table_list) (vimp_table_list[[ii]]),
+    vimp_table_list = vimp_table_list
+  )
   
   if (is.null(time_optimisation_model)) {
     # Create a scoring table, with accompanying information.
@@ -525,7 +517,7 @@
       run_id = run_table$run_id,
       training_samples = training_list,
       validation_samples = validation_list,
-      rank_table = rank_table_list,
+      vimp_table = vimp_table_list,
       parameter_table = parameter_list,
       progress_bar = verbose,
       MEASURE.TIME = TRUE,
@@ -551,7 +543,7 @@
       run_id = run_table$run_id,
       training_samples = training_list,
       validation_samples = validation_list,
-      rank_table = rank_table_list,
+      vimp_table = vimp_table_list,
       parameter_table = parameter_list,
       progress_bar = verbose,
       process_time = process_time,
@@ -599,7 +591,7 @@
     training_samples,
     validation_samples,
     parameter_table,
-    rank_table,
+    vimp_table,
     metric_objects,
     signature_features = NULL
 ) {
@@ -625,10 +617,13 @@
     data = data,
     samples = validation_samples
   )
-
+  
   # Update the familiar model (for variable importance)
   object@hyperparameters <- parameter_list
 
+  # Attach variable importance table to object.
+  object@vimp_table <- vimp_table
+  
   # Set signature.
   object <- set_model_features(
     object = object,
@@ -1575,7 +1570,7 @@ get_best_hyperparameter_set <- function(
     vimp_table_list,
     function(vimp_table, object) {
       object@vimp_table <- vimp_table
-      return(get_signature(object))
+      return(get_signature_features(object))
     },
     object = object
   )
@@ -1590,7 +1585,7 @@ get_best_hyperparameter_set <- function(
     vimp_table_list,
     function(vimp_table, object) {
       object@vimp_table <- vimp_table
-      return(get_signature(object))
+      return(get_signature_features(object))
     },
     object = object
   )

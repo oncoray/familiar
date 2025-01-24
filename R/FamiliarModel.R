@@ -1241,7 +1241,7 @@ setMethod(
     ...
   ) {
     # Get signature features. This is a list features after clustering.
-    signature_features <- get_signature(object = object)
+    signature_features <- get_signature_features(object = object)
 
     # Find important features, i.e. those that constitute the signature either
     # individually or as part of a cluster. The resulting list of features are
@@ -1287,9 +1287,9 @@ setMethod(
 
 
 
-# get_signature (familiarModel)-------------------------------------------------
+# get_signature_features (familiarModel)----------------------------------------
 setMethod(
-  "get_signature",
+  "get_signature_features",
   signature(object = "familiarModel"),
   function(
     object
@@ -1342,8 +1342,8 @@ setMethod(
   } else if (object@vimp_method %in% .get_available_none_vimp_methods()) {
     # Select all features.
     selected_features <- features_after_clustering(
-      features = get_available_features(feature_info_list = object),
-      feature_info_list = object
+      features = get_available_features(feature_info_list = object@feature_info),
+      feature_info_list = object@feature_info
     )
     
     # Order randomly so that there is no accidental dependency on order.
@@ -1356,8 +1356,8 @@ setMethod(
   } else if (object@vimp_method %in% .get_available_random_vimp_methods()) {
     # Select all features.
     selected_features <- features_after_clustering(
-      features = get_available_features(feature_info_list = object),
-      feature_info_list = object
+      features = get_available_features(feature_info_list = object@feature_info),
+      feature_info_list = object@feature_info
     )
     
     # Shrink signature sizes that are too large.

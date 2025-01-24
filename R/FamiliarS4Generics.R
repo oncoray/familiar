@@ -20,7 +20,7 @@ setGeneric("set_package_version", function(object, ...) standardGeneric("set_pac
 
 setGeneric("check_package_version", function(object, ...) standardGeneric("check_package_version"))
 
-setGeneric("get_signature", function(object, ...) standardGeneric("get_signature"))
+setGeneric("get_signature_features", function(object, ...) standardGeneric("get_signature_features"))
 
 setGeneric("model_is_trained", function(object, ...) standardGeneric("model_is_trained"))
 

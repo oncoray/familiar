@@ -4234,8 +4234,7 @@ test_hyperparameter_optimisation <- function(
               
             } else {
               # Bogus test to prevent skipping.
-              testthat::expect_true(rlang::is_bare_list(new_object@hyperparameters))
-              testthat::expect_true(is_empty(new_object@hyperparameters))
+              testthat::expect_true(is.null(new_object@hyperparameters))
             }
           }
         }

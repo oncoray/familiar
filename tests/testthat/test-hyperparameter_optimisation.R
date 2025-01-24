@@ -413,12 +413,9 @@ new_object <- ..generate_hyperparameters(
   verbose = verbose
 )
 
-
 testthat::test_that("One to four features are assessed for clustered features.", {
-  testthat::expect(
-    all(new_object@hyperparameter_data$parameter_table$sign_size >= 1 &
-          new_object@hyperparameter_data$parameter_table$sign_size <= 4),
-    TRUE)
+  testthat::expect_true(all(new_object@hyperparameter_data$parameter_table$sign_size >= 1))
+  testthat::expect_true(all(new_object@hyperparameter_data$parameter_table$sign_size <= 4))
   testthat::expect_true(any(new_object@hyperparameter_data$parameter_table$sign_size == 1))
   testthat::expect_true(any(new_object@hyperparameter_data$parameter_table$sign_size == 4))
 })
