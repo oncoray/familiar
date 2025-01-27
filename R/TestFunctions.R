@@ -5050,10 +5050,12 @@ integrated_test <- function(
 ) {
   if (debug) {
     test_fun <- debug_test_that
-    suppress_fun <- identity
+    suppress_fun <- suppress_fun_messages <- identity
+    
   } else {
     test_fun <- testthat::test_that
-    suppress_fun <- suppressMessages
+    suppress_fun <- suppressWarnings
+    suppress_fun_messages <- suppressMessages
   }
   
   # Set flag for missing learner.
@@ -5101,7 +5103,7 @@ integrated_test <- function(
         
         if (!is.null(.warning_good)) {
           testthat::expect_warning(
-            output <- suppress_fun(summon_familiar(
+            output <- suppress_fun_messages(summon_familiar(
               data = full_data,
               learner = learner,
               hyperparameter = hyperparameters,
@@ -5162,7 +5164,7 @@ integrated_test <- function(
         
         if (!is.null(.warning_bad)) {
           testthat::expect_warning(
-            output <- suppress_fun(summon_familiar(
+            output <- suppress_fun_messages(summon_familiar(
               data = bad_data,
               learner = learner,
               hyperparameter = hyperparameters,

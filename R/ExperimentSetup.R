@@ -689,16 +689,6 @@ extract_experimental_setup <- function(
     )
   }
   
-  # if (sum(section_table$vimp) == 0L) {
-  #   ..error(
-  #     paste0(
-  #       "The fs component for variable importance computation must appear in the ",
-  #       "experimental design. It was not found."
-  #     ),
-  #     error_class = "input_argument_error"
-  #   )
-  # }
-  
   if (sum(section_table$train) > 1L) {
     ..error(
       paste0(
