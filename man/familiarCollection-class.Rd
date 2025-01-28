@@ -20,7 +20,7 @@ objects.
 \item{\code{outcome_info}}{Outcome information object, which contains information
 concerning the outcome, such as class levels.}
 
-\item{\code{fs_vimpData}}{collected for variable importance methods.}
+\item{\code{fs_vimp}}{collected for variable importance methods.}
 
 \item{\code{model_vimp}}{Variable importance data collected from model-specific
 algorithms implemented by models created by familiar.}

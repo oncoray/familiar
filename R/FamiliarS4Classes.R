@@ -464,7 +464,7 @@ setClass("familiarData",
 #' @slot outcome_type Outcome type for which the collection was created.
 #' @slot outcome_info Outcome information object, which contains information
 #'   concerning the outcome, such as class levels.
-#' @slot fs_vimpData collected for variable importance methods.
+#' @slot fs_vimp collected for variable importance methods.
 #' @slot model_vimp Variable importance data collected from model-specific
 #'   algorithms implemented by models created by familiar.
 #' @slot permutation_vimp Data collected for permutation variable importance.
