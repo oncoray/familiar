@@ -675,10 +675,16 @@ setMethod(
         # Update the predicted probabilities with 1.0 for the majority
         # class and 0.0 for minority classes.
         if (class_levels[ii] == majority_class) {
-          prediction_list[[class_levels[ii]]] <- rep.int(1.0, times = get_n_samples(data, "repetition"))
+          prediction_list[[class_levels[ii]]] <- rep.int(
+            1.0,
+            times = get_n_samples(data, "repetition", count_unique = FALSE)
+          )
           
         } else {
-          prediction_list[[class_levels[ii]]] <- rep.int(0.0, times = get_n_samples(data, "repetition"))
+          prediction_list[[class_levels[ii]]] <- rep.int(
+            0.0,
+            times = get_n_samples(data, "repetition", count_unique = FALSE)
+          )
         }
       }
       
@@ -692,10 +698,13 @@ setMethod(
     } else if (metric@outcome_type %in% c("continuous")) {
       # Baseline median value.
       median_value <- outcome_info@distribution$median
-
+      
       # Fill the prediction_table.
       prediction_table <- as_prediction_table(
-        x = rep.int(median_value, times = get_n_samples(data, "repetition")),
+        x = rep.int(
+          median_value,
+          times = get_n_samples(data, "repetition", count_unique = FALSE)
+        ),
         type = "regression",
         data = data,
         model_object = object
@@ -715,7 +724,10 @@ setMethod(
       
       # Fill the prediction_table.
       prediction_table <- as_prediction_table(
-        x = rep.int(mean_survival_probability, times = get_n_samples(data, "repetition")),
+        x = rep.int(
+          mean_survival_probability,
+          times = get_n_samples(data, "repetition", count_unique = FALSE)
+        ),
         type = "survival_probability",
         data = data,
         model_object = object
