@@ -753,8 +753,8 @@ get_id_columns <- function(id_depth = "repetition", single_column = NULL) {
 
 get_object_file_name <- function(
     project_id,
-    data_id,
-    run_id,
+    data_id = NULL,
+    run_id = NULL,
     learner = NULL,
     vimp_method = NULL,
     ensemble_data_id = NULL,
