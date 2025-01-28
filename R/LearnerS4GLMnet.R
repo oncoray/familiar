@@ -187,7 +187,13 @@ setMethod(
 
     # Check for lasso_test
     if (object@learner %in% c("lasso_test_all_fail", "lasso_test_some_fail", "lasso_test_extreme")) {
-      fam <- ""
+      fam <- switch(
+        outcome_type,
+        "continuous" = "gaussian",
+        "binomial" = "binomial",
+        "multinomial" = "multinomial",
+        "survival" = "cox"
+      )
     }
 
     # Determine number of subjects
