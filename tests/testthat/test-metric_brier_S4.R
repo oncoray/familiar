@@ -3,6 +3,9 @@ familiar:::test_all_metrics_available(metrics = familiar:::.get_available_brier_
 # Skip remainder on CRAN due to runtimes.
 testthat::skip_on_cran()
 
+# power.transform and other packages are required.
+if (!rlang::is_installed("power.transform")) testthat::skip()
+
 familiar:::test_all_metrics(metrics = familiar:::.get_available_brier_metrics())
 
 data_good_binomial <- familiar::as_prediction_table(

@@ -1,3 +1,6 @@
+# xml2 is required to .
+if (!rlang::is_installed("xml2")) testthat::skip()
+
 # Find path to configuration file in package.
 config <- system.file("config.xml", package = "familiar")
 

@@ -5,6 +5,9 @@ familiar:::test_all_metrics_available(
 # Skip remainder on CRAN due to runtimes.
 testthat::skip_on_cran()
 
+# power.transform and other packages are required.
+if (!rlang::is_installed("power.transform")) testthat::skip()
+
 familiar:::test_all_metrics(
   metrics = familiar:::.get_available_concordance_index_metrics(),
   not_available_single_sample = TRUE,

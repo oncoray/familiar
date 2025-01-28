@@ -1,6 +1,9 @@
 # Don't perform any further tests on CRAN due to running time.
 testthat::skip_on_cran()
 
+# power.transform and other packages are required.
+if (!rlang::is_installed("power.transform")) testthat::skip()
+
 # Create data.table.
 data <- familiar:::test_create_good_data(
   outcome_type = "binomial",

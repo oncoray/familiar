@@ -7,6 +7,8 @@ familiar:::test_all_metrics_available(
 testthat::skip_on_cran()
 testthat::skip_on_ci()
 
+# power.transform and other packages are required.
+if (!rlang::is_installed("power.transform")) testthat::skip()
 
 regr_metric_test <- function(
     metric,
