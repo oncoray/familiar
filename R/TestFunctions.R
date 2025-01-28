@@ -5432,7 +5432,8 @@ get_test_collection_generation <- function(...) {
         )
       )
       
-      # Full data ----------------------------------------------------------------
+      
+      # Full data --------------------------------------------------------------
       
       if (n_models == 1L) {
         # Train the model.
@@ -5512,7 +5513,7 @@ get_test_collection_generation <- function(...) {
       # tested.
       if (test_specific_config) next
       
-      # Fully prospective data ---------------------------------------------------
+      # Fully prospective data -------------------------------------------------
       
       fully_prospective_data <- ..as_familiar_data_object(
         object = model_full,
@@ -5549,7 +5550,7 @@ get_test_collection_generation <- function(...) {
       
       rm("fully_prospective_data")
       
-      # Mostly prospective data --------------------------------------------------
+      # Mostly prospective data ------------------------------------------------
       
       mostly_prospective_data <- ..as_familiar_data_object(
         object = model_full,
@@ -5589,7 +5590,7 @@ get_test_collection_generation <- function(...) {
       
       rm("mostly_prospective_data")
       
-      # Mostly retrospective data ------------------------------------------------
+      # Mostly retrospective data ----------------------------------------------
       
       mostly_retrospective_data <- ..as_familiar_data_object(
         object = model_full,
@@ -5624,7 +5625,7 @@ get_test_collection_generation <- function(...) {
       
       rm("mostly_retrospective_data")
       
-      # Single-instance data -----------------------------------------------------
+      # Single-instance data ---------------------------------------------------
       
       single_instance_data <- ..as_familiar_data_object(
         object = model_full,
@@ -5661,7 +5662,7 @@ get_test_collection_generation <- function(...) {
       
       rm("single_instance_data")
       
-      # Bootstrapped data --------------------------------------------------------
+      # Bootstrapped data ------------------------------------------------------
       
       bootstrapped_data <- ..as_familiar_data_object(
         object = model_full,
@@ -5696,7 +5697,7 @@ get_test_collection_generation <- function(...) {
       
       rm("bootstrapped_data")
       
-      # Partially absent data ----------------------------------------------------
+      # Partially absent data --------------------------------------------------
       
       # Train a naive model.
       naive_model <- suppressWarnings(train_familiar(
@@ -5762,7 +5763,7 @@ get_test_collection_generation <- function(...) {
       
       rm("naive_data")
       
-      # Fully absent data --------------------------------------------------------
+      # Fully absent data ------------------------------------------------------
       
       empty_data_2 <- ..duplicate_familiar_data_object(empty_data_1)
       
@@ -5794,7 +5795,7 @@ get_test_collection_generation <- function(...) {
       
       rm("empty_data_1", "empty_data_2")
       
-      # Partially single-instance data -------------------------------------------
+      # Partially single-instance data -----------------------------------------
       
       one_sample_data_1 <- ..as_familiar_data_object(
         object = model_full,
@@ -5835,7 +5836,7 @@ get_test_collection_generation <- function(...) {
       
       rm("one_sample_data_1", "one_sample_data_2")
       
-      # Partially identical data -------------------------------------------------
+      # Partially identical data -----------------------------------------------
       
       identical_sample_data_1 <- ..as_familiar_data_object(
         object = model_full,
@@ -5876,7 +5877,7 @@ get_test_collection_generation <- function(...) {
       
       rm("identical_sample_data_1", "identical_sample_data_2")
       
-      # Multi-model ensemble -----------------------------------------------------
+      # Multi-model ensemble ---------------------------------------------------
       
       multi_model_data <- list(
         test_create_good_data(outcome_type),
@@ -5935,7 +5936,7 @@ get_test_collection_generation <- function(...) {
       rm("multi_model_data", "multi_model_set", "naive_model")
       rm("good_data_1", "good_data_2", "model_full")
       
-      # One-feature data ---------------------------------------------------------
+      # One-feature data -------------------------------------------------------
       
       # Train the model.
       one_feature_model <- suppressWarnings(test_train(
@@ -5987,7 +5988,7 @@ get_test_collection_generation <- function(...) {
         "expectation" = test_expectation
       ))
       
-      # Partially single-instance one-feature data -------------------------------
+      # Partially single-instance one-feature data -----------------------------
       
       good_one_sample_one_feature_data_1 <- ..as_familiar_data_object(
         object = one_feature_model,
@@ -6032,7 +6033,7 @@ get_test_collection_generation <- function(...) {
       
       rm("good_one_sample_one_feature_data_1", "good_one_sample_one_feature_data_2")
       
-      # Partially identical one-feature data -------------------------------------
+      # Partially identical one-feature data -----------------------------------
       
       good_identical_one_feature_data_1 <- ..as_familiar_data_object(
         object = one_feature_model,
@@ -6078,7 +6079,7 @@ get_test_collection_generation <- function(...) {
       rm("good_identical_one_feature_data_1", "good_identical_one_feature_data_2")
       rm("good_one_feature_data_1", "good_one_feature_data_2", "one_feature_model")
       
-      # Data with limited censoring ----------------------------------------------
+      # Data with limited censoring --------------------------------------------
       if (outcome_type %in% c("survival", "competing_risk")) {
         # Train the model.
         model_cens_1 <- suppressWarnings(test_train(
@@ -6167,7 +6168,7 @@ get_test_collection_generation <- function(...) {
         rm("data_cens_1", "data_cens_2", "data_cens_3", "model_cens_1", "model_cens_2", "model_cens_3")
       }
       
-      # Only invalid predictions -------------------------------------------------
+      # Only invalid predictions -----------------------------------------------
       
       model_failed_predictions <- suppressWarnings(test_train(
         cl = cl,
@@ -6215,7 +6216,7 @@ get_test_collection_generation <- function(...) {
       
       rm("failed_prediction_data", "model_failed_predictions")
       
-      # Some invalid predictions -------------------------------------------------
+      # Some invalid predictions -----------------------------------------------
       
       model_failing_predictions <- suppressWarnings(test_train(
         cl = cl,
@@ -6263,7 +6264,7 @@ get_test_collection_generation <- function(...) {
       
       rm("failing_prediction_data", "model_failing_predictions")
       
-      # Extreme predicted values -------------------------------------------------
+      # Extreme predicted values -----------------------------------------------
       
       if (outcome_type %in% c("binomial", "multinomial")) {
         model_extreme_predictions <- suppressWarnings(test_train(
