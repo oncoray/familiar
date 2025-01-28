@@ -347,8 +347,6 @@ setClassUnion(
 #'   dataset.
 #' @slot sample_similarity Sample similarity information of the underlying
 #'   dataset.
-#' @slot is_validation Signifies whether the underlying data forms a validation
-#'   dataset. Used internally.
 #' @slot project_id Identifier of the project that generated the familiarData
 #'   object.
 #' @slot familiar_version Version of the familiar package.
@@ -415,9 +413,6 @@ setClass("familiarData",
     sample_similarity = "ANY",
     # Information on individual conditional expectation
     ice_data = "ANY",
-    # Flag to signal whether the data concerns validation data (TRUE) or
-    # development data (FALSE)
-    is_validation = "logical",
     # Project identifier
     project_id = "ANY",
     # Package version for backward compatibility
@@ -451,11 +446,11 @@ setClass("familiarData",
     feature_similarity = NULL,
     sample_similarity = NULL,
     ice_data = NULL,
-    is_validation = FALSE,
     project_id = NULL,
     familiar_version = NULL
   )
 )
+
 
 # familiarCollection object ----------------------------------------------------
 

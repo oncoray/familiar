@@ -87,9 +87,6 @@ dataset.}
 \item{\code{sample_similarity}}{Sample similarity information of the underlying
 dataset.}
 
-\item{\code{is_validation}}{Signifies whether the underlying data forms a validation
-dataset. Used internally.}
-
 \item{\code{project_id}}{Identifier of the project that generated the familiarData
 object.}
 
