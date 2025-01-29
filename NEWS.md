@@ -100,6 +100,9 @@
   
 - Fixed an error where naive models would yield an incorrect number of predicted
   values when samples appear multiple times (e.g. in bootstraps).
+  
+- Fixed an error when trying to identify features prior to clustering using 
+  `features_before_clustering`.
 
 # Version 1.5.0 (Whole Whale)
 
