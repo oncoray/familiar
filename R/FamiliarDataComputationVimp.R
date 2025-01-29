@@ -250,7 +250,10 @@ setMethod(
     vimp_table_list <- unlist(
       lapply(
         object@model_list,
-        function(x) (x@vimp_table)
+        function(x) {
+          x <- load_familiar_object(x)
+          return(x@vimp_table)
+        }
       ),
       use.names = FALSE
     )

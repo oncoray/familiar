@@ -349,6 +349,24 @@ setGeneric(
 )
 
 
+
+# ..extract_model_performance_data (character) ---------------------------------
+setMethod(
+  "..extract_model_performance_data",
+  signature(object = "character"),
+  function(
+    object,
+    ...
+  ){
+    # Ensure that the object is loaded
+    object <- load_familiar_object(object)
+    
+    return(..extract_model_performance_data(object = object, ...))
+  }
+)
+
+
+
 # ..extract_model_performance_data (model, ensemble) ---------------------------
 setMethod(
   "..extract_model_performance_data",

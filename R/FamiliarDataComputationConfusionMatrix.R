@@ -228,6 +228,23 @@ setGeneric(
 
 
 
+# ..extract_confusion_matrix (character) ---------------------------------------
+setMethod(
+  "..extract_confusion_matrix",
+  signature(object = "character"),
+  function(
+    object,
+    ...
+  ){
+    # Ensure that the object is loaded
+    object <- load_familiar_object(object)
+    
+    return(..extract_confusion_matrix(object = object, ...))
+  }
+)
+
+
+
 # ..extract_confusion_matrix (model, ensemble) ---------------------------------
 setMethod(
   "..extract_confusion_matrix",

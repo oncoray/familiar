@@ -331,6 +331,23 @@ setGeneric(
 )
 
 
+# .extract_decision_curve_data (character) -------------------------------------
+setMethod(
+  ".extract_decision_curve_data",
+  signature(object = "character"),
+  function(
+    object,
+    ...
+  ){
+    # Ensure that the object is loaded
+    object <- load_familiar_object(object)
+    
+    return(.extract_decision_curve_data(object = object, ...))
+  }
+)
+
+
+
 # .extract_decision_curve_data (familiarModelUnion) ----------------------------
 setMethod(
   ".extract_decision_curve_data",
@@ -345,9 +362,6 @@ setMethod(
     is_pre_processed,
     ...
   ) {
-    # Ensure that the object is loaded
-    object <- load_familiar_object(object)
-    
     # Add model name.
     proto_data_element <- add_model_name(proto_data_element, object = object)
     

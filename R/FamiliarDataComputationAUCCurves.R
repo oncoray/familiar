@@ -335,6 +335,23 @@ setGeneric(
 
 
 
+# ..extract_roc_curve_data (character) -----------------------------------------
+setMethod(
+  "..extract_roc_curve_data",
+  signature(object = "character"),
+  function(
+    object,
+    ...
+  ){
+    # Ensure that the object is loaded
+    object <- load_familiar_object(object)
+    
+    return(..extract_roc_curve_data(object = object, ...))
+  }
+)
+
+
+
 # ..extract_roc_curve_data (model, ensemble) -----------------------------------
 setMethod(
   "..extract_roc_curve_data",
