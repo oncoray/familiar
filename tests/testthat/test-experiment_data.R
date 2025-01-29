@@ -95,10 +95,8 @@ experiment_vimp <- familiar::precompute_vimp(
 
 testthat::test_that("Assert that variable importance computation performs correctly", {
   # Assert that variable importance data are correct.
-  testthat::expect_equal(
-    length(experiment_vimp@vimp_table_list$univariate_regression),
-    3L)
-  for (vimp_table in experiment_vimp@vimp_table_list$univariate_regression) {
+  testthat::expect_length(experiment_vimp@vimp_table_list, 3L)
+  for (vimp_table in experiment_vimp@vimp_table_list) {
     testthat::expect_s4_class(vimp_table, "vimpTable")
   }
 
@@ -106,32 +104,36 @@ testthat::test_that("Assert that variable importance computation performs correc
   testthat::expect_equal(
     experiment_data_assignment@experiment_setup,
     experiment_vimp@experiment_setup,
-    ignore_attr = TRUE)
+    ignore_attr = TRUE
+  )
   testthat::expect_equal(
     experiment_data_assignment@iteration_list,
     experiment_vimp@iteration_list,
-    ignore_attr = TRUE)
+    ignore_attr = TRUE
+  )
   testthat::expect_equal(
     experiment_feature_info@feature_info,
     experiment_vimp@feature_info,
-    ignore_attr = TRUE)
+    ignore_attr = TRUE
+  )
   testthat::expect_equal(
     experiment_data_assignment@project_id,
-    experiment_vimp@project_id)
+    experiment_vimp@project_id
+  )
 
   # Test that get_vimp_table produces three tables.
-  vimp_table <- familiar::get_vimp_table(experiment_vimp)
-  testthat::expect_equal(length(vimp_table$univariate_regression), 3L)
+  vimp_table <- familiar::get_vimp_table(experiment_vimp@vimp_table_list)
+  testthat::expect_length(vimp_table, 3L)
 
   # Test that aggregate_vimp_table produces one table.
   vimp_table <- familiar::aggregate_vimp_table(
-    experiment_vimp, 
-    aggregation_method = "borda")
-  testthat::expect_s4_class(
-    vimp_table$univariate_regression, "vimpTable")
+    experiment_vimp@vimp_table_list, 
+    aggregation_method = "borda"
+  )
+  testthat::expect_s4_class(vimp_table, "vimpTable")
+  
   vimp_table <- familiar::get_vimp_table(vimp_table)
-  testthat::expect_s3_class(
-    vimp_table$univariate_regression, "data.table")
+  testthat::expect_s3_class(vimp_table, "data.table")
 })
 
 # Add additional variable importance methods.
@@ -151,24 +153,26 @@ experiment_vimp_3 <- familiar::precompute_vimp(
 testthat::test_that("Addition variable importance computation performs correctly", {
   # Assert that the vimp tables for the univariate_regression method are not
   # altered.
-  for (ii in seq_along(experiment_vimp_3@vimp_table_list$univariate_regression)) {
+  for (ii in 1L:3L) {
     testthat::expect_equal(
-      experiment_vimp_3@vimp_table_list$univariate_regression[[ii]],
-      experiment_vimp@vimp_table_list$univariate_regression[[ii]],
+      experiment_vimp_3@vimp_table_list[[ii]],
+      experiment_vimp@vimp_table_list[[ii]],
       ignore_attr = TRUE
     )
   }
 
   # Test that 9 variable importance tables were created.
-  testthat::expect_equal(
-    length(unlist(familiar::get_vimp_table(experiment_vimp_3), recursive = FALSE)),
-    9L)
+  testthat::expect_length(
+    familiar::get_vimp_table(experiment_vimp_3@vimp_table_list), 9L
+  )
 
   # Test that 3 aggregated variable importance tables are created.
-  testthat::expect_equal(
-    length(familiar::get_vimp_table(
-      familiar::aggregate_vimp_table(experiment_vimp_3, "borda"))),
-    3L)
+  testthat::expect_length(
+    familiar::get_vimp_table(
+      familiar::aggregate_vimp_table(experiment_vimp_3@vimp_table_list, "borda")
+    ),
+    3L
+  )
 
   testthat::expect_equal(
     experiment_vimp@project_id,
