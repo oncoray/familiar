@@ -4815,7 +4815,7 @@ test_plot_ordering <- function(
         which_present <- .test_which_plot_present(plot_list)
         
         if (outcome_type %in% outcome_type_available) {
-          testthat::expect_equal(all(which_present))
+          testthat::expect_true(all(which_present))
           
         } else {
           testthat::expect_true(!any(which_present))
