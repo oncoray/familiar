@@ -957,6 +957,25 @@ setMethod(
     # Keep only non-empty elements.
     x <- x[!empty_elements]
 
+    # Split by variable importance method.
+    vimp_methods <- sapply(x, function(x) (x@vimp_method))
+    if (length(unique(vimp_methods)) > 1L) {
+      vimp_table_list <- lapply(
+        unique(vimp_methods),
+        function(current_vimp_method, vimp_methods, x) {
+          return(x[vimp_methods == current_vimp_method])
+        },
+        vimp_methods = vimp_methods,
+        x = x
+      )
+      return(lapply(
+        vimp_table_list,
+        aggregate_vimp_table,
+        aggregation_method = aggregation_method,
+        rank_threshold = rank_threshold
+      ))
+    }
+    
     # Preprocess individual elements prior to merging.
     x <- lapply(x, preprocess_vimp_table, ...)
 
