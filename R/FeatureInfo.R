@@ -8,7 +8,8 @@ NULL
 .get_generic_feature_info <- function(
     data,
     outcome_type,
-    descriptor = NULL
+    descriptor = NULL,
+    project_id
 ) {
   # Initialises feature_info objects
 
@@ -24,7 +25,7 @@ NULL
   # Iterate over feature columns and create a list of feature_info objects
   feature_info_list <- lapply(
     feature_columns,
-    function(ii, data, descriptor) {
+    function(ii, data, descriptor, project_id) {
       # Determine feature type
       if (is.factor(data[[ii]])) {
         feature_type <- "factor"
@@ -54,13 +55,17 @@ NULL
         feature_info@removed_unknown_type <- TRUE
       }
       
+      # Add project_id.
+      feature_info@project_id
+      
       # Update the familiar version.
       feature_info <- add_package_version(object = feature_info)
       
       return(feature_info)
     },
     data = data,
-    descriptor = descriptor
+    descriptor = descriptor,
+    project_id = project_id
   )
   
   # Set names in the list of featureInfo objects
@@ -74,7 +79,8 @@ NULL
 add_control_info <- function(
     feature_info_list,
     data_id,
-    run_id
+    run_id,
+    project_id
 ) {
   # Control information is added to every feature regardless of "removed'.
   
@@ -85,15 +91,17 @@ add_control_info <- function(
   # Update the feature info list.
   feature_info_list <- lapply(
     feature_info_list,
-    function(object, data_id, run_id) {
+    function(object, data_id, run_id, project_id) {
       # Add data and run ids.
       object@data_id <- data_id
       object@run_id <- run_id
+      object@project_id <- project_id
       
       return(object)
     },
     data_id = data_id,
-    run_id = run_id
+    run_id = run_id,
+    project_id = project_id
   )
   
   return(feature_info_list)

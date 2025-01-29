@@ -81,16 +81,16 @@ load_experiment_data <- function(x, file_paths) {
       if (feature_info_name == "generic") {
         file_name <- get_object_file_name(
           object_type = "genericFeatureInfo",
-          project_id = feature_info@project_id,
+          project_id = feature_info[[1L]]@project_id,
           dir_path = file_paths$process_data_dir
         )
         
       } else {
         file_name <- get_object_file_name(
           object_type = "featureInfo",
-          project_id = feature_info@project_id,
-          data_id = feature_info@data_id,
-          run_id = feature_info@run_id,
+          project_id = feature_info[[1L]]@project_id,
+          data_id = feature_info[[1L]]@data_id,
+          run_id = feature_info[[1L]]@run_id,
           dir_path = file_paths$process_data_dir
         )
       }

@@ -820,6 +820,7 @@ setClass(
 #'   features.
 #' @slot required_features Details features required for clustering or
 #'   imputation.
+#' @slot project_id Identifier of the project that generated this collection.
 #' @slot familiar_version Version of the familiar package.
 #'
 #' @export
@@ -852,6 +853,7 @@ setClass("featureInfo",
     imputation_parameters = "ANY",
     cluster_parameters = "ANY",
     required_features = "ANY",
+    project_id = "ANY",
     familiar_version = "ANY"
   ),
   prototype = list(
@@ -881,6 +883,7 @@ setClass("featureInfo",
     imputation_parameters = NULL,
     cluster_parameters = NULL,
     required_features = NULL,
+    project_id = NULL,
     familiar_version = NULL
   )
 )

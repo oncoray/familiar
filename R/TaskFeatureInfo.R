@@ -133,7 +133,8 @@ setMethod(
     feature_info_list <- .get_generic_feature_info(
       data = data,
       outcome_type = data@outcome_type,
-      descriptor = descriptor
+      descriptor = descriptor,
+      project_id = object@project_id
     )
     
     # Write to file or return.
@@ -343,7 +344,8 @@ setMethod(
     feature_info_list <- add_control_info(
       feature_info_list = feature_info_list,
       data_id = object@data_id,
-      run_id = object@run_id
+      run_id = object@run_id,
+      project_id = object@project_id
     )
     
     # Add signature feature info.
