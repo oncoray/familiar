@@ -486,9 +486,12 @@ features_before_clustering <- function(
     ))
     
   } else if (is.null(cluster_table)) {
+    # Expressly set selected_features to NULL: selected_features is used to
+    # create a subset of the feature_info_list, which leads to missing data for
+    # features that are clustered.
     cluster_table <- .create_clustering_table(
       feature_info_list = feature_info_list,
-      selected_features = features
+      selected_features = NULL
     )
   }
   

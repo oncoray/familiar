@@ -437,7 +437,11 @@ setMethod(
     # Find novelty features. The resulting list of features are features prior
     # to clustering.
     novelty_features <- find_novelty_features(
-      model_features = signature_features,
+      model_features = features_before_clustering(
+        features = signature_features,
+        feature_info_list = object@feature_info,
+        representative_only = TRUE
+      ),
       feature_info_list = object@feature_info
     )
     
