@@ -187,19 +187,26 @@ setMethod(
       )
     }
 
+    # Check that the current ndim parameter is not larger than the number of
+    # features.
+    features <- get_feature_columns(data)
+    if (object@hyperparameters$n_dim < length(features)) {
+      object@hyperparameters$n_dim <- length(features)
+    }
+    
     # Extract hyperparameters from the object.
     param <- object@hyperparameters
-
+    
     # Create an isolation forest. Note that in addition to specifying the number
     # of trees and the number of samples assessed for each tree, missing_action
     # is set to "fail" -- this decreases model footprint and is not necessary as
     # familiar has its own imputation routines.
     detector <- isotree::isolation.forest(
-      data = data@data[, mget(get_feature_columns(data))],
+      data = data@data[, mget(features)],
       sample_size = ceiling(param$sample_size * nrow(data@data)),
       ntrees = as.integer(ceiling(2.0^(param$n_tree))),
       ndim = param$n_dim,
-      ntry = max(c(1L, as.integer(ceiling(param$m_try * get_n_features(x = data))))),
+      ntry = max(c(1L, as.integer(ceiling(param$m_try * length(features))))),
       max_depth = param$tree_depth,
       nthreads = 1L,
       missing_action = "fail"
