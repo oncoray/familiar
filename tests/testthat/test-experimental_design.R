@@ -73,8 +73,6 @@ familiar:::integrated_test(
   parallel = FALSE,
   skip_evaluation_elements = "all",
   outcome_type_available = "binomial",
-  warning_good = "Imbalance partitions are not required as data are not severely imbalanced.",
-  warning_bad = "Imbalance partitions are not required as data are not severely imbalanced.",
   debug = debug_flag
 )
 
@@ -89,7 +87,5 @@ familiar:::integrated_test(
   parallel = FALSE,
   skip_evaluation_elements = "all",
   outcome_type_available = "binomial",
-  warning_good = "Imbalance partitions are not required as data are not severely imbalanced.",
-  warning_bad = "Imbalance partitions are not required as data are not severely imbalanced.",
   debug = debug_flag
 )

@@ -38,8 +38,7 @@ familiar:::integrated_test(
   cluster_method = "none",
   imputation_method = "simple",
   parallel = TRUE,
-  skip_evaluation_elements = "all",
-  debug = TRUE
+  skip_evaluation_elements = "all"
 )
 
 cl <- familiar:::.terminate_cluster(cl = cl)
