@@ -1415,6 +1415,8 @@ setMethod(
         rank_threshold = object@vimp_rank_threshold
       )
       
+      if (is_empty(vimp_table)) return(signature_features)
+      
       # Keep only feature ranks of feature corresponding to available
       # features, and order by rank.
       rank_table <- get_vimp_table(vimp_table)[name %in% features, ][order(rank)]
