@@ -125,7 +125,7 @@ setMethod(
         return(feature_info_list)
       }
       
-      return(invisible(TRUE))
+      return(TRUE)
     }
     
     # If this point is reached, results will be created de novo.
@@ -146,7 +146,7 @@ setMethod(
       return(feature_info_list)
     }
     
-    return(invisible(TRUE))
+    return(TRUE)
   }
 )
 
@@ -320,7 +320,7 @@ setMethod(
         return(feature_info_list)
       }
       
-      return(invisible(TRUE))
+      return(TRUE)
     }
     
     # Check that a feature info list is provided, otherwise create an ad-hoc
@@ -396,7 +396,7 @@ setMethod(
       return(feature_info_list)
     }
     
-    return(invisible(TRUE))
+    return(TRUE)
   }
 )
 

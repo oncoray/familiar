@@ -163,6 +163,8 @@ setMethod(
     if (return_results) {
       return(collection_object)
     }
+    
+    return(TRUE)
   }
 )
 
@@ -440,6 +442,8 @@ setMethod(
     if (return_results) {
       return(evaluation_data)
     }
+    
+    return(TRUE)
   }
 )
 

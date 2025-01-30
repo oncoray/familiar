@@ -196,7 +196,7 @@ setMethod(
         return(hyperparameter_object)
       }
       
-      return(invisible(TRUE))
+      return(TRUE)
     }
     
     # Check that outcome_info is present on data
@@ -299,7 +299,7 @@ setMethod(
       return(hyperparameter_object)
     }
     
-    return(invisible(TRUE))
+    return(TRUE)
   }
 )
 

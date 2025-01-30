@@ -263,6 +263,6 @@ setMethod(
       return(hyperparameter_object)
     }
     
-    return(invisible(TRUE))
+    return(TRUE)
   }
 )
