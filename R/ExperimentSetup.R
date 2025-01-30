@@ -164,12 +164,15 @@ extract_experimental_setup <- function(
 .set_experimental_design_preprocessing <- function(section_table) {
   # Suppress NOTES due to non-standard evaluation in data.table
   perturb_method <- NULL
-
+  
   # Add can_preprocess column.
   section_table[, "can_pre_process" := TRUE]
   
   # Set can_pre_process to FALSE for select perturbation methods.
-  section_table["limited_bootstrap" %in% perturb_method, "can_pre_process" := FALSE]
+  section_table[
+    perturb_method %in% c("limited_bootstrap"),
+    "can_pre_process" := FALSE
+  ]
   
   return(section_table)
 }

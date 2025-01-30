@@ -675,7 +675,7 @@
 ) {
   # Start an empty run list
   run_list <- list()
-
+  
   for (ii in seq_len(length(train_samples))) {
     # Create new run table
     run_table <- data.table::data.table(
@@ -723,7 +723,7 @@
   # If data_id is not provided, the run_list will be treated a custom run, and
   # will receive a data_id of -1
   if (is.null(data_id)) data_id <- -1L
-
+  
   # Find the current perturbation level based on the input run
   curr_perturb_level <- max(run$run_table$perturb_level) + 1L
 
