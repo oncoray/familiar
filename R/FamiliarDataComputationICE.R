@@ -861,7 +861,7 @@ setMethod(
     new_value_column,
     setdiff(pd_data@value_column, old_value_column)
   )
-
+  
   if (!is.null(x_anchor) || !is.null(y_anchor)) {
     
     # Update individual conditional expectation data.
@@ -1045,25 +1045,17 @@ setMethod(
   
   if (is.null(n_samples)) return(x)
 
-  if (is.null(x$sample)) {
-    ..error_reached_unreachable_code("sample column was not defined")
-  }
-  
-  # Select unique sample identifiers.
-  sample_identifiers <- unique(x$sample)
-  
-  # Do not sample if the number of available samples is smaller than n_samples.
-  if (length(sample_identifiers) < n_samples) return(x)
-  
   # Select samples.
-  selected_identifiers <- fam_sample(
-    x = sample_identifiers,
-    size = n_samples,
-    replace = FALSE,
+  selected_samples <- fam_sample(
+    x = x, 
+    size = n_samples, 
+    replace = FALSE, 
     seed = seed
   )
+  if (is_empty(selected_samples)) return(NULL)
   
-  x <- x[sample %in% selected_identifiers]
+  # Select only selected samples
+  x <- x[selected_samples, on = .NATURAL]
   
   return(x)
 }
