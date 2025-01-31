@@ -326,6 +326,7 @@ setMethod(
       # Execute the task.
       hyperparameter_object <- .perform_task(
         object = hyperparameter_task,
+        hyperparameters = hyperparameters,
         ...
       )
       

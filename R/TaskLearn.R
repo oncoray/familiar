@@ -179,7 +179,6 @@ setMethod(
       }
     }
     
-    
     # Check and retrieve feature info list.
     feature_info_list <- .get_feature_info_list(
       object = object,
@@ -369,6 +368,7 @@ setMethod(
       # Execute the task.
       hyperparameter_object <- .perform_task(
         object = hyperparameter_task,
+        hyperparameters = hyperparameters,
         ...
       )
       
