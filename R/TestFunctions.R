@@ -924,7 +924,7 @@ test_all_learners_train_predict_vimp <- function(
           testthat::expect_false(model_is_trained(model))
           
           if (outcome_type == "survival") {
-            # Calibration info is absent.
+            # Calibration info is present.
             testthat::expect_true(has_calibration_info(model))
           }
         }
