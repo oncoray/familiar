@@ -259,7 +259,8 @@ setMethod(
     # Find novelty values.
     novelty_values <- predict(
       object = object@model,
-      newdata = data@data
+      newdata = data@data,
+      nthreads = 1L
     )
     
     prediction_table <- as_prediction_table(
