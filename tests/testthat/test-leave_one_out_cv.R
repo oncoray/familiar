@@ -23,7 +23,7 @@ hyperparameters <- list(
 output <- familiar:::summon_familiar(
   data = full_data,
   experimental_design = "lv(fs+mb)",
-  fs_method = "none",
+  vimp_method = "none",
   cluster_method = "none",
   imputation_method = "simple",
   learner = learner,
