@@ -1045,6 +1045,10 @@ setMethod(
   
   if (is.null(n_samples)) return(x)
 
+  # Check if the number of samples allows for sampling.
+  n_samples_present <- get_n_samples(x, id_depth = "sample")
+  if (n_samples_present < n_samples) n_samples <- n_samples_present
+  
   # Select samples.
   selected_samples <- fam_sample(
     x = x, 
@@ -1052,6 +1056,7 @@ setMethod(
     replace = FALSE, 
     seed = seed
   )
+  
   if (is_empty(selected_samples)) return(NULL)
   
   # Select only selected samples
