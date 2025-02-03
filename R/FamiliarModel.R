@@ -158,7 +158,8 @@ setMethod(
 
 # .train (familiarModel, NULL)--------------------------------------------------
 setMethod(
-  ".train", signature(
+  ".train",
+  signature(
     object = "familiarModel",
     data = "NULL"
   ),

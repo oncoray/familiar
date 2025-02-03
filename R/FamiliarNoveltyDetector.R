@@ -47,7 +47,7 @@ setMethod(
 
     # Check if the hyperparameters are plausible.
     if (!has_optimised_hyperparameters(object = object)) can_train <- FALSE
-
+    
     # Train a new model based on data.
     if (can_train) object <- ..train(object = object, data = data)
 
@@ -59,7 +59,7 @@ setMethod(
         data = data
       )
     }
-
+    
     if (trim_model) object <- trim_model(object = object, timeout = timeout)
 
     # Empty slots if a model can not be trained.

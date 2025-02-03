@@ -186,11 +186,11 @@ setMethod(
         ordered = FALSE
       )
     }
-
+    
     # Check that the current ndim parameter is not larger than the number of
     # features.
     features <- get_feature_columns(data)
-    if (object@hyperparameters$n_dim < length(features)) {
+    if (object@hyperparameters$n_dim > length(features)) {
       object@hyperparameters$n_dim <- length(features)
     }
     
