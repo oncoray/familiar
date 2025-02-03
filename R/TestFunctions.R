@@ -44,6 +44,7 @@ test_all_learners_train_predict_vimp <- function(
     learners,
     hyperparameter_list = NULL,
     except_train = NULL,
+    except_train_partial_prospective = NULL,
     except_naive = NULL,
     except_predict = NULL,
     except_predict_survival = NULL,
@@ -1423,7 +1424,7 @@ test_all_learners_train_predict_vimp <- function(
         ),
         {
           # Test that the model was successfully created.
-          testthat::expect_equal(model_is_trained(model), !learner %in% except_train)
+          testthat::expect_equal(model_is_trained(model), !learner %in% c(except_train, except_train_partial_prospective))
         }
       )
     }

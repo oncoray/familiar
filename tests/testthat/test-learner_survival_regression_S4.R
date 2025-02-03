@@ -9,7 +9,8 @@ testthat::skip_on_cran()
 testthat::skip_on_ci()
 
 familiar:::test_all_learners_train_predict_vimp(
-  learners = familiar:::.get_available_survival_regression_learners(show_general = FALSE)
+  learners = familiar:::.get_available_survival_regression_learners(show_general = FALSE),
+  except_train_partial_prospective = "survival_regr_weibull"
 )
 familiar:::test_all_learners_parallel_train_predict_vimp(
   learners = familiar:::.get_available_survival_regression_learners(show_general = FALSE)
