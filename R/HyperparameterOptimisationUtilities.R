@@ -352,8 +352,6 @@
     cl = NULL,
     object,
     data,
-    vimp_aggregation_method,
-    vimp_rank_threshold,
     bootstraps,
     verbose,
     message_indent,
@@ -369,25 +367,12 @@
     return(NULL)
     
   } else if (is(object@vimp_table, "vimpTable") || rlang::is_bare_list(object@vimp_table)) {
-    # Existing vimp_tables.
-    vimp_table <- object@vimp_table
-    
-    # vimp_table <- update_vimp_table_to_reference(
-    #   x = vimp_table,
-    #   reference_cluster_table = .create_clustering_table(
-    #     feature_info_list = object@feature_info
-    #   )
-    # )
-    # 
-    # # Form clusters.
-    # vimp_table <- recluster_vimp_table(vimp_table)
-    # 
-    # # Aggregate to single table.
-    # vimp_table <- aggregate_vimp_table(
-    #   vimp_table,
-    #   aggregation_method = vimp_aggregation_method,
-    #   rank_threshold = vimp_rank_threshold
-    # )
+    # Use existing vimp_tables.
+    vimp_table <- lapply(
+      bootstraps,
+      function(x, vimp_table) (vimp_table),
+      vimp_table = object@vimp_table
+    ) 
     
   } else {
     
