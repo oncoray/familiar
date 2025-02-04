@@ -1273,6 +1273,7 @@ setMethod(
     # Attempt to create an actual descriptor, if meaningful.
     if (is(object@cluster_parameters, "featureInfoParametersCluster")) {
       if (object@cluster_parameters@cluster_size > 1L) {
+        
         # Find the feature(s) required to form the cluster.
         cluster_feature_names <- object@cluster_parameters@required_features
 
@@ -1300,8 +1301,12 @@ setMethod(
               cluster_method_str,
               "with ",
               object@cluster_parameters@cluster_size - 1L,
-              " other features, and is the reference feature.\n"
+              " other features, and is the reference feature."
             )
+            
+            # Determine other features that are clustered with the current
+            # feature.
+            other_features <- setdiff(object@cluster_parameters@cluster_features, object@name)
             
           } else {
             # The current feature is not the reference feature.
@@ -1312,7 +1317,14 @@ setMethod(
               object@cluster_parameters@cluster_size - 1L,
               " other features, with ",
               cluster_feature_names,
-              " as the reference feature.\n"
+              " as the reference feature."
+            )
+            
+            # Determine other features that are clustered with the current
+            # feature.
+            other_features <- setdiff(
+              object@cluster_parameters@cluster_features,
+              c(object@name, cluster_feature_names)
             )
           }
           
@@ -1323,9 +1335,27 @@ setMethod(
             cluster_method_str,
             "with ",
             paste_s(setdiff(cluster_feature_names, object@name)),
-            ".\n"
+            "."
+          )
+          
+          # Determine other features that are clustered with the current
+          # feature.
+          other_features <- setdiff(
+            object@cluster_parameters@cluster_features,
+            c(object@name, cluster_feature_names)
           )
         }
+        
+        # Mention additional features in the cluster.
+        if (length(other_features) > 0L) {
+          cluster_str <- c(
+            cluster_str,
+            paste0(" Other feature(s) in the cluster: ", paste_sh(other_features))
+          )
+        }
+        
+        # Close cluster part of the string.
+        cluster_str <- c(cluster_str, "\n")
       }
     }
 
