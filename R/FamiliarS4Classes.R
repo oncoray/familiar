@@ -340,6 +340,8 @@ setClassUnion(
 #' @slot ice_data Individual conditional expectation data for features included
 #'   in a model or ensemble of models, based on the underlying dataset. Partial
 #'   dependence data are computed on the fly from these data.
+#' @slot shap_data SHAP values for features included in a model or ensemble of 
+#'   models.
 #' @slot univariate_analysis Univariate analysis of the underlying dataset.
 #' @slot feature_expressions Feature expression values of the underlying
 #'   dataset.
@@ -413,6 +415,8 @@ setClass("familiarData",
     sample_similarity = "ANY",
     # Information on individual conditional expectation
     ice_data = "ANY",
+    # Information on SHAP values
+    shap_data = "ANY",
     # Project identifier
     project_id = "ANY",
     # Package version for backward compatibility
@@ -446,6 +450,7 @@ setClass("familiarData",
     feature_similarity = NULL,
     sample_similarity = NULL,
     ice_data = NULL,
+    shap_data = NULL,
     project_id = NULL,
     familiar_version = NULL
   )
@@ -496,6 +501,8 @@ setClass("familiarData",
 #' @slot ice_data Individual conditional expectation data for data in the
 #'   collection. Partial dependence data are computed on the fly from these
 #'   data.
+#' @slot shap_data SHAP values for features included in a model or ensemble of 
+#'   models.
 #' @slot univariate_analysis Univariate analysis results of data in the
 #'   collection.
 #' @slot feature_expressions Feature expression values for data in the
@@ -586,6 +593,8 @@ setClass("familiarCollection",
     sample_similarity = "ANY",
     # Information on individual conditional expectation
     ice_data = "ANY",
+    # Information on SHAP values
+    shap_data = "ANY",
     # Label and order of data names
     data_set_labels = "ANY",
     # Label and order of learners
@@ -631,6 +640,7 @@ setClass("familiarCollection",
     feature_similarity = NULL,
     sample_similarity = NULL,
     ice_data = NULL,
+    shap_data = NULL,
     data_set_labels = NULL,
     learner_labels = NULL,
     vimp_method_labels = NULL,

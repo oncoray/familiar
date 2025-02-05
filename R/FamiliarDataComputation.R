@@ -498,7 +498,21 @@ setMethod(
     ...
 ) {
   
-  ## Compute distance between features ---------------------------------------
+  ## Compute SHAP values for features ------------------------------------------
+  # TODO: MOVE DOWN AFTER IMPLEMENTATION
+  
+  shap_data <- NULL
+  if ("shap" %in% data_element) {
+    shap_data <- extract_shap(
+      object = object,
+      data = data,
+      cl = cl,
+      verbose = verbose,
+      message_indent = message_indent
+    )
+  }
+  
+  ## Compute distance between features -----------------------------------------
   feature_similarity <- NULL
   if (any(c("model_vimp", "feature_similarity", "univariate_analysis",
             "feature_expressions", "permutation_vimp") %in% data_element)) {
@@ -838,7 +852,8 @@ setMethod(
     feature_expressions = expression_info,
     feature_similarity = feature_similarity,
     sample_similarity = sample_similarity,
-    ice_data = ice_data
+    ice_data = ice_data,
+    shap_data = shap_data
   )
   
   # Add package version to the data set 

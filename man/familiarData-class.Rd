@@ -76,6 +76,9 @@ based on the underlying dataset.}
 in a model or ensemble of models, based on the underlying dataset. Partial
 dependence data are computed on the fly from these data.}
 
+\item{\code{shap_data}}{SHAP values for features included in a model or ensemble of
+models.}
+
 \item{\code{univariate_analysis}}{Univariate analysis of the underlying dataset.}
 
 \item{\code{feature_expressions}}{Feature expression values of the underlying

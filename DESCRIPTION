@@ -114,6 +114,7 @@ Collate:
     'FamiliarDataComputationPermutationVimp.R'
     'FamiliarDataComputationRiskStratificationData.R'
     'FamiliarDataComputationRiskStratificationInfo.R'
+    'FamiliarDataComputationSHAP.R'
     'FamiliarDataComputationSampleSimilarity.R'
     'FamiliarDataComputationUnivariateAnalysis.R'
     'FamiliarDataComputationVimp.R'
