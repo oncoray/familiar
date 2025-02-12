@@ -107,14 +107,7 @@ setMethod(
 # values (m_i) to sample. Feature values can be randomly ordered for each
 # feature. Features with m_i < n can randomly draw additional features.
 
-# NOTE: Is step 2 really necessary? We can also determine SHAP values for each
-# feature value, by randomly generating coalitions, keeping track of the
-# results, and using these in subsequent calculations.
-
-# Yes necessary -- however, we can still track which predictions have been made
-# for which generated feature sets. Depending on the current sample in the 
-# minimum sample set, these predictions represent different coalitions, which we
-# then get to use for free!
+# Alternative: Use the actual dataset X (trigger on function argument).
 
 # Step 3: Create coalition sets for coalitions with all but one off and all but
 # one on.
@@ -135,4 +128,8 @@ setMethod(
 
 # Step 9: Average SHAP value for each feature value.
 
-# Step 10: Determine convergence and repeat steps 4-9.
+# Step 10: Determine convergence and repeat steps 4-9 until convergence is
+# reached, or capacity is exhausted.
+
+# Parallel processing: perform steps 4-6 multiple times within a parallel loop.
+# This allows for faster convergence.
