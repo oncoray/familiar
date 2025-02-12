@@ -98,6 +98,7 @@ setMethod(
   }
 )
 
+# TODO: Add sample distribution data to featureInfo objects.
 
 # Step 1: Determine feature values that are to be sampled for determining SHAP
 # values.
