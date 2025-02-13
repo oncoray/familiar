@@ -1147,6 +1147,12 @@ fivenum_summary <- function(x, na.rm = FALSE) {
 
 
 
+get_percentiles <- function(n) {
+  return(seq_len(n) - 1 / 3) / (n + 1 / 3)
+}
+
+
+
 trim <- function(x, fraction = 0.1) {
   if (fraction < 0.0 || fraction > 0.5) {
     ..error("Trimming fraction should be between 0.0 and 0.5.")
