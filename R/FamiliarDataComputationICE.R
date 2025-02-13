@@ -668,13 +668,16 @@ setMethod(
     } else {
       # Create the range of values from the feature distribution.
       if (n == 1L) {
-        feature_range <- as.numeric(feature_info@distribution$fivenum)[3L]
+        # Median value.
+        feature_range <- as.numeric(feature_info@distribution$pctl)[
+          ceiling(length(feature_info@distribution$pctl) / 2.0)
+        ]
         
       } else {
         # Sample the five-number summary.
         feature_range <- stats::spline(
-          x = c(0.00, 0.25, 0.50, 0.75, 1.00),
-          y = as.numeric(feature_info@distribution$fivenum),
+          x = (seq_along(feature_info@distribution$pctl) - 1L) / (length(feature_info@distribution$pctl) - 1L),
+          y = as.numeric(feature_info@distribution$pctl),
           n = n,
           method = "hyman"
         )$y
