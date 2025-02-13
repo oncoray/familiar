@@ -113,7 +113,7 @@ setMethod(
       logger_message(
         paste0(
           "Computing individual conditional expectation and partial dependence ",
-          "data for the selected features."
+          "data for the selected features: ", paste_s(features), "."
         ),
         indent = message_indent,
         verbose = verbose
@@ -667,21 +667,13 @@ setMethod(
       
     } else {
       # Create the range of values from the feature distribution.
-      if (n == 1L) {
-        # Median value.
-        feature_range <- as.numeric(feature_info@distribution$pctl)[
-          ceiling(length(feature_info@distribution$pctl) / 2.0)
-        ]
-        
-      } else {
-        # Sample the five-number summary.
-        feature_range <- stats::spline(
-          x = (seq_along(feature_info@distribution$pctl) - 1L) / (length(feature_info@distribution$pctl) - 1L),
-          y = as.numeric(feature_info@distribution$pctl),
-          n = n,
-          method = "hyman"
-        )$y
-      }
+      feature_range <- stats::spline(
+        x = (seq_along(feature_info@distribution$pctl) - 1L) / 
+          (length(feature_info@distribution$pctl) - 1L),
+        y = as.numeric(feature_info@distribution$pctl),
+        xout = get_percentiles(n),
+        method = "hyman"
+      )$y
     }
     
     # Convert to integer if required.
