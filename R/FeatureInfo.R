@@ -349,11 +349,19 @@ compute_feature_distribution_data <- function(
     # Number of samples
     distr_list[["n"]] <- length(x)
 
-    # Five-number summary of outcome values
+    # Five-number summary of feature values
     distr_list[["fivenum"]] <- fivenum_summary(x, na.rm = TRUE)
 
     # Mean value
     distr_list[["mean"]] <- mean(x, na.rm = TRUE)
+    
+    # Percentile summary of feature values
+    distr_list[["pctl"]] <- stats::spline(
+      x = (seq_along(x) - 1L) / (length(x) - 1L),
+      y = sort(x),
+      method = "hyman",
+      xout = (seq_len(101L) - 1L) / 100L
+    )$y
     
   } else {
     ..error_reached_unreachable_code(
@@ -1040,6 +1048,24 @@ trim_unused_features_from_list <- function(feature_info_list) {
 
         # Summarise and add to list
         distr_list[[item]] <- frequency_values[, list("count" = mean(count)), by = "factor_level"]
+      
+      } else if (grepl(pattern = "pctl", x = item, fixed = TRUE)) {
+        
+        # Aggregate from list
+        pctl_values <- unlist(
+          lapply(
+            feature_info_list, 
+            function(feature_info, item) (feature_info@distribution[[item]]),
+            item = item
+          ),
+          use.names = FALSE
+        )
+        
+        # Check for zero-length lists.
+        if (is_empty(pctl_values)) next
+        
+        # Add to list
+        distr_list[[item]] <- unique(sort(pctl_values))
         
       } else {
         # Find mean value
