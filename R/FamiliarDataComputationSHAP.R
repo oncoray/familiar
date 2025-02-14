@@ -269,15 +269,54 @@ setMethod(
     n_sample_points = n_sample_points
   )
   
-  # Generate 
+  # Generate data if absent.
   if (is_empty(data)) {
     data <- .get_shap_sample_set(
       object = object,
       feature_set = feature_set,
     )
-    
-  } 
+  }
   
+  # Generate coalitions (Z)
+  coalitions <- .get_shap_coalitions(
+    feature_set = feature_set,
+    depth = 1L
+  )
+  
+  # Check that coalitions are not empty: this happens if the data contains a
+  # single feature: SHAP values cannot be computed.
+  if (is.null(coalitions)) return(NULL)
+  
+  # From here, work with mapping representations of the data (h).
+  mapping_input <- .shap_data_to_mapping(
+    data = data,
+    feature_set = feature_set
+  )
+  
+  # TODO: convert input to dataObject
+  # TODO: predict input data.
+  
+  # Determine additional mapping.
+  # TODO: seed should depend on iteration in convergence.
+  mapping <- .shap_randomise_mapping_from_coalition(
+    samples = mapping_input,
+    coalitions = coalitions,
+    feature_set = feature_set,
+    seed = 1L
+  )
+  
+  # Check which parts of mapping lack predictions.
+  
+  # Skip if all parts of mapping have predictions.
+  
+  # TODO: convert input to dataObject
+  # TODO: predict input data
+  
+  # Add new predicted values to existing data.
+  
+  # Compute SHAP values for this iteration.
+  
+  # Check convergence.
 }
 
 
@@ -328,4 +367,236 @@ setMethod(
   }
   
   return(feature_set)
+}
+
+
+
+.get_shap_sample_set <- function(
+    object,
+    feature_set
+) {
+  # Determine the number of samples that are required.
+  n_samples <- max(lengths(feature_set))
+  
+  # Fill sample set. Feature values are randomly ordered and then distributed
+  # over features.
+  sample_set <- list()
+  for (ii in seq_along(feature_set)) {
+    feature <- names(feature_set)[ii]
+    feature_values <- feature_set[[feature]]
+    feature_values <- feature_values[fam_sample(
+      seq_along(feature_values),
+      n = length(feature_values),
+      replace = FALSE,
+      seed = ii
+    )]
+    sample_set[[feature]] <- rep_len(feature_values, length.out = n_samples)
+  }
+  
+  # Convert to data.table and batch and sample identifiers.
+  data <- data.table::as.data.table(sample_set)
+  data[, ":="(
+    "batch_id" = "generated",
+    "sample_id" = seq_len(nrow(data))
+  )]
+  
+  return(as_data_object(
+    data = data,
+    object = object,
+    batch_id_column = "batch_id",
+    sample_id_column = "sample_id"
+  ))
+}
+
+
+
+.get_shap_coalitions <- function(
+    feature_set,
+    depth = 2L
+) {
+  # Helper function that inserts TRUE at the indices indicated by ones.
+  ..fun <- function(ones, n_features) {
+    x <- logical(n_features)
+    x[ones] <- TRUE
+    return(x)
+  }
+
+  # Set number of features.
+  n_features <- length(feature_set)
+  
+  # Check that depth is at most n_features - 1L.
+  if (depth >= n_features) depth <- n_features - 1L
+  if (depth < 1L) return(NULL)
+  
+  z <- list()
+  for (ii in seq_len(depth)) {
+    z <- c(
+      z,
+      utils::combn(
+        n_features,
+        m = ii,
+        FUN = ..fun,
+        simplify = FALSE,
+        n_features = n_features
+      )
+    )
+  }
+  
+  # To matrix. Data are stored row-wise.
+  z <- matrix(unlist(z), ncol = n_features, byrow = TRUE)
+  colnames(z) <- names(feature_set)
+
+  # Use adversarial sampling and keep unique coalitions. Adversarial sampling
+  # relies on coalitions that are directly orthogonal to another.
+  z <- unique(rbind(z, !z))
+  
+  return(z)
+}
+
+
+
+.shap_data_to_mapping <- function(
+  data,
+  feature_set
+) {
+  # Convert data to mapping matrix. This uses the fact that all the values in
+  # the feature set
+  mapping <- list()
+  
+  # Maps data to a matrix of integers that establishes a mapping to the feature
+  # values in feature set.
+  for (feature in names(feature_set)) {
+    mapping[[feature]] <- match(data@data[[feature]], feature_set[[feature]])
+  }
+  browser()
+  # Create matrix.
+  h <- matrix(unlist(mapping), ncol = length(feature_set))
+  colnames(h) <- names(feature_set)
+  
+  return(h)
+}
+
+
+
+.shap_mapping_to_data <- function(
+    mapping,
+    feature_set,
+    object
+) {
+  ..fun <- function(feature, y, x) {
+    # Use column in mapping matrix x to lookup value from y.
+    return(y[x[, feature]])
+  }
+  
+  # Use lookup to fill data.
+  data <- mapply(
+    ..fun,
+    feature = names(feature_set),
+    y = feature_set,
+    MoreArgs = list("x" = mapping),
+    SIMPLIFY = FALSE
+  )
+  
+  # Set names of list elements.
+  names(data) <- names(feature_set)
+  
+  # Convert to data.table and add identifiers.
+  data <- data.table::as.data.table(data)
+  data[, ":="(
+    "batch_id" = "generated",
+    "sample_id" = apply(mapping, MARGIN = 1L, paste0, collapse="_")
+  )]
+  
+  return(as_data_object(
+    data = data,
+    object = object,
+    batch_id_column = "batch_id",
+    sample_id_column = "sample_id"
+  ))
+}
+
+
+
+.shap_randomise_mapping_from_coalition <- function(
+  samples,
+  coalitions,
+  feature_set,
+  seed
+) {
+  # Determine the number of feature values for each value.
+  n_feature_values <- lengths(feature_set)
+  
+  # Start random stream
+  rstream_object <- .start_random_number_stream(seed)
+  
+  mapping <- apply(
+    samples,
+    MARGIN = 1L,
+    ..shap_randomise_mapping_from_coalition,
+    coalitions = coalitions,
+    n_feature_values = n_feature_values,
+    rstream_object = rstream_object
+  )
+  
+  # Concatenate by rows.
+  mapping <- do.call(rbind, mapping)
+  
+  # Keep unique rows.
+  mapping <- unique(mapping, MARGIN = 1L)
+  
+  return(mapping)
+}
+
+
+
+..shap_randomise_mapping_from_coalition <- function(
+    x,
+    coalitions,
+    n_feature_values,
+    rstream_object
+) {
+  # Determine the number of feature values to samples for off-coalition
+  # features. This should be the same number for each feature in antithetical
+  # sampling.
+  n_to_draw <- colSums(!coalitions)
+  
+  mapping <- list()
+  for (feature in names(n_feature_values)) {
+    # Determine eligible features from in-coalition (on) and off-coalition
+    # (off) features.
+    on_feature_set <- x[feature]
+    off_feature_set <- seq_len(n_feature_values[feature])[-on_feature_set]
+    
+    # Sample the off-feature set, and append to the on-feature set. This forms
+    # the look-up table for forming coalitions.
+    feature_set <- c(
+      on_feature_set,
+      fam_sample(
+        off_feature_set,
+        n = n_to_draw[feature],
+        replace = TRUE,
+        rstream_object = rstream_object
+      )
+    )
+    
+    # Accumulate off-coalition elements. E.g. with coalitions (across samples
+    # for each feature) [0, 1, 1, 0], the lookup-vector is [1, 1, 1, 2].
+    lookup_vector <- cumsum(!coalitions[, feature])
+    
+    # Reset in-coalition elements of the lookup vector, yielding, e.g. [1, 0, 0,
+    # 2], and increment by 1. This results in indices (e.g. [2, 1, 1, 3])
+    # referring to the feature set, with index 1 corresponding to the
+    # in-coalition value.
+    lookup_vector <- lookup_vector * !coalitions[, feature] + 1L
+    
+    # Add features to mapping.
+    mapping[[feature]] <- feature_set[lookup_vector]
+  }
+  
+  # Convert to matrix. Mapping consists of columns, and the matrix is sorted
+  # this way.
+  mapping <- matrix(unlist(mapping), ncol = length(n_feature_values))
+  colnames(mapping) <- names(n_feature_values)
+  
+  return(mapping)
 }
