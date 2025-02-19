@@ -288,22 +288,22 @@ setMethod(
   if (is.null(coalitions)) return(NULL)
   
   # From here, work with mapping representations of the data (h).
-  mapping_input <- .shap_data_to_mapping(
+  mapping_input <- mapping <- .shap_data_to_mapping(
     data = data,
     feature_set = feature_set
   )
   
-  # TODO: convert input to dataObject
-  # TODO: predict input data.
-  
   # Determine additional mapping.
   # TODO: seed should depend on iteration in convergence.
-  mapping <- .shap_randomise_mapping_from_coalition(
-    samples = mapping_input,
-    coalitions = coalitions,
-    feature_set = feature_set,
-    seed = 1L
-  )
+  mapping <- unique(rbind(
+    mapping,
+    .shap_randomise_mapping_from_coalition(
+      samples = mapping_input,
+      coalitions = coalitions,
+      feature_set = feature_set,
+      seed = 1L
+    )
+  ))
   
   # Check which parts of mapping lack predictions.
   
