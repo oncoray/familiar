@@ -17,7 +17,8 @@ NULL
     "fs_vimp", "hyperparameters", "model_performance",
     "model_vimp", "permutation_vimp", "prediction_data",
     "risk_stratification_data", "risk_stratification_info",
-    "univariate_analysis", "feature_similarity", "sample_similarity", "ice_data"
+    "univariate_analysis", "feature_similarity", "sample_similarity", "ice_data",
+    "shap"
   )
   
   # Data elements that allow setting an estimation type.
@@ -29,7 +30,7 @@ NULL
   # Data elements that allow setting a detail level.
   can_set_detail_level <- c(
     can_set_estimation_type, "calibration_info", "confusion_matrix",
-    "risk_stratification_data", "risk_stratification_info"
+    "risk_stratification_data", "risk_stratification_info", "shap"
   )
   
   # Data elements that allow for setting an estimation type but not detail
@@ -37,7 +38,7 @@ NULL
   can_set_estimation_type <- c(can_set_estimation_type, "feature_similarity")
   
   # Data elements that allow for setting a sample limit.
-  can_set_sample_limit <- c("sample_similarity", "ice_data")
+  can_set_sample_limit <- c("sample_similarity", "ice_data", "shap")
   
   # Data elements that can be computed from prediction table objects.
   can_use_prediction_table <- c("prediction_data")
@@ -503,12 +504,20 @@ setMethod(
   
   shap_data <- NULL
   if ("shap" %in% data_element) {
+    
     shap_data <- extract_shap(
       object = object,
       data = data,
       cl = cl,
+      ensemble_method = ensemble_method,
+      evaluation_times = evaluation_times,
+      sample_limit = sample_limit,
+      detail_level = detail_level,
+      aggregate_results = aggregate_results,
+      is_pre_processed = is_pre_processed,
       verbose = verbose,
-      message_indent = message_indent
+      message_indent = message_indent,
+      ...
     )
   }
   

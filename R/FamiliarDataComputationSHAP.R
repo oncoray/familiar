@@ -31,6 +31,16 @@ setGeneric(
   "extract_shap",
   function(
     object,
+    data,
+    cl = NULL,
+    features = NULL,
+    n_sample_points = 20L,
+    ensemble_method = waiver(),
+    evaluation_times = waiver(),
+    sample_limit = waiver(),
+    detail_level = waiver(),
+    aggregate_results = waiver(),
+    is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
     ...
@@ -58,7 +68,8 @@ setMethod(
     aggregate_results = waiver(),
     is_pre_processed = FALSE,
     message_indent = 0L,
-    verbose = FALSE
+    verbose = FALSE,
+    ...
   ) {
     # Compute SHAP values.
     
@@ -68,7 +79,7 @@ setMethod(
       indent = message_indent,
       verbose = verbose
     )
-    browser()
+    
     if (is.null(features)) {
       logger_message(
         paste0(
@@ -260,7 +271,7 @@ setMethod(
   
   # Check that the model requires any features.
   if (is_empty(object@model_features)) return(NULL)
-  
+  browser()
   # Get set of feature values.
   feature_set <- .get_shap_feature_set(
     data = data,
@@ -304,7 +315,7 @@ setMethod(
       seed = 1L
     )
   ))
-  
+  browser
   # Check which parts of mapping lack predictions.
   
   # Skip if all parts of mapping have predictions.
@@ -468,7 +479,7 @@ setMethod(
   for (feature in names(feature_set)) {
     mapping[[feature]] <- match(data@data[[feature]], feature_set[[feature]])
   }
-  browser()
+  
   # Create matrix.
   h <- matrix(unlist(mapping), ncol = length(feature_set))
   colnames(h) <- names(feature_set)
@@ -543,7 +554,7 @@ setMethod(
   
   # Keep unique rows.
   mapping <- unique(mapping, MARGIN = 1L)
-  
+  browser()
   return(mapping)
 }
 
@@ -564,7 +575,7 @@ setMethod(
   for (feature in names(n_feature_values)) {
     # Determine eligible features from in-coalition (on) and off-coalition
     # (off) features.
-    on_feature_set <- x[feature]
+    on_feature_set <- unname(x[feature])
     off_feature_set <- seq_len(n_feature_values[feature])[-on_feature_set]
     
     # Sample the off-feature set, and append to the on-feature set. This forms
@@ -573,7 +584,7 @@ setMethod(
       on_feature_set,
       fam_sample(
         off_feature_set,
-        n = n_to_draw[feature],
+        size = n_to_draw[feature],
         replace = TRUE,
         rstream_object = rstream_object
       )
@@ -587,12 +598,12 @@ setMethod(
     # 2], and increment by 1. This results in indices (e.g. [2, 1, 1, 3])
     # referring to the feature set, with index 1 corresponding to the
     # in-coalition value.
-    lookup_vector <- lookup_vector * !coalitions[, feature] + 1L
+    lookup_vector <- 1L + lookup_vector * !coalitions[, feature]
     
     # Add features to mapping.
     mapping[[feature]] <- feature_set[lookup_vector]
   }
-  
+  browser()
   # Convert to matrix. Mapping consists of columns, and the matrix is sorted
   # this way.
   mapping <- matrix(unlist(mapping), ncol = length(n_feature_values))
@@ -600,3 +611,158 @@ setMethod(
   
   return(mapping)
 }
+
+
+
+
+# export_shap (generic) --------------------------------------------------------
+
+#'@title Extract and export individual conditional expectation data.
+#'
+#'@description Extract and export individual conditional expectation data.
+#'
+#'@inheritParams export_all
+#'@inheritParams export_univariate_analysis_data
+#'
+#'@inheritDotParams extract_ice
+#'@inheritDotParams as_familiar_collection
+#'
+#'@details Data is usually collected from a `familiarCollection` object.
+#'  However, you can also provide one or more `familiarData` objects, that will
+#'  be internally converted to a `familiarCollection` object. It is also
+#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
+#'  objects together with the data from which data is computed prior to export.
+#'  Paths to the previous files can also be provided.
+#'
+#'  All parameters aside from `object` and `dir_path` are only used if `object`
+#'  is not a `familiarCollection` object, or a path to one.
+#'
+#'@return A list of data.tables (if `dir_path` is not provided), or nothing, as
+#'  all data is exported to `csv` files.
+#'@exportMethod export_ice_data
+#'@md
+#'@rdname export_shap-methods
+setGeneric(
+  "export_shap",
+  function(
+    object,
+    dir_path = NULL,
+    aggregate_results = TRUE,
+    export_collection = FALSE,
+    ...
+  ) {
+    standardGeneric("export_shap")
+  }
+)
+
+
+
+# export_shap (collection) -----------------------------------------------------
+
+#'@rdname export_shap-methods
+setMethod(
+  "export_shap",
+  signature(object = "familiarCollection"),
+  function(
+    object,
+    dir_path = NULL,
+    aggregate_results = TRUE,
+    export_collection = FALSE,
+    ...
+  ) {
+    
+    # Make sure the collection object is updated.
+    object <- update_object(object = object)
+    
+    # Obtain individual conditional expectation plots.
+    return(.export(
+      x = object,
+      data_slot = "shap_data",
+      dir_path = dir_path,
+      aggregate_results = aggregate_results,
+      type = "explanation",
+      subtype = "shap",
+      object_class = "familiarDataElementSHAP",
+      export_collection = export_collection
+    ))
+  }
+)
+
+
+
+# export_shap (general) ----------------------------------------------------
+
+#'@rdname export_shap-methods
+setMethod(
+  "export_shap",
+  signature(object = "ANY"),
+  function(
+    object,
+    dir_path = NULL,
+    aggregate_results = TRUE,
+    export_collection = FALSE,
+    ...
+  ) {
+    
+    # Attempt conversion to familiarCollection object.
+    object <- do.call(
+      as_familiar_collection,
+      args = c(
+        list(
+          "object" = object,
+          "data_element" = "export_shap",
+          "aggregate_results" = aggregate_results
+        ),
+        list(...)
+      )
+    )
+    
+    return(do.call(
+      export_shap,
+      args = c(
+        list(
+          "object" = object,
+          "dir_path" = dir_path,
+          "aggregate_results" = aggregate_results,
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
+  }
+)
+
+
+
+# .export (familiarDataElementSHAP) --------------------------------------------
+setMethod(
+  ".export",
+  signature(x = "familiarDataElementSHAP"),
+  function(
+    x,
+    x_list, 
+    aggregate_results = FALSE,
+    ...
+  ) {
+    
+    if (aggregate_results) {
+      x_list <- .compute_data_element_estimates(x_list)
+    }
+    
+    # Determine identifiers that should be merged. Since the feature values of
+    # the x and y features may be different (e.g. numeric and factor), merging
+    # them would cause features values to merged incorrectly.
+    browser()
+    merging_identifiers <- setdiff(names(x@identifiers), c("feature_x", "feature_y"))
+    
+    # Merge data elements.
+    x <- merge_data_elements(
+      x = x_list,
+      as_data = merging_identifiers,
+      as_grouping_column = TRUE,
+      force_data_table = TRUE
+    )
+    
+    return(x)
+  }
+)
