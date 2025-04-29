@@ -228,6 +228,7 @@ setMethod(
     n_sample_points,
     aggregate_results,
     is_pre_processed = FALSE,
+    ensemble_method,
     cl,
     message_indent = 0L,
     verbose = FALSE,
@@ -269,9 +270,15 @@ setMethod(
   # Parallel processing: perform steps 4-6 multiple times within a parallel loop.
   # This allows for faster convergence.
   
+  prediction_type <- ifelse(
+    object@outcome_type %in% c("survival", "competing_risk"),
+    "survival_probability", 
+    "default"
+  )
+  
   # Check that the model requires any features.
   if (is_empty(object@model_features)) return(NULL)
-  browser()
+  
   # Get set of feature values.
   feature_set <- .get_shap_feature_set(
     data = data,
@@ -306,7 +313,7 @@ setMethod(
   
   # Determine additional mapping.
   # TODO: seed should depend on iteration in convergence.
-  mapping <- unique(rbind(
+  mapping <- rbind(
     mapping,
     .shap_randomise_mapping_from_coalition(
       samples = mapping_input,
@@ -314,14 +321,28 @@ setMethod(
       feature_set = feature_set,
       seed = 1L
     )
-  ))
-  browser
-  # Check which parts of mapping lack predictions.
+  )
+  browser()
+  # TODO: Check which parts of mapping lack predictions.
   
-  # Skip if all parts of mapping have predictions.
+  # TODO: Skip if all parts of mapping have predictions.
   
   # TODO: convert input to dataObject
+  temp_data <- .shap_mapping_to_data(
+    mapping = mapping,
+    feature_set = feature_set,
+    object = object
+  )
+  
   # TODO: predict input data
+  prediction_data <- .predict(
+    object = object,
+    data = temp_data,
+    ensemble_method = ensemble_method,
+    time = proto_data_element@identifiers$evaluation_time,
+    type = prediction_type,
+    aggregate_results = TRUE
+  )
   
   # Add new predicted values to existing data.
   
@@ -540,21 +561,20 @@ setMethod(
   # Start random stream
   rstream_object <- .start_random_number_stream(seed)
   
+  # Randomise.
   mapping <- apply(
     samples,
     MARGIN = 1L,
     ..shap_randomise_mapping_from_coalition,
     coalitions = coalitions,
     n_feature_values = n_feature_values,
-    rstream_object = rstream_object
+    rstream_object = rstream_object,
+    simplify = FALSE
   )
   
   # Concatenate by rows.
   mapping <- do.call(rbind, mapping)
-  
-  # Keep unique rows.
-  mapping <- unique(mapping, MARGIN = 1L)
-  browser()
+
   return(mapping)
 }
 
@@ -603,7 +623,7 @@ setMethod(
     # Add features to mapping.
     mapping[[feature]] <- feature_set[lookup_vector]
   }
-  browser()
+  
   # Convert to matrix. Mapping consists of columns, and the matrix is sorted
   # this way.
   mapping <- matrix(unlist(mapping), ncol = length(n_feature_values))
