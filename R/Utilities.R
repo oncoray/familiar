@@ -1431,3 +1431,26 @@ huber_estimate <- function(x, k = 1.28, tol = 1E-4) {
   
   return(x)
 }
+
+
+
+matrix_pseudo_inverse <- function(x, tol = sqrt(.Machine$double.eps)) {
+  # Compute matrix Moore-Penrose pseudo-inverse of x using singular value
+  # decomposition.
+  
+  # Compute single value decomposition.
+  svd_decomp <- svd(x)
+  
+  # Find all positive values in the vector of singular values d.
+  positive <- svd_decomp$d > max(tol * svd_decomp$d[1L], 0.0)
+  
+  if (!any(positive)) {
+    return(matrix(0.0, nrow = ncol(x), ncol = nrow(x)))
+    
+  } else {
+    return(
+      svd_decomp$v[, positive, drop = FALSE] %*% 
+        ((1.0 / svd_decomp$d[positive]) * t(svd_decomp$u[, positive, drop = FALSE]))
+    )
+  }
+}
