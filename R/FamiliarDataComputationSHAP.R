@@ -270,12 +270,6 @@ setMethod(
   # Parallel processing: perform steps 4-6 multiple times within a parallel loop.
   # This allows for faster convergence.
   
-  prediction_type <- ifelse(
-    object@outcome_type %in% c("survival", "competing_risk"),
-    "survival_probability", 
-    "default"
-  )
-  
   # Check that the model requires any features.
   if (is_empty(object@model_features)) return(NULL)
   
@@ -304,49 +298,82 @@ setMethod(
   # Check that coalitions are not empty: this happens if the data contains a
   # single feature: SHAP values cannot be computed.
   if (is.null(coalitions)) return(NULL)
-  
+  browser()
   # From here, work with mapping representations of the data (h).
-  mapping_input <- mapping <- .shap_data_to_mapping(
+  mapping_input <- .shap_data_to_mapping(
     data = data,
     feature_set = feature_set
   )
   
+  # Determine unique mappings.
+  mapping_hash_mapping <- .hash_mapping(mapping_input)
+  unique_mappings <- !duplicated(mapping_hash_mapping)
+  
+  # Select only unique mappings as input.
+  mapping_input <- mapping <- mapping_input[unique_mappings, , drop = FALSE]
+  mapping_hash_mapping <- mapping_hash_mapping[unique_mappings]
+  
+  if (is_empty(mapping_hash_mapping)) return(NULL)
+  
+  # Predict outcome values from the input data. Output may be more than one
+  # column.
+  predicted_values <- .predict_from_coalition(
+    mapping = mapping_input,
+    feature_set = feature_set,
+    object = object,
+    ensemble_method = ensemble_method,
+    evaluation_time = NULL
+  )
+  
+  # Compute phi_0.
+  phi_0 <- colMeans(predicted_values)
+  
   # Determine additional mapping.
   # TODO: seed should depend on iteration in convergence.
-  mapping <- rbind(
-    mapping,
-    .shap_randomise_mapping_from_coalition(
-      samples = mapping_input,
-      coalitions = coalitions,
-      feature_set = feature_set,
-      seed = 1L
-    )
+  mapping_iter <- .shap_randomise_mapping_from_coalition(
+    samples = mapping_input,
+    coalitions = coalitions,
+    feature_set = feature_set,
+    seed = 1L
   )
-  browser()
-  # TODO: Check which parts of mapping lack predictions.
+  
+  # Determine new, unique mappings in this iteration.
+  mapping_hash_iter <- .hash_mapping(mapping_iter)
+  new_mappings <- !mapping_hash_iter %in% mapping_hash_mapping
+  unique_mappings <- !duplicated(mapping_hash_iter)
+  
+  # Select only new unique mappings
+  mapping_iter <- mapping_iter[new_mappings & unique_mappings, , drop = FALSE]
+  mapping_hash_iter <- mapping_hash_iter[new_mappings & unique_mappings]
   
   # TODO: Skip if all parts of mapping have predictions.
+  if (is_empty(mapping_hash_iter)) {
+    browser()
+  }
   
-  # TODO: convert input to dataObject
-  temp_data <- .shap_mapping_to_data(
+  # Predict from new unique mappings.
+  predicted_values_iter <- .predict_from_coalition(
+    mapping = mapping_iter,
+    feature_set = feature_set,
+    object = object,
+    ensemble_method = ensemble_method,
+    evaluation_time = NULL
+  )
+  
+  # Update iterative data.
+  mapping <- rbind(mapping, mapping_iter)
+  mapping_hash_mapping <- c(mapping_hash_mapping, mapping_hash_iter)
+  predicted_values <- rbind(predicted_values, predicted_values_iter)
+
+  browser()
+  # Compute SHAP values for this iteration.
+  shap_values <- .compute_shap_value(
+    samples = mapping_input,
     mapping = mapping,
     feature_set = feature_set,
-    object = object
+    predicted_values = predicted_values,
+    phi_0 = phi_0
   )
-  
-  # TODO: predict input data
-  prediction_data <- .predict(
-    object = object,
-    data = temp_data,
-    ensemble_method = ensemble_method,
-    time = proto_data_element@identifiers$evaluation_time,
-    type = prediction_type,
-    aggregate_results = TRUE
-  )
-  
-  # Add new predicted values to existing data.
-  
-  # Compute SHAP values for this iteration.
   
   # Check convergence.
 }
@@ -534,16 +561,11 @@ setMethod(
   
   # Convert to data.table and add identifiers.
   data <- data.table::as.data.table(data)
-  data[, ":="(
-    "batch_id" = "generated",
-    "sample_id" = apply(mapping, MARGIN = 1L, paste0, collapse="_")
-  )]
   
   return(as_data_object(
     data = data,
     object = object,
-    batch_id_column = "batch_id",
-    sample_id_column = "sample_id"
+    check_stringency = "external"
   ))
 }
 
@@ -632,6 +654,134 @@ setMethod(
   return(mapping)
 }
 
+
+
+.compute_shap_value <- function(
+    samples,
+    mapping,
+    feature_set,
+    predicted_values,
+    phi_0
+) {
+  # For each sample in mapping_input, compute SHAP.
+  shap_values <- apply(
+    samples,
+    MARGIN = 1L,
+    ..compute_shap_value,
+    mapping = mapping,
+    predicted_values = predicted_values,
+    phi_0 = phi_0,
+    simplify = FALSE
+  )
+  
+}
+
+
+
+..compute_shap_value <- function(
+    x,
+    mapping,
+    predicted_values,
+    phi_0
+) {
+  # x is the mapping corresponding to the sample. First we determine the 
+  # coalitions pertaining to current sample. Since `==` is operating by column,
+  # we can simply transpose the mapping matrix so that rows become columns. Then
+  # the comparison is performed on the columns representing each row, and the
+  # result is transposed again.
+  coalitions <- t(t(mapping) == x)
+  
+  # Form a lookup-table for kernel weights.
+  n_max_present <- ncol(coalitions)
+  n_present <- seq_len(n_max_present + 1L) - 1L
+  n_permutations <- choose(n_max_present, n_present)
+  kernel_weights <- (n_max_present - 1.0) / (n_permutations * n_present * (n_max_present - n_present))
+  kernel_weights[!is.finite(kernel_weights)] <- 0.0
+  
+  # Compute the number of features "present" in each coalition. 
+  n_present <- apply(
+    coalitions,
+    MARGIN = 1L,
+    sum,
+    simplify = TRUE
+  )
+  
+  # Lookup the corresponding kernel weights.
+  kernel_weights <- kernel_weights[n_present + 1L]
+  
+  # Weighted least squares solves for coefficients beta as follows:
+  # beta = (t(X) W X)^-1 t(X)W y
+  # In the context of kernelSHAP, this means:
+  #    beta = phi
+  #       X = Z (coalitions),
+  #       W = diag(pi) (kernel_weights)
+  #   and y = f(h(z)) - phi_0
+  
+  X <- coalitions
+  W <- diag(kernel_weights)
+  y <- predicted_values - phi_0
+  
+  phi <- matrix_pseudo_inverse(t(X) %*% W %*% X) %*% t(X) %*% W %*% y
+  
+  data <- data.table::data.table(phi)
+  data[, "feature_name" := colnames(mapping)]
+  browser()
+  data[, "feature_value" := feature_set[[feature_name]]]
+  return()
+}
+
+
+
+.predict_from_coalition <- function(
+    mapping,
+    feature_set,
+    object,
+    ensemble_method,
+    evaluation_time
+) {
+  # Set prediction type.
+  prediction_type <- ifelse(
+    object@outcome_type %in% c("survival", "competing_risk"),
+    "survival_probability", 
+    "default"
+  )
+  
+  # Convert input to dataObject
+  data <- .shap_mapping_to_data(
+    mapping = mapping,
+    feature_set = feature_set,
+    object = object
+  )
+  
+  # Predict input data
+  prediction_data <- predict(
+    object = object,
+    newdata = data,
+    ensemble_method = ensemble_method,
+    time = evaluation_time,
+    type = prediction_type
+  )
+  
+  if (object@outcome_type == "continuous") {
+    prediction_data <- matrix(prediction_data$predicted_outcome, ncol = 1L)
+    
+  } else {
+    browser()
+  }
+  
+  return(prediction_data)
+}
+
+
+
+.hash_mapping <- function(x) {
+  return(apply(
+    x,
+    MARGIN = 1L,
+    FUN = rlang::hash,
+    simplify = TRUE
+  ))
+}
 
 
 
