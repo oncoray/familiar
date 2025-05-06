@@ -298,7 +298,7 @@ setMethod(
   # Check that coalitions are not empty: this happens if the data contains a
   # single feature: SHAP values cannot be computed.
   if (is.null(coalitions)) return(NULL)
-  browser()
+  
   # From here, work with mapping representations of the data (h).
   mapping_input <- .shap_data_to_mapping(
     data = data,
@@ -365,7 +365,6 @@ setMethod(
   mapping_hash_mapping <- c(mapping_hash_mapping, mapping_hash_iter)
   predicted_values <- rbind(predicted_values, predicted_values_iter)
 
-  browser()
   # Compute SHAP values for this iteration.
   shap_values <- .compute_shap_value(
     samples = mapping_input,
@@ -376,6 +375,7 @@ setMethod(
   )
   
   # Check convergence.
+  browser()
 }
 
 
@@ -673,7 +673,7 @@ setMethod(
     phi_0 = phi_0,
     simplify = FALSE
   )
-  
+  browser()
 }
 
 
@@ -699,15 +699,14 @@ setMethod(
   kernel_weights[!is.finite(kernel_weights)] <- 0.0
   
   # Compute the number of features "present" in each coalition. 
-  n_present <- apply(
-    coalitions,
-    MARGIN = 1L,
-    sum,
-    simplify = TRUE
-  )
+  n_present <- rowSums(coalitions)
   
-  # Lookup the corresponding kernel weights.
+  # Lookup the corresponding kernel weights, and filter non-zero weights.
   kernel_weights <- kernel_weights[n_present + 1L]
+  non_zero_weights <- kernel_weights > 0.0
+
+  # Check for empty weights.  
+  if (!any(non_zero_weights)) return(NULL)
   
   # Weighted least squares solves for coefficients beta as follows:
   # beta = (t(X) W X)^-1 t(X)W y
@@ -717,17 +716,32 @@ setMethod(
   #       W = diag(pi) (kernel_weights)
   #   and y = f(h(z)) - phi_0
   
-  X <- coalitions
-  W <- diag(kernel_weights)
-  y <- predicted_values - phi_0
+  X <- coalitions[non_zero_weights, , drop = FALSE]
+  y <- predicted_values[non_zero_weights, , drop = FALSE] - phi_0
   
-  phi <- matrix_pseudo_inverse(t(X) %*% W %*% X) %*% t(X) %*% W %*% y
+  # Instead of computing a diagonal matrix, we rely on equivalent element-wise
+  # multiplications (which are considerably cheaper).
+  w <- kernel_weights[non_zero_weights]
   
+  # Pre-compute inverse matrix because we need it for computing both the
+  # coefficients and their 
+  inv_mat <- matrix_pseudo_inverse(t(X) %*% (X * w))
+  
+  # Compute coefficients.
+  phi <- inv_mat %*% t(X) %*% (w * y)
+  
+  # Compute variance (t(X) W X)^-1 t(X) W M t(W) X (t(X) W X)^-1.
+  # Simplify: t(W) = W
+  
+  # Something breaks here with t(X)
+  phi_var <- inv_mat %*% t(x) %*% W %*% (t(X))cov %*% t(W) %*% X %*% inv_mat
+  
+  browser()
   data <- data.table::data.table(phi)
   data[, "feature_name" := colnames(mapping)]
-  browser()
-  data[, "feature_value" := feature_set[[feature_name]]]
-  return()
+  data[, "feature_value_mapping" := x]
+  
+  return(data)
 }
 
 
@@ -764,6 +778,7 @@ setMethod(
   
   if (object@outcome_type == "continuous") {
     prediction_data <- matrix(prediction_data$predicted_outcome, ncol = 1L)
+    colnames(prediction_data) <- "predicted_outcome"
     
   } else {
     browser()
