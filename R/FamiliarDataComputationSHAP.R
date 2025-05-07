@@ -673,6 +673,18 @@ setMethod(
     phi_0 = phi_0,
     simplify = FALSE
   )
+  
+  shap_values <- data.table::rbindlist(shap_values)
+  # TODO updated for different columns of phi.
+  shap_values <- shap_values[
+    ,
+    list(
+      "predicted_outcome" = sum(df * predicted_outcome) / sum(df),
+      "variance" = sum(df * variance) / sum(df)
+    ),
+    by = c("feature_value_mapping", "feature_name")
+  ]
+  
   browser()
 }
 
@@ -722,22 +734,21 @@ setMethod(
   # Instead of computing a diagonal matrix, we rely on equivalent element-wise
   # multiplications (which are considerably cheaper).
   w <- kernel_weights[non_zero_weights]
-  
+
   # Pre-compute inverse matrix because we need it for computing both the
-  # coefficients and their 
+  # coefficients and their variance.
   inv_mat <- matrix_pseudo_inverse(t(X) %*% (X * w))
   
   # Compute coefficients.
   phi <- inv_mat %*% t(X) %*% (w * y)
   
-  # Compute variance (t(X) W X)^-1 t(X) W M t(W) X (t(X) W X)^-1.
-  # Simplify: t(W) = W
+  # Compute variance for each coefficient: sigma^2 * t(X) W X)^-1,
+  # with sigma^2 = 1 / (n - p) * sum (w * (y - X * phi) ^2).
+  phi_var <- diag(inv_mat * sum (w * (y - X %*% phi)^2.0) / (length(w) - ncol(X)))
   
-  # Something breaks here with t(X)
-  phi_var <- inv_mat %*% t(x) %*% W %*% (t(X))cov %*% t(W) %*% X %*% inv_mat
-  
-  browser()
   data <- data.table::data.table(phi)
+  data[, "variance" := phi_var]
+  data[, "df" := length(w) - ncol(X)]
   data[, "feature_name" := colnames(mapping)]
   data[, "feature_value_mapping" := x]
   
