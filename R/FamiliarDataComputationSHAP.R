@@ -230,6 +230,8 @@ setMethod(
     is_pre_processed = FALSE,
     ensemble_method,
     cl,
+    tolerance = 0.001,
+    n_max_iter = 100L,
     message_indent = 0L,
     verbose = FALSE,
     progress_bar = FALSE,
@@ -328,53 +330,70 @@ setMethod(
   # Compute phi_0.
   phi_0 <- colMeans(predicted_values)
   
-  # Determine additional mapping.
-  # TODO: seed should depend on iteration in convergence.
-  mapping_iter <- .shap_randomise_mapping_from_coalition(
-    samples = mapping_input,
-    coalitions = coalitions,
-    feature_set = feature_set,
-    seed = 1L
-  )
+  # Looping variabes.
+  iter_id <- 1L
+  all_shap_converged <- FALSE
+  shap_values <- NULL
   
-  # Determine new, unique mappings in this iteration.
-  mapping_hash_iter <- .hash_mapping(mapping_iter)
-  new_mappings <- !mapping_hash_iter %in% mapping_hash_mapping
-  unique_mappings <- !duplicated(mapping_hash_iter)
-  
-  # Select only new unique mappings
-  mapping_iter <- mapping_iter[new_mappings & unique_mappings, , drop = FALSE]
-  mapping_hash_iter <- mapping_hash_iter[new_mappings & unique_mappings]
-  
-  # TODO: Skip if all parts of mapping have predictions.
-  if (is_empty(mapping_hash_iter)) {
-    browser()
+  while (!all_shap_converged && iter_id < n_max_iter) {
+    
+    # Determine additional mapping.
+    mapping_iter <- .shap_randomise_mapping_from_coalition(
+      samples = mapping_input,
+      coalitions = coalitions,
+      feature_set = feature_set,
+      seed = iter_id
+    )
+    
+    # Determine new, unique mappings in this iteration.
+    mapping_hash_iter <- .hash_mapping(mapping_iter)
+    new_mappings <- !mapping_hash_iter %in% mapping_hash_mapping
+    unique_mappings <- !duplicated(mapping_hash_iter)
+    
+    # Select only new unique mappings
+    mapping_iter <- mapping_iter[new_mappings & unique_mappings, , drop = FALSE]
+    mapping_hash_iter <- mapping_hash_iter[new_mappings & unique_mappings]
+    
+    # Skip if all parts of mapping have predictions.
+    if (is_empty(mapping_hash_iter)) {
+      iter_id <- iter_id + 1L
+      next
+    }
+    
+    # Predict from new unique mappings.
+    predicted_values_iter <- .predict_from_coalition(
+      mapping = mapping_iter,
+      feature_set = feature_set,
+      object = object,
+      ensemble_method = ensemble_method,
+      evaluation_time = NULL
+    )
+    
+    # Update iterative data.
+    mapping <- rbind(mapping, mapping_iter)
+    mapping_hash_mapping <- c(mapping_hash_mapping, mapping_hash_iter)
+    predicted_values <- rbind(predicted_values, predicted_values_iter)
+    
+    # Compute SHAP values for this iteration.
+    shap_values <- .compute_shap_value(
+      samples = mapping_input,
+      mapping = mapping,
+      feature_set = feature_set,
+      predicted_values = predicted_values,
+      phi_0 = phi_0
+    )
+    
+    if (is.null(shap_values)) return(NULL)
+    
+    # Check convergence.
+    all_shap_converged <- .evaluate_shap_convergence(
+      shap_values = shap_values,
+      predicted_values = predicted_values,
+      tolerance = tolerance
+    )
+    
+    iter_id <- iter_id + 1L
   }
-  
-  # Predict from new unique mappings.
-  predicted_values_iter <- .predict_from_coalition(
-    mapping = mapping_iter,
-    feature_set = feature_set,
-    object = object,
-    ensemble_method = ensemble_method,
-    evaluation_time = NULL
-  )
-  
-  # Update iterative data.
-  mapping <- rbind(mapping, mapping_iter)
-  mapping_hash_mapping <- c(mapping_hash_mapping, mapping_hash_iter)
-  predicted_values <- rbind(predicted_values, predicted_values_iter)
-
-  # Compute SHAP values for this iteration.
-  shap_values <- .compute_shap_value(
-    samples = mapping_input,
-    mapping = mapping,
-    feature_set = feature_set,
-    predicted_values = predicted_values,
-    phi_0 = phi_0
-  )
-  
-  # Check convergence.
   browser()
 }
 
@@ -561,7 +580,7 @@ setMethod(
   
   # Convert to data.table and add identifiers.
   data <- data.table::as.data.table(data)
-  
+  browser()
   return(as_data_object(
     data = data,
     object = object,
@@ -663,6 +682,9 @@ setMethod(
     predicted_values,
     phi_0
 ) {
+  # Initialise values to prevent CRAN NOTEs.
+  df <- phi <- variance <- m_est <- NULL
+  
   # For each sample in mapping_input, compute SHAP.
   shap_values <- apply(
     samples,
@@ -675,17 +697,21 @@ setMethod(
   )
   
   shap_values <- data.table::rbindlist(shap_values)
-  # TODO updated for different columns of phi.
+  if (is_empty(shap_values)) return(NULL)
+  
+  # Merge shap-values and update estimates, variance and estimated number of
+  # experiments.
   shap_values <- shap_values[
     ,
     list(
-      "predicted_outcome" = sum(df * predicted_outcome) / sum(df),
-      "variance" = sum(df * variance) / sum(df)
+      "phi" = sum(df * phi) / sum(df),
+      "variance" = sum(df * variance) / sum(df),
+      "m_est" = sum(m_est)
     ),
-    by = c("feature_value_mapping", "feature_name")
+    by = c("feature_name", "feature_value_mapping")
   ]
   
-  browser()
+  return(shap_values)
 }
 
 
@@ -709,6 +735,12 @@ setMethod(
   n_permutations <- choose(n_max_present, n_present)
   kernel_weights <- (n_max_present - 1.0) / (n_permutations * n_present * (n_max_present - n_present))
   kernel_weights[!is.finite(kernel_weights)] <- 0.0
+  
+  # The total kernel-weight of a single "iteration" is 2 times the number of
+  # features (equal to the number of coalitions with a one on/off configuration)
+  # times the respective kernel weight. We use this to determine the sample
+  # error of the mean for convergence purposes.
+  iteration_weight <- 2.0 * n_max_present * kernel_weights[2L]
   
   # Compute the number of features "present" in each coalition. 
   n_present <- rowSums(coalitions)
@@ -746,13 +778,31 @@ setMethod(
   # with sigma^2 = 1 / (n - p) * sum (w * (y - X * phi) ^2).
   phi_var <- diag(inv_mat * sum (w * (y - X %*% phi)^2.0) / (length(w) - ncol(X)))
   
-  data <- data.table::data.table(phi)
-  data[, "variance" := phi_var]
-  data[, "df" := length(w) - ncol(X)]
-  data[, "feature_name" := colnames(mapping)]
-  data[, "feature_value_mapping" := x]
+  data <- data.table::data.table(
+    "phi" = c(phi),
+    "variance" = phi_var,
+    "df" = length(w) - ncol(X),
+    "m_est" = sum(kernel_weights) / iteration_weight,
+    "feature_name" = colnames(mapping),
+    "feature_value_mapping" = x
+  )
   
   return(data)
+}
+
+
+
+.evaluate_shap_convergence <- function(
+  shap_values,
+  predicted_values,
+  tolerance
+) {
+  
+  # Determine tolerance scaled to the scale of the problem.
+  scale <- max(predicted_values) - min(predicted_values)
+  tolerance <- tolerance * scale
+  
+  return(all(sqrt(shap_values$variance / shap_values$m_est) < tolerance))
 }
 
 
