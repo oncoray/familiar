@@ -4,12 +4,128 @@
 \alias{extract_shap}
 \title{Internal function to compute SHAP values.}
 \usage{
-extract_shap(object, message_indent = 0L, verbose = FALSE, ...)
+extract_shap(
+  object,
+  data,
+  cl = NULL,
+  features = NULL,
+  n_sample_points = 20L,
+  ensemble_method = waiver(),
+  evaluation_times = waiver(),
+  sample_limit = waiver(),
+  detail_level = waiver(),
+  aggregate_results = waiver(),
+  is_pre_processed = FALSE,
+  message_indent = 0L,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{familiarEnsemble}, which is an ensemble of one or more
 \code{familiarModel} objects, or a \code{familiarDataElementPredictionTable} object
 that contains prediction data.}
+
+\item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
+constitutes the data that are assessed.}
+
+\item{cl}{Cluster created using the \code{parallel} package. This cluster is then
+used to speed up computation through parallellisation.}
+
+\item{ensemble_method}{Method for ensembling predictions from models for the
+same sample. Available methods are:
+\itemize{
+\item \code{median} (default): Use the median of the predicted values as the ensemble
+value for a sample.
+\item \code{mean}: Use the mean of the predicted values as the ensemble value for a
+sample.
+}}
+
+\item{evaluation_times}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
+calibration. If not provided explicitly, this parameter is read from
+settings used at creation of the underlying \code{familiarModel} objects. Only
+used for \code{survival} outcomes.}
+
+\item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be less than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity} and \code{ice_data}.}
+
+\item{detail_level}{(\emph{optional}) Sets the level at which results are computed
+and aggregated.
+\itemize{
+\item \code{ensemble}: Results are computed at the ensemble level, i.e. over all
+models in the ensemble. This means that, for example, bias-corrected
+estimates of model performance are assessed by creating (at least) 20
+bootstraps and computing the model performance of the ensemble model for
+each bootstrap.
+\item \code{hybrid} (default): Results are computed at the level of models in an
+ensemble. This means that, for example, bias-corrected estimates of model
+performance are directly computed using the models in the ensemble. If there
+are at least 20 trained models in the ensemble, performance is computed for
+each model, in contrast to \code{ensemble} where performance is computed for the
+ensemble of models. If there are less than 20 trained models in the
+ensemble, bootstraps are created so that at least 20 point estimates can be
+made.
+\item \code{model}: Results are computed at the model level. This means that, for
+example, bias-corrected estimates of model performance are assessed by
+creating (at least) 20 bootstraps and computing the performance of the model
+for each bootstrap.
+}
+
+Note that each level of detail has a different interpretation for bootstrap
+confidence intervals. For \code{ensemble} and \code{model} these are the confidence
+intervals for the ensemble and an individual model, respectively. That is,
+the confidence interval describes the range where an estimate produced by a
+respective ensemble or model trained on a repeat of the experiment may be
+found with the probability of the confidence level. For \code{hybrid}, it
+represents the range where any single model trained on a repeat of the
+experiment may be found with the probability of the confidence level. By
+definition, confidence intervals obtained using \code{hybrid} are at least as
+wide as those for \code{ensemble}. \code{hybrid} offers the correct interpretation if
+the goal of the analysis is to assess the result of a single, unspecified,
+model.
+
+\code{hybrid} is generally computationally less expensive then \code{ensemble}, which
+in turn is somewhat less expensive than \code{model}.
+
+A non-default \code{detail_level} parameter can be specified for separate
+evaluation steps by providing a parameter value in a named list with data
+elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
+This parameter can be set for the following data elements: \code{auc_data},
+\code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.
+
+If results are computed from 10 samples or fewer, \code{ensemble} is
+automatically used. This prevents issues where evaluation steps do not have
+a required minimum number of samples for \code{hybrid} or \code{model}.}
+
+\item{aggregate_results}{(\emph{optional}) Flag that signifies whether results
+should be aggregated during evaluation. If \code{estimation_type} is
+\code{bias_correction} or \code{bc}, aggregation leads to a single bias-corrected
+estimate. If \code{estimation_type} is \code{bootstrap_confidence_interval} or \code{bci},
+aggregation leads to a single bias-corrected estimate with lower and upper
+boundaries of the confidence interval. This has no effect if
+\code{estimation_type} is \code{point}.
+
+The default value is equal to \code{TRUE} except when assessing metrics to assess
+model performance, as the default violin plot requires underlying data.
+
+As with \code{detail_level} and \code{estimation_type}, a non-default
+\code{aggregate_results} parameter can be specified for separate evaluation steps
+by providing a parameter value in a named list with data elements, e.g.
+\code{list("auc_data"=TRUE, , "model_performance"=FALSE)}. This parameter exists
+for the same elements as \code{estimation_type}.}
+
+\item{is_pre_processed}{Flag that indicates whether the data was already
+pre-processed externally, e.g. normalised and clustered. Only used if the
+\code{data} argument is a \code{data.table} or \code{data.frame}.}
 
 \item{message_indent}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
