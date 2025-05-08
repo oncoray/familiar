@@ -1808,11 +1808,13 @@
     outcome_type, 
     outcome_column,
     class_levels,
-    check_stringency = "strict") {
+    check_stringency = "strict"
+) {
   
   if (
     outcome_type %in% c("binomial", "multinomial") &&
-    !is.null(class_levels)
+    !is.null(class_levels) &&
+    !is.null(outcome_column)
   ) {
     
     # Find the levels in the data
