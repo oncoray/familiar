@@ -8,9 +8,19 @@ NULL
 setClass(
   "familiarDataElementSHAP",
   contains = "familiarDataElement",
+  slots = list(
+    "data_mapping" = "ANY",
+    "predicted_values" = "ANY",
+    "lookup_table" = "ANY"
+  ),
   prototype = methods::prototype(
     detail_level = "ensemble",
-    estimation_type = "point"
+    estimation_type = "point",
+    value_column = "shap_value",
+    grouping_column = c("feature_name", "feature_value_mapping"),
+    data_mapping = NULL,
+    predicted_values = NULL,
+    lookup_table = NULL
   )
 )
 
@@ -319,7 +329,7 @@ setMethod(
   
   # Predict outcome values from the input data. Output may be more than one
   # column.
-  predicted_values <- .predict_from_coalition(
+  predicted_values <- predicted_values_input <- .predict_from_coalition(
     mapping = mapping_input,
     feature_set = feature_set,
     object = object,
@@ -394,6 +404,29 @@ setMethod(
     
     iter_id <- iter_id + 1L
   }
+  
+  # Add model name to data element.
+  proto_data_element <- add_model_name(
+    proto_data_element,
+    object = object
+  )
+  
+  # Store data mapping of feature values for input data.
+  proto_data_element@data_mapping <- mapping_input
+  
+  # Store lookup-table translate feature mapping back to feature values.
+  # TODO: ensure that categorical data is stored as factors.
+  proto_data_element@lookup_table <- feature_set
+  
+  # Add predictions for input data.
+  proto_data_element@predicted_values <- predicted_values_input
+  
+  # Store shap data. Value column is "shap_value", grouping columns are
+  # "feature_name" and "feature_value_mapping". For multinomial and survival
+  # outcomes, "shap_outcome" is an additional grouping column.
+  
+  # TODO: ensure that shap_outcome is correctly converted to factor with
+  # expected class levels for multinomial data.
   browser()
 }
 
@@ -580,7 +613,7 @@ setMethod(
   
   # Convert to data.table and add identifiers.
   data <- data.table::as.data.table(data)
-  browser()
+  
   return(as_data_object(
     data = data,
     object = object,
@@ -683,7 +716,7 @@ setMethod(
     phi_0
 ) {
   # Initialise values to prevent CRAN NOTEs.
-  df <- phi <- variance <- m_est <- NULL
+  df <- shap_value <- shap_variance <- m_est <- NULL
   
   # For each sample in mapping_input, compute SHAP.
   shap_values <- apply(
@@ -704,11 +737,11 @@ setMethod(
   shap_values <- shap_values[
     ,
     list(
-      "phi" = sum(df * phi) / sum(df),
-      "variance" = sum(df * variance) / sum(df),
+      "shap_value" = sum(df * shap_value) / sum(df),
+      "shap_variance" = sum(df * shap_variance) / sum(df),
       "m_est" = sum(m_est)
     ),
-    by = c("feature_name", "feature_value_mapping")
+    by = c("feature_name", "feature_value_mapping", "shap_outcome")
   ]
   
   return(shap_values)
@@ -775,16 +808,28 @@ setMethod(
   phi <- inv_mat %*% t(X) %*% (w * y)
   
   # Compute variance for each coefficient: sigma^2 * t(X) W X)^-1,
-  # with sigma^2 = 1 / (n - p) * sum (w * (y - X * phi) ^2).
-  phi_var <- diag(inv_mat * sum (w * (y - X %*% phi)^2.0) / (length(w) - ncol(X)))
+  # with sigma^2 = 1 / (n - p) * sum (w * (y - X * phi) ^2). This is computed
+  # for each component of phi, e.g. probability for a specific class.
+  overall_var <- colSums(w * (y - X %*% phi)^2.0) / (length(w) - ncol(X))
+  phi_var <- do.call(
+    cbind,
+    lapply(
+      overall_var,
+      function(var, inv_mat) {matrix(diag(inv_mat * var), ncol = 1L)},
+      inv_mat = inv_mat
+    )
+  )
+  prediction_names <- colnames(phi)
+  colnames(phi_var) <- prediction_names
   
   data <- data.table::data.table(
-    "phi" = c(phi),
-    "variance" = phi_var,
-    "df" = length(w) - ncol(X),
+    "feature_name" = rep(colnames(mapping), times = length(prediction_names)),
+    "feature_value_mapping" = rep(x, times = length(prediction_names)),
     "m_est" = sum(kernel_weights) / iteration_weight,
-    "feature_name" = colnames(mapping),
-    "feature_value_mapping" = x
+    "df" = length(w) - ncol(X),
+    "shap_value" = c(phi),
+    "shap_variance" = c(phi_var),
+    "shap_outcome" = rep(prediction_names, each = ncol(mapping))
   )
   
   return(data)
@@ -797,12 +842,11 @@ setMethod(
   predicted_values,
   tolerance
 ) {
-  
   # Determine tolerance scaled to the scale of the problem.
   scale <- max(predicted_values) - min(predicted_values)
   tolerance <- tolerance * scale
   
-  return(all(sqrt(shap_values$variance / shap_values$m_est) < tolerance))
+  return(all(sqrt(shap_values$shap_variance / shap_values$m_est) < tolerance))
 }
 
 
@@ -840,6 +884,10 @@ setMethod(
   if (object@outcome_type == "continuous") {
     prediction_data <- matrix(prediction_data$predicted_outcome, ncol = 1L)
     colnames(prediction_data) <- "predicted_outcome"
+    
+  } else if (object@outcome_type %in% c("binomial", "multinomial")) {
+    probability_columns <- setdiff(colnames(prediction_data), "predicted_class")
+    prediction_data <- as.matrix(prediction_data[, mget(probability_columns)])
     
   } else {
     browser()
