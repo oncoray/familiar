@@ -25,6 +25,45 @@ setClass(
 )
 
 
+# familiarDataElementSHAPSummary object ----------------------------------------
+
+# Objects for creating SHAP summary plots. These are created at run-time from
+# data included in familiarDataElementSHAP objects.
+setClass(
+  "familiarDataElementSHAPSummary",
+  contains = "familiarDataElement"
+)
+
+
+# familiarDataElementSHAPForce object ------------------------------------------
+
+# Objects for creating SHAP force plots. These are created at run-time from
+# data included in familiarDataElementSHAP objects.
+setClass(
+  "familiarDataElementSHAPForce",
+  contains = "familiarDataElement"
+)
+
+
+# familiarDataElementSHAPDependence object -------------------------------------
+
+# Objects for creating SHAP dependence plots. These are created at run-time from
+# data included in familiarDataElementSHAP objects.
+setClass(
+  "familiarDataElementSHAPDependence",
+  contains = "familiarDataElement",
+  slots = list(
+    "feature_x" = "character",
+    "feature_y" = "character"
+  ),
+  prototype = methods::prototype(
+    feature_x = NA_character_,
+    feature_y = NA_character_
+  )
+)
+
+
+
 
 # extract_shap (generic) -------------------------------------------------------
 
@@ -415,7 +454,6 @@ setMethod(
   proto_data_element@data_mapping <- mapping_input
   
   # Store lookup-table translate feature mapping back to feature values.
-  # TODO: ensure that categorical data is stored as factors.
   proto_data_element@lookup_table <- feature_set
   
   # Add predictions for input data.
@@ -424,10 +462,30 @@ setMethod(
   # Store shap data. Value column is "shap_value", grouping columns are
   # "feature_name" and "feature_value_mapping". For multinomial and survival
   # outcomes, "shap_outcome" is an additional grouping column.
+  if (object@outcome_type %in% c("multinomial", "survival")) {
+    proto_data_element@data <- data.table::copy(
+      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_outcome", "shap_value"))]
+    )
+    
+    # Add shap_outcome as additional grouping level.
+    proto_data_element@grouping_column <- c(proto_data_element@grouping_column, "shap_outcome")
+    
+    if (object@outcome_type %in% c("multinomial")) {
+      # Convert shap_outcome to categorical values corresponding to the levels
+      # in the modelled endpoint.
+      proto_data_element@data$shap_outcome <- factor(
+        proto_data_element@data$shap_outcome,
+        levels = get_outcome_class_levels(object)
+      )
+    }
+    
+  } else {
+    proto_data_element@data <- data.table::copy(
+      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_value"))]
+    )
+  }
   
-  # TODO: ensure that shap_outcome is correctly converted to factor with
-  # expected class levels for multinomial data.
-  browser()
+  return(proto_data_element)
 }
 
 
@@ -447,7 +505,7 @@ setMethod(
   for (feature in features) {
     # For categorical features, use all levels.
     if (feature_info[[feature]]@feature_type == "factor") {
-      feature_set[[feature]] <- feature_info[[feature]]@levels
+      feature_set[[feature]] <- factor(feature_info[[feature]]@levels)
       next
     }
     
@@ -620,6 +678,29 @@ setMethod(
     check_stringency = "external"
   ))
 }
+
+
+
+.shap_mapping_to_feature_list <- function(
+    feature,
+    mapping_value, 
+    lookup_table
+) {
+  y <- lookup_table[[feature[1L]]]
+  if (is.factor(y)) {
+    feature_value <- as.numeric(y)[mapping_value]
+    feature_label <- as.character(y)[mapping_value]
+  } else {
+    feature_value <- y[mapping_value]
+    feature_label <- rep_len(NA_character_, length(mapping_value))
+  }
+  
+  return(list(
+    "feature_value" = feature_value,
+    "feature_label" = feature_label
+  ))
+}
+
 
 
 
@@ -909,6 +990,126 @@ setMethod(
 
 
 
+.extract_shap_summary <- function(
+    x
+) {
+  data_element <- methods::new(
+    "familiarDataElementSHAPSummary",
+    x
+  )
+  
+  # Clean reporting elements.
+  data_element@data <- NULL
+  
+  if (is_empty(x@data)) return(data_element)
+  
+  # Get data_mapping and turn into a long data.table.
+  mapping_data <- data.table::as.data.table(x@data_mapping)
+  mapping_data[, "sample_hash" := .hash_mapping(x@data_mapping)]
+  mapping_data <- data.table::melt(
+    data = mapping_data,
+    id.vars = "sample_hash",
+    variable.name = "feature_name",
+    value.name = "feature_value_mapping",
+  )
+  
+  # Insert feature values in mapping data.
+  mapping_data[
+    ,
+    c("feature_value", "feature_label") := .shap_mapping_to_feature_list(
+      feature = feature_name,
+      mapping_value = feature_value_mapping, 
+      lookup_table = x@lookup_table
+    ),
+    by = "feature_name"
+  ]
+  browser()
+  # Cartesian merge.
+  summary_data <- merge(
+    x = x@data,
+    y = mapping_data,
+    by = c("feature_name", "feature_value_mapping"),
+    allow.cartesian = TRUE
+  )
+  
+  browser()
+}
+
+
+
+# 
+# # merge_data_elements (familiarDataElementSHAP) --------------------------------
+# setMethod(
+#   "merge_data_elements",
+#   signature(x = "familiarDataElementSHAP"),
+#   function(
+#     x,
+#     x_list,
+#     as_data = NULL,
+#     as_grouping_column = TRUE,
+#     force_data_table = FALSE,
+#     ...
+#   ) {
+#     # For each of the underlying data elements, 
+#     
+#     # Move identifiers from the identifiers attribute to the data attribute. The
+#     # primary reason for doing so is to group and merge similar elements, byt
+#     # e.g. from different models.
+#     if (!is.null(as_data)) {
+#       x_list <- lapply(
+#         x_list,
+#         .identifier_as_data_attribute,
+#         identifier = as_data,
+#         as_grouping_column = as_grouping_column
+#       )
+#     }
+#     
+#     # Identify items that can be joined.
+#     id_table <- identify_element_sets(x = x_list, ...)
+#     
+#     # Identify the element identifiers that should be grouped.
+#     grouped_data_element_ids <- lapply(
+#       split(id_table[, c("element_id", "group_id")], by = "group_id"),
+#       function(id_table) (id_table$element_id)
+#     )
+#     
+#     # List of data elements.
+#     data_elements <- list()
+#     
+#     for (current_group_data_element_ids in grouped_data_element_ids) {
+#       # Copy the first data element in the group and use it as a prototype.
+#       prototype_data_element <- x_list[[current_group_data_element_ids[1L]]]
+#       
+#       # Skip if all shap data elements for the current group are empty.
+#       all_is_empty <- all(sapply(
+#         x_list[current_group_data_element_ids],
+#         function(x) (is_empty(x@data))
+#       ))
+#       if (all_is_empty) next
+#       
+#       # Isolate data elements with the same identifiers.
+#       current_data_elements <- x_list[current_group_data_element_ids]
+#       
+#       # Skip if there is nothing to merge.
+#       if (length(current_data_elements) == 1L){
+#         data_elements <- c(data_elements, current_data_elements)
+#         next
+#       } 
+#       
+#       # Update stuff.
+#       browser()
+#       
+#       # Add merged data element to the list.
+#       data_elements <- c(data_elements, list(prototype_data_element))
+#     }
+#     
+#     return(data_elements)
+#   }
+# )
+
+
+
+
 # export_shap (generic) --------------------------------------------------------
 
 #'@title Extract and export individual conditional expectation data.
@@ -959,26 +1160,135 @@ setMethod(
   signature(object = "familiarCollection"),
   function(
     object,
+    feature_x = NULL,
+    feature_y = NULL,
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
     ...
   ) {
     
+    
     # Make sure the collection object is updated.
     object <- update_object(object = object)
+
+    # Generate data for summary plots.
+    summary_data_elements <- lapply(
+      object@shap_data,
+      .extract_shap_summary
+    )
     
-    # Obtain individual conditional expectation plots.
-    return(.export(
-      x = object,
-      data_slot = "shap_data",
-      dir_path = dir_path,
-      aggregate_results = aggregate_results,
-      type = "explanation",
-      subtype = "shap",
-      object_class = "familiarDataElementSHAP",
-      export_collection = export_collection
-    ))
+    # Generate data for force plots.
+    
+    if (!is.null(feature_x) && !is.null(feature_y)) {
+      # Generate data for SHAP dependence plots.
+    }
+    
+    browser()
+    
+    if (!is.null(time_range)) {
+      # Check that time_range is valid.
+      .check_argument_length(
+        time_range, 
+        var_name = "time_range",
+        min = 2L,
+        max = 2L
+      )
+      
+      sapply(
+        time_range,
+        .check_number_in_valid_range,
+        var_name = "time_range",
+        range = c(0.0, Inf)
+      )
+    }
+    
+    if (export_strata) {
+      # Compute kaplan-meier curves.
+      strata_data <- lapply(
+        object@km_data,
+        .compute_risk_stratification_curves,
+        time_range = time_range
+      )
+      
+      # Determine hazard ratio and logrank tests. We do this here because the
+      # data needs to be aggregated.
+      test_data <- lapply(
+        object@km_data,
+        .compute_risk_stratification_tests,
+        time_range = time_range
+      )
+      
+      # Export raw data.
+      raw_data <- .export(
+        x = object,
+        data_slot = "km_data",
+        dir_path = dir_path,
+        aggregate_results = TRUE,
+        type = "stratification",
+        subtype = "data"
+      )
+      
+      # Export strata.
+      strata_data <- .export(
+        x = object,
+        data_elements = strata_data,
+        dir_path = dir_path,
+        aggregate_results = TRUE,
+        type = "stratification",
+        subtype = "strata"
+      )
+      
+      # Export logrank data.
+      logrank_data <- .export(
+        x = object,
+        data_elements = test_data,
+        dir_path = dir_path,
+        aggregate_results = TRUE,
+        object_class = "familiarDataElementRiskLogrank",
+        type = "stratification",
+        subtype = "logrank"
+      )
+      
+      # Export hazard ratio data.
+      hazard_ratio_data <- .export(
+        x = object,
+        data_elements = test_data,
+        dir_path = dir_path,
+        aggregate_results = TRUE,
+        object_class = "familiarDataElementRiskHazardRatio",
+        type = "stratification",
+        subtype = "hazard_ratio"
+      )
+      
+      data_list <- list(
+        "data" = raw_data,
+        "strata" = strata_data,
+        "logrank" = logrank_data,
+        "hazard_ratio_data" = hazard_ratio_data
+      )
+      
+      if (export_collection) {
+        data_list <- c(
+          data_list,
+          list("collection" = object)
+        )
+      } 
+      
+      return(data_list)
+      
+    } else {
+      return(.export(
+        x = object,
+        data_slot = "shap_data",
+        dir_path = dir_path,
+        aggregate_results = TRUE,
+        type = "explanation",
+        subtype = "shap",
+        object_class = "familiarDataElementSHAP",
+        export_collection = export_collection
+      ))
+    }
   }
 )
 
@@ -1027,36 +1337,36 @@ setMethod(
 )
 
 
-
-# .export (familiarDataElementSHAP) --------------------------------------------
-setMethod(
-  ".export",
-  signature(x = "familiarDataElementSHAP"),
-  function(
-    x,
-    x_list, 
-    aggregate_results = FALSE,
-    ...
-  ) {
-    
-    if (aggregate_results) {
-      x_list <- .compute_data_element_estimates(x_list)
-    }
-    
-    # Determine identifiers that should be merged. Since the feature values of
-    # the x and y features may be different (e.g. numeric and factor), merging
-    # them would cause features values to merged incorrectly.
-    browser()
-    merging_identifiers <- setdiff(names(x@identifiers), c("feature_x", "feature_y"))
-    
-    # Merge data elements.
-    x <- merge_data_elements(
-      x = x_list,
-      as_data = merging_identifiers,
-      as_grouping_column = TRUE,
-      force_data_table = TRUE
-    )
-    
-    return(x)
-  }
-)
+# 
+# # .export (familiarDataElementSHAP) --------------------------------------------
+# setMethod(
+#   ".export",
+#   signature(x = "familiarDataElementSHAP"),
+#   function(
+#     x,
+#     x_list, 
+#     aggregate_results = FALSE,
+#     ...
+#   ) {
+#     
+#     if (aggregate_results) {
+#       x_list <- .compute_data_element_estimates(x_list)
+#     }
+#     
+#     # Determine identifiers that should be merged. Since the feature values of
+#     # the x and y features may be different (e.g. numeric and factor), merging
+#     # them would cause features values to merged incorrectly.
+#     browser()
+#     merging_identifiers <- setdiff(names(x@identifiers), c("feature_x", "feature_y"))
+#     
+#     # Merge data elements.
+#     x <- merge_data_elements(
+#       x = x_list,
+#       as_data = merging_identifiers,
+#       as_grouping_column = TRUE,
+#       force_data_table = TRUE
+#     )
+#     
+#     return(x)
+#   }
+# )
