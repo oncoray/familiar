@@ -505,7 +505,7 @@ setMethod(
   for (feature in features) {
     # For categorical features, use all levels.
     if (feature_info[[feature]]@feature_type == "factor") {
-      feature_set[[feature]] <- factor(feature_info[[feature]]@levels)
+      feature_set[[feature]] <- factor(feature_info[[feature]]@levels, levels = feature_info[[feature]]@levels)
       next
     }
     
