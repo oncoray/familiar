@@ -336,7 +336,7 @@ setMethod(
   if (is_empty(data)) {
     data <- .get_shap_sample_set(
       object = object,
-      feature_set = feature_set,
+      feature_set = feature_set
     )
   }
   
