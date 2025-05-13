@@ -896,7 +896,7 @@ setMethod(
     cbind,
     lapply(
       overall_var,
-      function(var, inv_mat) {matrix(diag(inv_mat * var), ncol = 1L)},
+      function(var, inv_mat) (matrix(diag(inv_mat * var), ncol = 1L)),
       inv_mat = inv_mat
     )
   )
