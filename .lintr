@@ -3,7 +3,7 @@ linters: linters_with_defaults(
     any_is_na_linter(),
     boolean_arithmetic_linter(),
     class_equals_linter(),
-    cyclocomp_linter = NULL,
+    commented_code_linter = NULL,
     duplicate_argument_linter(),
     empty_assignment_linter(),
     for_loop_index_linter(),
@@ -21,6 +21,7 @@ linters: linters_with_defaults(
     object_name_linter = NULL,
     outer_negation_linter(),
     paste_linter(),
+    return_linter = NULL,
     todo_comment_linter(),
     trailing_whitespace_linter = NULL
   )
