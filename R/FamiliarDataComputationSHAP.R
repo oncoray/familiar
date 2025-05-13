@@ -1054,6 +1054,67 @@ setMethod(
 
 
 
+.extract_shap_force <- function(
+    x
+) {
+  # Prevent NOTES due to non-standard evaluation
+  feature_name <- feature_value_mapping <- NULL
+  
+  # Generate object using the incoming familiarDataElementSHAP object as a
+  # template.
+  data_element <- methods::new(
+    "familiarDataElementSHAPForce",
+    x
+  )
+  
+  # Clean reporting elements.
+  data_element@data <- NULL
+  
+  if (is_empty(x@data)) return(data_element)
+browser()
+  # Establish same hashes.
+  sample_hashes <- .hash_mapping(x@data_mapping)
+  
+  # Get data_mapping and turn into a long data.table.
+  mapping_data <- data.table::as.data.table(x@data_mapping)
+  mapping_data[, "sample_hash" := sample_hashes]
+  mapping_data <- data.table::melt(
+    data = mapping_data,
+    id.vars = "sample_hash",
+    variable.name = "feature_name",
+    value.name = "feature_value_mapping"
+  )
+  
+  # Prediction data
+  prediction_data <- data.table::as.data.table(x@predicted_values)
+  prediction_data[, "sample_hash" := sample_hashes]
+  prediction_data <- data.table::melt(
+    data = prediction_data,
+    id.vars = "sample_hash",
+    variable.name = "shap_outcome",
+    value.name = "prediction"
+  )
+  
+  # Cartesian merge.
+  force_data <- merge(
+    x = x@data,
+    y = mapping_data,
+    by = c("feature_name", "feature_value_mapping"),
+    allow.cartesian = TRUE
+  )
+  
+  merge_cols <- "sample_hash"
+  if ("shap_outcome" %in% colnames(force_data)) merge_cols <- c(merge_cols, "shap_outcome")
+  
+  force_data <- merge(
+    x = force_data,
+    y = prediction_data,
+    by = merge_cols
+  )
+  
+  return(data_element)
+}
+
 # 
 # # merge_data_elements (familiarDataElementSHAP) --------------------------------
 # setMethod(
