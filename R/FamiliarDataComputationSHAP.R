@@ -1431,38 +1431,3 @@ setMethod(
     ))
   }
 )
-
-
-# 
-# # .export (familiarDataElementSHAP) --------------------------------------------
-# setMethod(
-#   ".export",
-#   signature(x = "familiarDataElementSHAP"),
-#   function(
-#     x,
-#     x_list, 
-#     aggregate_results = FALSE,
-#     ...
-#   ) {
-#     
-#     if (aggregate_results) {
-#       x_list <- .compute_data_element_estimates(x_list)
-#     }
-#     
-#     # Determine identifiers that should be merged. Since the feature values of
-#     # the x and y features may be different (e.g. numeric and factor), merging
-#     # them would cause features values to merged incorrectly.
-#     browser()
-#     merging_identifiers <- setdiff(names(x@identifiers), c("feature_x", "feature_y"))
-#     
-#     # Merge data elements.
-#     x <- merge_data_elements(
-#       x = x_list,
-#       as_data = merging_identifiers,
-#       as_grouping_column = TRUE,
-#       force_data_table = TRUE
-#     )
-#     
-#     return(x)
-#   }
-# )
