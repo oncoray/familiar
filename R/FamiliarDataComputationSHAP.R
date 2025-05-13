@@ -993,6 +993,11 @@ setMethod(
 .extract_shap_summary <- function(
     x
 ) {
+  # Prevent NOTES due to non-standard evaluation
+  feature_name <- feature_value_mapping <- NULL
+  
+  # Generate object using the incoming familiarDataElementSHAP object as a
+  # template.
   data_element <- methods::new(
     "familiarDataElementSHAPSummary",
     x
@@ -1002,15 +1007,18 @@ setMethod(
   data_element@data <- NULL
   
   if (is_empty(x@data)) return(data_element)
+
+  # Establish same hashes.
+  sample_hashes <- .hash_mapping(x@data_mapping)
   
   # Get data_mapping and turn into a long data.table.
   mapping_data <- data.table::as.data.table(x@data_mapping)
-  mapping_data[, "sample_hash" := .hash_mapping(x@data_mapping)]
+  mapping_data[, "sample_hash" := sample_hashes]
   mapping_data <- data.table::melt(
     data = mapping_data,
     id.vars = "sample_hash",
     variable.name = "feature_name",
-    value.name = "feature_value_mapping",
+    value.name = "feature_value_mapping"
   )
   
   # Insert feature values in mapping data.
@@ -1023,7 +1031,7 @@ setMethod(
     ),
     by = "feature_name"
   ]
-  browser()
+  
   # Cartesian merge.
   summary_data <- merge(
     x = x@data,
@@ -1032,7 +1040,16 @@ setMethod(
     allow.cartesian = TRUE
   )
   
-  browser()
+  # Set data.
+  data_element@data <- summary_data
+  
+  # Set identifiers
+  data_element@grouping_column <- c(
+    data_element@grouping_column,
+    c("sample_hash", "feature_value", "feature_label")
+  )
+  
+  return(data_element)
 }
 
 
