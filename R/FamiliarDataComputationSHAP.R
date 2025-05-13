@@ -1256,7 +1256,25 @@ setMethod(
       .extract_shap_summary
     )
     
+    # Export summary data.
+    summary_data <- .export(
+      x = object,
+      data_elements = summary_data_elements,
+      dir_path = dir_path,
+      aggregate_results = TRUE,
+      object_class = "familiarDataElementSHAPSummary",
+      type = "explanation",
+      subtype = "shap_summary"
+    )
+    
     # Generate data for force plots.
+    force_data_elements <- lapply(
+      object@shap_data,
+      .extract_shap_force
+    )
+    
+    # Export data for force
+    
     
     if (!is.null(feature_x) && !is.null(feature_y)) {
       # Generate data for SHAP dependence plots.
