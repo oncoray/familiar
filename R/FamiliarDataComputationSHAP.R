@@ -51,15 +51,7 @@ setClass(
 # data included in familiarDataElementSHAP objects.
 setClass(
   "familiarDataElementSHAPDependence",
-  contains = "familiarDataElement",
-  slots = list(
-    "feature_x" = "character",
-    "feature_y" = "character"
-  ),
-  prototype = methods::prototype(
-    feature_x = NA_character_,
-    feature_y = NA_character_
-  )
+  contains = "familiarDataElement"
 )
 
 
@@ -1137,6 +1129,61 @@ setMethod(
 
 
 
+.extract_shap_dependence <- function(
+    x,
+    feature_x,
+    feature_y
+) {
+  data_element_list <- list()
+  iter_id <- 1L
+  for (current_feature_x in feature_x) {
+    for (current_feature_y in feature_y) {
+      data_element_list[[iter_id]] <- ..extract_shap_dependence(
+        x = x,
+        feature_x = current_feature_x,
+        feature_y = current_feature_y
+      )
+      
+      iter_id <- iter_id + 1L
+    }
+  }
+  
+  return(data_element_list)
+}
+
+
+
+..extract_shap_dependence <- function(
+    x,
+    feature_x,
+    feature_y
+) {
+  # Prevent NOTES due to non-standard evaluation
+  feature_name <- feature_value_mapping <- NULL
+  
+  # Generate object using the incoming familiarDataElementSHAP object as a
+  # template.
+  data_element <- methods::new(
+    "familiarDataElementSHAPDependence",
+    x
+  )
+  
+  # Add feature x and feature y as identifiers to the dataset.
+  data_element <- add_data_element_identifier(
+    x = data_element,
+    feature_x = feature_x
+  )
+  data_element <- add_data_element_identifier(
+    x = data_element,
+    feature_y = feature_y
+  )
+  
+  # To create a dependence plot, we need for:
+  # feature x: its value and its SHAP value.
+  # feature y: its value
+  # These are linked by the sample identifier.
+  
+}
 
 
 # export_shap (generic) --------------------------------------------------------
@@ -1197,7 +1244,6 @@ setMethod(
     ...
   ) {
     
-    
     # Make sure the collection object is updated.
     object <- update_object(object = object)
 
@@ -1235,115 +1281,34 @@ setMethod(
       subtype = "shap_force"
     )
     
+    dependence_data <- NULL
     if (!is.null(feature_x) && !is.null(feature_y)) {
       # Generate data for SHAP dependence plots.
+      dependence_data_elements <- lapply(
+        object@shap_data,
+        .extract_shap_dependence,
+        feature_x = feature_x,
+        feature_y = feature_y
+      )
+      
     }
     
     browser()
     
-    if (!is.null(time_range)) {
-      # Check that time_range is valid.
-      .check_argument_length(
-        time_range, 
-        var_name = "time_range",
-        min = 2L,
-        max = 2L
-      )
-      
-      sapply(
-        time_range,
-        .check_number_in_valid_range,
-        var_name = "time_range",
-        range = c(0.0, Inf)
-      )
-    }
+    data_list <- c(
+      "shap_summary" = summary_data,
+      "shap_force" = force_data,
+      "shap_dependence" = dependence_data
+    )
     
-    if (export_strata) {
-      # Compute kaplan-meier curves.
-      strata_data <- lapply(
-        object@km_data,
-        .compute_risk_stratification_curves,
-        time_range = time_range
+    if (export_collection) {
+      data_list <- c(
+        data_list,
+        list("collection" = object)
       )
-      
-      # Determine hazard ratio and logrank tests. We do this here because the
-      # data needs to be aggregated.
-      test_data <- lapply(
-        object@km_data,
-        .compute_risk_stratification_tests,
-        time_range = time_range
-      )
-      
-      # Export raw data.
-      raw_data <- .export(
-        x = object,
-        data_slot = "km_data",
-        dir_path = dir_path,
-        aggregate_results = TRUE,
-        type = "stratification",
-        subtype = "data"
-      )
-      
-      # Export strata.
-      strata_data <- .export(
-        x = object,
-        data_elements = strata_data,
-        dir_path = dir_path,
-        aggregate_results = TRUE,
-        type = "stratification",
-        subtype = "strata"
-      )
-      
-      # Export logrank data.
-      logrank_data <- .export(
-        x = object,
-        data_elements = test_data,
-        dir_path = dir_path,
-        aggregate_results = TRUE,
-        object_class = "familiarDataElementRiskLogrank",
-        type = "stratification",
-        subtype = "logrank"
-      )
-      
-      # Export hazard ratio data.
-      hazard_ratio_data <- .export(
-        x = object,
-        data_elements = test_data,
-        dir_path = dir_path,
-        aggregate_results = TRUE,
-        object_class = "familiarDataElementRiskHazardRatio",
-        type = "stratification",
-        subtype = "hazard_ratio"
-      )
-      
-      data_list <- list(
-        "data" = raw_data,
-        "strata" = strata_data,
-        "logrank" = logrank_data,
-        "hazard_ratio_data" = hazard_ratio_data
-      )
-      
-      if (export_collection) {
-        data_list <- c(
-          data_list,
-          list("collection" = object)
-        )
-      } 
-      
-      return(data_list)
-      
-    } else {
-      return(.export(
-        x = object,
-        data_slot = "shap_data",
-        dir_path = dir_path,
-        aggregate_results = TRUE,
-        type = "explanation",
-        subtype = "shap",
-        object_class = "familiarDataElementSHAP",
-        export_collection = export_collection
-      ))
-    }
+    } 
+    
+    return(data_list)
   }
 )
 
