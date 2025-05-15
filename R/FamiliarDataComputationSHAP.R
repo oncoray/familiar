@@ -1071,7 +1071,7 @@ setMethod(
   data_element@data <- NULL
   
   if (is_empty(x@data)) return(data_element)
-browser()
+  
   # Establish same hashes.
   sample_hashes <- .hash_mapping(x@data_mapping)
   
@@ -1084,6 +1084,17 @@ browser()
     variable.name = "feature_name",
     value.name = "feature_value_mapping"
   )
+  
+  # Insert feature values in mapping data.
+  mapping_data[
+    ,
+    c("feature_value", "feature_label") := .shap_mapping_to_feature_list(
+      feature = feature_name,
+      mapping_value = feature_value_mapping, 
+      lookup_table = x@lookup_table
+    ),
+    by = "feature_name"
+  ]
   
   # Prediction data
   prediction_data <- data.table::as.data.table(x@predicted_values)
@@ -1110,6 +1121,15 @@ browser()
     x = force_data,
     y = prediction_data,
     by = merge_cols
+  )
+  
+  # Set data.
+  data_element@data <- force_data
+  
+  # Set identifiers
+  data_element@grouping_column <- c(
+    data_element@grouping_column,
+    c("sample_hash", "feature_value", "feature_label", "prediction")
   )
   
   return(data_element)
@@ -1204,8 +1224,16 @@ setMethod(
       .extract_shap_force
     )
     
-    # Export data for force
-    
+    # Export data for force plots.
+    force_data <- .export(
+      x = object,
+      data_elements = force_data_elements,
+      dir_path = dir_path,
+      aggregate_results = TRUE,
+      object_class = "familiarDataElementSHAPForce",
+      type = "explanation",
+      subtype = "shap_force"
+    )
     
     if (!is.null(feature_x) && !is.null(feature_y)) {
       # Generate data for SHAP dependence plots.
