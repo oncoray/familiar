@@ -458,13 +458,13 @@ setMethod(
     has_data_set <- "data_set" %in% columns
     has_learner <- "learner" %in% columns
     has_vimp_method <- "vimp_method" %in% columns
-    has_feature <- any(c("name", "feature_name_1", "feature_name_2", "feature") %in% columns)
+    has_feature <- any(c("name", "feature_name_1", "feature_name_2", "feature", "feature_x", "feature_y") %in% columns)
     has_risk_group <- any(c("reference_group", "group", "group_1", "group_2") %in% columns)
-    has_multiclass_outcome <- any(c("pos_class", "positive_class", "outcome") %in% columns) &&
+    has_multiclass_outcome <- any(c("pos_class", "positive_class", "outcome", "shap_outcome") %in% columns) &&
       object@outcome_type == "multinomial"
     has_categorical_outcome <- any(c("observed_outcome", "expected_outcome") %in% columns) &&
       object@outcome_type %in% c("binomial", "multinomial")
-    has_evaluation_time <- any(c("evaluation_time", "eval_time") %in% columns) &&
+    has_evaluation_time <- any(c("evaluation_time", "eval_time", "shap_outcome") %in% columns) &&
       object@outcome_type %in% c("survival", "competing_risk")
     has_performance_metric <- any(c("metric") %in% columns)
     has_model_name <- any(c("ensemble_model_name", "model_name") %in% columns)
@@ -507,7 +507,7 @@ setMethod(
     }
     
     if (has_feature) {
-      for (current_column_name in c("name", "feature_name_1", "feature_name_2", "feature")) {
+      for (current_column_name in c("name", "feature_name_1", "feature_name_2", "feature", "feature_x", "feature_y")) {
         
         if (!is.null(x[[current_column_name]])) {
           # Check if all feature names are actually in the object. Some features
@@ -558,7 +558,7 @@ setMethod(
     }
     
     if (has_multiclass_outcome) {
-      for (current_column_name in c("pos_class", "positive_class", "outcome")) {
+      for (current_column_name in c("pos_class", "positive_class", "outcome", "shap_outcome")) {
         
         if (!is.null(x[[current_column_name]])) {
           data.table::set(
@@ -593,7 +593,7 @@ setMethod(
     }
     
     if (has_evaluation_time) {
-      for (current_column_name in c("evaluation_time", "eval_time")) {
+      for (current_column_name in c("evaluation_time", "eval_time", "shap_outcome")) {
         
         if (!is.null(x[[current_column_name]])) {
           data.table::set(

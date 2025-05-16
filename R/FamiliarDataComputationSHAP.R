@@ -11,7 +11,8 @@ setClass(
   slots = list(
     "data_mapping" = "ANY",
     "predicted_values" = "ANY",
-    "lookup_table" = "ANY"
+    "lookup_table" = "ANY",
+    "sample_identifiers" = "character"
   ),
   prototype = methods::prototype(
     detail_level = "ensemble",
@@ -20,7 +21,8 @@ setClass(
     grouping_column = c("feature_name", "feature_value_mapping"),
     data_mapping = NULL,
     predicted_values = NULL,
-    lookup_table = NULL
+    lookup_table = NULL,
+    sample_identifiers = NA_character_
   )
 )
 
@@ -332,6 +334,9 @@ setMethod(
     )
   }
   
+  # Get sample identifiers.
+  sample_identifiers <- get_unique_row_names(data)
+  
   # Generate coalitions (Z)
   coalitions <- .get_shap_coalitions(
     feature_set = feature_set,
@@ -476,6 +481,9 @@ setMethod(
       shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_value"))]
     )
   }
+  
+  # Add sample identifiers.
+  proto_data_element@sample_identifiers <- sample_identifiers
   
   return(proto_data_element)
 }
@@ -999,16 +1007,13 @@ setMethod(
   data_element@data <- NULL
   
   if (is_empty(x@data)) return(data_element)
-
-  # Establish same hashes.
-  sample_hashes <- .hash_mapping(x@data_mapping)
   
   # Get data_mapping and turn into a long data.table.
   mapping_data <- data.table::as.data.table(x@data_mapping)
-  mapping_data[, "sample_hash" := sample_hashes]
+  mapping_data[, "sample_id" := x@sample_identifiers]
   mapping_data <- data.table::melt(
     data = mapping_data,
-    id.vars = "sample_hash",
+    id.vars = "sample_id",
     variable.name = "feature_name",
     value.name = "feature_value_mapping"
   )
@@ -1032,13 +1037,16 @@ setMethod(
     allow.cartesian = TRUE
   )
   
+  # Drop unused columns.
+  summary_data[, feature_value_mapping := NULL]
+  
   # Set data.
   data_element@data <- summary_data
   
   # Set identifiers
   data_element@grouping_column <- c(
-    data_element@grouping_column,
-    c("sample_hash", "feature_value", "feature_label")
+    setdiff(data_element@grouping_column, "feature_value_mapping"),
+    c("sample_id", "feature_value", "feature_label")
   )
   
   return(data_element)
@@ -1064,15 +1072,12 @@ setMethod(
   
   if (is_empty(x@data)) return(data_element)
   
-  # Establish same hashes.
-  sample_hashes <- .hash_mapping(x@data_mapping)
-  
   # Get data_mapping and turn into a long data.table.
   mapping_data <- data.table::as.data.table(x@data_mapping)
-  mapping_data[, "sample_hash" := sample_hashes]
+  mapping_data[, "sample_id" := x@sample_identifiers]
   mapping_data <- data.table::melt(
     data = mapping_data,
-    id.vars = "sample_hash",
+    id.vars = "sample_id",
     variable.name = "feature_name",
     value.name = "feature_value_mapping"
   )
@@ -1090,10 +1095,10 @@ setMethod(
   
   # Prediction data
   prediction_data <- data.table::as.data.table(x@predicted_values)
-  prediction_data[, "sample_hash" := sample_hashes]
+  prediction_data[, "sample_id" := x@sample_identifiers]
   prediction_data <- data.table::melt(
     data = prediction_data,
-    id.vars = "sample_hash",
+    id.vars = "sample_id",
     variable.name = "shap_outcome",
     value.name = "prediction"
   )
@@ -1106,7 +1111,7 @@ setMethod(
     allow.cartesian = TRUE
   )
   
-  merge_cols <- "sample_hash"
+  merge_cols <- "sample_id"
   if ("shap_outcome" %in% colnames(force_data)) merge_cols <- c(merge_cols, "shap_outcome")
   
   force_data <- merge(
@@ -1115,13 +1120,16 @@ setMethod(
     by = merge_cols
   )
   
+  # Drop unused columns.
+  force_data[, feature_value_mapping := NULL]
+
   # Set data.
   data_element@data <- force_data
   
   # Set identifiers
   data_element@grouping_column <- c(
-    data_element@grouping_column,
-    c("sample_hash", "feature_value", "feature_label", "prediction")
+    setdiff(data_element@grouping_column, "feature_value_mapping"),
+    c("sample_id", "feature_value", "feature_label", "prediction")
   )
   
   return(data_element)
@@ -1137,7 +1145,23 @@ setMethod(
   data_element_list <- list()
   iter_id <- 1L
   for (current_feature_x in feature_x) {
+    if (!current_feature_x %in% names(x@lookup_table)) {
+      ..warning(paste0(
+        current_feature_x, " is not part of the feature set used by the model. ",
+        "The following features were used: ", paste_s(names(x@lookup_table))
+      ))
+      next
+    }
+      
     for (current_feature_y in feature_y) {
+      if (!current_feature_y %in% names(x@lookup_table)) {
+        ..warning(paste0(
+          current_feature_y, " is not part of the feature set used by the model. ",
+          "The following features were used: ", paste_s(names(x@lookup_table))
+        ))
+        next
+      }
+      
       data_element_list[[iter_id]] <- ..extract_shap_dependence(
         x = x,
         feature_x = current_feature_x,
@@ -1147,6 +1171,8 @@ setMethod(
       iter_id <- iter_id + 1L
     }
   }
+  
+  if (is_empty(data_element_list)) return(NULL)
   
   return(data_element_list)
 }
@@ -1172,17 +1198,98 @@ setMethod(
   data_element <- add_data_element_identifier(
     x = data_element,
     feature_x = feature_x
-  )
+  )[[1L]]
   data_element <- add_data_element_identifier(
     x = data_element,
     feature_y = feature_y
+  )[[1L]]
+  
+  # Clean reporting elements.
+  data_element@data <- NULL
+  
+  if (is_empty(x@data)) return(data_element)
+  
+  # Get data_mapping and turn into a long data.table.
+  mapping_data <- data.table::as.data.table(x@data_mapping)
+  mapping_data[, "sample_id" := x@sample_identifiers]
+  mapping_data <- data.table::melt(
+    data = mapping_data,
+    id.vars = "sample_id",
+    variable.name = "feature_name",
+    value.name = "feature_value_mapping"
   )
+  
+  # Insert feature values in mapping data.
+  mapping_data[
+    ,
+    c("feature_value", "feature_label") := .shap_mapping_to_feature_list(
+      feature = feature_name,
+      mapping_value = feature_value_mapping, 
+      lookup_table = x@lookup_table
+    ),
+    by = "feature_name"
+  ]
   
   # To create a dependence plot, we need for:
   # feature x: its value and its SHAP value.
   # feature y: its value
   # These are linked by the sample identifier.
   
+  feature_x_data <- data.table::copy(mapping_data[feature_name == feature_x])
+  feature_y_data <- data.table::copy(mapping_data[feature_name == feature_y])
+  
+  # Cartesian merge.
+  dependence_data <- merge(
+    x = x@data,
+    y = feature_x_data,
+    by = c("feature_name", "feature_value_mapping"),
+    allow.cartesian = TRUE
+  )
+  
+  # Update column names.
+  setnames(
+    dependence_data,
+    old = c("feature_value", "feature_label"),
+    new = c("feature_value_x", "feature_label_x")
+  )
+  dependence_data[, feature_value_mapping := NULL]
+  dependence_data[, feature_name := NULL]
+  
+  # Add feature_y_data.
+  dependence_data <- merge(
+    x = dependence_data,
+    y = feature_y_data,
+    by = "sample_id"
+  )
+  
+  # Update column names.
+  data.table::setnames(
+    dependence_data,
+    old = c("feature_value", "feature_label"),
+    new = c("feature_value_y", "feature_label_y")
+  )
+  dependence_data[, feature_value_mapping := NULL]
+  dependence_data[, feature_name := NULL]
+  
+  # Update column order.
+  col_order <- c("sample_id", "feature_value_x", "feature_label_x")
+  if ("shap_outcome" %in% colnames(dependence_data)) col_order <- c(col_order, "shap_outcome")
+  col_order <- c(col_order, "shap_value", "feature_value_y", "feature_label_y")
+  data.table::setcolorder(
+    dependence_data,
+    neworder = col_order
+  )
+  
+  # Set data.
+  data_element@data <- dependence_data
+  
+  # Update grouping columns.
+  data_element@grouping_column <- c(
+    setdiff(data_element@grouping_column, c("feature_name", "feature_value_mapping")),
+    c("sample_id", "feature_value_x", "feature_label_x", "feature_value_y", "feature_label_y")
+  )
+  
+  return(data_element)
 }
 
 
@@ -1291,10 +1398,18 @@ setMethod(
         feature_y = feature_y
       )
       
+      dependence_data <- .export(
+        x = object,
+        data_elements = dependence_data_elements,
+        dir_path = dir_path,
+        aggregate_results = TRUE,
+        object_class = "familiarDataElementSHAPDependence",
+        type = "explanation",
+        subtype = "shap_dependence"
+      )
     }
     
-    browser()
-    
+    # Add to list.
     data_list <- c(
       "shap_summary" = summary_data,
       "shap_force" = force_data,
