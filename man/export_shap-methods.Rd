@@ -19,6 +19,8 @@ export_shap(
   dir_path = NULL,
   aggregate_results = TRUE,
   export_collection = FALSE,
+  feature_x = NULL,
+  feature_y = NULL,
   ...
 )
 
