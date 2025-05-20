@@ -397,7 +397,7 @@ setMethod(
     if (is.waive(y_label)) {
       y_label <- "feature"
     }
-    browser()
+    
     .check_input_plot_args(
       facet_wrap_cols = facet_wrap_cols,
       x_label = x_label,
@@ -456,7 +456,6 @@ setMethod(
         ggtheme = ggtheme,
         discrete_palette = discrete_palette,
         gradient_palette = gradient_palette,
-        gradient_palette_range = gradient_palette_range,
         x_label = x_label,
         y_label = y_label,
         legend_label = legend_label,
@@ -468,7 +467,7 @@ setMethod(
         x_breaks = x_breaks,
         outcome_type = object@outcome_type
       )
-      
+      browser()
       # Check empty output
       if (is.null(p)) next
       
@@ -533,7 +532,6 @@ setMethod(
     ggtheme,
     discrete_palette,
     gradient_palette,
-    gradient_palette_range,
     x_label,
     y_label,
     legend_label,
@@ -546,10 +544,38 @@ setMethod(
     outcome_type
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
+  shap_value <- NULL
   browser()
+  
+  value_group_columns <- c("vimp_method", "learner", "feature_name")
+  if ("evaluation_time" %in% colnames(x)) value_group_columns <- c(value_group_columns, "evaluation_time")
+  if ("positive_class" %in% colnames(x)) value_group_columns <- c(value_group_columns, "positive_class")
+  
+  # Apply representation.
+  if (value_representation == "abs") {
+    x[, "shap_value" := abs(shap_value)]
+    
+  } else if (value_representation == "abs_mean") {
+    x <- x[, list("shap_value" = mean(abs(shap_value))), by = value_group_columns]
+    
+  } else if (value_representation == "abs_max") {
+    x <- x[, list("shap_value" = max(abs(shap_value))), by = value_group_columns]
+    
+  } else if (value_representation == "abs_min") {
+    x <- x[, list("shap_value" = min(abs(shap_value))), by = value_group_columns]
+  }
+  
+  # TODO: Map feature values to (-1, 1) range for raw representation.
+  TODO
+  
   # Check x-range.
   if (is.null(x_range)) {
-    x_range <- c(Inf, -Inf)
+    if (value_representation == "raw") {
+      x_range <- c(min(x$shap_value), max(x$shap_value))
+      
+    } else {
+      x_range <- c(0.0, max(x$shap_value))
+    }
     
   } else {
     .check_input_plot_args(x_range = x_range)
