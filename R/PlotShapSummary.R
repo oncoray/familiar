@@ -51,9 +51,11 @@ NULL
 #'   * `abs_mean` (default for `barplot` plot type): uses mean absolute value of
 #'     SHAP values. Only used by `barplot`.
 #'
-#'   * `abs_max`: uses maximum absolute value of SHAP values. Only used by `barplot`.
+#'   * `abs_max`: uses maximum absolute value of SHAP values. Only used by 
+#'     `barplot`.
 #'
-#'   * `abs_min`: uses minimum absolute value of SHAP values. Only used by `barplot`.
+#'   * `abs_min`: uses minimum absolute value of SHAP values. Only used by 
+#'     `barplot`.
 #'   
 #'   If `abs_mean`, `abs_max` or `abs_min` are chosen, `plot_type` automatically
 #'   switches to `barplot`.
@@ -357,11 +359,9 @@ setMethod(
         color_by <- additional_variable
         
       } else if (value_representation == "raw" && plot_type == "beeswarmplot") {
-        color_by <- "feature_value"
+        color_by <- NULL
         facet_by <- additional_variable
-        
-        all_variables <- c(all_variables, "feature_value")
-        
+
       } else {
         color_by <- additional_variable
       }
@@ -544,7 +544,7 @@ setMethod(
     outcome_type
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  shap_value <- NULL
+  shap_value <- vimp <- NULL
   browser()
   
   value_group_columns <- c("vimp_method", "learner", "feature_name")
@@ -565,8 +565,22 @@ setMethod(
     x <- x[, list("shap_value" = min(abs(shap_value))), by = value_group_columns]
   }
   
-  # TODO: Map feature values to (-1, 1) range for raw representation.
-  TODO
+  # Map feature values to (-1, 1) range for raw representation.
+  if (value_representation == "raw") {
+    x[
+      ,
+      "feature_value" := 2.0 * .normalise(feature_value,  normalisation_method = "normalisation") - 1.0,
+      by = "feature_name"
+    ]
+  }
+  
+  # Sort features by importance (mean absolute SHAP).
+  feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = value_group_columns]
+  feature_importance <- x[, list("vimp" = max(vimp)), by = "feature_name"][order(vimp)]
+  x$feature_name <- factor(
+    x = x$feature_name,
+    levels = feature_importance$feature_name
+  )
   
   # Check x-range.
   if (is.null(x_range)) {
@@ -604,219 +618,66 @@ setMethod(
   } else {
     .check_input_plot_args(x_breaks = x_breaks)
   }
-  
 
-  # Create a legend label
+  # Create a legend label.
   legend_label <- .create_plot_legend_title(
     user_label = legend_label,
     color_by = color_by
   )
-    
-  # } else {
-  #   # y-label for heatmap plots
-  #   if (is.waive(y_label)) {
-  #     y_label <- switch(
-  #       y_axis_by,
-  #       learner = "learner",
-  #       vimp_method = "feature selection method",
-  #       data_set = "dataset",
-  #       metric = "metric",
-  #       evaluation_time = "time"
-  #     )
-  #   }
-  #   
-  #   # gradient_palette_range
-  #   if (is.waive(gradient_palette_range)) {
-  #     if (length(metrics) == 1L) {
-  #       gradient_palette_range <- .get_metric_default_range(
-  #         metric = metrics,
-  #         outcome_type = outcome_type
-  #       )
-  #       
-  #       # Replace a positive infinite value by the max range in the data.
-  #       if (gradient_palette_range[2L] == Inf) {
-  #         gradient_palette_range[2L] <- max(x[metric == metrics, value], na.rm = TRUE)
-  #       }
-  #       
-  #       # Replace any negative infinite value by the min range in the data.
-  #       if (gradient_palette_range[1L] == -Inf) {
-  #         gradient_palette_range[1L] <- min(x[metric == metrics, value], na.rm = TRUE)
-  #       }
-  #       
-  #       gradient_was_provided <- FALSE
-  #       
-  #     } else {
-  #       # If metric for whatever reason is not a single metric.
-  #       gradient_palette_range <- c(NA, NA)
-  #       gradient_was_provided <- FALSE
-  #     }
-  #     
-  #   } else {
-  #     # Check for NULL.
-  #     if (is.null(gradient_palette_range)) {
-  #       gradient_palette_range <- c(NA, NA)
-  #     }
-  #     
-  #     gradient_was_provided <- TRUE
-  #   }
-  #   
-  #   # Create a legend label
-  #   legend_label <- ifelse(length(metrics) == 1L && is.waive(legend_label), metrics, "value")
-  # }
   
   # Check remaining input arguments.
   .check_input_plot_args(
     legend_label = legend_label
   )
   
+  # Generate a guide table
+  guide_list <- .create_plot_guide_table(
+    x = x,
+    color_by = color_by,
+    discrete_palette = discrete_palette
+  )
+  
+  # Extract data
+  x <- guide_list$data
+  
+  # Extract guide_table for color.
+  g_color <- guide_list$guide_color
+  
   # Create basic plot
-  p <- ggplot2::ggplot()
+  p <- ggplot2::ggplot(
+    data = x,
+    mapping = ggplot2::aes(
+      x = !!sym(shap_value),
+      y = !!sym(feature_name)
+    ))
   p <- p + ggtheme
   
-  if (plot_type == "heatmap") {
-    # Heatmap ------------------------------------------------------------------
+  # Set breaks and range.
+  p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
+  p <- p + ggplot2::coord_cartesian(xlim = x_range)
+  
+  if (plot_type == "beeswarm_plot") {
+    # Beeswarm plot ------------------------------------------------------------
     
-    # Create summary data.
-    x_bar <- x[
-      ,
-      list(
-        "median" = stats::median(value, na.rm = TRUE),
-        "ci_up" = stats::quantile(value, probs = 0.975, na.rm = TRUE, names = FALSE),
-        "ci_low" = stats::quantile(value, probs = 0.025, na.rm = TRUE, names = FALSE)
-      ),
-      by = c("metric", "data_set", "vimp_method", "learner")
-    ]
-    
-    # Determine what direction a metric has.
-    if (length(metrics) == 1L) {
-      invert_scale <- !is_higher_better(
-        metric = metrics,
-        outcome_type = outcome_type
-      )
-      
-    } else {
-      invert_scale <- FALSE
-    }
-    
-    # Determine the type of sequential colorscale. This has no effect if the
-    # user provides a colorscale.
-    if (length(metrics) == 1L && !gradient_was_provided) {
-      palette_type <- ifelse(
-        length(gradient_palette_range) > 2L,
-        "divergent",
-        "sequential"
-      )
-      
-    } else {
-      palette_type <- "sequential"
-    }
-    
-    # Form heatmap raster.
-    p <- p + ggplot2::geom_raster(
-      data = x_bar,
-      mapping = ggplot2::aes(
-        x = !!sym(x_axis_by),
-        y = !!sym(y_axis_by),
-        fill = !!sym("median")
-      )
-    )
-    
-    # Colors
-    gradient_colours <- .get_palette(
-      x = gradient_palette, 
-      palette_type = palette_type
-    )
-    
-    if (invert_scale) gradient_colours <- rev(gradient_colours)
-    
-    # Add gradient palette.
-    p <- p + ggplot2::scale_fill_gradientn(
-      name = legend_label,
-      colors = gradient_colours,
-      limits = range(gradient_palette_range)
-    )
-    
-    # Obtain default settings.
-    text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
+    # TODO
     
   } else if (plot_type == "barplot") {
     # Barplot ------------------------------------------------------------------
     
-    # Create data for bar
-    x_bar <- x[
-      ,
-      list(
-        "median" = stats::median(value, na.rm = TRUE),
-        "ci_up" = stats::quantile(value, probs = 0.975, na.rm = TRUE, names = FALSE),
-        "ci_low" = stats::quantile(value, probs = 0.025, na.rm = TRUE, names = FALSE)
-      ),
-      by = c("metric", "data_set", "vimp_method", "learner")
-    ]
-    
-    # Generate a guide table
-    guide_list <- .create_plot_guide_table(
-      x = x_bar,
-      color_by = color_by,
-      discrete_palette = discrete_palette
-    )
-    
-    # Extract data
-    x_bar <- guide_list$data
-    
-    # Set breaks.
-    p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
-    
     if (is.null(color_by)) {
-      # Add barplot
       p <- p + ggplot2::geom_bar(
-        data = x_bar,
-        mapping = ggplot2::aes(
-          x = !!sym(x_axis_by),
-          y = !!sym("median")
-        ),
         stat = "identity",
-        position = "dodge"
-      )
-      
-      # Add error bars
-      p <- p + ggplot2::geom_errorbar(
-        data = x_bar,
-        mapping = ggplot2::aes(
-          x = !!sym(x_axis_by),
-          ymin = !!sym("ci_low"),
-          ymax = !!sym("ci_up")
-        ),
         position = ggplot2::position_dodge(width = 0.9),
-        width = 0.20
       )
       
     } else {
-      # Extract guide_table for color
-      g_color <- guide_list$guide_color
-      
       # Add barplot.
       p <- p + ggplot2::geom_bar(
-        data = x_bar,
         mapping = ggplot2::aes(
-          x = !!sym(x_axis_by),
-          y = !!sym("median"),
           fill = !!sym("color_breaks")
         ),
         stat = "identity",
         position = ggplot2::position_dodge(width = 0.9)
-      )
-      
-      # Add error bars
-      p <- p + ggplot2::geom_errorbar(
-        data = x_bar,
-        mapping = ggplot2::aes(
-          x = !!sym(x_axis_by),
-          ymin = !!sym("ci_low"),
-          ymax = !!sym("ci_up"),
-          group = !!sym("color_breaks")
-        ),
-        position = ggplot2::position_dodge(width = 0.9),
-        width = 0.20
       )
       
       # Set fill colours.
@@ -828,11 +689,10 @@ setMethod(
       )
     }
     
-    # Plot to Cartesian coordinates.
-    p <- p + ggplot2::coord_cartesian(xlim = x_range)
-    
   } else if (plot_type == "boxplot") {
     # Boxplot ------------------------------------------------------------------
+    
+    # TODO
     
     # Generate a guide table
     guide_list <- .create_plot_guide_table(
@@ -887,6 +747,8 @@ setMethod(
     
   } else if (plot_type == "violinplot") {
     # Violinplot ---------------------------------------------------------------
+    
+    # TODO
     
     # Generate a guide table
     guide_list <- .create_plot_guide_table(
