@@ -647,8 +647,8 @@ setMethod(
   p <- ggplot2::ggplot(
     data = x,
     mapping = ggplot2::aes(
-      x = !!sym(shap_value),
-      y = !!sym(feature_name)
+      x = !!sym("shap_value"),
+      y = !!sym("feature_name")
     ))
   p <- p + ggtheme
   
@@ -659,7 +659,47 @@ setMethod(
   if (plot_type == "beeswarm_plot") {
     # Beeswarm plot ------------------------------------------------------------
     
-    # TODO
+    if (value_representation == "raw") {
+      p <- p + ggplot2::geom_jitter(
+        mapping = ggplot::aes(color = !!sym("feature_value")),
+        width = 0.0,
+        height = 0.4
+      )
+      
+      # Colors
+      gradient_colours <- .get_palette(
+        x = gradient_palette, 
+        palette_type = "divergent"
+      )
+      
+      # Add gradient palette.
+      p <- p + ggplot2::scale_colour_gradientn(
+        name = legend_label,
+        colors = gradient_colours,
+        limits = c(-1.0, 1.0)
+      )
+      
+    } else if (is.null(color_by)) {
+      p <- p + ggplot2::geom_jitter(
+        width = 0.0,
+        height = 0.4
+      )
+      
+    } else {
+      p <- p + ggplot2::geom_jitter(
+        mapping = ggplot::aes(color = !!sym("color_breaks")),
+        width = 0.0,
+        height = 0.4
+      )
+      
+      # Set fill colours.
+      p <- p + ggplot2::scale_color_manual(
+        name = legend_label$guide_color,
+        values = g_color$color_values,
+        breaks = g_color$color_breaks,
+        drop = FALSE
+      )
+    }
     
   } else if (plot_type == "barplot") {
     # Barplot ------------------------------------------------------------------
@@ -692,45 +732,14 @@ setMethod(
   } else if (plot_type == "boxplot") {
     # Boxplot ------------------------------------------------------------------
     
-    # TODO
-    
-    # Generate a guide table
-    guide_list <- .create_plot_guide_table(
-      x = x,
-      color_by = color_by,
-      discrete_palette = discrete_palette
-    )
-    
-    # Extract data
-    x <- guide_list$data
-    
-    # Set breaks.
-    p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
-    
     if (is.null(color_by)) {
-      # Create boxplot.
-      p <- p + ggplot2::geom_boxplot(
-        data = x,
-        mapping = ggplot2::aes(
-          x = !!sym(x_axis_by),
-          y = !!sym("value")
-        ),
-        outlier.alpha = 0.1
-      )
+      p <- p + ggplot2::geom_boxplot()
       
     } else {
-      # Extract guide_table for color
-      g_color <- guide_list$guide_color
-      
-      # Create boxplot.
       p <- p + ggplot2::geom_boxplot(
-        data = x,
         mapping = ggplot2::aes(
-          x = !!sym(x_axis_by),
-          y = !!sym("value"),
           colour = !!sym("color_breaks")
-        ),
-        outlier.alpha = 0.1
+        )
       )
       
       # Set fill colours.
@@ -742,50 +751,21 @@ setMethod(
       )
     }
     
-    # Plot to Cartesian coordinates.
-    p <- p + ggplot2::coord_cartesian(xlim = x_range)
-    
   } else if (plot_type == "violinplot") {
     # Violinplot ---------------------------------------------------------------
-    
-    # TODO
-    
-    # Generate a guide table
-    guide_list <- .create_plot_guide_table(
-      x = x,
-      color_by = color_by,
-      discrete_palette = discrete_palette
-    )
-    
-    # Extract data
-    x <- guide_list$data
-    
-    # Set breaks.
-    p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
     
     if (is.null(color_by)) {
       # Create boxplot.
       p <- p + ggplot2::geom_violin(
-        data = x,
-        mapping = ggplot2::aes(
-          x = !!sym(x_axis_by),
-          y = !!sym("value")
-        ),
         draw_quantiles = c(0.025, 0.5, 0.975),
         scale = "width",
         position = ggplot2::position_dodge(width = 1.0)
       )
       
     } else {
-      # Extract guide_table for color
-      g_color <- guide_list$guide_color
-      
       # Create boxplot.
       p <- p + ggplot2::geom_violin(
-        data = x,
         mapping = ggplot2::aes(
-          x = !!sym(x_axis_by),
-          y = !!sym("value"),
           fill = !!sym("color_breaks")
         ),
         draw_quantiles = c(0.025, 0.5, 0.975),
@@ -801,12 +781,9 @@ setMethod(
         drop = FALSE
       )
     }
-    
-    # Plot to Cartesian coordinates.
-    p <- p + ggplot2::coord_cartesian(xlim = x_range)
   }
   
-  # Determine how things are facetted
+  # Determine how things are faceted.
   facet_by_list <- .parse_plot_facet_by(
     x = x, 
     facet_by = facet_by, 

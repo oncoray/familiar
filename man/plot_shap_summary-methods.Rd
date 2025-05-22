@@ -52,7 +52,6 @@ plot_shap_summary(
   ggtheme = NULL,
   discrete_palette = NULL,
   gradient_palette = NULL,
-  gradient_palette_range = waiver(),
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
@@ -84,7 +83,6 @@ plot_shap_summary(
   ggtheme = NULL,
   discrete_palette = NULL,
   gradient_palette = NULL,
-  gradient_palette_range = waiver(),
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
@@ -161,8 +159,10 @@ types): uses SHAP values as they are.
 \item \code{abs}: uses absolute value of SHAP values.
 \item \code{abs_mean} (default for \code{barplot} plot type): uses mean absolute value of
 SHAP values. Only used by \code{barplot}.
-\item \code{abs_max}: uses maximum absolute value of SHAP values. Only used by \code{barplot}.
-\item \code{abs_min}: uses minimum absolute value of SHAP values. Only used by \code{barplot}.
+\item \code{abs_max}: uses maximum absolute value of SHAP values. Only used by
+\code{barplot}.
+\item \code{abs_min}: uses minimum absolute value of SHAP values. Only used by
+\code{barplot}.
 }
 
 If \code{abs_mean}, \code{abs_max} or \code{abs_min} are chosen, \code{plot_type} automatically
