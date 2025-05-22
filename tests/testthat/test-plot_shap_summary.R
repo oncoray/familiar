@@ -8,8 +8,7 @@ debug_flag <- FALSE
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
-  outcome_type_available = c("multinomial", "survival"),
-  # outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   debug = debug_flag
 )
 
@@ -21,6 +20,6 @@ familiar:::test_plot_ordering(
   data_element = "shap",
   plot_args = list(
     "verbose" = FALSE
-),
+  ),
   debug = debug_flag
 )

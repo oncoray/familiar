@@ -15,15 +15,15 @@ NULL
 #'   plots are saved to. Output is saved in the `explanation` subdirectory. If
 #'   `NULL` no figures are saved, but are returned instead.
 #' @param plot_type (*optional*) Type of plot to draw. This is one of
-#'   `beeswarmplot` (draws a beeswarm plot), `barplot` (draws a barplot),
+#'   `swarmplot` (draws a beeswarm plot), `barplot` (draws a barplot),
 #'   `boxplot` (draws a boxplot) and `violinplot` (draws a violin plot).
 #'   Defaults to `boxplot` if a single SHAP value is available for each feature,
-#'   and `beeswarmplot` otherwise.
+#'   and `swarmplot` otherwise.
 #'
 #'   The choice for `plot_type` affects several other arguments.
 #' @param discrete_palette (*optional*) Palette for colouring plot elements
 #'   indicated by the `color_by` argument (if any). Only used if `plot_type` is
-#'   not `beeswarmplot`. `familiar` has a default palette. Other palettes are
+#'   not `swarmplot`. `familiar` has a default palette. Other palettes are
 #'   supported by the `paletteer` package, `grDevices::palette.pals()` (requires
 #'   R >= 4.0.0), `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`,
 #'   `heat.colors`, `terrain.colors`, `topo.colors` and `cm.colors`, which
@@ -31,7 +31,7 @@ NULL
 #'   specify your own palette by providing a vector of colour names listed by
 #'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette (*optional*) Sequential or divergent palette used to
-#'   colour the points  the raster in the default `beeswarmplot` plots. This
+#'   colour the points  the raster in the default `swarmplot` plots. This
 #'   argument is not used for other `plot_type` value. `familiar` has a default
 #'   palette. Other palettes are supported by the `paletteer` package,
 #'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
@@ -43,7 +43,7 @@ NULL
 #' @param value_representation (*optional*) Indicates how SHAP values are
 #'   represented, with the following options:
 #'
-#'   * `raw` (default for `beeswarmplot`, `boxplot`, and `violinplot` plot 
+#'   * `raw` (default for `swarmplot`, `boxplot`, and `violinplot` plot 
 #'     types): uses SHAP values as they are.
 #'
 #'   * `abs`: uses absolute value of SHAP values.
@@ -296,12 +296,12 @@ setMethod(
     is_single_sample <- all(value_data$n == 1L)
     
     # Set initial estimates for plot-type. If only a single SHAP value is
-    # present, use barplot. Otherwise, if unset, use beeswarmplot.
+    # present, use barplot. Otherwise, if unset, use swarmplot.
     if (is_single_sample) {
       plot_type <- "barplot"
       
     } else if (is.null(plot_type)) {
-      plot_type <- "beeswarmplot"
+      plot_type <- "swarmplot"
     }
     
     # Check value representation. If unset, the default for barplots is
@@ -330,7 +330,7 @@ setMethod(
     .check_parameter_value_is_valid(
       x = plot_type,
       var_name = "plot_type",
-      values = c("beeswarmplot", "barplot", "boxplot", "violinplot")
+      values = c("swarmplot", "barplot", "boxplot", "violinplot")
     )
     
     # Add evaluation time as a splitting variable.
@@ -358,7 +358,7 @@ setMethod(
       if (plot_type == "bar_plot") {
         color_by <- additional_variable
         
-      } else if (value_representation == "raw" && plot_type == "beeswarmplot") {
+      } else if (value_representation == "raw" && plot_type == "swarmplot") {
         color_by <- NULL
         facet_by <- additional_variable
 
@@ -467,7 +467,7 @@ setMethod(
         x_breaks = x_breaks,
         outcome_type = object@outcome_type
       )
-      browser()
+      
       # Check empty output
       if (is.null(p)) next
       
@@ -544,8 +544,7 @@ setMethod(
     outcome_type
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  shap_value <- vimp <- NULL
-  browser()
+  shap_value <- vimp <- feature_value <- NULL
   
   value_group_columns <- c("vimp_method", "learner", "feature_name")
   if ("evaluation_time" %in% colnames(x)) value_group_columns <- c(value_group_columns, "evaluation_time")
@@ -569,14 +568,14 @@ setMethod(
   if (value_representation == "raw") {
     x[
       ,
-      "feature_value" := 2.0 * .normalise(feature_value,  normalisation_method = "normalisation") - 1.0,
+      "feature_value" := 2.0 * (feature_value - min(feature_value)) / (max(feature_value) - min(feature_value))- 1.0,
       by = "feature_name"
     ]
   }
   
   # Sort features by importance (mean absolute SHAP).
   feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = value_group_columns]
-  feature_importance <- x[, list("vimp" = max(vimp)), by = "feature_name"][order(vimp)]
+  feature_importance <- feature_importance[, list("vimp" = max(vimp)), by = "feature_name"][order(vimp)]
   x$feature_name <- factor(
     x = x$feature_name,
     levels = feature_importance$feature_name
@@ -622,7 +621,7 @@ setMethod(
   # Create a legend label.
   legend_label <- .create_plot_legend_title(
     user_label = legend_label,
-    color_by = color_by
+    color_by = ifelse(value_representation == "raw", "feature_value", color_by)
   )
   
   # Check remaining input arguments.
@@ -656,12 +655,12 @@ setMethod(
   p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
   p <- p + ggplot2::coord_cartesian(xlim = x_range)
   
-  if (plot_type == "beeswarm_plot") {
-    # Beeswarm plot ------------------------------------------------------------
+  if (plot_type == "swarmplot") {
+    # Swarm plot ---------------------------------------------------------------
     
     if (value_representation == "raw") {
       p <- p + ggplot2::geom_jitter(
-        mapping = ggplot::aes(color = !!sym("feature_value")),
+        mapping = ggplot2::aes(color = !!sym("feature_value")),
         width = 0.0,
         height = 0.4
       )

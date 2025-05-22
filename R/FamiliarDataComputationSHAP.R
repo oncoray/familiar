@@ -566,8 +566,7 @@ setMethod(
   data <- data.table::as.data.table(sample_set)
   data[, ":="(
     "batch_id" = "generated",
-    "sample_id" = seq_len(nrow(data)),
-    "series_id" = 1L
+    "sample_id" = seq_len(nrow(data))
   )]
   
   return(as_data_object(
@@ -575,7 +574,7 @@ setMethod(
     object = object,
     batch_id_column = "batch_id",
     sample_id_column = "sample_id",
-    series_id_column = "series_id"
+    check_stringency = "external"
   ))
 }
 

@@ -144,17 +144,17 @@ See details for available variables.}
 wrapping. If NULL, a facet grid is produced instead.}
 
 \item{plot_type}{(\emph{optional}) Type of plot to draw. This is one of
-\code{beeswarmplot} (draws a beeswarm plot), \code{barplot} (draws a barplot),
+\code{swarmplot} (draws a beeswarm plot), \code{barplot} (draws a barplot),
 \code{boxplot} (draws a boxplot) and \code{violinplot} (draws a violin plot).
 Defaults to \code{boxplot} if a single SHAP value is available for each feature,
-and \code{beeswarmplot} otherwise.
+and \code{swarmplot} otherwise.
 
 The choice for \code{plot_type} affects several other arguments.}
 
 \item{value_representation}{(\emph{optional}) Indicates how SHAP values are
 represented, with the following options:
 \itemize{
-\item \code{raw} (default for \code{beeswarmplot}, \code{boxplot}, and \code{violinplot} plot
+\item \code{raw} (default for \code{swarmplot}, \code{boxplot}, and \code{violinplot} plot
 types): uses SHAP values as they are.
 \item \code{abs}: uses absolute value of SHAP values.
 \item \code{abs_mean} (default for \code{barplot} plot type): uses mean absolute value of
@@ -172,7 +172,7 @@ switches to \code{barplot}.}
 
 \item{discrete_palette}{(\emph{optional}) Palette for colouring plot elements
 indicated by the \code{color_by} argument (if any). Only used if \code{plot_type} is
-not \code{beeswarmplot}. \code{familiar} has a default palette. Other palettes are
+not \code{swarmplot}. \code{familiar} has a default palette. Other palettes are
 supported by the \code{paletteer} package, \code{grDevices::palette.pals()} (requires
 R >= 4.0.0), \code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow},
 \code{heat.colors}, \code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which
@@ -181,7 +181,7 @@ specify your own palette by providing a vector of colour names listed by
 \code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
-colour the points  the raster in the default \code{beeswarmplot} plots. This
+colour the points  the raster in the default \code{swarmplot} plots. This
 argument is not used for other \code{plot_type} value. \code{familiar} has a default
 palette. Other palettes are supported by the \code{paletteer} package,
 \code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}

@@ -458,7 +458,7 @@ setMethod(
     has_data_set <- "data_set" %in% columns
     has_learner <- "learner" %in% columns
     has_vimp_method <- "vimp_method" %in% columns
-    has_feature <- any(c("name", "feature_name_1", "feature_name_2", "feature", "feature_x", "feature_y") %in% columns)
+    has_feature <- any(c("name", "feature_name", "feature_name_1", "feature_name_2", "feature", "feature_x", "feature_y") %in% columns)
     has_risk_group <- any(c("reference_group", "group", "group_1", "group_2") %in% columns)
     has_multiclass_outcome <- any(c("pos_class", "positive_class", "outcome", "shap_outcome") %in% columns) &&
       object@outcome_type == "multinomial"
@@ -507,7 +507,7 @@ setMethod(
     }
     
     if (has_feature) {
-      for (current_column_name in c("name", "feature_name_1", "feature_name_2", "feature", "feature_x", "feature_y")) {
+      for (current_column_name in c("name", "feature_name", "feature_name_1", "feature_name_2", "feature", "feature_x", "feature_y")) {
         
         if (!is.null(x[[current_column_name]])) {
           # Check if all feature names are actually in the object. Some features
@@ -645,7 +645,7 @@ setMethod(
       "data_set", "vimp_method", "learner",
       "ensemble_model_name", "model_name",
       "evaluation_time", "eval_time",
-      "name", "feature_name_1", "feature_name_2", "feature",
+      "name", "feature_name", "feature_name_1", "feature_name_2", "feature",
       "pos_class", "positive_class",
       "metric"
     )
