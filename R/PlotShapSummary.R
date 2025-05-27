@@ -658,11 +658,23 @@ setMethod(
   if (plot_type == "swarmplot") {
     # Swarm plot ---------------------------------------------------------------
     
+    # Determine the density of points for each feature as function of the
+    # shap-value.
+    grouping_variables <- c("feature_name", facet_by)
+    if (!is.null(color_by)) {
+      grouping_variables <- c(grouping_variables, "color_breaks")
+    }
+    
+    x[
+      ,
+      "y_offset" := ..set_shap_swarmplot_jitter(shap_value, feature_value, value_representation = value_representation),
+      by = c("feature_name", facet_by, color_by)
+    ]
+    
     if (value_representation == "raw") {
-      p <- p + ggplot2::geom_jitter(
+      p <- p + ggplot2::geom_point(
         mapping = ggplot2::aes(color = !!sym("feature_value")),
-        width = 0.0,
-        height = 0.4
+        position = ggplot2::position_nudge(y = x$y_offset)
       )
       
       # Colors
@@ -679,16 +691,12 @@ setMethod(
       )
       
     } else if (is.null(color_by)) {
-      p <- p + ggplot2::geom_jitter(
-        width = 0.0,
-        height = 0.4
-      )
+      p <- p + ggplot2::geom_point(position = ggplot2::position_nudge(y = x$y_offset))
       
     } else {
       p <- p + ggplot2::geom_jitter(
         mapping = ggplot::aes(color = !!sym("color_breaks")),
-        width = 0.0,
-        height = 0.4
+        position = ggplot2::position_nudge(y = x$y_offset)
       )
       
       # Set fill colours.
@@ -816,6 +824,40 @@ setMethod(
   )
   
   return(p)
+}
+
+
+
+..set_shap_swarmplot_jitter <- function(x, value, value_representation = "raw") {
+  # Prevent notes.
+  feature_value <- density <- y_offset <- NULL
+  
+  # Get density.
+  density_object <- stats::density(x = x)
+  
+  # Find density at every point and normalise.
+  data <- data.table::data.table(
+    "original_order" = seq_along(x),
+    "shap_value" = x,
+    "feature_value" = value,
+    "density" = approx(x = density_object$x, y = density_object$y, xout = x)$y
+  )
+  data[, "density" := density / max(density)]
+  
+  if (value_representation == "raw") {
+    offset <- stats::rnorm(n = length(x), mean = 0.0, sd = 0.1)
+    offset[offset < -0.3] <- -0.3
+    offset[offset > 0.3] <- 0.3
+    data[, "y_offset" := (feature_value + offset) * density]
+    data[, "y_offset" := 0.35 * y_offset /max(abs(y_offset))]
+    
+  } else {
+    offset <- stats::runif(n = length(x), min = -1.0, max = 1.0)
+    data[, "y_offset" := offset * density]
+    data[, "y_offset" := 0.35 * y_offset /max(abs(y_offset))]
+  }
+  
+  return(data$y_offset)
 }
 
 
