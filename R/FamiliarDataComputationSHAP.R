@@ -370,7 +370,7 @@ setMethod(
     feature_set = feature_set,
     object = object,
     ensemble_method = ensemble_method,
-    evaluation_time = NULL
+    evaluation_time = evaluation_times
   )
   
   # Compute phi_0.
@@ -412,7 +412,7 @@ setMethod(
       feature_set = feature_set,
       object = object,
       ensemble_method = ensemble_method,
-      evaluation_time = NULL
+      evaluation_time = evaluation_times
     )
     
     if (is.null(predicted_values_iter)) {
@@ -506,7 +506,6 @@ setMethod(
   # (if available), and additional values are drawn based on the known
   # distribution of feature values for each feature.
   feature_set <- list()
-  
   for (feature in features) {
     # For categorical features, use all levels.
     if (feature_info[[feature]]@feature_type == "factor") {
@@ -959,25 +958,62 @@ setMethod(
     object = object
   )
   
-  # Predict input data
-  prediction_data <- predict(
-    object = object,
-    newdata = data,
-    ensemble_method = ensemble_method,
-    time = evaluation_time,
-    type = prediction_type
-  )
-  
-  if (object@outcome_type == "continuous") {
-    prediction_data <- matrix(prediction_data$predicted_outcome, ncol = 1L)
-    colnames(prediction_data) <- "predicted_outcome"
+  if (object@outcome_type == "survival") {
+    prediction_list <- list()
     
-  } else if (object@outcome_type %in% c("binomial", "multinomial")) {
-    probability_columns <- setdiff(colnames(prediction_data), "predicted_class")
-    prediction_data <- as.matrix(prediction_data[, mget(probability_columns)])
+    for (ii in seq_along(evaluation_time)) {
+      # Predict input data
+      prediction_data <- predict(
+        object = object,
+        newdata = data,
+        ensemble_method = ensemble_method,
+        time = evaluation_time[ii],
+        type = prediction_type,
+        .as_prediction_table = TRUE
+      )
+      
+      # Check if all predictions are valid.
+      if (!all_predictions_valid(prediction_data)) return(NULL)
+      
+      # Convert to data.table.
+      prediction_data <- .as_data_table(prediction_data)[, mget(prediction_data@value_column)]
+      prediction_list[[ii]] <- matrix(prediction_data$predicted_outcome, ncol = 1L)
+    }
+    
+    prediction_data <- do.call(cbind, prediction_list)
+    colnames(prediction_data) <- as.character(evaluation_time)
     
   } else {
-    browser()
+    # Predict input data
+    prediction_data <- predict(
+      object = object,
+      newdata = data,
+      ensemble_method = ensemble_method,
+      type = prediction_type,
+      .as_prediction_table = TRUE
+    )
+    
+    # Check if all predictions are valid.
+    if (!all_predictions_valid(prediction_data)) return(NULL)
+    
+    # Convert to data.table.
+    prediction_data <- .as_data_table(prediction_data)[, mget(prediction_data@value_column)]
+    
+    if (object@outcome_type == "continuous") {
+      prediction_data <- matrix(prediction_data$predicted_outcome, ncol = 1L)
+      colnames(prediction_data) <- "predicted_outcome"
+      
+    } else if (object@outcome_type %in% c("multinomial")) {
+      probability_columns <- get_outcome_class_levels(object)
+      prediction_data <- as.matrix(prediction_data[, mget(probability_columns)])
+      
+    } else if (object@outcome_type %in% c("binomial")) {
+      probability_column <- utils::tail(get_outcome_class_levels(object), n = 1L)
+      prediction_data <- as.matrix(prediction_data[, mget(probability_column)])
+      
+    } else {
+      ..error_outcome_type_not_implemented(object@outcome_type)
+    }
   }
   
   return(prediction_data)
