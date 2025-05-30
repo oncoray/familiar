@@ -1148,7 +1148,7 @@ fivenum_summary <- function(x, na.rm = FALSE) {
 
 
 get_percentiles <- function(n) {
-  return(seq_len(n) - 1 / 3) / (n + 1 / 3)
+  return((seq_len(n) - 1.0 / 3.0) / (n + 1.0 / 3.0))
 }
 
 
