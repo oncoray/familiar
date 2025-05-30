@@ -4600,6 +4600,7 @@ test_plot_ordering <- function(
     create_novelty_detector = FALSE,
     use_prediction_table = FALSE,
     prediction_type = NULL,
+    use_single_sample = FALSE,
     debug = FALSE,
     parallel = waiver()
 ) {
@@ -4683,6 +4684,7 @@ test_plot_ordering <- function(
   for (outcome_type in outcome_type_available) {
     # Obtain data.
     full_data <- test_create_good_data(outcome_type)
+    single_data <- test_create_one_sample_data(outcome_type)
     empty_data <- test_create_empty_data(outcome_type)
     
     # Parse hyperparameter list
@@ -4737,10 +4739,16 @@ test_plot_ordering <- function(
       )
     ))
     
+    if (use_single_sample) {
+      input_data <- single_data
+    } else {
+      input_data <- full_data
+    }
+    
     # Create familiar data objects.
     data_good_full_lasso_1 <- ..as_familiar_data_object(
       object = model_full_lasso,
-      data = full_data,
+      data = input_data,
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
@@ -4750,7 +4758,7 @@ test_plot_ordering <- function(
     data_good_full_lasso_2 <- ..duplicate_familiar_data_object(data_good_full_lasso_1)
     data_good_full_glm_1 <- ..as_familiar_data_object(
       object = model_full_glm,
-      data = full_data,
+      data = input_data,
       data_element = data_element,
       cl = cl,
       use_prediction_table = use_prediction_table,
