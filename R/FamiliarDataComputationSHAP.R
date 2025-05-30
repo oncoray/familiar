@@ -739,7 +739,7 @@ setMethod(
     )
     
     mapping <- c(mapping, random_mapping)
-    n_mappings <- n_mappings + sapply(random_mapping, nrow)
+    n_mappings <- n_mappings + sum(sapply(random_mapping, nrow))
   }
   
   # Concatenate by rows.
