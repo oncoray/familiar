@@ -832,30 +832,55 @@ setMethod(
   # Prevent notes.
   feature_value <- density <- y_offset <- NULL
   
-  # Get density.
-  density_object <- stats::density(x = x)
-  
-  # Find density at every point and normalise.
-  data <- data.table::data.table(
-    "original_order" = seq_along(x),
-    "shap_value" = x,
-    "feature_value" = value,
-    "density" = approx(x = density_object$x, y = density_object$y, xout = x)$y
+  # Get density. In edge cases, this will fail (e.g. too few samples to
+  # establish a bandwidth for the filter.)
+  density_object <- tryCatch(
+    stats::density(x = x),
+    error = identity
   )
-  data[, "density" := density / max(density)]
+  
+  if (inherits(density_object, "density")) {
+    # Find density at every point and normalise.
+    data <- data.table::data.table(
+      "original_order" = seq_along(x),
+      "shap_value" = x,
+      "feature_value" = value,
+      "density" = approx(x = density_object$x, y = density_object$y, xout = x)$y
+    )
+    data[, "density" := density / max(density)]
+    
+  } else if (length(x) == 1L) {
+    data <- data.table::data.table(
+      "original_order" = seq_along(x),
+      "shap_value" = x,
+      "feature_value" = value,
+      "density" = 0.0
+    )
+    
+  } else {
+    data <- data.table::data.table(
+      "original_order" = seq_along(x),
+      "shap_value" = x,
+      "feature_value" = value,
+      "density" = 1.0
+    )
+  }
   
   if (value_representation == "raw") {
     offset <- stats::rnorm(n = length(x), mean = 0.0, sd = 0.1)
     offset[offset < -0.3] <- -0.3
     offset[offset > 0.3] <- 0.3
     data[, "y_offset" := (feature_value + offset) * density]
-    data[, "y_offset" := 0.35 * y_offset /max(abs(y_offset))]
+    data[, "y_offset" := 0.35 * y_offset / max(abs(y_offset))]
     
   } else {
     offset <- stats::runif(n = length(x), min = -1.0, max = 1.0)
     data[, "y_offset" := offset * density]
-    data[, "y_offset" := 0.35 * y_offset /max(abs(y_offset))]
+    data[, "y_offset" := 0.35 * y_offset / max(abs(y_offset))]
   }
+  
+  # Replace NaN-values.
+  data[is.na(y_offset), "y_offset" := 0.0]
   
   return(data$y_offset)
 }
