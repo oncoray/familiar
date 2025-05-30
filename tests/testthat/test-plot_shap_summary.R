@@ -13,13 +13,27 @@ familiar:::test_plots(
 )
 
 
+# Swarm plot -------------------------------------------------------------------
+familiar:::test_plot_ordering(
+  plot_function = familiar::plot_shap_summary,
+  data_element = "shap",
+  evaluation_time = c(1.0, 2.0, 3.5),
+  plot_args = list(
+    "verbose" = FALSE,
+    "draw" = debug_flag
+  ),
+  debug = debug_flag
+)
+
 
 familiar:::test_plot_ordering(
   plot_function = familiar::plot_shap_summary,
-  outcome_type_available = "multinomial",
   data_element = "shap",
+  evaluation_time = c(1.0, 2.0, 3.5),
   plot_args = list(
-    "verbose" = FALSE
+    "verbose" = FALSE,
+    "draw" = debug_flag
   ),
+  use_single_sample = TRUE,
   debug = debug_flag
 )
