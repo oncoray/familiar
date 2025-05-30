@@ -415,6 +415,11 @@ setMethod(
       evaluation_time = NULL
     )
     
+    if (is.null(predicted_values_iter)) {
+      iter_id <- iter_id + 1L
+      next
+    }
+    
     # Update iterative data.
     mapping <- rbind(mapping, mapping_iter)
     mapping_hash_mapping <- c(mapping_hash_mapping, mapping_hash_iter)
