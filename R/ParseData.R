@@ -568,7 +568,7 @@
 
     # Create new columns and set to NA
     for (current_outcome_col in outcome_column) {
-      data[, (current_outcome_col) := NA]
+      data[, (current_outcome_col) := NA_real_]
     }
     
   } else if (outcome_type %in% c("binomial", "multinomial")) {
