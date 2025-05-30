@@ -382,7 +382,6 @@ setMethod(
   shap_values <- NULL
   
   while (!all_shap_converged && iter_id < n_max_iter) {
-    
     # Determine additional mapping.
     mapping_iter <- .shap_randomise_mapping_from_coalition(
       samples = mapping_input,
@@ -713,7 +712,8 @@ setMethod(
   samples,
   coalitions,
   feature_set,
-  seed
+  seed,
+  n_min_mappings = 300L
 ) {
   # Determine the number of feature values for each value.
   n_feature_values <- lengths(feature_set)
@@ -721,16 +721,26 @@ setMethod(
   # Start random stream
   rstream_object <- .start_random_number_stream(seed)
   
-  # Randomise.
-  mapping <- apply(
-    samples,
-    MARGIN = 1L,
-    ..shap_randomise_mapping_from_coalition,
-    coalitions = coalitions,
-    n_feature_values = n_feature_values,
-    rstream_object = rstream_object,
-    simplify = FALSE
-  )
+  mapping <- list()
+  n_mappings <- 0L
+  
+  # Ensure that sufficient mappings are generated to limit the effect of
+  # overhead on the computation of SHAP values.
+  while (n_mappings < n_min_mappings) {
+    # Randomise.
+    random_mapping <- apply(
+      samples,
+      MARGIN = 1L,
+      ..shap_randomise_mapping_from_coalition,
+      coalitions = coalitions,
+      n_feature_values = n_feature_values,
+      rstream_object = rstream_object,
+      simplify = FALSE
+    )
+    
+    mapping <- c(mapping, random_mapping)
+    n_mappings <- n_mappings + sapply(random_mapping, nrow)
+  }
   
   # Concatenate by rows.
   mapping <- do.call(rbind, mapping)
