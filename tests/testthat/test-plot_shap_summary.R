@@ -41,8 +41,57 @@ familiar:::test_plot_ordering(
 
 # Bar plot ---------------------------------------------------------------------
 
+# By specifying barplot as plot type..
+familiar:::test_plot_ordering(
+  plot_function = familiar::plot_shap_summary,
+  data_element = "shap",
+  evaluation_time = c(1.0, 2.0, 3.5),
+  plot_args = list(
+    "plot_type" = "barplot",
+    "verbose" = FALSE,
+    "draw" = debug_flag
+  ),
+  debug = debug_flag
+)
 
+# By specifying value_representation as abs_mean..
+familiar:::test_plot_ordering(
+  plot_function = familiar::plot_shap_summary,
+  data_element = "shap",
+  evaluation_time = c(1.0, 2.0, 3.5),
+  plot_args = list(
+    "value_representation" = "abs_mean",
+    "verbose" = FALSE,
+    "draw" = debug_flag
+  ),
+  debug = debug_flag
+)
 
+# By specifying value_representation as abs_min.
+familiar:::test_plot_ordering(
+  plot_function = familiar::plot_shap_summary,
+  data_element = "shap",
+  evaluation_time = c(1.0, 2.0, 3.5),
+  plot_args = list(
+    "value_representation" = "abs_min",
+    "verbose" = FALSE,
+    "draw" = debug_flag
+  ),
+  debug = debug_flag
+)
+
+# By specifying value_representation as abs_max.
+familiar:::test_plot_ordering(
+  plot_function = familiar::plot_shap_summary,
+  data_element = "shap",
+  evaluation_time = c(1.0, 2.0, 3.5),
+  plot_args = list(
+    "value_representation" = "abs_max",
+    "verbose" = FALSE,
+    "draw" = debug_flag
+  ),
+  debug = debug_flag
+)
 # Box plot ---------------------------------------------------------------------
 
 
