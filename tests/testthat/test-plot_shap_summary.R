@@ -9,7 +9,8 @@ familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
   outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
-  debug = debug_flag
+  debug = debug_flag,
+  not_available_no_samples = FALSE
 )
 
 
