@@ -621,7 +621,7 @@ setMethod(
   # Create a legend label.
   legend_label <- .create_plot_legend_title(
     user_label = legend_label,
-    color_by = ifelse(value_representation == "raw", "feature_value", color_by)
+    color_by = if(value_representation == "raw") "feature_value" else color_by
   )
   
   # Check remaining input arguments.
