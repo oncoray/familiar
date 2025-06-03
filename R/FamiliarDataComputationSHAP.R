@@ -334,6 +334,9 @@ setMethod(
     )
   }
   
+  # Ensure that data is unique.
+  data <- select_unique_data(data = data)
+  
   # Get sample identifiers.
   sample_identifiers <- get_unique_row_names(data)
   

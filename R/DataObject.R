@@ -1888,13 +1888,30 @@ setMethod(
 
 
 
-# aggregate_data (delayedDataObject) --------------------------------------------------
+# aggregate_data (delayedDataObject) -------------------------------------------
 setMethod(
   "aggregate_data",
   signature(data = "delayedDataObject"),
   function(data) {
     # Mark for future aggregation after loading the data.
     data@aggregate_on_load <- TRUE
+    return(data)
+  }
+)
+
+
+
+# select_unique_data (dataObject) ----------------------------------------------
+setMethod(
+  "select_unique_data",
+  signature(data = "dataObject"),
+  function(data) {
+    # Check if the data is empty
+    if (is_empty(data)) return(data)
+    
+    # Drop any duplicates (e.g. from bootstraps).
+    data@data <- unique(data@data)
+    
     return(data)
   }
 )

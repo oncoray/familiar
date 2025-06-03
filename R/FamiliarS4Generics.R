@@ -70,6 +70,8 @@ setGeneric("cluster_features", function(data, ...) standardGeneric("cluster_feat
 
 setGeneric("aggregate_data", function(data, ...) standardGeneric("aggregate_data"))
 
+setGeneric("select_unique_data", function(data, ...) standardGeneric("select_unique_data"))
+
 setGeneric("select_features", function(data, ...) standardGeneric("select_features"))
 
 setGeneric("preprocess_data", function(data, object, ...) standardGeneric("preprocess_data"))
