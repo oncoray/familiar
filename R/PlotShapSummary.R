@@ -695,7 +695,7 @@ setMethod(
       
     } else {
       p <- p + ggplot2::geom_jitter(
-        mapping = ggplot::aes(color = !!sym("color_breaks")),
+        mapping = ggplot2::aes(color = !!sym("color_breaks")),
         position = ggplot2::position_nudge(y = x$y_offset)
       )
       
