@@ -437,6 +437,18 @@ setMethod(
       # Declare subtitle components.
       additional_subtitle <- NULL
       
+      # Add evaluation time as subtitle component if it is not used
+      # otherwise.
+      if (
+        !"evaluation_time" %in% c(split_by, color_by, facet_by) &&
+        object@outcome_type %in% c("survival")
+      ) {
+        additional_subtitle <- c(
+          additional_subtitle,
+          .add_time_to_plot_subtitle(x_split[[ii]]$evaluation_time[1L])
+        )
+      }
+      
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
