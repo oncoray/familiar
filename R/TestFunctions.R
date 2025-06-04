@@ -4844,8 +4844,14 @@ test_export <- function(
     ...,
     export_args = list(),
     debug = FALSE,
+    debug_config = NULL,
+    debug_outcome_type = NULL,
     parallel = waiver()
 ) {
+  # Automatically override debug
+  if (!is.null(debug_config)) debug <- TRUE
+  if (!is.null(debug_outcome_type)) debug <- TRUE
+  
   if (debug) {
     test_fun <- debug_test_that
   } else {
@@ -4874,7 +4880,12 @@ test_export <- function(
     cl <- NULL
   }
   
-  test_collection_generator <- get_test_collection_generation(..., cl = cl)
+  test_collection_generator <- get_test_collection_generation(
+    ...,
+    cl = cl, 
+    debug_config = debug_config,
+    debug_outcome_type = debug_outcome_type
+  )
   
   while (TRUE) {
     # Generate parameters.
