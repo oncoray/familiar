@@ -963,9 +963,16 @@ setMethod(
     data = "dataObject"
   ),
   function(object, data, type = "default", ...) {
+    ..set_max <- function(x) {
+      y <- numeric(length(x))
+      y[which.max(x)] <- 1.0
+      names(y) <- names(x)
+      return(as.list(y))
+    }
+    
     # Suppress NOTES due to non-standard evaluation in data.table
     predicted_outcome <- NULL
-
+    
     # Check if the model was trained.
     if (!model_is_trained(object)) {
       return(callNextMethod())
@@ -975,7 +982,7 @@ setMethod(
     if (is_empty(data)) {
       return(callNextMethod())
     }
-
+    
     # Get a prediction table.
     prediction_table <- callNextMethod()
     
@@ -987,13 +994,11 @@ setMethod(
       # Get class levels
       class_levels <- get_outcome_class_levels(x = object)
       
-      # Set probability to 1.0 for the column that matches the outcome.
-      for (ii in seq_along(class_levels)) {
-        prediction_table@prediction_data[
-          , (class_levels[ii]) := as.numeric(data@data$outcome == class_levels[ii])
-        ]
-      }
-
+      # Set probability to 1.0 for the column with the highest predicted
+      # probability. First add maximum probability for each instance.
+      x <- prediction_table@prediction_data[, ..set_max(.SD), by = .I]
+      prediction_table@prediction_data <- x[, mget(class_levels)]
+      
     } else if (object@outcome_type == "continuous") {
       # Set predicted outcome.
       prediction_table@prediction_data[, "predicted_outcome" := data@data$outcome]
