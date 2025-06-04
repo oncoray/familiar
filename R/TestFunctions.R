@@ -5405,6 +5405,9 @@ get_test_collection_generation <- function(...) {
     # Within this function, test_config and debug_config are the same.
     if (!is.null(test_config)) debug_config <- test_config
     
+    # TODO: Fully deprecate this.
+    if (test_specific_config) ..error_reached_unreachable_code("test_specific_config is deprecated; replace by test_config = \"normal\"")
+    
     # Iterate over the outcome type.
     for (outcome_type in all_outcome_types) {
       
@@ -5543,10 +5546,6 @@ get_test_collection_generation <- function(...) {
           "expectation" = test_expectation
         ))
       }
-      
-      # Go to next outcome type if only a specific configuration needs to be
-      # tested.
-      if (test_specific_config) next
       
       # Fully prospective data -------------------------------------------------
       
