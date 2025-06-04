@@ -5341,6 +5341,7 @@ get_test_collection_generation <- function(...) {
     ...,
     cl = NULL,
     test_specific_config = FALSE,
+    debug_config = NULL,
     n_models = 1L,
     create_novelty_detector = FALSE
   ) {
@@ -5482,7 +5483,7 @@ get_test_collection_generation <- function(...) {
         }
       }
       
-      good_data_1 <- ..as_familiar_data_object(
+      good_data_1 %<~% ..as_familiar_data_object(
         object = model_full,
         data = full_data,
         data_element = data_element,
@@ -5490,33 +5491,36 @@ get_test_collection_generation <- function(...) {
         use_prediction_table = use_prediction_table,
         ...
       )
-      good_data_2 <- ..duplicate_familiar_data_object(good_data_1)
       
-      familiar_data_list <- mapply(
-        set_object_name,
-        list(good_data_1, good_data_2, good_data_1, good_data_2),
-        c("development_1", "development_2", "validation_1", "validation_2")
-      )
+      good_data_2 %<~% ..duplicate_familiar_data_object(good_data_1)
       
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("development", "development", "validation", "validation")
-      ))
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
-        " be created for a complete data set."
-      )
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
+      if (is.null(debug_config) || "normal" %in% debug_config) {
+        familiar_data_list <- mapply(
+          set_object_name,
+          list(good_data_1, good_data_2, good_data_1, good_data_2),
+          c("development_1", "development_2", "validation_1", "validation_2")
+        )
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("development", "development", "validation", "validation")
+        ))
+        
+        test_message <- paste0(
+          "(normal) Data for ", outcome_type, " outcomes ",
+          ifelse(outcome_type %in% outcome_type_available, "can", "cannot"),
+          " be created for a complete data set."
+        )
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+      }
       
       # Go to next outcome type if only a specific configuration needs to be
       # tested.
@@ -5524,189 +5528,210 @@ get_test_collection_generation <- function(...) {
       
       # Fully prospective data -------------------------------------------------
       
-      fully_prospective_data <- ..as_familiar_data_object(
-        object = model_full,
-        data = test_create_prospective_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      familiar_data_list <- mapply(set_object_name, list(fully_prospective_data), c("prospective"))
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("prospective")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available && !.not_available_all_prospective) {
-        test_expectation <- "all_present"
+      if (is.null(debug_config) || "prospective" %in% debug_config) {
+        fully_prospective_data <- ..as_familiar_data_object(
+          object = model_full,
+          data = test_create_prospective_data(outcome_type),
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        familiar_data_list <- mapply(set_object_name, list(fully_prospective_data), c("prospective"))
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("prospective")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available && !.not_available_all_prospective) {
+          test_expectation <- "all_present"
+        }
+        
+        test_message <- paste0(
+          "(prospective) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a prospective data set without known outcome."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("fully_prospective_data")
       }
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a prospective data set without known outcome."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("fully_prospective_data")
       
       # Mostly prospective data ------------------------------------------------
       
-      mostly_prospective_data <- ..as_familiar_data_object(
-        object = model_full,
-        data = test_create_mostly_prospective_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      familiar_data_list <- mapply(set_object_name, list(mostly_prospective_data), c("prospective"))
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("prospective")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (
-        outcome_type %in% outcome_type_available &&
-        (!.not_available_any_prospective || !.not_available_single_sample)
-      ) {
-        test_expectation <- "all_present"
+      if (is.null(debug_config) || "mostly prospective" %in% debug_config) {
+        mostly_prospective_data <- ..as_familiar_data_object(
+          object = model_full,
+          data = test_create_mostly_prospective_data(outcome_type),
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        familiar_data_list <- mapply(set_object_name, list(mostly_prospective_data), c("prospective"))
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("prospective")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (
+          outcome_type %in% outcome_type_available &&
+          (!.not_available_any_prospective || !.not_available_single_sample)
+        ) {
+          test_expectation <- "all_present"
+        }
+        
+        test_message <- paste0(
+          "(mostly prospective) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a prospective data set with one instance with known outcome."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("mostly_prospective_data")
       }
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a prospective data set with one instance with known outcome."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("mostly_prospective_data")
       
       # Mostly retrospective data ----------------------------------------------
       
-      mostly_retrospective_data <- ..as_familiar_data_object(
-        object = model_full,
-        data = test_create_partially_prospective_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      familiar_data_list <- mapply(set_object_name, list(mostly_retrospective_data), c("prospective"))
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("prospective")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a prospective data set where most instances are known."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("mostly_retrospective_data")
+      if (is.null(debug_config) || "few prospective" %in% debug_config) {
+        
+        mostly_retrospective_data <- ..as_familiar_data_object(
+          object = model_full,
+          data = test_create_partially_prospective_data(outcome_type),
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        familiar_data_list <- mapply(set_object_name, list(mostly_retrospective_data), c("prospective"))
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("prospective")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
+        
+        test_message <- paste0(
+          "(few prospective) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a prospective data set where most instances are known."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("mostly_retrospective_data")
+      }
       
       # Single-instance data ---------------------------------------------------
       
-      single_instance_data <- ..as_familiar_data_object(
-        object = model_full,
-        data = test_create_one_sample_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      familiar_data_list <- mapply(set_object_name, list(single_instance_data), c("one_sample"))
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("one_sample")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available && !.not_available_single_sample) {
-        test_expectation <- "all_present"
+      if (is.null(debug_config) || "single instance" %in% debug_config) {
+        
+        single_instance_data <- ..as_familiar_data_object(
+          object = model_full,
+          data = test_create_one_sample_data(outcome_type),
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        familiar_data_list <- mapply(set_object_name, list(single_instance_data), c("one_sample"))
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("one_sample")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available && !.not_available_single_sample) {
+          test_expectation <- "all_present"
+        }
+        
+        test_message <- paste0(
+          "(single instance) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a prospective data set with one instance."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("single_instance_data")
       }
       
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a prospective data set with one instance."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("single_instance_data")
-      
       # Bootstrapped data ------------------------------------------------------
+      if (is.null(debug_config) || "bootstrap" %in% debug_config) {
+        
+        bootstrapped_data <- ..as_familiar_data_object(
+          object = model_full,
+          data = test_create_bootstrapped_data(outcome_type),
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        familiar_data_list <- mapply(set_object_name, list(bootstrapped_data), c("bootstrapped"))
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("bootstrapped")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
+        
+        test_message <- paste0(
+          "(bootstrap) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a prospective, bootstrapped, data set."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("bootstrapped_data")
+      }
       
-      bootstrapped_data <- ..as_familiar_data_object(
+      # Partially absent data --------------------------------------------------
+      
+      empty_data_1 %<~% ..as_familiar_data_object(
         object = model_full,
-        data = test_create_bootstrapped_data(outcome_type),
+        data = test_create_empty_data(outcome_type),
         data_element = data_element,
         cl = cl,
         use_prediction_table = use_prediction_table,
         ...
       )
-      
-      familiar_data_list <- mapply(set_object_name, list(bootstrapped_data), c("bootstrapped"))
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("bootstrapped")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a prospective, bootstrapped, data set."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("bootstrapped_data")
-      
-      # Partially absent data --------------------------------------------------
       
       # Train a naive model.
       naive_model <- suppressWarnings(train_familiar(
@@ -5726,223 +5751,228 @@ get_test_collection_generation <- function(...) {
       # Replace vimp_method attribute
       naive_model@vimp_method <- "mifs"
       
-      naive_data <- ..as_familiar_data_object(
-        object = naive_model,
-        data = test_create_good_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      empty_data_1 <- ..as_familiar_data_object(
-        object = model_full,
-        data = test_create_empty_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      familiar_data_list <- mapply(
-        set_object_name,
-        list(good_data_1, naive_data, empty_data_1, good_data_2),
-        c("development_1", "development_2", "validation_1", "validation_2")
-      )
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("development", "development", "validation", "validation")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a dataset with some missing data."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("naive_data")
+      if (is.null(debug_config) || "single empty dataset" %in% debug_config) {
+        naive_data <- ..as_familiar_data_object(
+          object = naive_model,
+          data = test_create_good_data(outcome_type),
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        familiar_data_list <- mapply(
+          set_object_name,
+          list(good_data_1, naive_data, empty_data_1, good_data_2),
+          c("development_1", "development_2", "validation_1", "validation_2")
+        )
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("development", "development", "validation", "validation")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
+        
+        test_message <- paste0(
+          "(single empty dataset) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a dataset with some missing data."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("naive_data")
+      }
       
       # Fully absent data ------------------------------------------------------
       
-      empty_data_2 <- ..duplicate_familiar_data_object(empty_data_1)
-      
-      familiar_data_list <- mapply(
-        set_object_name,
-        list(empty_data_1, empty_data_2, empty_data_1, empty_data_2),
-        c("development_1", "development_2", "validation_1", "validation_2")
-      )
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("development", "development", "validation", "validation")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available && !.not_available_no_samples) test_expectation <- "all_present"
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a dataset with completely missing data."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("empty_data_1", "empty_data_2")
+      if (is.null(debug_config) || "all empty datasets" %in% debug_config) {
+        empty_data_2 <- ..duplicate_familiar_data_object(empty_data_1)
+        
+        familiar_data_list <- mapply(
+          set_object_name,
+          list(empty_data_1, empty_data_2, empty_data_1, empty_data_2),
+          c("development_1", "development_2", "validation_1", "validation_2")
+        )
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("development", "development", "validation", "validation")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available && !.not_available_no_samples) test_expectation <- "all_present"
+        
+        test_message <- paste0(
+          "(all empty datasets) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a dataset with completely missing data."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("empty_data_2")
+      }
+      rm("empty_data_1")
       
       # Partially single-instance data -----------------------------------------
       
-      one_sample_data_1 <- ..as_familiar_data_object(
-        object = model_full,
-        data = test_create_one_sample_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
+      if (is.null(debug_config) || "some single instance datasets" %in% debug_config) {
       
-      one_sample_data_2 <- ..duplicate_familiar_data_object(one_sample_data_1)
-      
-      familiar_data_list <- mapply(
-        set_object_name,
-        list(good_data_1, good_data_2, one_sample_data_1, one_sample_data_2),
-        c("development_1", "development_2", "validation_1", "validation_2")
-      )
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("development", "development", "validation", "validation")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a dataset where some data only have one sample."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("one_sample_data_1", "one_sample_data_2")
+        one_sample_data_1 <- ..as_familiar_data_object(
+          object = model_full,
+          data = test_create_one_sample_data(outcome_type),
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        one_sample_data_2 <- ..duplicate_familiar_data_object(one_sample_data_1)
+        
+        familiar_data_list <- mapply(
+          set_object_name,
+          list(good_data_1, good_data_2, one_sample_data_1, one_sample_data_2),
+          c("development_1", "development_2", "validation_1", "validation_2")
+        )
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("development", "development", "validation", "validation")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
+        
+        test_message <- paste0(
+          "(some single instance datasets) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a dataset where some data only have one sample."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("one_sample_data_1", "one_sample_data_2")
+      }
       
       # Partially identical data -----------------------------------------------
       
-      identical_sample_data_1 <- ..as_familiar_data_object(
-        object = model_full,
-        data = test_create_all_identical_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      identical_sample_data_2 <- ..duplicate_familiar_data_object(identical_sample_data_1)
-      
-      familiar_data_list <- mapply(
-        set_object_name,
-        list(good_data_1, good_data_2, identical_sample_data_1, identical_sample_data_2),
-        c("development_1", "development_2", "validation_1", "validation_2")
-      )
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("development", "development", "validation", "validation")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a dataset where some data only have identical samples."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("identical_sample_data_1", "identical_sample_data_2")
+      if (is.null(debug_config) || "identical instance datasets" %in% debug_config) {
+        
+        identical_sample_data_1 <- ..as_familiar_data_object(
+          object = model_full,
+          data = test_create_all_identical_data(outcome_type),
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        identical_sample_data_2 <- ..duplicate_familiar_data_object(identical_sample_data_1)
+        
+        familiar_data_list <- mapply(
+          set_object_name,
+          list(good_data_1, good_data_2, identical_sample_data_1, identical_sample_data_2),
+          c("development_1", "development_2", "validation_1", "validation_2")
+        )
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("development", "development", "validation", "validation")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
+        
+        test_message <- paste0(
+          "(identical instance datasets) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a dataset where some data only have identical samples."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("identical_sample_data_1", "identical_sample_data_2")
+      }
       
       # Multi-model ensemble ---------------------------------------------------
       
-      multi_model_data <- list(
-        test_create_good_data(outcome_type),
-        test_create_bootstrapped_data(outcome_type, seed = 1844L),
-        test_create_bootstrapped_data(outcome_type, seed = 1863L)
-      )
+      if (is.null(debug_config) || "multiple models" %in% debug_config) {
       
-      multi_model_set <- suppressWarnings(lapply(
-        multi_model_data,
-        test_train,
-        cluster_method = "hclust",
-        imputation_method = "simple",
-        hyperparameter_list = hyperparameters,
-        learner = "lasso",
-        cluster_similarity_threshold = 0.7,
-        time_max = 3.5,
-        create_novelty_detector = create_novelty_detector
-      ))
-      
-      # Replace vimp_method attribute and add naive_model to the multi-model
-      # ensemble.
-      naive_model@vimp_method <- "none"
-      multi_model_set <- c(multi_model_set, list(naive_model))
-      
-      multi_model_data <- ..as_familiar_data_object(
-        object = multi_model_set,
-        data = full_data,
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      familiar_data_list <- mapply(set_object_name, list(multi_model_data), c("development_1"))
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("development")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a dataset created from an ensemble of multiple models."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("multi_model_data", "multi_model_set", "naive_model")
+        multi_model_data <- list(
+          test_create_good_data(outcome_type),
+          test_create_bootstrapped_data(outcome_type, seed = 1844L),
+          test_create_bootstrapped_data(outcome_type, seed = 1863L)
+        )
+        
+        multi_model_set <- suppressWarnings(lapply(
+          multi_model_data,
+          test_train,
+          cluster_method = "hclust",
+          imputation_method = "simple",
+          hyperparameter_list = hyperparameters,
+          learner = "lasso",
+          cluster_similarity_threshold = 0.7,
+          time_max = 3.5,
+          create_novelty_detector = create_novelty_detector
+        ))
+        
+        # Replace vimp_method attribute and add naive_model to the multi-model
+        # ensemble.
+        naive_model@vimp_method <- "none"
+        multi_model_set <- c(multi_model_set, list(naive_model))
+        
+        multi_model_data <- ..as_familiar_data_object(
+          object = multi_model_set,
+          data = full_data,
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        familiar_data_list <- mapply(set_object_name, list(multi_model_data), c("development_1"))
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("development")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available) test_expectation <- "all_present"
+        
+        test_message <- paste0(
+          "(multiple models) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a dataset created from an ensemble of multiple models."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("multi_model_data", "multi_model_set", "naive_model")
+      }
       rm("good_data_1", "good_data_2", "model_full")
       
       # One-feature data -------------------------------------------------------
@@ -5959,7 +5989,7 @@ get_test_collection_generation <- function(...) {
         create_novelty_detector = create_novelty_detector
       ))
       
-      good_one_feature_data_1 <- ..as_familiar_data_object(
+      good_one_feature_data_1 %<~% ..as_familiar_data_object(
         object = one_feature_model,
         data = test_create_single_feature_data(outcome_type),
         data_element = data_element,
@@ -5967,205 +5997,78 @@ get_test_collection_generation <- function(...) {
         use_prediction_table = use_prediction_table,
         ...
       )
-      good_one_feature_data_2 <- ..duplicate_familiar_data_object(good_one_feature_data_1)
+      good_one_feature_data_2 %<~% ..duplicate_familiar_data_object(good_one_feature_data_1)
       
-      familiar_data_list <- mapply(
-        set_object_name,
-        list(good_one_feature_data_1, good_one_feature_data_2, good_one_feature_data_1, good_one_feature_data_2),
-        c("development_1", "development_2", "validation_1", "validation_2")
-      )
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("development", "development", "validation", "validation")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available && !.not_available_single_feature) {
-        test_expectation <- "all_present"
+      if (is.null(debug_config) || "single feature" %in% debug_config) {
+        
+        familiar_data_list <- mapply(
+          set_object_name,
+          list(good_one_feature_data_1, good_one_feature_data_2, good_one_feature_data_1, good_one_feature_data_2),
+          c("development_1", "development_2", "validation_1", "validation_2")
+        )
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("development", "development", "validation", "validation")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available && !.not_available_single_feature) {
+          test_expectation <- "all_present"
+        }
+        
+        test_message <- paste0(
+          "(single feature) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a complete one-feature data set."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
       }
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a complete one-feature data set."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
       
       # Partially single-instance one-feature data -----------------------------
       
-      good_one_sample_one_feature_data_1 <- ..as_familiar_data_object(
-        object = one_feature_model,
-        data = test_create_single_feature_one_sample_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      good_one_sample_one_feature_data_2 <- ..duplicate_familiar_data_object(good_one_sample_one_feature_data_1)
-      
-      familiar_data_list <- mapply(
-        set_object_name,
-        list(
-          good_one_feature_data_1, good_one_feature_data_2, 
-          good_one_sample_one_feature_data_1, good_one_sample_one_feature_data_2
-        ),
-        c("development_1", "development_2", "validation_1", "validation_2")
-      )
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("development", "development", "validation", "validation")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available && !.not_available_single_feature) {
-        test_expectation <- "all_present"
-      }
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a one-feature dataset with some one-sample data."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("good_one_sample_one_feature_data_1", "good_one_sample_one_feature_data_2")
-      
-      # Partially identical one-feature data -----------------------------------
-      
-      good_identical_one_feature_data_1 <- ..as_familiar_data_object(
-        object = one_feature_model,
-        data = test_create_single_feature_invariant_data(outcome_type),
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      good_identical_one_feature_data_2 <- ..duplicate_familiar_data_object(good_identical_one_feature_data_1)
-      
-      familiar_data_list <- mapply(
-        set_object_name,
-        list(
-          good_one_feature_data_1, good_one_feature_data_2, 
-          good_identical_one_feature_data_1, good_identical_one_feature_data_2
-        ),
-        c("development_1", "development_2", "validation_1", "validation_2")
-      )
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("development", "development", "validation", "validation")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available && !.not_available_single_feature) {
-        test_expectation <- "all_present"
-      }
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for a one-feature dataset with some invariant data."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("good_identical_one_feature_data_1", "good_identical_one_feature_data_2")
-      rm("good_one_feature_data_1", "good_one_feature_data_2", "one_feature_model")
-      
-      # Data with limited censoring --------------------------------------------
-      if (outcome_type %in% c("survival", "competing_risk")) {
-        # Train the model.
-        model_cens_1 <- suppressWarnings(test_train(
-          cl = cl,
-          data = test_create_good_data_without_censoring(outcome_type),
-          cluster_method = "none",
-          imputation_method = "simple",
-          hyperparameter_list = hyperparameters,
-          learner = "lasso",
-          time_max = 3.5
-        ))
+      if (is.null(debug_config) || "single feature and sample" %in% debug_config) {
         
-        model_cens_2 <- suppressWarnings(test_train(
-          cl = cl,
-          data = test_create_good_data_one_censored(outcome_type),
-          cluster_method = "none",
-          imputation_method = "simple",
-          hyperparameter_list = hyperparameters,
-          learner = "lasso",
-          time_max = 3.5
-        ))
-        
-        model_cens_3 <- suppressWarnings(test_train(
-          cl = cl,
-          data = test_create_good_data_few_censored(outcome_type),
-          cluster_method = "none",
-          imputation_method = "simple",
-          hyperparameter_list = hyperparameters,
-          learner = "lasso",
-          time_max = 3.5
-        ))
-        
-        data_cens_1 <- as_familiar_data(
-          object = model_cens_1,
-          data = test_create_good_data_without_censoring(outcome_type),
+        good_one_sample_one_feature_data_1 <- ..as_familiar_data_object(
+          object = one_feature_model,
+          data = test_create_single_feature_one_sample_data(outcome_type),
           data_element = data_element,
           cl = cl,
           use_prediction_table = use_prediction_table,
           ...
         )
-        data_cens_2 <- as_familiar_data(
-          object = model_cens_2, 
-          data = test_create_good_data_one_censored(outcome_type),
-          data_element = data_element,
-          cl = cl,
-          use_prediction_table = use_prediction_table,
-          ...
-        )
-        data_cens_3 <- as_familiar_data(
-          object = model_cens_3,
-          data = test_create_good_data_few_censored(outcome_type),
-          data_element = data_element, 
-          cl = cl,
-          use_prediction_table = use_prediction_table,
-          ...
+        good_one_sample_one_feature_data_2 <- ..duplicate_familiar_data_object(
+          good_one_sample_one_feature_data_1
         )
         
         familiar_data_list <- mapply(
           set_object_name,
-          list(data_cens_1, data_cens_2, data_cens_3),
-          c("no_censoring", "one_censored", "few_censored")
+          list(
+            good_one_feature_data_1, good_one_feature_data_2, 
+            good_one_sample_one_feature_data_1, good_one_sample_one_feature_data_2
+          ),
+          c("development_1", "development_2", "validation_1", "validation_2")
         )
         
         familiar_collection <- suppressWarnings(as_familiar_collection(
           familiar_data_list,
-          familiar_data_names = c("no_censoring", "one_censored", "few_censored")
+          familiar_data_names = c("development", "development", "validation", "validation")
         ))
         
         test_expectation <- "all_absent"
-        if (outcome_type %in% outcome_type_available) {
+        if (outcome_type %in% outcome_type_available && !.not_available_single_feature) {
           test_expectation <- "all_present"
         }
         
         test_message <- paste0(
-          "Data for ", outcome_type, " outcomes ",
+          "(single feature and sample) Data for ", outcome_type, " outcomes ",
           ifelse(test_expectation == "all_present", "can", "cannot"),
-          " be created for a data set that includes no or limited censoring."
+          " be created for a one-feature dataset with some one-sample data."
         )
         
         coro::yield(list(
@@ -6174,121 +6077,166 @@ get_test_collection_generation <- function(...) {
           "expectation" = test_expectation
         ))
         
-        rm("data_cens_1", "data_cens_2", "data_cens_3", "model_cens_1", "model_cens_2", "model_cens_3")
+        rm("good_one_sample_one_feature_data_1", "good_one_sample_one_feature_data_2")
+      }
+      
+      # Partially identical one-feature data -----------------------------------
+      
+      if (is.null(debug_config) || "single feature identical instance dataset" %in% debug_config) {
+        
+        good_identical_one_feature_data_1 <- ..as_familiar_data_object(
+          object = one_feature_model,
+          data = test_create_single_feature_invariant_data(outcome_type),
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        good_identical_one_feature_data_2 <- ..duplicate_familiar_data_object(good_identical_one_feature_data_1)
+        
+        familiar_data_list <- mapply(
+          set_object_name,
+          list(
+            good_one_feature_data_1, good_one_feature_data_2, 
+            good_identical_one_feature_data_1, good_identical_one_feature_data_2
+          ),
+          c("development_1", "development_2", "validation_1", "validation_2")
+        )
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("development", "development", "validation", "validation")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available && !.not_available_single_feature) {
+          test_expectation <- "all_present"
+        }
+        
+        test_message <- paste0(
+          "(single feature identical instance dataset) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for a one-feature dataset with some invariant data."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("good_identical_one_feature_data_1", "good_identical_one_feature_data_2")
+      }
+      rm("good_one_feature_data_1", "good_one_feature_data_2", "one_feature_model")
+      
+      # Data with limited censoring --------------------------------------------
+      if (is.null(debug_config) || "limited censoring" %in% debug_config) {
+        if (outcome_type %in% c("survival", "competing_risk")) {
+          # Train the model.
+          model_cens_1 <- suppressWarnings(test_train(
+            cl = cl,
+            data = test_create_good_data_without_censoring(outcome_type),
+            cluster_method = "none",
+            imputation_method = "simple",
+            hyperparameter_list = hyperparameters,
+            learner = "lasso",
+            time_max = 3.5
+          ))
+          
+          model_cens_2 <- suppressWarnings(test_train(
+            cl = cl,
+            data = test_create_good_data_one_censored(outcome_type),
+            cluster_method = "none",
+            imputation_method = "simple",
+            hyperparameter_list = hyperparameters,
+            learner = "lasso",
+            time_max = 3.5
+          ))
+          
+          model_cens_3 <- suppressWarnings(test_train(
+            cl = cl,
+            data = test_create_good_data_few_censored(outcome_type),
+            cluster_method = "none",
+            imputation_method = "simple",
+            hyperparameter_list = hyperparameters,
+            learner = "lasso",
+            time_max = 3.5
+          ))
+          
+          data_cens_1 <- as_familiar_data(
+            object = model_cens_1,
+            data = test_create_good_data_without_censoring(outcome_type),
+            data_element = data_element,
+            cl = cl,
+            use_prediction_table = use_prediction_table,
+            ...
+          )
+          data_cens_2 <- as_familiar_data(
+            object = model_cens_2, 
+            data = test_create_good_data_one_censored(outcome_type),
+            data_element = data_element,
+            cl = cl,
+            use_prediction_table = use_prediction_table,
+            ...
+          )
+          data_cens_3 <- as_familiar_data(
+            object = model_cens_3,
+            data = test_create_good_data_few_censored(outcome_type),
+            data_element = data_element, 
+            cl = cl,
+            use_prediction_table = use_prediction_table,
+            ...
+          )
+          
+          familiar_data_list <- mapply(
+            set_object_name,
+            list(data_cens_1, data_cens_2, data_cens_3),
+            c("no_censoring", "one_censored", "few_censored")
+          )
+          
+          familiar_collection <- suppressWarnings(as_familiar_collection(
+            familiar_data_list,
+            familiar_data_names = c("no_censoring", "one_censored", "few_censored")
+          ))
+          
+          test_expectation <- "all_absent"
+          if (outcome_type %in% outcome_type_available) {
+            test_expectation <- "all_present"
+          }
+          
+          test_message <- paste0(
+            "(limited censoring) Data for ", outcome_type, " outcomes ",
+            ifelse(test_expectation == "all_present", "can", "cannot"),
+            " be created for a data set that includes no or limited censoring."
+          )
+          
+          coro::yield(list(
+            "collection" = familiar_collection,
+            "message" = test_message,
+            "expectation" = test_expectation
+          ))
+          
+          rm("data_cens_1", "data_cens_2", "data_cens_3")
+          rm("model_cens_1", "model_cens_2", "model_cens_3")
+        }
       }
       
       # Only invalid predictions -----------------------------------------------
       
-      model_failed_predictions <- suppressWarnings(test_train(
-        cl = cl,
-        data = full_data,
-        cluster_method = "none",
-        imputation_method = "simple",
-        hyperparameter_list = hyperparameters,
-        learner = "lasso_test_all_fail",
-        time_max = 3.5,
-        create_novelty_detector = create_novelty_detector
-      ))
-      
-      failed_prediction_data <- ..as_familiar_data_object(
-        object = model_failed_predictions,
-        data = full_data,
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      familiar_data_list <- mapply(set_object_name, list(failed_prediction_data), c("all_failed_predictions"))
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("all_failed_predictions")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available && !.not_available_all_predictions_fail) {
-        test_expectation <- "all_present"
-      }
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for models that do not provide valid predictions."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("failed_prediction_data", "model_failed_predictions")
-      
-      # Some invalid predictions -----------------------------------------------
-      
-      model_failing_predictions <- suppressWarnings(test_train(
-        cl = cl,
-        data = full_data,
-        cluster_method = "none",
-        imputation_method = "simple",
-        hyperparameter_list = hyperparameters,
-        learner = "lasso_test_some_fail",
-        time_max = 3.5,
-        create_novelty_detector = create_novelty_detector
-      ))
-      
-      failing_prediction_data <- ..as_familiar_data_object(
-        object = model_failing_predictions,
-        data = full_data,
-        data_element = data_element,
-        cl = cl,
-        use_prediction_table = use_prediction_table,
-        ...
-      )
-      
-      familiar_data_list <- mapply(set_object_name, list(failing_prediction_data), c("some_failed_predictions"))
-      
-      familiar_collection <- suppressWarnings(as_familiar_collection(
-        familiar_data_list,
-        familiar_data_names = c("some_failed_predictions")
-      ))
-      
-      test_expectation <- "all_absent"
-      if (outcome_type %in% outcome_type_available && !.not_available_some_predictions_fail) {
-        test_expectation <- "all_present"
-      }
-      
-      test_message <- paste0(
-        "Data for ", outcome_type, " outcomes ",
-        ifelse(test_expectation == "all_present", "can", "cannot"),
-        " be created for models that provide some invalid predictions."
-      )
-      
-      coro::yield(list(
-        "collection" = familiar_collection,
-        "message" = test_message,
-        "expectation" = test_expectation
-      ))
-      
-      rm("failing_prediction_data", "model_failing_predictions")
-      
-      # Extreme predicted values -----------------------------------------------
-      
-      if (outcome_type %in% c("binomial", "multinomial")) {
-        model_extreme_predictions <- suppressWarnings(test_train(
+      if (is.null(debug_config) || "all invalid predictions" %in% debug_config) {
+        model_failed_predictions <- suppressWarnings(test_train(
           cl = cl,
           data = full_data,
           cluster_method = "none",
           imputation_method = "simple",
           hyperparameter_list = hyperparameters,
-          learner = "lasso_test_extreme",
+          learner = "lasso_test_all_fail",
           time_max = 3.5,
           create_novelty_detector = create_novelty_detector
         ))
         
-        extreme_prediction_data <- ..as_familiar_data_object(
-          object = model_extreme_predictions,
+        failed_prediction_data <- ..as_familiar_data_object(
+          object = model_failed_predictions,
           data = full_data,
           data_element = data_element,
           cl = cl,
@@ -6296,22 +6244,22 @@ get_test_collection_generation <- function(...) {
           ...
         )
         
-        familiar_data_list <- mapply(set_object_name, list(extreme_prediction_data), c("extreme_predictions"))
+        familiar_data_list <- mapply(set_object_name, list(failed_prediction_data), c("all_failed_predictions"))
         
         familiar_collection <- suppressWarnings(as_familiar_collection(
           familiar_data_list,
-          familiar_data_names = c("extreme_predictions")
+          familiar_data_names = c("all_failed_predictions")
         ))
         
         test_expectation <- "all_absent"
-        if (outcome_type %in% outcome_type_available && !.not_available_extreme_probability) {
+        if (outcome_type %in% outcome_type_available && !.not_available_all_predictions_fail) {
           test_expectation <- "all_present"
         }
         
         test_message <- paste0(
-          "Data for ", outcome_type, " outcomes ",
+          "(all invalid predictions) Data for ", outcome_type, " outcomes ",
           ifelse(test_expectation == "all_present", "can", "cannot"),
-          " be created for models yielding extreme predictions."
+          " be created for models that do not provide valid predictions."
         )
         
         coro::yield(list(
@@ -6320,7 +6268,111 @@ get_test_collection_generation <- function(...) {
           "expectation" = test_expectation
         ))
         
-        rm("extreme_prediction_data", "model_extreme_predictions")
+        rm("failed_prediction_data", "model_failed_predictions")
+      }
+      
+      # Some invalid predictions -----------------------------------------------
+      
+      if (is.null(debug_config) || "some invalid predictions" %in% debug_config) {
+        
+        model_failing_predictions <- suppressWarnings(test_train(
+          cl = cl,
+          data = full_data,
+          cluster_method = "none",
+          imputation_method = "simple",
+          hyperparameter_list = hyperparameters,
+          learner = "lasso_test_some_fail",
+          time_max = 3.5,
+          create_novelty_detector = create_novelty_detector
+        ))
+        
+        failing_prediction_data <- ..as_familiar_data_object(
+          object = model_failing_predictions,
+          data = full_data,
+          data_element = data_element,
+          cl = cl,
+          use_prediction_table = use_prediction_table,
+          ...
+        )
+        
+        familiar_data_list <- mapply(set_object_name, list(failing_prediction_data), c("some_failed_predictions"))
+        
+        familiar_collection <- suppressWarnings(as_familiar_collection(
+          familiar_data_list,
+          familiar_data_names = c("some_failed_predictions")
+        ))
+        
+        test_expectation <- "all_absent"
+        if (outcome_type %in% outcome_type_available && !.not_available_some_predictions_fail) {
+          test_expectation <- "all_present"
+        }
+        
+        test_message <- paste0(
+          "(some invalid predictions) Data for ", outcome_type, " outcomes ",
+          ifelse(test_expectation == "all_present", "can", "cannot"),
+          " be created for models that provide some invalid predictions."
+        )
+        
+        coro::yield(list(
+          "collection" = familiar_collection,
+          "message" = test_message,
+          "expectation" = test_expectation
+        ))
+        
+        rm("failing_prediction_data", "model_failing_predictions")
+      }
+      
+      # Extreme predicted values -----------------------------------------------
+      
+      if (is.null(debug_config) || "extreme predictions" %in% debug_config) {
+        if (outcome_type %in% c("binomial", "multinomial")) {
+          
+          model_extreme_predictions <- suppressWarnings(test_train(
+            cl = cl,
+            data = full_data,
+            cluster_method = "none",
+            imputation_method = "simple",
+            hyperparameter_list = hyperparameters,
+            learner = "lasso_test_extreme",
+            time_max = 3.5,
+            create_novelty_detector = create_novelty_detector
+          ))
+          
+          extreme_prediction_data <- ..as_familiar_data_object(
+            object = model_extreme_predictions,
+            data = full_data,
+            data_element = data_element,
+            cl = cl,
+            use_prediction_table = use_prediction_table,
+            ...
+          )
+          
+          familiar_data_list <- mapply(set_object_name, list(extreme_prediction_data), c("extreme_predictions"))
+          
+          familiar_collection <- suppressWarnings(as_familiar_collection(
+            familiar_data_list,
+            familiar_data_names = c("extreme_predictions")
+          ))
+          
+          test_expectation <- "all_absent"
+          if (outcome_type %in% outcome_type_available && !.not_available_extreme_probability) {
+            test_expectation <- "all_present"
+          }
+          
+          test_message <- paste0(
+            "(extreme predictions) Data for ", outcome_type, " outcomes ",
+            ifelse(test_expectation == "all_present", "can", "cannot"),
+            " be created for models yielding extreme predictions."
+          )
+          
+          coro::yield(list(
+            "collection" = familiar_collection,
+            "message" = test_message,
+            "expectation" = test_expectation
+          ))
+          
+          rm("extreme_prediction_data", "model_extreme_predictions")
+        }
       }
     }
   })
