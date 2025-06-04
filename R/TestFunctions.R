@@ -5355,6 +5355,7 @@ get_test_collection_generation <- function(...) {
     ...,
     cl = NULL,
     test_specific_config = FALSE,
+    test_config = NULL,
     debug_config = NULL,
     debug_outcome_type = NULL,
     n_models = 1L,
@@ -5400,6 +5401,9 @@ get_test_collection_generation <- function(...) {
     # Allow for debugging specific outcome types
     all_outcome_types <- c("continuous", "binomial", "multinomial", "survival")
     if (!is.null(debug_outcome_type)) all_outcome_types <- debug_outcome_type
+    
+    # Within this function, test_config and debug_config are the same.
+    if (!is.null(test_config)) debug_config <- test_config
     
     # Iterate over the outcome type.
     for (outcome_type in all_outcome_types) {
