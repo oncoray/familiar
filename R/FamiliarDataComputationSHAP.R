@@ -893,7 +893,9 @@ setMethod(
   #   and y = f(h(z)) - phi_0
   
   X <- coalitions[non_zero_weights, , drop = FALSE]
-  y <- predicted_values[non_zero_weights, , drop = FALSE] - phi_0
+  
+  # This ensures that phi_0 is subtracted row-wise.
+  y <- t(t(predicted_values[non_zero_weights, ,drop = FALSE]) - phi_0)
   
   # Instead of computing a diagonal matrix, we rely on equivalent element-wise
   # multiplications (which are considerably cheaper).
