@@ -340,16 +340,6 @@ setMethod(
   # Get sample identifiers.
   sample_identifiers <- get_unique_row_names(data)
   
-  # Generate coalitions (Z)
-  coalitions <- .get_shap_coalitions(
-    feature_set = feature_set,
-    depth = 1L
-  )
-  
-  # Check that coalitions are not empty: this happens if the data contains a
-  # single feature: SHAP values cannot be computed.
-  if (is.null(coalitions)) return(NULL)
-  
   # From here, work with mapping representations of the data (h).
   mapping_input <- .shap_data_to_mapping(
     data = data,
@@ -379,73 +369,96 @@ setMethod(
   # Compute phi_0.
   phi_0 <- colMeans(predicted_values)
   
-  # Looping variabes.
-  iter_id <- 1L
-  all_shap_converged <- FALSE
-  shap_values <- NULL
-  
-  while (!all_shap_converged && iter_id < n_max_iter) {
-    # Determine additional mapping.
-    mapping_iter <- .shap_randomise_mapping_from_coalition(
-      samples = mapping_input,
-      coalitions = coalitions,
-      feature_set = feature_set,
-      seed = iter_id
-    )
-    
-    # Determine new, unique mappings in this iteration.
-    mapping_hash_iter <- .hash_mapping(mapping_iter)
-    new_mappings <- !mapping_hash_iter %in% mapping_hash_mapping
-    unique_mappings <- !duplicated(mapping_hash_iter)
-    
-    # Select only new unique mappings
-    mapping_iter <- mapping_iter[new_mappings & unique_mappings, , drop = FALSE]
-    mapping_hash_iter <- mapping_hash_iter[new_mappings & unique_mappings]
-    
-    # Skip if all parts of mapping have predictions.
-    if (is_empty(mapping_hash_iter)) {
-      iter_id <- iter_id + 1L
-      next
-    }
-    
-    # Predict from new unique mappings.
-    predicted_values_iter <- .predict_from_coalition(
-      mapping = mapping_iter,
-      feature_set = feature_set,
-      object = object,
-      ensemble_method = ensemble_method,
-      evaluation_time = evaluation_times
-    )
-    
-    if (is.null(predicted_values_iter)) {
-      iter_id <- iter_id + 1L
-      next
-    }
-    
-    # Update iterative data.
-    mapping <- rbind(mapping, mapping_iter)
-    mapping_hash_mapping <- c(mapping_hash_mapping, mapping_hash_iter)
-    predicted_values <- rbind(predicted_values, predicted_values_iter)
-    
-    # Compute SHAP values for this iteration.
-    shap_values <- .compute_shap_value(
-      samples = mapping_input,
-      mapping = mapping,
+  if (length(feature_set) == 1L) {
+    # Single feature (shapley) -------------------------------------------------
+    shap_values <- .compute_shap_value_single_feature(
+      mapping = mapping_input,
       feature_set = feature_set,
       predicted_values = predicted_values,
       phi_0 = phi_0
     )
     
-    if (is.null(shap_values)) return(NULL)
+  } else {
+    # Multiple features (kernel) -----------------------------------------------
     
-    # Check convergence.
-    all_shap_converged <- .evaluate_shap_convergence(
-      shap_values = shap_values,
-      predicted_values = predicted_values,
-      tolerance = tolerance
+    # Generate coalitions (Z)
+    coalitions <- .get_shap_coalitions(
+      feature_set = feature_set,
+      depth = 1L
     )
     
-    iter_id <- iter_id + 1L
+    # Check that coalitions are not empty: this happens if the data contains a
+    # single feature: SHAP values cannot be computed.
+    if (is.null(coalitions)) return(NULL)
+    
+    # Looping variabes.
+    iter_id <- 1L
+    all_shap_converged <- FALSE
+    shap_values <- NULL
+    
+    while (!all_shap_converged && iter_id < n_max_iter) {
+      # Determine additional mapping.
+      mapping_iter <- .shap_randomise_mapping_from_coalition(
+        samples = mapping_input,
+        coalitions = coalitions,
+        feature_set = feature_set,
+        seed = iter_id
+      )
+      
+      # Determine new, unique mappings in this iteration.
+      mapping_hash_iter <- .hash_mapping(mapping_iter)
+      new_mappings <- !mapping_hash_iter %in% mapping_hash_mapping
+      unique_mappings <- !duplicated(mapping_hash_iter)
+      
+      # Select only new unique mappings
+      mapping_iter <- mapping_iter[new_mappings & unique_mappings, , drop = FALSE]
+      mapping_hash_iter <- mapping_hash_iter[new_mappings & unique_mappings]
+      
+      # Skip if all parts of mapping have predictions.
+      if (is_empty(mapping_hash_iter)) {
+        iter_id <- iter_id + 1L
+        next
+      }
+      
+      # Predict from new unique mappings.
+      predicted_values_iter <- .predict_from_coalition(
+        mapping = mapping_iter,
+        feature_set = feature_set,
+        object = object,
+        ensemble_method = ensemble_method,
+        evaluation_time = evaluation_times
+      )
+      
+      if (is.null(predicted_values_iter)) {
+        iter_id <- iter_id + 1L
+        next
+      }
+      
+      # Update iterative data.
+      mapping <- rbind(mapping, mapping_iter)
+      mapping_hash_mapping <- c(mapping_hash_mapping, mapping_hash_iter)
+      predicted_values <- rbind(predicted_values, predicted_values_iter)
+      
+      # Compute SHAP values for this iteration.
+      shap_values <- .compute_shap_value(
+        samples = mapping_input,
+        mapping = mapping,
+        feature_set = feature_set,
+        predicted_values = predicted_values,
+        phi_0 = phi_0
+      )
+      
+      if (is.null(shap_values)) return(NULL)
+      
+      # Check convergence.
+      all_shap_converged <- .evaluate_shap_convergence(
+        shap_values = shap_values,
+        predicted_values = predicted_values,
+        tolerance = tolerance
+      )
+      
+      iter_id <- iter_id + 1L
+    }
   }
   
   # Add model name to data element.

@@ -4559,15 +4559,18 @@ test_plots <- function(
     collection <- test_collection_generator()
     if (coro::is_exhausted(collection)) break
     
+    plot_fun_args <- c(
+      list("object" = collection$collection),
+      plot_args
+    )
+    if (debug) plot_fun_args <- c(plot_fun_args, list("draw" = TRUE))
+    
     test_fun(
       collection$message,
       {
         plot_list <- do.call(
           plot_function,
-          args = c(
-            list("object" = collection$collection),
-            plot_args
-          )
+          args = plot_fun_args
         )
         
         # Determine which plots are present.
