@@ -1734,7 +1734,6 @@ setMethod(
   "..compute_ensemble_prediction_estimates",
   signature(x = "familiarDataElementPredictionTable"),
   function(x, data, ensemble_method, ...) {
-    
     # Suppress NOTES due to non-standard evaluation in data.table
     estimation_type <- NULL
     
@@ -1749,28 +1748,26 @@ setMethod(
     # Check if ensembling uses standard functions where we don't actually need
     # do difficult stuff.
     if (ensemble_method == "median") {
-      return(data[
+      data <- data[
         estimation_type != "point",
         (x@value_column) := lapply(.SD, stats::median, na.rm = TRUE),
         by = c(x@grouping_column),
         .SDcols = c(x@value_column)
-      ][
-        , mget(c(x@grouping_column, x@value_column))
-      ])
+      ]
+      data <- unique(data[, mget(c(x@grouping_column, x@value_column))])
       
     } else if (ensemble_method == "mean") {
-      return(data[
+      data <- data[
         estimation_type != "point",
         (x@value_column) := lapply(.SD, mean, na.rm = TRUE),
         by = c(x@grouping_column),
         .SDcols = c(x@value_column)
-      ][
-        , mget(c(x@grouping_column, x@value_column))
-      ])
+      ]
+      data <- unique(data[, mget(c(x@grouping_column, x@value_column))])
       
     } else {
       # Compute bootstrap estimates.
-      return(data[
+      data <- data[
         ,
         ...compute_bootstrap_ensemble_estimates(
           x = .SD,
@@ -1782,8 +1779,10 @@ setMethod(
         ),
         by = c(x@grouping_column),
         .SDcols = c("estimation_type", x@value_column)
-      ])
+      ]
     }
+    
+    return(data)
   }
 )
 
