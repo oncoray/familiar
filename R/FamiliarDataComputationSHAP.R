@@ -938,6 +938,25 @@ setMethod(
 
 
 
+.compute_shap_value_single_feature <- function(
+  mapping,
+  feature_set,
+  predicted_values,
+  phi_0
+) {
+  data <- data.table::data.table(
+    "feature_name" = colnames(mapping),
+    "feature_value_mapping" = rep(mapping[, 1L], times = ncol(predicted_values)),
+    "shap_value" = c(t(t(predicted_values) - phi_0)),
+    "shap_variance" = 0.0,
+    "shap_outcome" = rep(colnames(predicted_values), each = nrow(predicted_values))
+  )
+  
+  return(data)
+}
+
+
+
 .evaluate_shap_convergence <- function(
   shap_values,
   predicted_values,
