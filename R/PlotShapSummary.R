@@ -299,7 +299,9 @@ setMethod(
     # present, use barplot. Otherwise, if unset, use swarmplot.
     if (is_single_sample) {
       plot_type <- "barplot"
-      
+      if (is.waive(x_label) && is.null(value_representation)) {
+        x_label <- "SHAP"
+      }
     } else if (is.null(plot_type)) {
       plot_type <- "swarmplot"
     }
@@ -310,6 +312,7 @@ setMethod(
     if (is.null(value_representation)) {
       if (plot_type == "barplot") {
         value_representation <- "abs_mean"
+        
       } else {
         value_representation <- "raw"
         color_by <- NULL
