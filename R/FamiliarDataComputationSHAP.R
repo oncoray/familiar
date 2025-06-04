@@ -366,6 +366,8 @@ setMethod(
     evaluation_time = evaluation_times
   )
   
+  if (is_empty(predicted_values)) return(NULL)
+  
   # Compute phi_0.
   phi_0 <- colMeans(predicted_values)
   
