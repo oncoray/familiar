@@ -15,28 +15,20 @@ familiar:::test_plots(
 
 
 # Swarm plot -------------------------------------------------------------------
-familiar:::test_plot_ordering(
+familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
   evaluation_time = c(1.0, 2.0, 3.5),
-  plot_args = list(
-    "verbose" = FALSE,
-    "draw" = debug_flag
-  ),
+  test_config = "normal",
   debug = debug_flag
 )
 
-
 # Test with single samples
-familiar:::test_plot_ordering(
+familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
   evaluation_time = c(1.0, 2.0, 3.5),
-  plot_args = list(
-    "verbose" = FALSE,
-    "draw" = debug_flag
-  ),
-  use_single_sample = TRUE,
+  test_config = "single instance",
   debug = debug_flag
 )
 
