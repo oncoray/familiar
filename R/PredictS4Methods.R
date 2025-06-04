@@ -368,7 +368,7 @@ setMethod(
         is_pre_processed = is_pre_processed,
         time = time,
         type = type,
-        ensemble_method = "median",
+        ensemble_method = ensemble_method,
         stratification_threshold = stratification_threshold,
         stratification_method = stratification_method,
         percentiles = percentiles,
