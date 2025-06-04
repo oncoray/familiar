@@ -5342,6 +5342,7 @@ get_test_collection_generation <- function(...) {
     cl = NULL,
     test_specific_config = FALSE,
     debug_config = NULL,
+    debug_outcome_type = NULL,
     n_models = 1L,
     create_novelty_detector = FALSE
   ) {
@@ -5382,9 +5383,12 @@ get_test_collection_generation <- function(...) {
       x@vimp_method <- "mifs"
       return(x)
     }
+    # Allow for debugging specific outcome types
+    all_outcome_types <- c("continuous", "binomial", "multinomial", "survival")
+    if (!is.null(debug_outcome_type)) all_outcome_types <- debug_outcome_type
     
     # Iterate over the outcome type.
-    for (outcome_type in c("continuous", "binomial", "multinomial", "survival")) {
+    for (outcome_type in all_outcome_types) {
       
       # Set up full dataset.
       full_data <- test_create_good_data(outcome_type)
