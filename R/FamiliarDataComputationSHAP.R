@@ -273,7 +273,7 @@ setMethod(
     is_pre_processed = FALSE,
     ensemble_method,
     cl,
-    tolerance = 0.001,
+    tolerance = 0.005,
     n_max_iter = 100L,
     message_indent = 0L,
     verbose = FALSE,
