@@ -2,10 +2,42 @@
 % Please edit documentation in R/PlotShapWaterfall.R
 \name{plot_shap_waterfall}
 \alias{plot_shap_waterfall}
+\alias{plot_shap_waterfall,ANY-method}
 \alias{plot_shap_waterfall,familiarCollection-method}
 \title{Create SHAP waterfall plot}
 \usage{
 plot_shap_waterfall(
+  object,
+  draw = FALSE,
+  dir_path = NULL,
+  split_by = NULL,
+  x_axis_by = NULL,
+  y_axis_by = NULL,
+  color_by = NULL,
+  facet_by = NULL,
+  facet_wrap_cols = NULL,
+  plot_type = NULL,
+  value_representation = NULL,
+  ggtheme = NULL,
+  discrete_palette = NULL,
+  gradient_palette = NULL,
+  x_label = waiver(),
+  y_label = waiver(),
+  legend_label = waiver(),
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
+  caption = NULL,
+  x_range = NULL,
+  x_n_breaks = 5L,
+  x_breaks = NULL,
+  width = waiver(),
+  height = waiver(),
+  units = waiver(),
+  export_collection = FALSE,
+  ...
+)
+
+\S4method{plot_shap_waterfall}{ANY}(
   object,
   draw = FALSE,
   dir_path = NULL,
