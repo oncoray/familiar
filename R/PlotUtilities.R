@@ -352,10 +352,14 @@ theme_familiar <- function(
 
           if (split_variable_name == "vimp_method") {
             split_variable_name <- "VIMP method"
+          } else if (split_variable_name == "learner") {
+            split_variable_name <- "learner"
           } else if (split_variable_name == "data_set") {
             split_variable_name <- "data set"
           } else if (split_variable_name == "evaluation_time") {
             split_variable_name <- "time point"
+          } else if (split_variable_name == "sample_id") {
+            split_variable_name <- "sample"
           }
 
           # Remove all underscores.
