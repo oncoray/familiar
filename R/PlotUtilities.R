@@ -2705,20 +2705,47 @@ theme_familiar <- function(
 
 
 
-.format_plot_number <- function(x, digits = 3L) {
+.format_plot_number <- function(
+    x,
+    digits = 3L,
+    common_base = NULL,
+    min_common_base = NULL,
+    max_common_base = NULL,
+    character_out = TRUE
+) {
+  # Determine the common base.
+  if (is.null(common_base)) {
+    common_base <- ..format_get_common_base(x)
+    if (is.numeric(max_common_base)) {
+      common_base <- ifelse(common_base > max_common_base, max_common_base, common_base)
+    }
+    if (is.numeric(min_common_base)) {
+      common_base <- ifelse(common_base < min_common_base, min_common_base, common_base)
+    }
+  }
+
+  # Round numbers.
+  x <- as.integer(round(x / 10.0^(1.0 + common_base - digits))) * 10.0^(1.0 + common_base - digits)
+
+  # Format output.
+  if (character_out) {
+    return(format(x, digits = digits, trim = TRUE))
+    
+  } else {
+    return(x)
+  }
+}
+
+
+
+..format_get_common_base <- function(x) {
   # Find the base-10 integer of the data.
   x_base <- floor(log10(abs(x)))
   x_base <- x_base[is.finite(x_base)]
-
-  # Determine the largest base.
-  common_base <- ifelse(length(x_base) > 0.0, max(x_base), 0.0)
-
-  # Round numbers.
-  x <- as.integer(round(x / 10.0^(1.0 + common_base - digits)) * 10.0^(1.0 + common_base - digits))
-
-  # Format output.
-  return(format(x, digits = digits, trim = TRUE))
+  
+  return(as.integer(max(x_base)))
 }
+
 
 
 

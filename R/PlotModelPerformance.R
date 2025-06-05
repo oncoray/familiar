@@ -912,7 +912,7 @@ setMethod(
     # Show performance value as text.
     if (annotate_performance == "value") {
       # Show median value.
-      x_bar[is.finite(median), "performance_text" := .format_plot_number(median)]
+      x_bar[is.finite(median), "performance_text" := .format_plot_number(median, min_common_base = 0L)]
 
       # Add to figure.
       p <- p + ggplot2::geom_text(
