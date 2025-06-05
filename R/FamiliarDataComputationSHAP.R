@@ -474,7 +474,7 @@ setMethod(
   
   # Store lookup-table translate feature mapping back to feature values.
   proto_data_element@lookup_table <- feature_set
-  
+  browser()
   # Add predictions for input data.
   proto_data_element@predicted_values <- predicted_values_input
   

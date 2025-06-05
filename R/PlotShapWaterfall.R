@@ -128,7 +128,7 @@ setGeneric(
 
 # plot_shap_summary (general) --------------------------------------------------
 
-#' @rdname plot_shap_summary-methods
+#' @rdname plot_shap_waterfall-methods
 setMethod(
   "plot_shap_waterfall",
   signature(object = "ANY"),
@@ -257,7 +257,7 @@ setMethod(
     
     # Load the data.
     x <- export_shap(object = object)
-    browser()
+    
     x <- x$shap_force
     if (is_empty(x)) return(NULL)
     
@@ -313,8 +313,6 @@ setMethod(
       # Split by vimp_method, learner and sample id.
       split_by <- c("vimp_method", "learner", "sample_id")
       facet_by <- additional_variable
-      
-      # Color element by whether the contribution is negative, zero, or 
     }
     
     # Check splitting variables and generate sanitised output
@@ -333,14 +331,7 @@ setMethod(
     
     # x_label
     if (is.waive(x_label)) {
-      x_label <- switch(
-        value_representation,
-        raw = "SHAP",
-        abs = "|SHAP|",
-        abs_mean = "mean(|SHAP|)",
-        abs_max = "max(|SHAP|)",
-        abs_min = "min(|SHAP|)"
-      )
+      x_label <- "predicted value"
     }
     
     # y_label
@@ -382,7 +373,7 @@ setMethod(
       # Skip empty datasets.
       if (is_empty(x_split[[ii]])) next
       
-      if (is.waive(plot_title)) plot_title <- "SHAP summary"
+      if (is.waive(plot_title)) plot_title <- "SHAP waterfall"
       
       # Declare subtitle components.
       additional_subtitle <- NULL
@@ -439,7 +430,7 @@ setMethod(
       # Save and export
       if (!is.null(dir_path)) {
         # Obtain decent default values for the plot.
-        def_plot_dims <- .determine_shap_summary_plot_dimensions(
+        def_plot_dims <- .determine_shap_waterfall_plot_dimensions(
           x = x_split[[ii]],
           plot_type = plot_type,
           facet_by = facet_by,
@@ -512,7 +503,7 @@ setMethod(
   # 
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  shap_value <- vimp <- feature_value <- NULL
+  shap_value <- vimp <- feature_value <- feature_name <- prediction <- NULL
   
   # Sort features by importance (mean absolute SHAP).
   feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = c(facet_by, "feature_name")]
@@ -523,9 +514,16 @@ setMethod(
   )
   
   # Common base for formatting prediction and shap values.
-  
+  common_base <- ..format_get_common_base(c(x$shap_value, x$prediction))
 
-  
+  # Update start and end positions.
+  if (!is.null(facet_by)) {
+    x[, ..set_shap_waterfall_positions(shap_value, prediction, feature_name), by = facet_by]
+    
+  } else {
+    x[, ..set_shap_waterfall_positions(shap_value, prediction, feature_name)]
+  }
+  browser()
   # Check x-range.
   if (is.null(x_range)) {
     if (value_representation == "raw") {
@@ -773,61 +771,28 @@ setMethod(
 
 
 
-..set_shap_swarmplot_jitter <- function(x, value, value_representation = "raw") {
+..set_shap_waterfall_positions <- function(x, predictions, feature_name) {
   # Prevent notes.
   feature_value <- density <- y_offset <- NULL
   
-  # Get density. In edge cases, this will fail (e.g. too few samples to
-  # establish a bandwidth for the filter.)
-  density_object <- tryCatch(
-    stats::density(x = x),
-    error = identity
-  )
+  # Initialise.
+  x_start <- x_end <- numeric(length(x))
   
-  if (inherits(density_object, "density")) {
-    # Find density at every point and normalise.
-    data <- data.table::data.table(
-      "original_order" = seq_along(x),
-      "shap_value" = x,
-      "feature_value" = value,
-      "density" = approx(x = density_object$x, y = density_object$y, xout = x)$y
-    )
-    data[, "density" := density / max(density)]
-    
-  } else if (length(x) == 1L) {
-    data <- data.table::data.table(
-      "original_order" = seq_along(x),
-      "shap_value" = x,
-      "feature_value" = value,
-      "density" = 0.0
-    )
-    
-  } else {
-    data <- data.table::data.table(
-      "original_order" = seq_along(x),
-      "shap_value" = x,
-      "feature_value" = value,
-      "density" = 1.0
-    )
+  # Set feature order.
+  feature_order <- order(feature_name, decreasing = TRUE)
+  
+  # We fill start and end positions in reverse order, beginning with the most
+  # important feature.
+  previous_start <- utils::head(predictions, n = 1L)
+  for (ii in feature_order) {
+    x_end[ii] <- previous_start
+    x_start[ii] <- previous_start - x[ii]
+    previous_start <- x_start[ii]
   }
   
-  if (value_representation == "raw") {
-    offset <- stats::rnorm(n = length(x), mean = 0.0, sd = 0.1)
-    offset[offset < -0.3] <- -0.3
-    offset[offset > 0.3] <- 0.3
-    data[, "y_offset" := (feature_value + offset) * density]
-    data[, "y_offset" := 0.35 * y_offset / max(abs(y_offset))]
-    
-  } else {
-    offset <- stats::runif(n = length(x), min = -1.0, max = 1.0)
-    data[, "y_offset" := offset * density]
-    data[, "y_offset" := 0.35 * y_offset / max(abs(y_offset))]
-  }
+  browser()
   
-  # Replace NaN-values.
-  data[is.na(y_offset), "y_offset" := 0.0]
-  
-  return(data$y_offset)
+  return(list("x_start" = x_start, "x_end" = x_end))
 }
 
 
