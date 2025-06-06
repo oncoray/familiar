@@ -931,8 +931,16 @@ setMethod(
   # coefficients and their variance.
   inv_mat <- matrix_pseudo_inverse(t(X) %*% (X * w))
   
-  # Compute coefficients.
-  phi <- inv_mat %*% t(X) %*% (w * y)
+  # Pre-compute weighted matrix for sum of marginal contributions.
+  b <- t(X) %*% (w * y)
+  
+  # Compute initial coefficients.
+  phi <- inv_mat %*% b
+  
+  # Due to the local accuracy criterion the sum of of the SHAP values plus the
+  # the mean prediction should be 0, and we compute the SHAP value under this
+  # constraint.
+  phi <- inv_mat %*% t(t(b) - (colSums(phi) - constraint) / sum(inv_mat))
   
   # Compute variance for each coefficient: sigma^2 * t(X) W X)^-1,
   # with sigma^2 = 1 / (n - p) * sum (w * (y - X * phi) ^2). This is computed
