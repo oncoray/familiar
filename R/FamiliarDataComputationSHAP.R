@@ -474,7 +474,7 @@ setMethod(
   
   # Store lookup-table translate feature mapping back to feature values.
   proto_data_element@lookup_table <- feature_set
-  browser()
+
   # Add predictions for input data.
   proto_data_element@predicted_values <- predicted_values_input
   
@@ -845,7 +845,7 @@ setMethod(
   
   shap_values <- data.table::rbindlist(shap_values)
   if (is_empty(shap_values)) return(NULL)
-  
+
   # Merge shap-values and update estimates, variance and estimated number of
   # experiments.
   shap_values <- shap_values[
@@ -890,10 +890,21 @@ setMethod(
   iteration_weight <- 2.0 * n_max_present * kernel_weights[2L]
   
   # Compute the number of features "present" in each coalition. 
-  n_present <- rowSums(coalitions)
+  n_coalition_size <- rowSums(coalitions)
+  
+  # Determine constraint.
+  constraint <- predicted_values[n_coalition_size == n_max_present, ] - phi_0
+  
+  # We under- or over-permute some of the coalitions, i.e. no coalitions might not be equally sampled.
+  freq_weight <- numeric(length(kernel_weights))
+  for (ii in seq_along(n_present)) {
+    n <- sum(n_coalition_size == n_present[ii])
+    freq_weight[ii] <- n_permutations[ii] / n
+  }
+  kernel_weights <- kernel_weights * freq_weight
   
   # Lookup the corresponding kernel weights, and filter non-zero weights.
-  kernel_weights <- kernel_weights[n_present + 1L]
+  kernel_weights <- kernel_weights[n_coalition_size + 1L]
   non_zero_weights <- kernel_weights > 0.0
 
   # Check for empty weights.  
