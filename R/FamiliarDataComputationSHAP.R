@@ -392,7 +392,7 @@ setMethod(
     # Check that coalitions are not empty: this happens if the data contains a
     # single feature: SHAP values cannot be computed.
     if (is.null(coalitions)) return(NULL)
-    
+    browser()
     # Looping variabes.
     iter_id <- 1L
     all_shap_converged <- FALSE
@@ -455,7 +455,10 @@ setMethod(
       # Check convergence.
       all_shap_converged <- .evaluate_shap_convergence(
         shap_values = shap_values,
-        predicted_values = predicted_values,
+        mapping = mapping_input,
+        predicted_values = predicted_values_input,
+        sample_identifiers = sample_identifiers,
+        phi_0 = phi_0,
         tolerance = tolerance
       )
       
@@ -876,6 +879,14 @@ setMethod(
   # result is transposed again.
   coalitions <- t(t(mapping) == x)
   
+  # The procedure below doesn't work correctly because the final result is not
+  # locally accurate. Consider: Covert & Lee's approach. See also:
+  # https://github.com/ModelOriented/kernelshap/issues/22
+  #
+  # Since our coalitions are not super-clean, we could try to approximate A and
+  # b by resampling, and applying eqn 9. We may not need weights.
+  
+  
   # Form a lookup-table for kernel weights.
   n_max_present <- ncol(coalitions)
   n_present <- seq_len(n_max_present + 1L) - 1L
@@ -896,12 +907,12 @@ setMethod(
   constraint <- predicted_values[n_coalition_size == n_max_present, ] - phi_0
   
   # We under- or over-permute some of the coalitions, i.e. no coalitions might not be equally sampled.
-  freq_weight <- numeric(length(kernel_weights))
-  for (ii in seq_along(n_present)) {
-    n <- sum(n_coalition_size == n_present[ii])
-    freq_weight[ii] <- n_permutations[ii] / n
-  }
-  kernel_weights <- kernel_weights * freq_weight
+  # freq_weight <- numeric(length(kernel_weights))
+  # for (ii in seq_along(n_present)) {
+  #   n <- sum(n_coalition_size == n_present[ii])
+  #   freq_weight[ii] <- n_permutations[ii] / n
+  # }
+  # kernel_weights <- kernel_weights * freq_weight
   
   # Lookup the corresponding kernel weights, and filter non-zero weights.
   kernel_weights <- kernel_weights[n_coalition_size + 1L]
@@ -992,15 +1003,67 @@ setMethod(
 
 
 .evaluate_shap_convergence <- function(
-  shap_values,
-  predicted_values,
-  tolerance
+    shap_values,
+    mapping,
+    sample_identifiers,
+    predicted_values,
+    phi_0,
+    tolerance
 ) {
-  # Determine tolerance scaled to the scale of the problem.
-  scale <- max(predicted_values) - min(predicted_values)
-  tolerance <- tolerance * scale
+  # Avoid notes due to data.table.
+  shap_value <- prediction <- NULL
   
+  # Determine tolerance scaled to the scale of the problem.
+  scale <- max(c(predicted_values, shap_values$shap_value)) - min(c(predicted_values, shap_values$shap_value))
+  tolerance <- tolerance * scale
+  browser()
   return(all(sqrt(shap_values$shap_variance / shap_values$m_est) < tolerance))
+  
+  # We need to test local accuracy, and whether this falls within the tolerance.
+  # Therefore we need to use the input samples, compute the sum of SHAP values 
+  # and determine the difference.
+  mapping_data <- data.table::as.data.table(mapping)
+  mapping_data[, "sample_id" := sample_identifiers]
+  mapping_data <- data.table::melt(
+    data = mapping_data,
+    id.vars = "sample_id",
+    variable.name = "feature_name",
+    value.name = "feature_value_mapping"
+  )
+  
+  # Prediction data
+  prediction_data <- data.table::as.data.table(predicted_values)
+  prediction_data[, "sample_id" := sample_identifiers]
+  prediction_data <- data.table::melt(
+    data = prediction_data,
+    id.vars = "sample_id",
+    variable.name = "shap_outcome",
+    value.name = "prediction"
+  )
+  
+  # Cartesian merge of mapping with SHAP values.
+  shap_data <- merge(
+    x = shap_values,
+    y = mapping_data,
+    by = c("feature_name", "feature_value_mapping"),
+    allow.cartesian = TRUE
+  )
+  
+  merge_cols <- "sample_id"
+  if ("shap_outcome" %in% colnames(shap_data)) merge_cols <- c(merge_cols, "shap_outcome")
+  
+  # Merge predictions with sample data.
+  shap_data <- merge(
+    x = shap_data,
+    y = prediction_data,
+    by = merge_cols
+  )
+  
+  # Compute local accuracy
+  shap_data <- shap_data[, list("sum_phi" = sum(shap_value), "f" = max(prediction)), by = merge_cols]
+  local_accuracy_differences <- abs(phi_0 + shap_data$sum_phi - shap_data$f)
+
+  return(all(local_accuracy_differences < tolerance))
 }
 
 

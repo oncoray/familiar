@@ -260,7 +260,7 @@ setMethod(
     
     x <- x$shap_force
     if (is_empty(x)) return(NULL)
-    
+    browser()
     # Obtain single data element from list.
     if (is.list(x)) {
       if (length(x) > 1L) {
