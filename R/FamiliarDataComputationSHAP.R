@@ -872,6 +872,9 @@ setMethod(
     predicted_values,
     phi_0
 ) {
+  # Prevent notes due to data.table.
+  weight <- NULL
+  
   # x is the mapping corresponding to the sample. First we determine the 
   # coalitions pertaining to current sample. Since `==` is operating by column,
   # we can simply transpose the mapping matrix so that rows become columns. Then
@@ -879,43 +882,41 @@ setMethod(
   # result is transposed again.
   coalitions <- t(t(mapping) == x)
   
-  # The procedure below doesn't work correctly because the final result is not
-  # locally accurate. Consider: Covert & Lee's approach. See also:
-  # https://github.com/ModelOriented/kernelshap/issues/22
-  #
-  # Since our coalitions are not super-clean, we could try to approximate A and
-  # b by resampling, and applying eqn 9. We may not need weights.
-  
-  
   # Form a lookup-table for kernel weights.
   n_max_present <- ncol(coalitions)
   n_present <- seq_len(n_max_present + 1L) - 1L
   n_permutations <- choose(n_max_present, n_present)
   kernel_weights <- (n_max_present - 1.0) / (n_permutations * n_present * (n_max_present - n_present))
-  kernel_weights[!is.finite(kernel_weights)] <- 0.0
-  
-  # The total kernel-weight of a single "iteration" is 2 times the number of
-  # features (equal to the number of coalitions with a one on/off configuration)
-  # times the respective kernel weight. We use this to determine the sample
-  # error of the mean for convergence purposes.
-  iteration_weight <- 2.0 * n_max_present * kernel_weights[2L]
+  kernel_weights[!is.finite(kernel_weights)] <- 0.0 
   
   # Compute the number of features "present" in each coalition. 
   n_coalition_size <- rowSums(coalitions)
   
+  # Determine which unique coalitions are present.
+  coalition_hash <- .hash_mapping(coalitions)
+  
+  # Set up weight table.
+  weight_table <- data.table::data.table(
+    "coalition" = coalition_hash,
+    "weight" = kernel_weights[n_coalition_size + 1L]
+  )
+  
+  # kernelSHAP originally was defined by sampling coalitions, with each
+  # coalition drawn probabilistically according to the SHAP kernel weights. This
+  # means that the appearance of coalitions would stochastically mirror their
+  # probabilities. Here we have a fixed set of coalitions, and coalitions that
+  # are randomly formed from the entire set of decisions that should be
+  # explained (and their fixed coalitions). This means that our coalitions are
+  # not distributed as expected. The weights are set to compensate for this.
+  weight_table[, "weight" := weight / .N, by = "coalition"]
+  weight_table[, "weight" := weight / sum(weight)]
+
   # Determine constraint.
-  constraint <- predicted_values[n_coalition_size == n_max_present, ] - phi_0
-  
-  # We under- or over-permute some of the coalitions, i.e. no coalitions might not be equally sampled.
-  # freq_weight <- numeric(length(kernel_weights))
-  # for (ii in seq_along(n_present)) {
-  #   n <- sum(n_coalition_size == n_present[ii])
-  #   freq_weight[ii] <- n_permutations[ii] / n
-  # }
-  # kernel_weights <- kernel_weights * freq_weight
-  
+  # constraint <- predicted_values[n_coalition_size == n_max_present, ] - phi_0
+  constraint <- predicted_values[n_coalition_size == n_max_present, ]
+ 
   # Lookup the corresponding kernel weights, and filter non-zero weights.
-  kernel_weights <- kernel_weights[n_coalition_size + 1L]
+  kernel_weights <- weight_table$weight
   non_zero_weights <- kernel_weights > 0.0
 
   # Check for empty weights.  
@@ -928,11 +929,15 @@ setMethod(
   #       X = Z (coalitions),
   #       W = diag(pi) (kernel_weights)
   #   and y = f(h(z)) - phi_0
-  
+  # X <- coalitions[non_zero_weights, , drop = FALSE]
   X <- coalitions[non_zero_weights, , drop = FALSE]
+  X_phi_0 <- matrix(!logical(nrow(X)), ncol = 1L)
+  colnames(X_phi_0) <- "__phi0__"
+  X <- cbind(X_phi_0, X)
   
   # This ensures that phi_0 is subtracted row-wise.
-  y <- t(t(predicted_values[non_zero_weights, ,drop = FALSE]) - phi_0)
+  # y <- t(t(predicted_values[non_zero_weights, , drop = FALSE]) - phi_0)
+  y <- predicted_values[non_zero_weights, , drop = FALSE]
   
   # Instead of computing a diagonal matrix, we rely on equivalent element-wise
   # multiplications (which are considerably cheaper).
@@ -947,7 +952,7 @@ setMethod(
   
   # Compute initial coefficients.
   phi <- inv_mat %*% b
-  
+  browser()
   # Due to the local accuracy criterion the sum of of the SHAP values plus the
   # the mean prediction should be 0, and we compute the SHAP value under this
   # constraint.
@@ -971,7 +976,7 @@ setMethod(
   data <- data.table::data.table(
     "feature_name" = rep(colnames(mapping), times = length(prediction_names)),
     "feature_value_mapping" = rep(x, times = length(prediction_names)),
-    "m_est" = sum(kernel_weights) / iteration_weight,
+    "m_est" = 1.0,
     "df" = length(w) - ncol(X),
     "shap_value" = c(phi),
     "shap_variance" = c(phi_var),
@@ -1016,54 +1021,8 @@ setMethod(
   # Determine tolerance scaled to the scale of the problem.
   scale <- max(c(predicted_values, shap_values$shap_value)) - min(c(predicted_values, shap_values$shap_value))
   tolerance <- tolerance * scale
-  browser()
+  
   return(all(sqrt(shap_values$shap_variance / shap_values$m_est) < tolerance))
-  
-  # We need to test local accuracy, and whether this falls within the tolerance.
-  # Therefore we need to use the input samples, compute the sum of SHAP values 
-  # and determine the difference.
-  mapping_data <- data.table::as.data.table(mapping)
-  mapping_data[, "sample_id" := sample_identifiers]
-  mapping_data <- data.table::melt(
-    data = mapping_data,
-    id.vars = "sample_id",
-    variable.name = "feature_name",
-    value.name = "feature_value_mapping"
-  )
-  
-  # Prediction data
-  prediction_data <- data.table::as.data.table(predicted_values)
-  prediction_data[, "sample_id" := sample_identifiers]
-  prediction_data <- data.table::melt(
-    data = prediction_data,
-    id.vars = "sample_id",
-    variable.name = "shap_outcome",
-    value.name = "prediction"
-  )
-  
-  # Cartesian merge of mapping with SHAP values.
-  shap_data <- merge(
-    x = shap_values,
-    y = mapping_data,
-    by = c("feature_name", "feature_value_mapping"),
-    allow.cartesian = TRUE
-  )
-  
-  merge_cols <- "sample_id"
-  if ("shap_outcome" %in% colnames(shap_data)) merge_cols <- c(merge_cols, "shap_outcome")
-  
-  # Merge predictions with sample data.
-  shap_data <- merge(
-    x = shap_data,
-    y = prediction_data,
-    by = merge_cols
-  )
-  
-  # Compute local accuracy
-  shap_data <- shap_data[, list("sum_phi" = sum(shap_value), "f" = max(prediction)), by = merge_cols]
-  local_accuracy_differences <- abs(phi_0 + shap_data$sum_phi - shap_data$f)
-
-  return(all(local_accuracy_differences < tolerance))
 }
 
 
