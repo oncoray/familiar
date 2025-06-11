@@ -346,19 +346,9 @@ setMethod(
     feature_set = feature_set
   )
   
-  # Determine unique mappings.
-  mapping_hash_mapping <- .hash_mapping(mapping_input)
-  unique_mappings <- !duplicated(mapping_hash_mapping)
-  
-  # Select only unique mappings as input.
-  mapping_input <- mapping <- mapping_input[unique_mappings, , drop = FALSE]
-  mapping_hash_mapping <- mapping_hash_mapping[unique_mappings]
-  
-  if (is_empty(mapping_hash_mapping)) return(NULL)
-  
   # Predict outcome values from the input data. Output may be more than one
   # column.
-  predicted_values <- predicted_values_input <- .predict_from_coalition(
+  predicted_values_input <- .predict_from_coalition(
     mapping = mapping_input,
     feature_set = feature_set,
     object = object,
@@ -366,17 +356,17 @@ setMethod(
     evaluation_time = evaluation_times
   )
   
-  if (is_empty(predicted_values)) return(NULL)
+  if (is_empty(predicted_values_input)) return(NULL)
   
   # Compute phi_0.
-  phi_0 <- colMeans(predicted_values)
+  phi_0 <- colMeans(predicted_values_input)
   
   if (length(feature_set) == 1L) {
     # Single feature (shapley) -------------------------------------------------
     shap_values <- .compute_shap_value_single_feature(
       mapping = mapping_input,
       feature_set = feature_set,
-      predicted_values = predicted_values,
+      predicted_values = predicted_values_input,
       phi_0 = phi_0
     )
     
@@ -392,11 +382,25 @@ setMethod(
     # Check that coalitions are not empty: this happens if the data contains a
     # single feature: SHAP values cannot be computed.
     if (is.null(coalitions)) return(NULL)
+    
+    # Compute initial A and b matrices
+    # shap_matrices <- .compute_shap_matrices(
+    #   matrices = NULL,
+    #   samples = mapping_input,
+    #   sample_predictions = predicted_values_input,
+    #   sample_id = sample_identifiers,
+    #   mapping = mapping_input,
+    #   feature_set = feature_set,
+    #   predicted_values = predicted_values_input,
+    #   phi_0 = phi_0
+    # )
+    
     browser()
     # Looping variabes.
     iter_id <- 1L
     all_shap_converged <- FALSE
     shap_values <- NULL
+    shap_matrices <- NULL
     
     while (!all_shap_converged && iter_id < n_max_iter) {
       # Determine additional mapping.
@@ -406,21 +410,6 @@ setMethod(
         feature_set = feature_set,
         seed = iter_id
       )
-      
-      # Determine new, unique mappings in this iteration.
-      mapping_hash_iter <- .hash_mapping(mapping_iter)
-      new_mappings <- !mapping_hash_iter %in% mapping_hash_mapping
-      unique_mappings <- !duplicated(mapping_hash_iter)
-      
-      # Select only new unique mappings
-      mapping_iter <- mapping_iter[new_mappings & unique_mappings, , drop = FALSE]
-      mapping_hash_iter <- mapping_hash_iter[new_mappings & unique_mappings]
-      
-      # Skip if all parts of mapping have predictions.
-      if (is_empty(mapping_hash_iter)) {
-        iter_id <- iter_id + 1L
-        next
-      }
       
       # Predict from new unique mappings.
       predicted_values_iter <- .predict_from_coalition(
@@ -436,19 +425,21 @@ setMethod(
         next
       }
       
-      # Update iterative data.
-      mapping <- rbind(mapping, mapping_iter)
-      mapping_hash_mapping <- c(mapping_hash_mapping, mapping_hash_iter)
-      predicted_values <- rbind(predicted_values, predicted_values_iter)
+      # Compute and update A and b matrices.
+      shap_matrices <- .compute_shap_matrices(
+        matrices = shap_matrices,
+        samples = mapping_input,
+        sample_predictions = predicted_values_input,
+        sample_id = sample_identifiers,
+        mapping = mapping_iter,
+        predicted_values = predicted_values_iter,
+        phi_0 = phi_0
+      )
       
       # Compute SHAP values for this iteration.
       shap_values <- .compute_shap_value(
-        samples = mapping_input,
-        sample_id = sample_identifiers,
-        mapping = mapping,
-        feature_set = feature_set,
-        predicted_values = predicted_values,
-        phi_0 = phi_0
+        shap_values = shap_values,
+        shap_matrices = shap_matrices
       )
       
       if (is.null(shap_values)) return(NULL)
@@ -456,14 +447,16 @@ setMethod(
       # Check convergence.
       all_shap_converged <- .evaluate_shap_convergence(
         shap_values = shap_values,
-        iter_id = iter_id,
         tolerance = tolerance
       )
       
       iter_id <- iter_id + 1L
     }
   }
+  
+  # TODO: Compute final SHAP values.
   browser()
+  
   # Add model name to data element.
   proto_data_element <- add_model_name(
     proto_data_element,
@@ -823,7 +816,207 @@ setMethod(
 
 
 
+.compute_shap_matrices <- function(
+  matrices = NULL,
+  samples,
+  sample_predictions,
+  sample_id,
+  mapping,
+  predicted_values,
+  phi_0
+) {
+  # We follow the recipe by Covert and Lee (2021), which means that we update
+  # the A and b matrices each iteration.
+  
+  # Compute A and b matrices for each sample.
+  new_matrices <- mapply(
+    ..compute_shap_matrices,
+    x = asplit(samples, MARGIN = 1L),
+    v_0 = sample_predictions,
+    sample_id = sample_id,
+    MoreArgs = list(
+      "mapping" = mapping,
+      "predicted_values" = predicted_values,
+      "phi_0" = phi_0
+    ),
+    SIMPLIFY = FALSE,
+    USE.NAMES = FALSE
+  )
+  
+  # Update full matrix.
+  if (is.null(matrices)) {
+    matrices <- new_matrices
+    names(matrices) <- sample_id
+    matrices <- lapply(
+      matrices,
+      function(x) {
+        x$n_iter <- 1L
+        return(x)
+      }
+    )
+    
+  } else {
+    matrices <- ..update_shap_matrices(
+      old = matrices$full,
+      new = new_matrices
+    )
+  }
+  browser()
+  # Return both the full and temporary matrices.
+  return(list("full" = matrices, "temp" = new_matrices))
+}
+
+
+
+..compute_shap_matrices <- function(
+    x,
+    v_0,
+    sample_id,
+    mapping,
+    predicted_values,
+    phi_0
+) {
+  # Prevent notes due to data.table.
+  weight <- NULL
+  
+  # x is the mapping corresponding to the sample. First we determine the 
+  # coalitions pertaining to current sample. Since `==` is operating by column,
+  # we can simply transpose the mapping matrix so that rows become columns. Then
+  # the comparison is performed on the columns representing each row, and the
+  # result is transposed again.
+  coalitions <- t(t(mapping) == c(x))
+  
+  # Form a lookup-table for kernel weights.
+  n_max_present <- ncol(coalitions)
+  n_present <- seq_len(n_max_present + 1L) - 1L
+  n_permutations <- choose(n_max_present, n_present)
+  kernel_weights <- (n_max_present - 1.0) / (n_permutations * n_present * (n_max_present - n_present))
+  kernel_weights[!is.finite(kernel_weights)] <- 0.0 
+  
+  # Compute the number of features "present" in each coalition. 
+  n_coalition_size <- rowSums(coalitions)
+  
+  # Determine which unique coalitions are present.
+  coalition_hash <- .hash_mapping(coalitions)
+  
+  # Set up weight table.
+  weight_table <- data.table::data.table(
+    "coalition" = coalition_hash,
+    "weight" = kernel_weights[n_coalition_size + 1L]
+  )
+  
+  # kernelSHAP originally was defined by sampling coalitions, with each
+  # coalition drawn probabilistically according to the SHAP kernel weights. This
+  # means that the appearance of coalitions would stochastically mirror their
+  # probabilities. Here we have a fixed set of coalitions, and coalitions that
+  # are randomly formed from the entire set of decisions that should be
+  # explained (and their fixed coalitions). This means that our coalitions are
+  # not distributed as expected. The weights are set to compensate for this.
+  weight_table[, "weight" := weight / .N, by = "coalition"]
+  weight_table[, "weight" := weight / sum(weight)]
+  
+  # Lookup the corresponding kernel weights, and filter non-zero weights.
+  kernel_weights <- weight_table$weight
+  non_zero_weights <- kernel_weights > 0.0
+  
+  # Check for empty weights.  
+  if (!any(non_zero_weights)) return(NULL)
+  
+  # Weighted least squares solves for coefficients beta as follows:
+  # beta = (t(X) W X)^-1 t(X)W y
+  # In the context of kernelSHAP, this means:
+  #    beta = phi
+  #       X = Z (coalitions),
+  #       W = diag(pi) (kernel_weights)
+  #   and y = f(h(z)) - phi_0
+  X <- coalitions[non_zero_weights, , drop = FALSE]
+  
+  # This ensures that phi_0 is subtracted row-wise.
+  y <- t(t(predicted_values[non_zero_weights, , drop = FALSE] - phi_0))
+  
+  # Instead of computing a diagonal matrix, we rely on equivalent element-wise
+  # multiplications (which are considerably cheaper).
+  w <- kernel_weights[non_zero_weights]
+  
+  return(list(
+    "A" = t(X) %*% (X * w),
+    "b" = t(X) %*% (y * w),
+    "v_0" = v_0,
+    "phi_0" = phi_0,
+    "sample_id" = sample_id,
+    "sample_mapping" = x
+  ))
+}
+
+
+
+..update_shap_matrices <- function(
+    old,
+    new
+) {
+  browser()
+  old$A <- old$A + new$A
+  old$B <- old$B + new$B
+  old$n_iter <- old$n_iter + 1L
+  old$phi_0 <- new$phi_0
+  
+  return(old)
+}
+
+
+
 .compute_shap_value <- function(
+  shap_values,
+  shap_matrices
+) {
+  new_shap_values <- lapply(
+    shap_matrices$temp,
+    ..compute_shap_value,
+    is_full = FALSE
+  )
+  
+  return(data.table::rbindlist(
+    list(shap_values),
+    new_shap_values
+  ))
+}
+
+
+
+..compute_shap_value <- function(
+    x,
+    is_full
+) {
+  if (is_full) {
+    A_inv <- matrix_pseudo_inverse(x$A / x$n_iter)
+    b <- x$b / x$n_iter
+  } else {
+    A_inv <- matrix_pseudo_inverse(x$A)
+    b <- x$b
+  }
+  
+  # Compute initial coefficients.
+  phi <- A_inv %*% b
+  
+  # Due to the local accuracy criterion the sum of of the SHAP values plus phi_0
+  # should be equal to the predicted value. We estimate the SHAP values under
+  # this constraint.
+  phi <- A_inv %*% t(t(b) - (colSums(phi) - (x$v_0 - x$phi_0)) / sum(A_inv))
+  
+  shap_values <- data.table::data.table(
+    "sample_id" = x$sample_id,
+    "feature_name" = rep(colnames(x$A), times = ncol(x$b)),
+    "feature_value_mapping" = rep(x$sample_mapping, times = ncol(x$b)),
+    "shap_value" = c(phi),
+    "shap_outcome" = rep(colnames(x$b), each = ncol(x$A))
+  )
+  
+  return(shap_values)
+}
+
+
+
+..old_compute_shap_value <- function(
     samples,
     sample_id,
     mapping,
@@ -847,7 +1040,7 @@ setMethod(
     SIMPLIFY = FALSE,
     USE.NAMES = FALSE
   )
-  
+
   shap_values <- data.table::rbindlist(shap_values)
   if (is_empty(shap_values)) return(NULL)
   
@@ -856,7 +1049,7 @@ setMethod(
 
 
 
-..compute_shap_value <- function(
+..old_compute_shap_value <- function(
     x,
     sample_id,
     mapping,
@@ -929,6 +1122,12 @@ setMethod(
   # multiplications (which are considerably cheaper).
   w <- kernel_weights[non_zero_weights]
 
+  browser()
+  return(list(
+    "A" = t(X) %*% (X * w),
+    "b" = t(X) %*% (w * y)
+  ))
+  
   # Pre-compute inverse matrix because we need it for computing both the
   # coefficients and their variance.
   inv_mat <- matrix_pseudo_inverse(t(X) %*% (X * w))
@@ -1001,12 +1200,14 @@ setMethod(
 ) {
   # Avoid notes due to data.table.
   shap_value <- prediction <- NULL
-  
+  browser()
   # Determine tolerance scaled to the scale of the problem.
   scale <- max(c(shap_values$shap_value)) - min(c(shap_values$shap_value))
   tolerance <- tolerance * scale
   
-  return(all(sqrt(shap_values$shap_variance / iter_id) < tolerance))
+  # TODO: Compute sample error of the mean for each shap value.
+  
+  # return(all(sqrt(shap_values$shap_variance / iter_id) < tolerance))
 }
 
 
