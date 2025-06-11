@@ -273,7 +273,7 @@ setMethod(
     is_pre_processed = FALSE,
     ensemble_method,
     cl,
-    tolerance = 0.005,
+    tolerance = 0.001,
     n_max_iter = 100L,
     message_indent = 0L,
     verbose = FALSE,
@@ -444,6 +444,7 @@ setMethod(
       # Compute SHAP values for this iteration.
       shap_values <- .compute_shap_value(
         samples = mapping_input,
+        sample_id = sample_identifiers,
         mapping = mapping,
         feature_set = feature_set,
         predicted_values = predicted_values,
@@ -455,17 +456,14 @@ setMethod(
       # Check convergence.
       all_shap_converged <- .evaluate_shap_convergence(
         shap_values = shap_values,
-        mapping = mapping_input,
-        predicted_values = predicted_values_input,
-        sample_identifiers = sample_identifiers,
-        phi_0 = phi_0,
+        iter_id = iter_id,
         tolerance = tolerance
       )
       
       iter_id <- iter_id + 1L
     }
   }
-  
+  browser()
   # Add model name to data element.
   proto_data_element <- add_model_name(
     proto_data_element,
@@ -827,39 +825,31 @@ setMethod(
 
 .compute_shap_value <- function(
     samples,
+    sample_id,
     mapping,
     feature_set,
     predicted_values,
     phi_0
 ) {
   # Initialise values to prevent CRAN NOTEs.
-  df <- shap_value <- shap_variance <- m_est <- NULL
+  shap_value <- shap_variance <- NULL
   
   # For each sample in mapping_input, compute SHAP.
-  shap_values <- apply(
-    samples,
-    MARGIN = 1L,
+  shap_values <- mapply(
     ..compute_shap_value,
-    mapping = mapping,
-    predicted_values = predicted_values,
-    phi_0 = phi_0,
-    simplify = FALSE
+    x = asplit(samples, MARGIN = 1L),
+    sample_id = sample_id,
+    MoreArgs = list(
+      "mapping" = mapping,
+      "predicted_values" = predicted_values,
+      "phi_0" = phi_0
+    ),
+    SIMPLIFY = FALSE,
+    USE.NAMES = FALSE
   )
   
   shap_values <- data.table::rbindlist(shap_values)
   if (is_empty(shap_values)) return(NULL)
-
-  # Merge shap-values and update estimates, variance and estimated number of
-  # experiments.
-  shap_values <- shap_values[
-    ,
-    list(
-      "shap_value" = sum(df * shap_value) / sum(df),
-      "shap_variance" = sum(df * shap_variance) / sum(df),
-      "m_est" = sum(m_est)
-    ),
-    by = c("feature_name", "feature_value_mapping", "shap_outcome")
-  ]
   
   return(shap_values)
 }
@@ -868,6 +858,7 @@ setMethod(
 
 ..compute_shap_value <- function(
     x,
+    sample_id,
     mapping,
     predicted_values,
     phi_0
@@ -880,7 +871,7 @@ setMethod(
   # we can simply transpose the mapping matrix so that rows become columns. Then
   # the comparison is performed on the columns representing each row, and the
   # result is transposed again.
-  coalitions <- t(t(mapping) == x)
+  coalitions <- t(t(mapping) == c(x))
   
   # Form a lookup-table for kernel weights.
   n_max_present <- ncol(coalitions)
@@ -913,7 +904,7 @@ setMethod(
 
   # Determine constraint.
   # constraint <- predicted_values[n_coalition_size == n_max_present, ] - phi_0
-  constraint <- predicted_values[n_coalition_size == n_max_present, ]
+  constraint <- predicted_values[n_coalition_size == n_max_present, ] - phi_0
  
   # Lookup the corresponding kernel weights, and filter non-zero weights.
   kernel_weights <- weight_table$weight
@@ -929,15 +920,10 @@ setMethod(
   #       X = Z (coalitions),
   #       W = diag(pi) (kernel_weights)
   #   and y = f(h(z)) - phi_0
-  # X <- coalitions[non_zero_weights, , drop = FALSE]
   X <- coalitions[non_zero_weights, , drop = FALSE]
-  X_phi_0 <- matrix(!logical(nrow(X)), ncol = 1L)
-  colnames(X_phi_0) <- "__phi0__"
-  X <- cbind(X_phi_0, X)
   
   # This ensures that phi_0 is subtracted row-wise.
-  # y <- t(t(predicted_values[non_zero_weights, , drop = FALSE]) - phi_0)
-  y <- predicted_values[non_zero_weights, , drop = FALSE]
+  y <- t(t(predicted_values[non_zero_weights, , drop = FALSE] - phi_0))
   
   # Instead of computing a diagonal matrix, we rely on equivalent element-wise
   # multiplications (which are considerably cheaper).
@@ -952,10 +938,10 @@ setMethod(
   
   # Compute initial coefficients.
   phi <- inv_mat %*% b
-  browser()
-  # Due to the local accuracy criterion the sum of of the SHAP values plus the
-  # the mean prediction should be 0, and we compute the SHAP value under this
-  # constraint.
+  
+  # Due to the local accuracy criterion the sum of of the SHAP values plus phi_0
+  # should be equal to the predicted value. We estimate the SHAP values under
+  # this constraint.
   phi <- inv_mat %*% t(t(b) - (colSums(phi) - constraint) / sum(inv_mat))
   
   # Compute variance for each coefficient: sigma^2 * t(X) W X)^-1,
@@ -973,13 +959,14 @@ setMethod(
   prediction_names <- colnames(phi)
   colnames(phi_var) <- prediction_names
   
+  browser()
   data <- data.table::data.table(
+    "sample_id" = sample_id,
     "feature_name" = rep(colnames(mapping), times = length(prediction_names)),
     "feature_value_mapping" = rep(x, times = length(prediction_names)),
-    "m_est" = 1.0,
-    "df" = length(w) - ncol(X),
     "shap_value" = c(phi),
     "shap_variance" = c(phi_var),
+    "shap_phi_0" = rep(c(phi_0), each = ncol(mapping)),
     "shap_outcome" = rep(prediction_names, each = ncol(mapping))
   )
   
@@ -1009,20 +996,17 @@ setMethod(
 
 .evaluate_shap_convergence <- function(
     shap_values,
-    mapping,
-    sample_identifiers,
-    predicted_values,
-    phi_0,
+    iter_id,
     tolerance
 ) {
   # Avoid notes due to data.table.
   shap_value <- prediction <- NULL
   
   # Determine tolerance scaled to the scale of the problem.
-  scale <- max(c(predicted_values, shap_values$shap_value)) - min(c(predicted_values, shap_values$shap_value))
+  scale <- max(c(shap_values$shap_value)) - min(c(shap_values$shap_value))
   tolerance <- tolerance * scale
   
-  return(all(sqrt(shap_values$shap_variance / shap_values$m_est) < tolerance))
+  return(all(sqrt(shap_values$shap_variance / iter_id) < tolerance))
 }
 
 
