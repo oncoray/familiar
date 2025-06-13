@@ -11,18 +11,16 @@ setClass(
   slots = list(
     "data_mapping" = "ANY",
     "predicted_values" = "ANY",
-    "lookup_table" = "ANY",
-    "sample_identifiers" = "character"
+    "lookup_table" = "ANY"
   ),
   prototype = methods::prototype(
     detail_level = "ensemble",
     estimation_type = "point",
     value_column = "shap_value",
-    grouping_column = c("feature_name", "feature_value_mapping"),
+    grouping_column = c("feature_name", "feature_value_mapping", "sample_id"),
     data_mapping = NULL,
     predicted_values = NULL,
-    lookup_table = NULL,
-    sample_identifiers = NA_character_
+    lookup_table = NULL
   )
 )
 
@@ -273,7 +271,7 @@ setMethod(
     is_pre_processed = FALSE,
     ensemble_method,
     cl,
-    tolerance = 0.001,
+    tolerance = 0.005,
     n_max_iter = 100L,
     message_indent = 0L,
     verbose = FALSE,
@@ -314,6 +312,8 @@ setMethod(
   #
   # Parallel processing: perform steps 4-6 multiple times within a parallel loop.
   # This allows for faster convergence.
+  
+  shap_value <- NULL
   
   # Check that the model requires any features.
   if (is_empty(object@model_features)) return(NULL)
@@ -383,19 +383,6 @@ setMethod(
     # single feature: SHAP values cannot be computed.
     if (is.null(coalitions)) return(NULL)
     
-    # Compute initial A and b matrices
-    # shap_matrices <- .compute_shap_matrices(
-    #   matrices = NULL,
-    #   samples = mapping_input,
-    #   sample_predictions = predicted_values_input,
-    #   sample_id = sample_identifiers,
-    #   mapping = mapping_input,
-    #   feature_set = feature_set,
-    #   predicted_values = predicted_values_input,
-    #   phi_0 = phi_0
-    # )
-    
-    browser()
     # Looping variabes.
     iter_id <- 1L
     all_shap_converged <- FALSE
@@ -454,8 +441,14 @@ setMethod(
     }
   }
   
-  # TODO: Compute final SHAP values.
   browser()
+  # Compute final SHAP values.
+  shap_values <- shap_values[
+    ,
+    list("shap_vale" = mean(shap_value)),
+    by = c("sample_id", "feature_name", "feature_value_mapping", "shap_outcome")
+  ]
+  
   
   # Add model name to data element.
   proto_data_element <- add_model_name(
@@ -477,7 +470,7 @@ setMethod(
   # outcomes, "shap_outcome" is an additional grouping column.
   if (object@outcome_type %in% c("multinomial", "survival")) {
     proto_data_element@data <- data.table::copy(
-      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_outcome", "shap_value"))]
+      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_outcome", "shap_value", "sample_id"))]
     )
     
     # Add shap_outcome as additional grouping level.
@@ -494,12 +487,9 @@ setMethod(
     
   } else {
     proto_data_element@data <- data.table::copy(
-      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_value"))]
+      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_value", "sample_id"))]
     )
   }
-  
-  # Add sample identifiers.
-  proto_data_element@sample_identifiers <- sample_identifiers
   
   return(proto_data_element)
 }
@@ -856,14 +846,17 @@ setMethod(
     )
     
   } else {
-    matrices <- ..update_shap_matrices(
-      old = matrices$full,
-      new = new_matrices
+    matrices <- mapply(
+      FUN = .update_shap_matrices,
+      old = matrices,
+      new = new_matrices,
+      SIMPLIFY = FALSE,
+      USE.NAMES = FALSE
     )
   }
-  browser()
+  
   # Return both the full and temporary matrices.
-  return(list("full" = matrices, "temp" = new_matrices))
+  return(new_matrices)
 }
 
 
@@ -891,17 +884,20 @@ setMethod(
   n_present <- seq_len(n_max_present + 1L) - 1L
   n_permutations <- choose(n_max_present, n_present)
   kernel_weights <- (n_max_present - 1.0) / (n_permutations * n_present * (n_max_present - n_present))
-  kernel_weights[!is.finite(kernel_weights)] <- 0.0 
+  kernel_weights[!is.finite(kernel_weights)] <- 0.0
+  
+  # Normalise kernel-weights to 1.
+  kernel_weights <- kernel_weights / sum(kernel_weights)
+  
+  # Determine weights for individual unique coalitions.
+  kernel_weights <- kernel_weights / n_permutations
   
   # Compute the number of features "present" in each coalition. 
   n_coalition_size <- rowSums(coalitions)
   
-  # Determine which unique coalitions are present.
-  coalition_hash <- .hash_mapping(coalitions)
-  
   # Set up weight table.
   weight_table <- data.table::data.table(
-    "coalition" = coalition_hash,
+    "coalition" = data.table::frank(data.table::as.data.table(coalitions), ties.method = "dense"),
     "weight" = kernel_weights[n_coalition_size + 1L]
   )
   
@@ -950,13 +946,12 @@ setMethod(
 
 
 
-..update_shap_matrices <- function(
+.update_shap_matrices <- function(
     old,
     new
 ) {
-  browser()
   old$A <- old$A + new$A
-  old$B <- old$B + new$B
+  old$b <- old$b + new$b
   old$n_iter <- old$n_iter + 1L
   old$phi_0 <- new$phi_0
   
@@ -969,31 +964,20 @@ setMethod(
   shap_values,
   shap_matrices
 ) {
+  # Compute shap values.
   new_shap_values <- lapply(
-    shap_matrices$temp,
-    ..compute_shap_value,
-    is_full = FALSE
+    shap_matrices,
+    ..compute_shap_value
   )
   
-  return(data.table::rbindlist(
-    list(shap_values),
-    new_shap_values
-  ))
+  return(data.table::rbindlist(c(list(shap_values), new_shap_values)))
 }
 
 
 
-..compute_shap_value <- function(
-    x,
-    is_full
-) {
-  if (is_full) {
-    A_inv <- matrix_pseudo_inverse(x$A / x$n_iter)
-    b <- x$b / x$n_iter
-  } else {
-    A_inv <- matrix_pseudo_inverse(x$A)
-    b <- x$b
-  }
+..compute_shap_value <- function(x) {
+  A_inv <- matrix_pseudo_inverse(x$A)
+  b <- x$b
   
   # Compute initial coefficients.
   phi <- A_inv %*% b
@@ -1077,11 +1061,11 @@ setMethod(
   n_coalition_size <- rowSums(coalitions)
   
   # Determine which unique coalitions are present.
-  coalition_hash <- .hash_mapping(coalitions)
-  
+  # coalition_hash <- .hash_mapping(coalitions)
+  browser()
   # Set up weight table.
   weight_table <- data.table::data.table(
-    "coalition" = coalition_hash,
+    "coalition" = data.table::frank(data.table::as.data.table(coalitions), ties.method = "first"),
     "weight" = kernel_weights[n_coalition_size + 1L]
   )
   
@@ -1195,19 +1179,20 @@ setMethod(
 
 .evaluate_shap_convergence <- function(
     shap_values,
-    iter_id,
     tolerance
 ) {
   # Avoid notes due to data.table.
   shap_value <- prediction <- NULL
-  browser()
+
   # Determine tolerance scaled to the scale of the problem.
   scale <- max(c(shap_values$shap_value)) - min(c(shap_values$shap_value))
   tolerance <- tolerance * scale
   
-  # TODO: Compute sample error of the mean for each shap value.
-  
-  # return(all(sqrt(shap_values$shap_variance / iter_id) < tolerance))
+  # Compute sample error of the mean for each shap value.
+  sem_data <- shap_values[, list("sample_error_mean" = stats::sd(shap_value) / sqrt(.N)), by = c("sample_id", "feature_name", "feature_value_mapping", "shap_outcome")]
+  if (any(!is.finite(sem_data$sample_error_mean))) return(FALSE)
+  cat(paste0("sum SEM: ", sum(sem_data$sample_error_mean), " ; total converged: ", sum(sem_data$sample_error_mean <= tolerance), "\n"))
+  return(all(sem_data$sample_error_mean <= tolerance))
 }
 
 
