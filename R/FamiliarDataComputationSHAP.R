@@ -986,8 +986,9 @@ setMethod(
     shap_matrices,
     ..compute_shap_value
   )
+  new_shap_values <- data.table::rbindlist(new_shap_values)
   
-  return(data.table::rbindlist(c(list(shap_values), new_shap_values)))
+  return(rbind(shap_values, new_shap_values))
 }
 
 
@@ -1004,14 +1005,14 @@ setMethod(
   # this constraint.
   phi <- A_inv %*% t(t(b) - (colSums(phi) - (x$v_0 - x$phi_0)) / sum(A_inv))
   
-  shap_values <- data.table::data.table(
+  shap_values <- list(
     "sample_id" = x$sample_id,
     "feature_name" = rep(colnames(x$A), times = ncol(x$b)),
     "feature_value_mapping" = rep(x$sample_mapping, times = ncol(x$b)),
     "shap_value" = c(phi),
     "shap_outcome" = rep(colnames(x$b), each = ncol(x$A))
   )
-  browser()
+  
   return(shap_values)
 }
 
