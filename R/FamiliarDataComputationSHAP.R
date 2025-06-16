@@ -365,6 +365,7 @@ setMethod(
     # Single feature (shapley) -------------------------------------------------
     shap_values <- .compute_shap_value_single_feature(
       mapping = mapping_input,
+      sample_id = sample_identifiers,
       feature_set = feature_set,
       predicted_values = predicted_values_input,
       phi_0 = phi_0
@@ -1071,15 +1072,16 @@ setMethod(
 
 .compute_shap_value_single_feature <- function(
   mapping,
+  sample_id,
   feature_set,
   predicted_values,
   phi_0
 ) {
   data <- data.table::data.table(
+    "sample_id" = sample_id,
     "feature_name" = colnames(mapping),
     "feature_value_mapping" = rep(mapping[, 1L], times = ncol(predicted_values)),
     "shap_value" = c(t(t(predicted_values) - phi_0)),
-    "shap_variance" = 0.0,
     "shap_outcome" = rep(colnames(predicted_values), each = nrow(predicted_values))
   )
   
