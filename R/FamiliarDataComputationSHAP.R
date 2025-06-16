@@ -909,30 +909,8 @@ setMethod(
   
   # Compute the number of features "present" in each coalition. 
   n_coalition_size <- rowSums(coalitions)
-  
-  # Set up weight table.
-  weight_table <- data.table::data.table(
-    "coalition" = data.table::frank(data.table::as.data.table(coalitions), ties.method = "dense"),
-    "weight" = kernel_weights[n_coalition_size + 1L]
-  )
-  
-  # kernelSHAP originally was defined by sampling coalitions, with each
-  # coalition drawn probabilistically according to the SHAP kernel weights. This
-  # means that the appearance of coalitions would stochastically mirror their
-  # probabilities. Here we have a fixed set of coalitions, and coalitions that
-  # are randomly formed from the entire set of decisions that should be
-  # explained (and their fixed coalitions). This means that our coalitions are
-  # not distributed as expected. The weights are set to compensate for this.
-  weight_table[, "n" := .N, by = "coalition"]
-  
-  # weight_table[, "weight" := weight / .N, by = "coalition"]
-  # weight_table[, "weight" := weight / sum(weight)]
-  
-  # Lookup the corresponding kernel weights, and filter non-zero weights.
-  kernel_weights <- weight_table$weight / weight_table$n
-  kernel_weights <- kernel_weights / sum(kernel_weights)
-
-  non_zero_weights <- kernel_weights > 0.0
+  weights <- kernel_weights[n_coalition_size + 1L]
+  non_zero_weights <- weights > 0.0
   
   # Check for empty weights.  
   if (!any(non_zero_weights)) return(NULL)
@@ -949,10 +927,30 @@ setMethod(
   # This ensures that phi_0 is subtracted row-wise.
   y <- t(t(predicted_values[non_zero_weights, , drop = FALSE] - phi_0))
   
+  # kernelSHAP originally was defined by sampling coalitions, with each
+  # coalition drawn probabilistically according to the SHAP kernel weights. This
+  # means that the appearance of coalitions would stochastically mirror their
+  # probabilities. Here we have a fixed set of coalitions, and coalitions that
+  # are randomly formed from the entire set of decisions that should be
+  # explained (and their fixed coalitions). This means that our coalitions are
+  # not distributed as expected, and cannot be used without updating the
+  # weights.
+  
+  # First determine how often individual coalitions appear.
+  coalition_id <- data.table::frank(data.table::as.data.table(X), ties.method = "dense")
+  n_coalition_instances <- integer(length(coalition_id))
+  for (ii in seq_len(max(coalition_id))) {
+    instance_in_coalition <- coalition_id == ii
+    n_coalition_instances[instance_in_coalition] <- sum(instance_in_coalition)
+  }
+  
+  # Then re-weight probability of individual coalitions, and normalise.
+  w <- weights[non_zero_weights]
+  w <- w / n_coalition_instances
+  w <- w / sum(w)
+  
   # Instead of computing a diagonal matrix, we rely on equivalent element-wise
   # multiplications (which are considerably cheaper).
-  w <- kernel_weights[non_zero_weights]
-  
   return(list(
     "A" = t(X) %*% (X * w),
     "b" = t(X) %*% (y * w),
