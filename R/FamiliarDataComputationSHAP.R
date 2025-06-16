@@ -838,6 +838,12 @@ setMethod(
   # We follow the recipe by Covert and Lee (2021), which means that we update
   # the A and b matrices each iteration.
   
+  # Compute weights for each coalition in a coalition set.
+  kernel_weights <- .compute_shap_kernel_weights(
+    n = ncol(samples),
+    individual_coalition = TRUE
+  )
+  
   # Compute A and b matrices for each sample.
   new_matrices <- mapply(
     ..compute_shap_matrices,
@@ -845,6 +851,7 @@ setMethod(
     v_0 = sample_predictions,
     sample_id = sample_id,
     MoreArgs = list(
+      "kernel_weights" = kernel_weights,
       "mapping" = mapping,
       "predicted_values" = predicted_values,
       "phi_0" = phi_0
@@ -885,6 +892,7 @@ setMethod(
     x,
     v_0,
     sample_id,
+    kernel_weights,
     mapping,
     predicted_values,
     phi_0
@@ -898,19 +906,6 @@ setMethod(
   # the comparison is performed on the columns representing each row, and the
   # result is transposed again.
   coalitions <- t(t(mapping) == c(x))
-  
-  # Form a lookup-table for kernel weights.
-  n_max_present <- ncol(coalitions)
-  n_present <- seq_len(n_max_present + 1L) - 1L
-  n_permutations <- choose(n_max_present, n_present)
-  kernel_weights <- (n_max_present - 1.0) / (n_permutations * n_present * (n_max_present - n_present))
-  kernel_weights[!is.finite(kernel_weights)] <- 0.0
-  
-  # Normalise kernel-weights to 1.
-  kernel_weights <- kernel_weights / sum(kernel_weights)
-  
-  # Determine weights for individual unique coalitions.
-  kernel_weights <- kernel_weights / n_permutations
   
   # Compute the number of features "present" in each coalition. 
   n_coalition_size <- rowSums(coalitions)
