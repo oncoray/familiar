@@ -908,11 +908,15 @@ setMethod(
   # are randomly formed from the entire set of decisions that should be
   # explained (and their fixed coalitions). This means that our coalitions are
   # not distributed as expected. The weights are set to compensate for this.
-  weight_table[, "weight" := weight / .N, by = "coalition"]
-  weight_table[, "weight" := weight / sum(weight)]
+  weight_table[, "n" := .N, by = "coalition"]
+  
+  # weight_table[, "weight" := weight / .N, by = "coalition"]
+  # weight_table[, "weight" := weight / sum(weight)]
   
   # Lookup the corresponding kernel weights, and filter non-zero weights.
-  kernel_weights <- weight_table$weight
+  kernel_weights <- weight_table$weight / weight_table$n
+  kernel_weights <- kernel_weights / sum(kernel_weights)
+
   non_zero_weights <- kernel_weights > 0.0
   
   # Check for empty weights.  
