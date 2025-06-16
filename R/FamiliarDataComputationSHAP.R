@@ -936,7 +936,18 @@ setMethod(
   # not distributed as expected, and cannot be used without updating the
   # weights.
   
-  # First determine how often individual coalitions appear.
+  # First determine how often individual coalitions appear. This is currently
+  # the most expensive part of this function. I thought of solutions to speed up
+  # the process, other than data.table::frank. Hashing each row using
+  # rlang::hash or paste0 is slower. Using a filter technique where we count which
+  # individual coalitions are present is not scalable for large feature sets due
+  # to large number of permutations of coalitions. Even though that solution
+  # could be quite fast when few features are present (and thus a non-sparse
+  # coalition set is present in `coalitions`), the likely gains will be minimal.
+  # Another alternative is to encode coalitions as a sum of positional powers of
+  # 2 ( feature 1: TRUE / FALSE * 2^0; feature 2: TRUE / FALSE 2^1; etc.), but
+  # that would still be problematic with large numbers of features due to
+  # integer bit precision.
   coalition_id <- data.table::frank(data.table::as.data.table(X), ties.method = "dense")
   n_coalition_instances <- integer(length(coalition_id))
   for (ii in seq_len(max(coalition_id))) {
