@@ -806,6 +806,26 @@ setMethod(
 
 
 
+.compute_shap_kernel_weights <- function(n, individual_coalition = FALSE) {
+  # Form a lookup-table for kernel weights.
+  n_present <- seq_len(n + 1L) - 1L
+  n_permutations <- choose(n, n_present)
+  kernel_weights <- (n - 1.0) / (n_permutations * n_present * (n - n_present))
+  kernel_weights[!is.finite(kernel_weights)] <- 0.0
+  
+  # Normalise kernel-weights to 1.
+  kernel_weights <- kernel_weights / sum(kernel_weights)
+  
+  if (individual_coalition) {
+    # Determine weights for individual unique coalitions.
+    kernel_weights <- kernel_weights / n_permutations
+  }
+  
+  return(kernel_weights)
+}
+
+
+
 .compute_shap_matrices <- function(
   matrices = NULL,
   samples,
