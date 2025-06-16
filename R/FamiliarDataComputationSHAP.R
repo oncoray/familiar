@@ -756,44 +756,84 @@ setMethod(
     x,
     coalitions,
     n_feature_values,
-    rstream_object
+    rstream_object,
+    mapping_method = "fixed"
 ) {
-  # Determine the number of feature values to samples for off-coalition
-  # features. This should be the same number for each feature in antithetical
-  # sampling.
-  n_to_draw <- colSums(!coalitions)
+  # The mapping method determines how values are drawn.
+  #
+  # - "fixed": a single sample, not_x, that is fully distinct from x is 
+  #    randomly drawn. on-features are copied from x, and off-features from
+  #    not_x.
+  # - "random": off-features are drawn randomly.
   
   mapping <- list()
-  for (feature in names(n_feature_values)) {
-    # Determine eligible features from in-coalition (on) and off-coalition
-    # (off) features.
-    on_feature_set <- unname(x[feature])
-    off_feature_set <- seq_len(n_feature_values[feature])[-on_feature_set]
-    
-    # Sample the off-feature set, and append to the on-feature set. This forms
-    # the look-up table for forming coalitions.
-    feature_set <- c(
-      on_feature_set,
-      fam_sample(
-        off_feature_set,
-        size = n_to_draw[feature],
-        replace = TRUE,
-        rstream_object = rstream_object
+  if (mapping_method == "fixed") {
+    for (feature in names(n_feature_values)) {
+      # Determine eligible features from in-coalition (on) and off-coalition
+      # (off) features.
+      on_feature_set <- unname(x[feature])
+      off_feature_set <- seq_len(n_feature_values[feature])[-on_feature_set]
+      
+      # Sample a single value from the off-feature set, and append to the
+      # on-feature set. This forms the look-up table for forming coalitions.
+      feature_set <- c(
+        on_feature_set,
+        fam_sample(
+          off_feature_set,
+          size = 1L,
+          rstream_object = rstream_object
+        )
       )
-    )
+      
+      # Determine which value from feature_set should be used. Index 1L
+      # corresponds to the in-coalition feature value, and index 2L to the
+      # off-coalition feature value.
+      lookup_vector <- 1L + !coalitions[, feature]
+      
+      # Add features to mapping.
+      mapping[[feature]] <- feature_set[lookup_vector]
+    }
+      
+  } else if (mapping_method == "random") {
+    # Determine the number of feature values to samples for off-coalition
+    # features. This should be the same number for each feature in antithetical
+    # sampling.
+    n_to_draw <- colSums(!coalitions)
     
-    # Accumulate off-coalition elements. E.g. with coalitions (across samples
-    # for each feature) [0, 1, 1, 0], the lookup-vector is [1, 1, 1, 2].
-    lookup_vector <- cumsum(!coalitions[, feature])
+    for (feature in names(n_feature_values)) {
+      # Determine eligible features from in-coalition (on) and off-coalition
+      # (off) features.
+      on_feature_set <- unname(x[feature])
+      off_feature_set <- seq_len(n_feature_values[feature])[-on_feature_set]
+      
+      # Sample the off-feature set, and append to the on-feature set. This forms
+      # the look-up table for forming coalitions.
+      feature_set <- c(
+        on_feature_set,
+        fam_sample(
+          off_feature_set,
+          size = n_to_draw[feature],
+          replace = TRUE,
+          rstream_object = rstream_object
+        )
+      )
+      
+      # Accumulate off-coalition elements. E.g. with coalitions (across samples
+      # for each feature) [0, 1, 1, 0], the lookup-vector is [1, 1, 1, 2].
+      lookup_vector <- cumsum(!coalitions[, feature])
+      
+      # Reset in-coalition elements of the lookup vector, yielding, e.g. [1, 0, 0,
+      # 2], and increment by 1. This results in indices (e.g. [2, 1, 1, 3])
+      # referring to the feature set, with index 1 corresponding to the
+      # in-coalition value.
+      lookup_vector <- 1L + lookup_vector * !coalitions[, feature]
+      
+      # Add features to mapping.
+      mapping[[feature]] <- feature_set[lookup_vector]
+    } 
     
-    # Reset in-coalition elements of the lookup vector, yielding, e.g. [1, 0, 0,
-    # 2], and increment by 1. This results in indices (e.g. [2, 1, 1, 3])
-    # referring to the feature set, with index 1 corresponding to the
-    # in-coalition value.
-    lookup_vector <- 1L + lookup_vector * !coalitions[, feature]
-    
-    # Add features to mapping.
-    mapping[[feature]] <- feature_set[lookup_vector]
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown mapping_method: ", mapping_method))
   }
   
   # Convert to matrix. Mapping consists of columns, and the matrix is sorted
