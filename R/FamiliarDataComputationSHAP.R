@@ -375,16 +375,25 @@ setMethod(
     # Multiple features (kernel) -----------------------------------------------
     
     # Generate coalitions (Z)
-    coalitions <- .get_shap_coalitions(
+    input_coalitions <- .get_shap_coalitions(
       feature_set = feature_set,
       depth = 1L
     )
     
     # Check that coalitions are not empty: this happens if the data contains a
     # single feature: SHAP values cannot be computed.
-    if (is.null(coalitions)) return(NULL)
+    if (is.null(input_coalitions)) return(NULL)
     
-    # Looping variabes.
+    # Compute weights for each coalition in a coalition set.
+    kernel_weights <- .compute_shap_kernel_weights(
+      n = ncol(mapping_input),
+      individual_coalition = TRUE
+    )
+    
+    # Provide the initial set of coalitions.
+    coalitions <- list(input_coalitions)
+    
+    # Looping variables.
     iter_id <- 1L
     all_shap_converged <- FALSE
     shap_values <- NULL
@@ -421,7 +430,8 @@ setMethod(
         sample_id = sample_identifiers,
         mapping = mapping_iter,
         predicted_values = predicted_values_iter,
-        phi_0 = phi_0
+        phi_0 = phi_0,
+        kernel_weights = kernel_weights
       )
       
       # Compute SHAP values for this iteration.
@@ -432,10 +442,26 @@ setMethod(
       
       if (is.null(shap_values)) return(NULL)
       
+      # Compute variance of each SHAP value.
+      shap_variance <- shap_values[
+        ,
+        list("shap_var" = stats::var(shap_value), "n" = .N),
+        by = c("sample_id", "feature_name", "feature_value_mapping", "shap_outcome")
+      ]
+      
       # Check convergence.
       all_shap_converged <- .evaluate_shap_convergence(
-        shap_values = shap_values,
-        tolerance = tolerance
+        shap_variance = shap_variance,
+        tolerance = tolerance * diff(range(shap_values$shap_value))
+      )
+      
+      # Update coalitions.
+      coalitions <- .sample_shap_coalitions(
+        coalitions = input_coalitions,
+        kernel_weights = kernel_weights,
+        shap_variance = shap_variance,
+        sampling_method = "importance",
+        seed = 19L + iter_id
       )
       
       iter_id <- iter_id + 1L
@@ -446,7 +472,7 @@ setMethod(
   # Compute final SHAP values.
   shap_values <- shap_values[
     ,
-    list("shap_vale" = mean(shap_value)),
+    list("shap_value" = mean(shap_value)),
     by = c("sample_id", "feature_name", "feature_value_mapping", "shap_outcome")
   ]
   
@@ -588,8 +614,11 @@ setMethod(
 
 .get_shap_coalitions <- function(
     feature_set,
-    depth = 2L
+    depth = 1L
 ) {
+  # Get initial set of coalitions. Antithetic coalitions are created within
+  # ...shap_randomise_mapping_from_coalition
+  
   # Helper function that inserts TRUE at the indices indicated by ones.
   ..fun <- function(ones, n_features) {
     x <- logical(n_features)
@@ -621,12 +650,98 @@ setMethod(
   # To matrix. Data are stored row-wise.
   z <- matrix(unlist(z), ncol = n_features, byrow = TRUE)
   colnames(z) <- names(feature_set)
-
-  # Use adversarial sampling and keep unique coalitions. Adversarial sampling
-  # relies on coalitions that are directly orthogonal to another.
-  z <- unique(rbind(z, !z))
   
   return(z)
+}
+
+
+
+.sample_shap_coalitions <- function(
+    coalitions,
+    kernel_weights,
+    shap_variance,
+    sampling_method,
+    seed
+) {
+  shap_var <- coalition_id <- NULL
+  if (sampling_method == "fixed") {
+    sampled_coalitions <- list(coalitions)
+    
+  } else if (sampling_method == "importance") {
+  
+    # Probabilistic selection of coalitions. This is very much similar to
+    # importance sampling in MCMC. The central concept is that SHAP values for
+    # some features are more difficult to determine than those of others. The
+    # more difficult features will have a larger overall variance. Therefore we
+    # want to focus more on coalitions where these features are present.
+    
+    # Check if shap_variance contains useful info. Particularly, it cannot be
+    # empty, or contain NA or inf values. In that case, just return the fixed
+    # coalitions
+    if (is_empty(shap_variance)) return(list(coalitions))
+    if (any(!is.finite(shap_variance$shap_var))) return(list(coalitions))
+    
+    # Determine the cost of each input coalition, normalised by their total
+    # cost. We want to sample coalitions until the budget (1.0) is exceeded.
+    # This is the same budget available to the input coalition. The cost is
+    # equal to the corresponding kernel weight for the individual coalition.
+    
+    coalition_size <- rowSums(coalitions)
+    coalition_cost <- kernel_weights[coalition_size + 1L]
+    coalition_cost <- coalition_cost / sum(coalition_cost)
+    
+    # The selection probability for each individual coalition is the variance(s)
+    # of the on-feature(s) times the kernel weight, normalised by the total
+    # probability over all input coalitions.
+    shap_variance <- shap_variance[, list("feature_shap_var" = sum(shap_var)), by = "feature_name"]
+    feature_names <- colnames(coalitions)
+    feature_shap_variance <- numeric(length(feature_names))
+    for (ii in seq_along(feature_names)) {
+      feature_shap_variance[ii] <- shap_variance[feature_name == feature_names[ii], ]$feature_shap_var
+    }
+    
+    coalition_probability <- colSums(t(coalitions) * feature_shap_variance * kernel_weights[coalition_size + 1L])
+    coalition_probability <- coalition_probability / sum(coalition_probability)
+    
+    # Draw 1 / min(coalition_cost) coalitions with resampling, and use these up to
+    # and including the coalition where the budget is exceeded.
+    n_to_sample <- ceiling(1.0 / min(coalition_cost))
+    u_sampled <- fam_runif(n = n_to_sample, seed = seed)
+    
+    selected_coalition <- sapply(
+      u_sampled,
+      function(x, u) (which.min(u < x)),
+      u = cumsum(coalition_probability)
+    )
+    
+    selected_coalition <- head(
+      selected_coalition,
+      n = which.min(cumsum(coalition_cost[selected_coalition]) < 1.0)
+    )
+    
+    # Form subsets of coalitions so that each individual coalition only appears
+    # once in its bag. This is important so that a different sample will be drawn
+    # when the fixed mapping method in ...shap_randomise_mapping_from_coalition is
+    # used.
+    coalition_table <- data.table::data.table("coalition_id" = selected_coalition)
+    coalition_table[, "bag_id" := data.table::rowid(coalition_id)]
+    
+    sampled_coalitions <- lapply(
+      split(coalition_table, by = "bag_id"),
+      function(x, coalitions){
+        coalitions[x$coalition_id, , drop = FALSE]
+      },
+      coalitions = coalitions
+    )
+    
+    # Note that antithetic sampling is done later in
+    # ...shap_randomise_mapping_from_coalition.
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown sampling_method: ", sampling_method))
+  }
+  
+  return(sampled_coalitions)
 }
 
 
@@ -752,14 +867,33 @@ setMethod(
 }
 
 
-
 ..shap_randomise_mapping_from_coalition <- function(
-    x,
+  x, 
+  coalitions,
+  ...
+) {
+  # Nested loop over coalitions.
+  mapping <- lapply(
     coalitions,
+    ...shap_randomise_mapping_from_coalition,
+    x,
+    ...
+  )
+  
+  return(do.call(rbind, mapping))
+}
+
+
+...shap_randomise_mapping_from_coalition <- function(
+    coalitions,
+    x,
     n_feature_values,
     rstream_object,
     mapping_method = "fixed"
 ) {
+  # Generate antithetic coalitions from input.
+  coalitions <- rbind(coalitions, !coalitions)
+  
   # The mapping method determines how values are drawn.
   #
   # - "fixed": a single sample, not_x, that is fully distinct from x is 
@@ -874,16 +1008,11 @@ setMethod(
   sample_id,
   mapping,
   predicted_values,
-  phi_0
+  phi_0,
+  kernel_weights
 ) {
   # We follow the recipe by Covert and Lee (2021), which means that we update
   # the A and b matrices each iteration.
-  
-  # Compute weights for each coalition in a coalition set.
-  kernel_weights <- .compute_shap_kernel_weights(
-    n = ncol(samples),
-    individual_coalition = TRUE
-  )
   
   # Compute A and b matrices for each sample.
   new_matrices <- mapply(
@@ -1091,21 +1220,14 @@ setMethod(
 
 
 .evaluate_shap_convergence <- function(
-    shap_values,
+    shap_variance,
     tolerance
 ) {
-  # Avoid notes due to data.table.
-  shap_value <- prediction <- NULL
-
-  # Determine tolerance scaled to the scale of the problem.
-  scale <- max(c(shap_values$shap_value)) - min(c(shap_values$shap_value))
-  tolerance <- tolerance * scale
-  
   # Compute sample error of the mean for each shap value.
-  sem_data <- shap_values[, list("sample_error_mean" = stats::sd(shap_value) / sqrt(.N)), by = c("sample_id", "feature_name", "feature_value_mapping", "shap_outcome")]
-  if (any(!is.finite(sem_data$sample_error_mean))) return(FALSE)
-  cat(paste0("sum SEM: ", sum(sem_data$sample_error_mean), " ; total converged: ", sum(sem_data$sample_error_mean <= tolerance), "\n"))
-  return(all(sem_data$sample_error_mean <= tolerance))
+  sem_values <- sqrt(shap_variance$shap_var / shap_variance$n)
+  if (any(!is.finite(sem_values))) return(FALSE)
+  cat(paste0("sum SEM: ", sum(sem_values), " ; total converged: ", sum(sem_values <= tolerance), "\n"))
+  return(all(sem_values <= tolerance))
 }
 
 
