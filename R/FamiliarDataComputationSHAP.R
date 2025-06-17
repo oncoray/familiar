@@ -273,6 +273,7 @@ setMethod(
     cl,
     tolerance = 0.005,
     n_max_iter = 100L,
+    mapping_method = "fixed",
     message_indent = 0L,
     verbose = FALSE,
     progress_bar = FALSE,
@@ -405,7 +406,8 @@ setMethod(
         samples = mapping_input,
         coalitions = coalitions,
         feature_set = feature_set,
-        seed = iter_id
+        seed = iter_id,
+        mapping_method = mapping_method
       )
       
       # Predict from new unique mappings.
@@ -833,7 +835,8 @@ setMethod(
   coalitions,
   feature_set,
   seed,
-  n_min_mappings = 300L
+  n_min_mappings = 300L,
+  mapping_method = "fixed"
 ) {
   # Determine the number of feature values for each value.
   n_feature_values <- lengths(feature_set)
@@ -847,15 +850,36 @@ setMethod(
   # Ensure that sufficient mappings are generated to limit the effect of
   # overhead on the computation of SHAP values.
   while (n_mappings < n_min_mappings) {
-    # Randomise.
-    random_mapping <- apply(
-      samples,
-      MARGIN = 1L,
-      ..shap_randomise_mapping_from_coalition,
-      coalitions = coalitions,
-      n_feature_values = n_feature_values,
-      rstream_object = rstream_object,
-      simplify = FALSE
+    # Generate random values.
+    if (mapping_method == "fixed") {
+      # Generate a random number for each feature and each sample and coalition
+      # set.
+      n_random <- nrow(samples) * length(coalitions) * length(feature_set)
+      
+    } else if (mapping_method == "random") {
+      # Generate a random number for each feature and each sample and each
+      # single coalition. Due to antithetic sampling, the number of coalitions
+      # is doubled.
+      n_random <- nrow(samples) * 2L * sum(sapply(coalitions, nrow)) * length(feature_set)
+      
+    } else {
+      ..error_reached_unreachable_code(paste0("unknown mapping_method: ", mapping_method))
+    }
+    
+    # Stream random numbers.
+    x_random <- fam_runif(n = n_random, rstream_object = rstream_object)
+    
+    random_mapping <- mapply(
+      FUN = ..shap_randomise_mapping_from_coalition,
+      x = asplit(samples, 1L),
+      x_random = split(x_random, cut(seq_along(x_random), nrow(samples), labels = FALSE)),
+      MoreArgs = list(
+        "coalitions" = coalitions,
+        "n_feature_values" = n_feature_values,
+        "mapping_method" = mapping_method
+      ),
+      USE.NAMES = FALSE,
+      SIMPLIFY = FALSE
     )
     
     mapping <- c(mapping, random_mapping)
@@ -871,15 +895,40 @@ setMethod(
 
 ..shap_randomise_mapping_from_coalition <- function(
   x, 
+  x_random,
   coalitions,
-  ...
+  n_feature_values,
+  mapping_method
 ) {
-  # Nested loop over coalitions.
-  mapping <- lapply(
-    coalitions,
-    ...shap_randomise_mapping_from_coalition,
-    x,
-    ...
+  
+  # Split random values.
+  if (length(coalitions) == 1L) {
+    x_random <- list(x_random)
+    
+  } else {
+    if (mapping_method == "fixed") {
+      # Each coalition set requires the same number of random values.
+      x_random <- split(x_random, cut(seq_along(x_random), length(coalitions), labels = FALSE))
+      
+    } else if (mapping_method == "random") {
+      # Due to antithetic sampling, the number of coalitions is doubled.
+      n_coalitions_in_bag <- 2L * sapply(coalitions, nrow)
+      x_random <- split(x_random, rep(seq_along(coalitions), n_coalitions_in_bag * length(n_feature_values)))
+    }
+  }
+  
+  # Loop over coalition sets.
+  mapping <- mapply(
+    FUN = ...shap_randomise_mapping_from_coalition,
+    coalitions = coalitions,
+    x_random = x_random,
+    MoreArgs = list(
+      "x" = x,
+      "n_feature_values" = n_feature_values,
+      "mapping_method" = mapping_method
+    ),
+    USE.NAMES = FALSE,
+    SIMPLIFY = FALSE
   )
   
   return(do.call(rbind, mapping))
@@ -888,11 +937,23 @@ setMethod(
 
 ...shap_randomise_mapping_from_coalition <- function(
     coalitions,
+    x_random,
     x,
     n_feature_values,
-    rstream_object,
-    mapping_method = "fixed"
+    mapping_method
 ) {
+  
+  ..select_shap_feature_mapping <- function(
+    available_feature_values,
+    random_values
+  ) {
+    # Sample with replacement.
+    x_indices <- as.integer(ceiling(random_values * length(available_feature_values)))
+    x_indices[x_indices == 0L] <- 1L
+    
+    return(available_feature_values[x_indices])
+  }
+  
   # Generate antithetic coalitions from input.
   coalitions <- rbind(coalitions, !coalitions)
   
@@ -905,9 +966,10 @@ setMethod(
   
   mapping <- list()
   if (mapping_method == "fixed") {
-    for (feature in names(n_feature_values)) {
+    for (ii in seq_along(n_feature_values)) {
       # Determine eligible features from in-coalition (on) and off-coalition
       # (off) features.
+      feature <- names(n_feature_values)[ii]
       on_feature_set <- unname(x[feature])
       off_feature_set <- seq_len(n_feature_values[feature])[-on_feature_set]
       
@@ -915,10 +977,9 @@ setMethod(
       # on-feature set. This forms the look-up table for forming coalitions.
       feature_set <- c(
         on_feature_set,
-        fam_sample(
-          off_feature_set,
-          size = 1L,
-          rstream_object = rstream_object
+        ..select_shap_feature_mapping(
+          available_feature_values = off_feature_set,
+          random_values = x_random[ii]
         )
       )
       
@@ -936,10 +997,12 @@ setMethod(
     # features. This should be the same number for each feature in antithetical
     # sampling.
     n_to_draw <- colSums(!coalitions)
+    jj <- 0L
     
-    for (feature in names(n_feature_values)) {
+    for (ii in seq_along(n_feature_values)) {
       # Determine eligible features from in-coalition (on) and off-coalition
       # (off) features.
+      feature <- names(n_feature_values)[ii]
       on_feature_set <- unname(x[feature])
       off_feature_set <- seq_len(n_feature_values[feature])[-on_feature_set]
       
@@ -947,13 +1010,14 @@ setMethod(
       # the look-up table for forming coalitions.
       feature_set <- c(
         on_feature_set,
-        fam_sample(
-          off_feature_set,
-          size = n_to_draw[feature],
-          replace = TRUE,
-          rstream_object = rstream_object
+        ..select_shap_feature_mapping(
+          available_feature_values = off_feature_set,
+          random_values = x_random[(1L:n_to_draw[feature]) + jj]
         )
       )
+      
+      # Update offset.
+      jj <- jj + n_to_draw[feature]
       
       # Accumulate off-coalition elements. E.g. with coalitions (across samples
       # for each feature) [0, 1, 1, 0], the lookup-vector is [1, 1, 1, 2].
