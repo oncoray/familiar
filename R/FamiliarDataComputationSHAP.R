@@ -272,8 +272,9 @@ setMethod(
     ensemble_method,
     cl,
     tolerance = 0.005,
-    n_max_iter = 100L,
+    n_max_iter = 1000L,
     mapping_method = "fixed",
+    sampling_method = "importance",
     message_indent = 0L,
     verbose = FALSE,
     progress_bar = FALSE,
@@ -462,7 +463,7 @@ setMethod(
         coalitions = input_coalitions,
         kernel_weights = kernel_weights,
         shap_variance = shap_variance,
-        sampling_method = "importance",
+        sampling_method = sampling_method,
         seed = 19L + iter_id
       )
       
@@ -933,6 +934,7 @@ setMethod(
   
   return(do.call(rbind, mapping))
 }
+
 
 
 ...shap_randomise_mapping_from_coalition <- function(
