@@ -260,6 +260,7 @@ setMethod(
 )
 
 
+
 .extract_shap <- function(
     object,
     data = NULL,
