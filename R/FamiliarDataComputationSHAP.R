@@ -694,13 +694,13 @@ setMethod(
     # of the on-feature(s) times the kernel weight, normalised by the total
     # probability over all input coalitions.
     shap_variance <- shap_variance[, list("feature_shap_var" = sum(shap_var)), by = "feature_name"]
-    feature_names <- colnames(coalitions)
-    feature_shap_variance <- numeric(length(feature_names))
-    for (ii in seq_along(feature_names)) {
-      feature_shap_variance[ii] <- shap_variance[feature_name == feature_names[ii], ]$feature_shap_var
-    }
     
     coalition_probability <- colSums(t(coalitions) * feature_shap_variance * kernel_weights[coalition_size + 1L])
+    # Ensure that feature shap variance and the respective features in the
+    # coalition matrix are ordered the same way.
+    feature_shap_variance <- shap_variance$feature_shap_var
+    names(feature_shap_variance) <- shap_variance$feature_name
+    feature_shap_variance <- feature_shap_variance[colnames(coalitions)]
     coalition_probability <- coalition_probability / sum(coalition_probability)
     
     # Draw 1 / min(coalition_cost) coalitions with resampling, and use these up to
