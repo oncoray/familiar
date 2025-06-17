@@ -8,13 +8,6 @@
     # Set package version.
     object@familiar_version <- current_version
     
-  } else if (
-    tail(object@familiar_version, n = 1L) < utils::packageVersion("familiar") &&
-    head(object@familiar_version, n = 1L) == "0.0.0"
-  ) {
-    # Replace version.
-    object@familiar_version <- utils::packageVersion("familiar")
-    
   } else if (tail(object@familiar_version, n = 1L) < current_version) {
     # Check if package version differs from the currently installed version.
     # This is usually done when updating the object.
