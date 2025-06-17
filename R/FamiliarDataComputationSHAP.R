@@ -695,12 +695,14 @@ setMethod(
     # probability over all input coalitions.
     shap_variance <- shap_variance[, list("feature_shap_var" = sum(shap_var)), by = "feature_name"]
     
-    coalition_probability <- colSums(t(coalitions) * feature_shap_variance * kernel_weights[coalition_size + 1L])
     # Ensure that feature shap variance and the respective features in the
     # coalition matrix are ordered the same way.
     feature_shap_variance <- shap_variance$feature_shap_var
     names(feature_shap_variance) <- shap_variance$feature_name
     feature_shap_variance <- feature_shap_variance[colnames(coalitions)]
+    
+    # Compute selection likelihood.
+    coalition_probability <- colSums(t(coalitions * kernel_weights[coalition_size + 1L]) * feature_shap_variance)
     coalition_probability <- coalition_probability / sum(coalition_probability)
     
     # Draw 1 / min(coalition_cost) coalitions with resampling, and use these up to
