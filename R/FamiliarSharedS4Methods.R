@@ -2,9 +2,11 @@
   # Adds the version of the familiar package used to generate the object. This
   # allows for backward compatibility.
 
+  current_version <- utils::packageVersion("familiar")
+  
   if (is.null(object@familiar_version)) {
     # Set package version.
-    object@familiar_version <- utils::packageVersion("familiar")
+    object@familiar_version <- current_version
     
   } else if (
     tail(object@familiar_version, n = 1L) < utils::packageVersion("familiar") &&
@@ -13,13 +15,12 @@
     # Replace version.
     object@familiar_version <- utils::packageVersion("familiar")
     
-  } else if (tail(object@familiar_version, n = 1L) < utils::packageVersion("familiar")) {
+  } else if (tail(object@familiar_version, n = 1L) < current_version) {
     # Check if package version differs from the currently installed version.
     # This is usually done when updating the object.
     object@familiar_version <- c(
       object@familiar_version,
-      utils::packageVersion("familiar"
-      )
+      current_version
     )
   }
 
