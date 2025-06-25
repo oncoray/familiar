@@ -4279,7 +4279,7 @@
   )
   
   .check_number_in_valid_range(
-    x = shap_tolerance,
+    x = settings$shap_tolerance,
     var_name = "shap_tolerance",
     range = c(0.0, Inf),
     closed = c(FALSE, FALSE)

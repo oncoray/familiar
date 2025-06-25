@@ -9,6 +9,7 @@ setClass(
   "familiarDataElementSHAP",
   contains = "familiarDataElement",
   slots = list(
+    "sample_identifiers" = "ANY",
     "data_mapping" = "ANY",
     "predicted_values" = "ANY",
     "lookup_table" = "ANY"
@@ -18,6 +19,7 @@ setClass(
     estimation_type = "point",
     value_column = "shap_value",
     grouping_column = c("feature_name", "feature_value_mapping", "sample_id"),
+    sample_identifiers = NULL,
     data_mapping = NULL,
     predicted_values = NULL,
     lookup_table = NULL
@@ -512,14 +514,12 @@ setMethod(
     }
   }
   
-  browser()
   # Compute final SHAP values.
   shap_values <- shap_values[
     ,
     list("shap_value" = mean(shap_value)),
     by = c("sample_id", "feature_name", "feature_value_mapping", "shap_outcome")
   ]
-  
   
   # Add model name to data element.
   proto_data_element <- add_model_name(
@@ -535,6 +535,9 @@ setMethod(
 
   # Add predictions for input data.
   proto_data_element@predicted_values <- predicted_values_input
+  
+  # Add sample identifiers.
+  proto_data_element@sample_identifiers <- sample_identifiers
   
   # Store shap data. Value column is "shap_value", grouping columns are
   # "feature_name" and "feature_value_mapping". For multinomial and survival
@@ -1479,7 +1482,7 @@ setMethod(
   summary_data <- merge(
     x = x@data,
     y = mapping_data,
-    by = c("feature_name", "feature_value_mapping"),
+    by = c("feature_name", "feature_value_mapping", "sample_id"),
     allow.cartesian = TRUE
   )
   
@@ -1492,7 +1495,7 @@ setMethod(
   # Set identifiers
   data_element@grouping_column <- c(
     setdiff(data_element@grouping_column, "feature_value_mapping"),
-    c("sample_id", "feature_value", "feature_label")
+    c("feature_value", "feature_label")
   )
   
   return(data_element)
@@ -1553,7 +1556,7 @@ setMethod(
   force_data <- merge(
     x = x@data,
     y = mapping_data,
-    by = c("feature_name", "feature_value_mapping"),
+    by = c("feature_name", "feature_value_mapping", "sample_id"),
     allow.cartesian = TRUE
   )
   
@@ -1575,7 +1578,7 @@ setMethod(
   # Set identifiers
   data_element@grouping_column <- c(
     setdiff(data_element@grouping_column, "feature_value_mapping"),
-    c("sample_id", "feature_value", "feature_label", "prediction")
+    c("feature_value", "feature_label", "prediction")
   )
   
   return(data_element)
@@ -1688,12 +1691,12 @@ setMethod(
   dependence_data <- merge(
     x = x@data,
     y = feature_x_data,
-    by = c("feature_name", "feature_value_mapping"),
+    by = c("feature_name", "feature_value_mapping", "sample_id"),
     allow.cartesian = TRUE
   )
   
   # Update column names.
-  setnames(
+  data.table::setnames(
     dependence_data,
     old = c("feature_value", "feature_label"),
     new = c("feature_value_x", "feature_label_x")
@@ -1732,7 +1735,7 @@ setMethod(
   # Update grouping columns.
   data_element@grouping_column <- c(
     setdiff(data_element@grouping_column, c("feature_name", "feature_value_mapping")),
-    c("sample_id", "feature_value_x", "feature_label_x", "feature_value_y", "feature_label_y")
+    c("feature_value_x", "feature_label_x", "feature_value_y", "feature_label_y")
   )
   
   return(data_element)

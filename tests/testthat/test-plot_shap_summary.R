@@ -18,6 +18,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   evaluation_time = c(1.0, 2.0, 3.5),
   test_config = "normal",
   debug = debug_flag
