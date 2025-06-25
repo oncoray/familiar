@@ -1454,3 +1454,13 @@ matrix_pseudo_inverse <- function(x, tol = sqrt(.Machine$double.eps)) {
     )
   }
 }
+
+
+
+fam_cut <- function(x, n) {
+  if (n > 1L) {
+    return(cut(x, n, labels = FALSE))
+  }
+  # n = 1
+  return(rep.int(1L, length(x)))
+}
