@@ -498,7 +498,10 @@ setMethod(
       # Check convergence.
       all_shap_converged <- .evaluate_shap_convergence(
         shap_variance = shap_variance,
-        tolerance = tolerance * diff(range(shap_values$shap_value))
+        tolerance = max(c(
+          tolerance * diff(range(shap_values$shap_value)),
+          tolerance * diff(range(c(predicted_values_iter))) / sqrt(length(feature_set))
+        ))
       )
       
       # Update coalitions.
