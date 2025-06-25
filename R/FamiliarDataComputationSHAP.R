@@ -895,6 +895,7 @@ setMethod(
   # Ensure that sufficient mappings are generated to limit the effect of
   # overhead on the computation of SHAP values.
   while (n_mappings < n_min_mappings) {
+    
     # Generate random values.
     if (mapping_method == "fixed") {
       # Generate a random number for each feature and each sample and coalition
@@ -917,7 +918,7 @@ setMethod(
     random_mapping <- mapply(
       FUN = ..shap_randomise_mapping_from_coalition,
       x = asplit(samples, 1L),
-      x_random = split(x_random, cut(seq_along(x_random), nrow(samples), labels = FALSE)),
+      x_random = split(x_random, fam_cut(seq_along(x_random), nrow(samples))),
       MoreArgs = list(
         "coalitions" = coalitions,
         "n_feature_values" = n_feature_values,
@@ -953,7 +954,7 @@ setMethod(
   } else {
     if (mapping_method == "fixed") {
       # Each coalition set requires the same number of random values.
-      x_random <- split(x_random, cut(seq_along(x_random), length(coalitions), labels = FALSE))
+      x_random <- split(x_random, fam_cut(seq_along(x_random), length(coalitions)))
       
     } else if (mapping_method == "random") {
       # Due to antithetic sampling, the number of coalitions is doubled.
@@ -1338,6 +1339,7 @@ setMethod(
   # Compute sample error of the mean for each shap value.
   sem_values <- sqrt(shap_variance$shap_var / shap_variance$n)
   if (any(!is.finite(sem_values))) return(FALSE)
+  # TODO: remove
   cat(paste0("sum SEM: ", sum(sem_values), " ; total converged: ", sum(sem_values <= tolerance), "\n"))
   return(all(sem_values <= tolerance))
 }
