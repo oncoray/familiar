@@ -8,6 +8,7 @@ debug_flag <- FALSE
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   debug = debug_flag,
   not_available_no_samples = FALSE
@@ -28,6 +29,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   evaluation_time = c(1.0, 2.0, 3.5),
   test_config = "single instance",
   debug = debug_flag
@@ -37,6 +39,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   evaluation_time = c(1.0, 2.0, 3.5),
   plot_args = list("value_representation" = "abs"),
   test_config = "normal",
@@ -50,6 +53,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   evaluation_time = c(1.0, 2.0, 3.5),
   plot_args = list("plot_type" = "barplot"),
   test_config = "normal",
@@ -60,6 +64,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   evaluation_time = c(1.0, 2.0, 3.5),
   plot_args = list("value_representation" = "abs_mean"),
   test_config = "normal",
@@ -70,6 +75,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   evaluation_time = c(1.0, 2.0, 3.5),
   plot_args = list("value_representation" = "abs_min"),
   test_config = "normal",
@@ -80,6 +86,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   evaluation_time = c(1.0, 2.0, 3.5),
   plot_args = list("value_representation" = "abs_max"),
   test_config = "normal",
@@ -91,6 +98,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   evaluation_time = c(1.0, 2.0, 3.5),
   plot_args = list("plot_type" = "boxplot"),
   test_config = "normal",
@@ -102,6 +110,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,
   data_element = "shap",
+  shap_max_iterations = 10L,
   evaluation_time = c(1.0, 2.0, 3.5),
   plot_args = list("plot_type" = "violinplot"),
   test_config = "normal",
