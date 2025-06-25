@@ -3594,6 +3594,16 @@
 #'  often not suitable due to non-normal distributions. The bias-corrected and
 #'  accelerated (BCa) method is not implemented yet.
 #'
+#' @param shap_tolerance (*optional*) Relative tolerance for convergence of SHAP
+#'   values. The tolerance is scaled with the range in SHAP values.
+#'   
+#'   The default value is `0.005`.
+#'   
+#' @param shap_max_iterations (*optional*) Maximum iterations for convergence of
+#'   SHAP values.
+#' 
+#'   The default value is `1000` iterations.
+#'
 #' @param feature_cluster_method (*optional*) Method used to perform clustering
 #'  of features. The same methods as for the `cluster_method` configuration
 #'  parameter are available: `none`, `hclust`, `agnes`, `diana` and `pam`.
@@ -3822,6 +3832,8 @@
     aggregate_results = waiver(),
     confidence_level = waiver(),
     bootstrap_ci_method = waiver(),
+    shap_tolerance = waiver(),
+    shap_max_iterations = waiver(),
     feature_cluster_method = waiver(),
     feature_cluster_cut_method = waiver(),
     feature_linkage_method = waiver(),
@@ -4256,6 +4268,40 @@
     closed = c(FALSE, FALSE)
   )
 
+  # SHAP tolerance -------------------------------------------------------------
+  settings$shap_tolerance <- .parse_arg(
+    x_config = config$shap_tolerance,
+    x_var = shap_tolerance,
+    var_name = "shap_tolerance",
+    type = "numeric",
+    optional = TRUE,
+    default = 0.005
+  )
+  
+  .check_number_in_valid_range(
+    x = shap_tolerance,
+    var_name = "shap_tolerance",
+    range = c(0.0, Inf),
+    closed = c(FALSE, FALSE)
+  )
+  
+  # SHAP maximum iterations ----------------------------------------------------
+  settings$shap_max_iterations <- .parse_arg(
+    x_config = config$shap_max_iterations,
+    x_var = shap_max_iterations,
+    var_name = "shap_max_iterations",
+    type = "integer",
+    optional = TRUE,
+    default = 1000L
+  )
+  
+  .check_number_in_valid_range(
+    x = settings$shap_max_iterations,
+    var_name = "shap_max_iterations",
+    range = c(1L, Inf),
+    closed = c(TRUE, TRUE)
+  )
+  
   # feature_cluster_method -----------------------------------------------------
   # Feature cluster method
   settings$feature_cluster_method <- .parse_arg(

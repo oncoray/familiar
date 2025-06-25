@@ -946,6 +946,14 @@ method.
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
+    \item{\code{shap_tolerance}}{(\emph{optional}) Relative tolerance for convergence of SHAP
+values. The tolerance is scaled with the range in SHAP values.
+
+The default value is \code{0.005}.}
+    \item{\code{shap_max_iterations}}{(\emph{optional}) Maximum iterations for convergence of
+SHAP values.
+
+The default value is \code{1000} iterations.}
     \item{\code{feature_cluster_method}}{(\emph{optional}) Method used to perform clustering
 of features. The same methods as for the \code{cluster_method} configuration
 parameter are available: \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.

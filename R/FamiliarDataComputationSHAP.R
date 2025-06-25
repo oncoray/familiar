@@ -59,9 +59,21 @@ setClass(
 
 # extract_shap (generic) -------------------------------------------------------
 
-#'@title Internal function to compute SHAP values.
+#'@title Internal function for computing SHAP values.
 #'
-#'@description Computes SHAP values for features using a `familiarEnsemble`.
+#'@description Computes SHAP values for feature values using a
+#'  `familiarEnsemble`.
+#'
+#'@param features Features for whose values SHAP values need to be computed.
+#'  defaults to all features in the model.
+#'@param n_sample_points Minimum number of values to sample for numeric
+#'  features. By default, this is based on input dataset. But if the number of
+#'  values of a feature within that dataset is too low, additional values are
+#'  drawn from the feature distribution (stored with the model).
+#'@param shap_tolerance Relative tolerance for convergence of SHAP values. The
+#'  tolerance is scaled with the range in SHAP values. Default: 0.005.
+#'@param shap_max_iterations Maximum iterations for convergence of SHAP values.
+#'  Default: 1000
 #'
 #'@inheritParams .extract_data
 #'
@@ -76,6 +88,8 @@ setGeneric(
     cl = NULL,
     features = NULL,
     n_sample_points = 20L,
+    shap_tolerance = waiver(),
+    shap_max_iterations = waiver(),
     ensemble_method = waiver(),
     evaluation_times = waiver(),
     sample_limit = waiver(),
@@ -102,6 +116,8 @@ setMethod(
     cl = NULL,
     features = NULL,
     n_sample_points = 20L,
+    shap_tolerance = waiver(),
+    shap_max_iterations = waiver(),
     ensemble_method = waiver(),
     evaluation_times = waiver(),
     sample_limit = waiver(),
@@ -160,6 +176,28 @@ setMethod(
       x = n_sample_points,
       var_name = "n_sample_points",
       range = c(2L, Inf),
+      closed = c(TRUE, TRUE)
+    )
+    
+    # Check shap_tolerance argument. This sets stopping criteria for convergence
+    # of SHAP values.
+    if (is.waive(shap_tolerance)) shap_tolerance <- object@settings$shap_tolerance
+    
+    .check_number_in_valid_range(
+      x = shap_tolerance,
+      var_name = "shap_tolerance",
+      range = c(0.0, Inf),
+      closed = c(FALSE, FALSE)
+    )
+    
+    # Check shap_max_iterations argument. This sets the maximum number of
+    # iterations for computing SHAP values.
+    if (is.waive(shap_max_iterations)) shap_max_iterations <- object@settings$shap_max_iterations
+    
+    .check_number_in_valid_range(
+      x = shap_max_iterations,
+      var_name = "shap_max_iterations",
+      range = c(1L, Inf),
       closed = c(TRUE, TRUE)
     )
     
@@ -235,6 +273,8 @@ setMethod(
       data = data,
       features = features,
       n_sample_points = n_sample_points,
+      tolerance = shap_tolerance,
+      n_max_iter = shap_max_iterations,
       proto_data_element = proto_data_element,
       is_pre_processed = is_pre_processed,
       ensemble_method = ensemble_method,

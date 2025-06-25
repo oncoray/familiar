@@ -29,6 +29,8 @@
   aggregate_results = waiver(),
   confidence_level = waiver(),
   bootstrap_ci_method = waiver(),
+  shap_tolerance = waiver(),
+  shap_max_iterations = waiver(),
   feature_cluster_method = waiver(),
   feature_cluster_cut_method = waiver(),
   feature_linkage_method = waiver(),
@@ -292,6 +294,16 @@ method.
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
+
+\item{shap_tolerance}{(\emph{optional}) Relative tolerance for convergence of SHAP
+values. The tolerance is scaled with the range in SHAP values.
+
+The default value is \code{0.005}.}
+
+\item{shap_max_iterations}{(\emph{optional}) Maximum iterations for convergence of
+SHAP values.
+
+The default value is \code{1000} iterations.}
 
 \item{feature_cluster_method}{(\emph{optional}) Method used to perform clustering
 of features. The same methods as for the \code{cluster_method} configuration

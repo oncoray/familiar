@@ -2,7 +2,7 @@
 % Please edit documentation in R/FamiliarDataComputationSHAP.R
 \name{extract_shap}
 \alias{extract_shap}
-\title{Internal function to compute SHAP values.}
+\title{Internal function for computing SHAP values.}
 \usage{
 extract_shap(
   object,
@@ -10,6 +10,8 @@ extract_shap(
   cl = NULL,
   features = NULL,
   n_sample_points = 20L,
+  shap_tolerance = waiver(),
+  shap_max_iterations = waiver(),
   ensemble_method = waiver(),
   evaluation_times = waiver(),
   sample_limit = waiver(),
@@ -31,6 +33,20 @@ constitutes the data that are assessed.}
 
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
+
+\item{features}{Features for whose values SHAP values need to be computed.
+defaults to all features in the model.}
+
+\item{n_sample_points}{Minimum number of values to sample for numeric
+features. By default, this is based on input dataset. But if the number of
+values of a feature within that dataset is too low, additional values are
+drawn from the feature distribution (stored with the model).}
+
+\item{shap_tolerance}{Relative tolerance for convergence of SHAP values. The
+tolerance is scaled with the range in SHAP values. Default: 0.005.}
+
+\item{shap_max_iterations}{Maximum iterations for convergence of SHAP values.
+Default: 1000}
 
 \item{ensemble_method}{Method for ensembling predictions from models for the
 same sample. Available methods are:
@@ -139,6 +155,7 @@ computation and extraction of various data elements.}
 A list of familiarDataElements with SHAP values.
 }
 \description{
-Computes SHAP values for features using a \code{familiarEnsemble}.
+Computes SHAP values for feature values using a
+\code{familiarEnsemble}.
 }
 \keyword{internal}
