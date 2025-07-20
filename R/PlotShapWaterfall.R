@@ -15,24 +15,11 @@ NULL
 #'   plots are saved to. Output is saved in the `explanation` subdirectory. If
 #'   `NULL` no figures are saved, but are returned instead.
 #' @param plot_type (*optional*) Type of plot to draw. This is one of
-#'   `swarmplot` (draws a beeswarm plot), `barplot` (draws a barplot),
-#'   `boxplot` (draws a boxplot) and `violinplot` (draws a violin plot).
-#'   Defaults to `boxplot` if a single SHAP value is available for each feature,
-#'   and `swarmplot` otherwise.
+#'   `waterfall` or `stacked`.
 #'
 #'   The choice for `plot_type` affects several other arguments.
-#' @param discrete_palette (*optional*) Palette for colouring plot elements
-#'   indicated by the `color_by` argument (if any). Only used if `plot_type` is
-#'   not `swarmplot`. `familiar` has a default palette. Other palettes are
-#'   supported by the `paletteer` package, `grDevices::palette.pals()` (requires
-#'   R >= 4.0.0), `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`,
-#'   `heat.colors`, `terrain.colors`, `topo.colors` and `cm.colors`, which
-#'   correspond to the palettes of the same name in `grDevices`. You may also
-#'   specify your own palette by providing a vector of colour names listed by
-#'   `grDevices::colors()` or through hexadecimal RGB strings.
 #' @param gradient_palette (*optional*) Sequential or divergent palette used to
-#'   colour the points  the raster in the default `swarmplot` plots. This
-#'   argument is not used for other `plot_type` value. `familiar` has a default
+#'   colour the elements of waterfall plots. `familiar` has a default
 #'   palette. Other palettes are supported by the `paletteer` package,
 #'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
 #'   (requires R >= 3.6.0) and `rainbow`, `heat.colors`, `terrain.colors`,
@@ -40,26 +27,6 @@ NULL
 #'   name in `grDevices`. You may also specify your own palette by providing a
 #'   vector of colour names listed by `grDevices::colors()` or through
 #'   hexadecimal RGB strings.
-#' @param value_representation (*optional*) Indicates how SHAP values are
-#'   represented, with the following options:
-#'
-#'   * `raw` (default for `swarmplot`, `boxplot`, and `violinplot` plot 
-#'     types): uses SHAP values as they are.
-#'
-#'   * `abs`: uses absolute value of SHAP values.
-#'
-#'   * `abs_mean` (default for `barplot` plot type): uses mean absolute value of
-#'     SHAP values. Only used by `barplot`.
-#'
-#'   * `abs_max`: uses maximum absolute value of SHAP values. Only used by 
-#'     `barplot`.
-#'
-#'   * `abs_min`: uses minimum absolute value of SHAP values. Only used by 
-#'     `barplot`.
-#'   
-#'   If `abs_mean`, `abs_max` or `abs_min` are chosen, `plot_type` automatically
-#'   switches to `barplot`.
-#'
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
 #' @inheritParams .check_input_plot_args
@@ -73,11 +40,9 @@ NULL
 #'
 #'   Available splitting variables are: `vimp_method`, `learner`,
 #'   `evaluation_time` (survival outcome only) and `positive_class` (categorical
-#'   outcomes). The default for `value_representation = "raw"` is to facet by
-#'   `evaluation_time` or `positive_class`, and split by `vimp_method` and
-#'   `learner`. `color_by` is not used. The default for other
-#'   `value_representation` is to `color_by` `evaluation_time` or
-#'   `positive_class`, and split by `vimp_method` and `learner`.
+#'   outcomes). The default for is to facet by `evaluation_time` or 
+#'   `positive_class`, and split by `vimp_method` and
+#'   `learner`. `color_by` is not used.
 #'
 #'   Labelling methods such as `set_vimp_method_names` or `set_learner_names`
 #'   can be applied to the `familiarCollection` object to update labels, and
@@ -101,9 +66,7 @@ setGeneric(
     facet_by = NULL,
     facet_wrap_cols = NULL,
     plot_type = NULL,
-    value_representation = NULL,
     ggtheme = NULL,
-    discrete_palette = NULL,
     gradient_palette = NULL,
     x_label = waiver(),
     y_label = waiver(),
@@ -126,7 +89,7 @@ setGeneric(
 
 
 
-# plot_shap_summary (general) --------------------------------------------------
+# plot_shap_waterfall (general) ------------------------------------------------
 
 #' @rdname plot_shap_waterfall-methods
 setMethod(
@@ -143,9 +106,7 @@ setMethod(
     facet_by = NULL,
     facet_wrap_cols = NULL,
     plot_type = NULL,
-    value_representation = NULL,
     ggtheme = NULL,
-    discrete_palette = NULL,
     gradient_palette = NULL,
     x_label = waiver(),
     y_label = waiver(),
@@ -188,8 +149,6 @@ setMethod(
         "facet_wrap_cols" = facet_wrap_cols,
         "ggtheme" = ggtheme,
         "plot_type" = plot_type,
-        "value_representation" = value_representation,
-        "discrete_palette" = discrete_palette,
         "gradient_palette" = gradient_palette,
         "x_label" = x_label,
         "y_label" = y_label,
@@ -228,9 +187,7 @@ setMethod(
     facet_by = NULL,
     facet_wrap_cols = NULL,
     plot_type = NULL,
-    value_representation = NULL,
     ggtheme = NULL,
-    discrete_palette = NULL,
     gradient_palette = NULL,
     x_label = waiver(),
     y_label = waiver(),
@@ -260,7 +217,7 @@ setMethod(
     
     x <- x$shap_force
     if (is_empty(x)) return(NULL)
-    browser()
+    
     # Obtain single data element from list.
     if (is.list(x)) {
       if (length(x) > 1L) {
@@ -292,7 +249,24 @@ setMethod(
       return(NULL)
     }
     
-    # Add evaluation time as a splitting variable.
+    # Check input arguments ----------------------------------------------------
+    
+    value_data <- x@data[, list("n" = .N), by = setdiff(x@grouping_column, c("sample_id", "feature_value", "feature_label"))]
+    is_single_sample <- all(value_data$n == 1L)
+    
+    if (is.null(plot_type)) {
+      plot_type <- ifelse(is_single_sample, "waterfall", "stacked")
+    }
+    
+    # Check plot_type.
+    .check_parameter_value_is_valid(
+      x = plot_type,
+      var_name = "plot_type",
+      values = c("waterfall", "stacked")
+    )
+    
+    
+    # Add evaluation time or class as a splitting variable.
     additional_variable <- NULL
     if (object@outcome_type %in% c("survival")) {
       additional_variable <- "evaluation_time"
@@ -304,16 +278,19 @@ setMethod(
     }
     
     # Add default splitting variables.
-    all_variables <- c("vimp_method", "learner", "sample_id", additional_variable)
     if (
       is.null(split_by) &&
       is.null(color_by) &&
       is.null(facet_by)
     ) {
       # Split by vimp_method, learner and sample id.
-      split_by <- c("vimp_method", "learner", "sample_id")
+      split_by <- c("vimp_method", "learner")
+      if (plot_type == "waterfall") split_by <- c(split_by, "sample_id")
       facet_by <- additional_variable
     }
+    
+    all_variables <- c("vimp_method", "learner", additional_variable)
+    if (plot_type == "waterfall") all_variables <- c(all_variables, "sample_id")
     
     # Check splitting variables and generate sanitised output
     split_var_list <- .check_plot_splitting_variables(
@@ -405,9 +382,7 @@ setMethod(
         facet_by = facet_by,
         facet_wrap_cols = facet_wrap_cols,
         plot_type = plot_type,
-        value_representation = value_representation,
         ggtheme = ggtheme,
-        discrete_palette = discrete_palette,
         gradient_palette = gradient_palette,
         x_label = x_label,
         y_label = y_label,
@@ -446,7 +421,7 @@ setMethod(
               "object" = object,
               "dir_path" = dir_path,
               "type" = "explanation",
-              "subtype" = paste0(plot_type, "_", value_representation),
+              "subtype" = paste0(plot_type),
               "x" = x_split[[ii]],
               "split_by" = split_by,
               "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
@@ -481,9 +456,7 @@ setMethod(
     facet_by,
     facet_wrap_cols,
     plot_type,
-    value_representation,
     ggtheme,
-    discrete_palette,
     gradient_palette,
     x_label,
     y_label,
@@ -512,59 +485,60 @@ setMethod(
     x = x$feature_name,
     levels = feature_importance$feature_name
   )
+  x[, "y" := as.numeric(feature_name)]
   
   # Common base for formatting prediction and shap values.
   common_base <- ..format_get_common_base(c(x$shap_value, x$prediction))
 
   # Update start and end positions.
   if (!is.null(facet_by)) {
-    x[, ..set_shap_waterfall_positions(shap_value, prediction, feature_name), by = facet_by]
+    x[, (c("x_start", "x_end")) := ..set_shap_waterfall_positions(shap_value, prediction, feature_name), by = facet_by]
     
   } else {
-    x[, ..set_shap_waterfall_positions(shap_value, prediction, feature_name)]
+    x[, (c("x_start", "x_end")) := ..set_shap_waterfall_positions(shap_value, prediction, feature_name)]
   }
   browser()
   # Check x-range.
-  if (is.null(x_range)) {
-    if (value_representation == "raw") {
-      x_range <- c(min(x$shap_value), max(x$shap_value))
-      
-    } else {
-      x_range <- c(0.0, max(x$shap_value))
-    }
-    
-  } else {
-    .check_input_plot_args(x_range = x_range)
-  }
-  
-  # x_breaks
-  if (is.null(x_breaks)) {
-    .check_input_plot_args(
-      x_range = x_range,
-      x_n_breaks = x_n_breaks
-    )
-    
-    # Create breaks and update x_range
-    x_breaks <- labeling::extended(
-      m = x_n_breaks,
-      dmin = x_range[1L],
-      dmax = x_range[2L],
-      only.loose = TRUE
-    )
-    
-    x_range <- c(
-      head(x_breaks, n = 1L),
-      tail(x_breaks, n = 1L)
-    )
-    
-  } else {
-    .check_input_plot_args(x_breaks = x_breaks)
-  }
-  
+  # if (is.null(x_range)) {
+  #   if (value_representation == "raw") {
+  #     x_range <- c(min(x$shap_value), max(x$shap_value))
+  #     
+  #   } else {
+  #     x_range <- c(0.0, max(x$shap_value))
+  #   }
+  #   
+  # } else {
+  #   .check_input_plot_args(x_range = x_range)
+  # }
+  # 
+  # # x_breaks
+  # if (is.null(x_breaks)) {
+  #   .check_input_plot_args(
+  #     x_range = x_range,
+  #     x_n_breaks = x_n_breaks
+  #   )
+  #   
+  #   # Create breaks and update x_range
+  #   x_breaks <- labeling::extended(
+  #     m = x_n_breaks,
+  #     dmin = x_range[1L],
+  #     dmax = x_range[2L],
+  #     only.loose = TRUE
+  #   )
+  #   
+  #   x_range <- c(
+  #     head(x_breaks, n = 1L),
+  #     tail(x_breaks, n = 1L)
+  #   )
+  #   
+  # } else {
+  #   .check_input_plot_args(x_breaks = x_breaks)
+  # }
+  # 
   # Create a legend label.
   legend_label <- .create_plot_legend_title(
     user_label = legend_label,
-    color_by = if(value_representation == "raw") "feature_value" else color_by
+    color_by = "shap_value"
   )
   
   # Check remaining input arguments.
@@ -575,8 +549,7 @@ setMethod(
   # Generate a guide table
   guide_list <- .create_plot_guide_table(
     x = x,
-    color_by = color_by,
-    discrete_palette = discrete_palette
+    color_by = color_by
   )
   
   # Extract data
@@ -585,6 +558,37 @@ setMethod(
   # Extract guide_table for color.
   g_color <- guide_list$guide_color
   
+  # Set up basic waterfall plot.
+  p <- ggplot2::ggplot(data = x)
+  p <- p + ggtheme
+  p <- p + ggplot2::geom_rect(
+    data = x,
+    mapping = ggplot2::aes(
+      xmin = !!sym("x_start"),
+      xmax = !!sym("x_end"),
+      ymin = !!sym("y") - 0.4,
+      ymax = !!sym("y") + 0.4,
+      fill = !!sym("shap_value")
+    )
+  )
+  p <- p + ggplot2::scale_y_continuous(
+    breaks = seq_len(nlevels(x$feature_name)),
+    labels = levels(x$feature_name)
+  )
+  
+  # Add gradient palette.
+  gradient_colours <- .get_palette(
+    x = gradient_palette, 
+    palette_type = "divergent"
+  )
+  
+  p <- p + ggplot2::scale_fill_gradientn(
+    name = legend_label,
+    colors = gradient_colours,
+    limits = c(-max(abs(x$shap_value)), max(abs(x$shap_value)))
+  )
+  
+  browser()
   # Create basic plot
   p <- ggplot2::ggplot(
     data = x,
@@ -789,9 +793,7 @@ setMethod(
     x_start[ii] <- previous_start - x[ii]
     previous_start <- x_start[ii]
   }
-  
-  browser()
-  
+
   return(list("x_start" = x_start, "x_end" = x_end))
 }
 
