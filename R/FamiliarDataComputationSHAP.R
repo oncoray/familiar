@@ -1134,7 +1134,7 @@ setMethod(
   new_matrices <- mapply(
     ..compute_shap_matrices,
     x = asplit(samples, MARGIN = 1L),
-    v_0 = sample_predictions,
+    v_0 = asplit(sample_predictions, MARGIN = 1L),
     sample_id = sample_id,
     MoreArgs = list(
       "kernel_weights" = kernel_weights,
@@ -1251,7 +1251,7 @@ setMethod(
   return(list(
     "A" = t(X) %*% (X * w),
     "b" = t(X) %*% (y * w),
-    "v_0" = v_0,
+    "v_0" = as.numeric(v_0),
     "phi_0" = phi_0,
     "sample_id" = sample_id,
     "sample_mapping" = x
@@ -1291,6 +1291,7 @@ setMethod(
 
 
 ..compute_shap_value <- function(x) {
+  
   A_inv <- matrix_pseudo_inverse(x$A)
   b <- x$b
   
