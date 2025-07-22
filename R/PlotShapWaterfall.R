@@ -469,11 +469,10 @@ setMethod(
     outcome_type
 ) {
   # TODO:
-  # faceting: free x-range in each facet
-  # Create a new polygon-based geom: https://ggplot2.tidyverse.org/articles/extending-ggplot2.html#creating-a-new-geom
+  # Show feature values on y-axis.
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  shap_value <- vimp <- feature_value <- feature_name <- prediction <- NULL
+  shap_value <- vimp <- feature_value <- feature_name <- feature_label <- prediction <- y <- NULL
   
   # Sort features by importance (mean absolute SHAP).
   feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = c(facet_by, "feature_name")]
@@ -483,6 +482,10 @@ setMethod(
     levels = feature_importance$feature_name
   )
   x[, "y" := as.numeric(feature_name)]
+  
+  y_label_table <- unique(x[, mget(c("feature_name", "feature_value", "feature_label", "y"))])
+  y_label_table[, "feature_name_value" := ..set_shap_waterfall_feature_name_value(feature_name, feature_value, feature_label)]
+  y_label_table <- y_label_table[order(y)]
   
   # Common base for formatting prediction and shap values.
   common_base <- ..format_get_common_base(c(x$shap_value, x$prediction))
@@ -505,47 +508,35 @@ setMethod(
   
   f_instance_data <- unique(x[, mget(c("prediction", facet_by))])
   
-  # Create data for segments. These connect the neighbouring SHAP elements.
-  
-  
-  
   # Check x-range.
-  # if (is.null(x_range)) {
-  #   if (value_representation == "raw") {
-  #     x_range <- c(min(x$shap_value), max(x$shap_value))
-  #     
-  #   } else {
-  #     x_range <- c(0.0, max(x$shap_value))
-  #   }
-  #   
-  # } else {
-  #   .check_input_plot_args(x_range = x_range)
-  # }
-  # 
-  # # x_breaks
-  # if (is.null(x_breaks)) {
-  #   .check_input_plot_args(
-  #     x_range = x_range,
-  #     x_n_breaks = x_n_breaks
-  #   )
-  #   
-  #   # Create breaks and update x_range
-  #   x_breaks <- labeling::extended(
-  #     m = x_n_breaks,
-  #     dmin = x_range[1L],
-  #     dmax = x_range[2L],
-  #     only.loose = TRUE
-  #   )
-  #   
-  #   x_range <- c(
-  #     head(x_breaks, n = 1L),
-  #     tail(x_breaks, n = 1L)
-  #   )
-  #   
-  # } else {
-  #   .check_input_plot_args(x_breaks = x_breaks)
-  # }
-  # 
+  if (!is.null(x_range)) {
+    .check_input_plot_args(x_range = x_range)
+    
+    # x_breaks
+    if (is.null(x_breaks)) {
+      .check_input_plot_args(
+        x_range = x_range,
+        x_n_breaks = x_n_breaks
+      )
+      
+      # Create breaks and update x_range
+      x_breaks <- labeling::extended(
+        m = x_n_breaks,
+        dmin = x_range[1L],
+        dmax = x_range[2L],
+        only.loose = TRUE
+      )
+      
+      x_range <- c(
+        head(x_breaks, n = 1L),
+        tail(x_breaks, n = 1L)
+      )
+      
+    } else {
+      .check_input_plot_args(x_breaks = x_breaks)
+    }
+  }
+
   # Create a legend label.
   legend_label <- .create_plot_legend_title(
     user_label = legend_label,
@@ -585,8 +576,8 @@ setMethod(
   )
   
   p <- p + ggplot2::scale_y_continuous(
-    breaks = seq_len(nlevels(x$feature_name)),
-    labels = levels(x$feature_name)
+    breaks = y_label_table$y,
+    labels = y_label_table$feature_name_value
   )
   
   # Add gradient palette.
@@ -649,18 +640,20 @@ setMethod(
       # Use a grid
       p <- p + ggplot2::facet_grid(
         rows = facet_by_list$facet_rows, 
-        cols = facet_by_list$facet_cols, 
+        cols = facet_by_list$facet_cols,
+        scales = ifelse(is.null(x_range), "free_x", "fixed"),
         labeller = "label_context"
       )
       
     } else {
       p <- p + ggplot2::facet_wrap(
         facets = facet_by_list$facet_by, 
+        scales = ifelse(is.null(x_range), "free_x", "fixed"),
         labeller = "label_context"
       )
     }
   }
-  browser()
+  
   # Update labels.
   p <- p + ggplot2::labs(
     x = x_label, 
@@ -669,6 +662,9 @@ setMethod(
     subtitle = plot_sub_title, 
     caption = caption
   )
+  
+  # Prevent clipping of confidence intervals.
+  if (!is.null(x_range)) p <- p + ggplot2::coord_cartesian(xlim = x_range)
   
   return(p)
 }
@@ -698,6 +694,19 @@ setMethod(
     "x_start" = x_start,
     "x_end" = x_end
   ))
+}
+
+
+
+..set_shap_waterfall_feature_name_value <- function(
+    feature_name,
+    feature_value, 
+    feature_label
+) {
+  actual_label <- feature_label
+  actual_label[is.na(feature_label)] <- signif(feature_value[is.na(feature_label)], 3L)
+  
+  return(paste0(feature_name, ": ", actual_label))
 }
 
 
