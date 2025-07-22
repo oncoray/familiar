@@ -479,7 +479,7 @@
   logger_message(
     paste0(
       nrow(cluster_table),
-      ifelse(nrow(cluster_table) == 1L, " feature cluster was", " feature clusteres were"),
+      ifelse(nrow(cluster_table) == 1L, " feature cluster was", " feature clusters were"),
       " created from ", n_features_current,
       ifelse(n_features_current == 1L, " feature. ", " features. "),
       sum(cluster_table$cluster_size > 1L),
