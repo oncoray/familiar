@@ -468,9 +468,6 @@ setMethod(
     x_breaks,
     outcome_type
 ) {
-  # TODO:
-  # Show feature values on y-axis.
-  
   # Suppress NOTES due to non-standard evaluation in data.table
   shap_value <- vimp <- feature_value <- feature_name <- feature_label <- prediction <- y <- NULL
   
