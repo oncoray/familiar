@@ -1295,7 +1295,7 @@ theme_familiar <- function(
   }
 
   # Update the text size using the magical ggplot2 point size (ggplot2:::.pt).
-  geom_text_size <- fontsize * fontsize_rel / 2.845276
+  geom_text_size <- fontsize * fontsize_rel / ggplot2::.pt
 
   # Obtain lineheight
   lineheight <- ggtheme$text$lineheight
