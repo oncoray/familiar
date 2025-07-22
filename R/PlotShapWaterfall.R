@@ -249,8 +249,7 @@ setMethod(
       return(NULL)
     }
     
-    # Check input arguments ----------------------------------------------------
-    
+    # Check and set plot_type.
     value_data <- x@data[, list("n" = .N), by = setdiff(x@grouping_column, c("sample_id", "feature_value", "feature_label"))]
     is_single_sample <- all(value_data$n == 1L)
     
@@ -471,9 +470,7 @@ setMethod(
 ) {
   # TODO:
   # faceting: free x-range in each facet
-  # compute start and stop points based on shap value and iterate from the most important feature to the least.
-  # set colour based on whether SHAP value is positive or not.
-  # 
+  # Create a new polygon-based geom: https://ggplot2.tidyverse.org/articles/extending-ggplot2.html#creating-a-new-geom
   
   # Suppress NOTES due to non-standard evaluation in data.table
   shap_value <- vimp <- feature_value <- feature_name <- prediction <- NULL
@@ -490,14 +487,28 @@ setMethod(
   # Common base for formatting prediction and shap values.
   common_base <- ..format_get_common_base(c(x$shap_value, x$prediction))
 
-  # Update start and end positions.
+  # Update start and end positions for force elements.
   if (!is.null(facet_by)) {
     x[, (c("x_start", "x_end")) := ..set_shap_waterfall_positions(shap_value, prediction, feature_name), by = facet_by]
     
   } else {
     x[, (c("x_start", "x_end")) := ..set_shap_waterfall_positions(shap_value, prediction, feature_name)]
   }
-  browser()
+  
+  # Derive information for the average prediction and extract the instance
+  # prediction.
+  if (!is.null(facet_by)) {
+    f_average_data <- x[, list("prediction" = max(prediction) + sum(shap_value)), by = facet_by]
+  } else {
+    f_average_data <- x[, list("prediction" = max(prediction) + sum(shap_value))]
+  }
+  
+  f_instance_data <- unique(x[, mget(c("prediction", facet_by))])
+  
+  # Create data for segments. These connect the neighbouring SHAP elements.
+  
+  
+  
   # Check x-range.
   # if (is.null(x_range)) {
   #   if (value_representation == "raw") {
@@ -561,16 +572,18 @@ setMethod(
   # Set up basic waterfall plot.
   p <- ggplot2::ggplot(data = x)
   p <- p + ggtheme
-  p <- p + ggplot2::geom_rect(
+  p <- p + geom_fam_force_shap(
     data = x,
     mapping = ggplot2::aes(
-      xmin = !!sym("x_start"),
-      xmax = !!sym("x_end"),
+      x = !!sym("x_start"),
+      xend = !!sym("x_end"),
+      y = !!sym("y"),
       ymin = !!sym("y") - 0.4,
       ymax = !!sym("y") + 0.4,
       fill = !!sym("shap_value")
     )
   )
+  
   p <- p + ggplot2::scale_y_continuous(
     breaks = seq_len(nlevels(x$feature_name)),
     labels = levels(x$feature_name)
@@ -588,154 +601,41 @@ setMethod(
     limits = c(-max(abs(x$shap_value)), max(abs(x$shap_value)))
   )
   
-  browser()
-  # Create basic plot
-  p <- ggplot2::ggplot(
+  # Add instance and group average prediction.
+  p <- p + ggplot2::geom_vline(
+    data = f_average_data,
+    mapping = ggplot2::aes(xintercept = !!sym("prediction")),
+    color = "grey80",
+    linetype = 2L
+  )
+  p <- p + ggplot2::geom_vline(
+    data = f_instance_data,
+    mapping = ggplot2::aes(xintercept = !!sym("prediction")),
+    color = "grey80",
+    linetype = 2L
+  )
+  
+  # Use geom-segment to connect segments.
+  p <- p + ggplot2::geom_segment(
     data = x,
     mapping = ggplot2::aes(
-      x = !!sym("shap_value"),
-      y = !!sym("feature_name")
-    ))
-  p <- p + ggtheme
-  
-  # Set breaks and range.
-  p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
-  p <- p + ggplot2::coord_cartesian(xlim = x_range)
-  
-  if (plot_type == "swarmplot") {
-    # Swarm plot ---------------------------------------------------------------
-    
-    # Determine the density of points for each feature as function of the
-    # shap-value.
-    grouping_variables <- c("feature_name", facet_by)
-    if (!is.null(color_by)) {
-      grouping_variables <- c(grouping_variables, "color_breaks")
-    }
-    
-    x[
-      ,
-      "y_offset" := ..set_shap_swarmplot_jitter(shap_value, feature_value, value_representation = value_representation),
-      by = c("feature_name", facet_by, color_by)
-    ]
-    
-    if (value_representation == "raw") {
-      p <- p + ggplot2::geom_point(
-        mapping = ggplot2::aes(color = !!sym("feature_value")),
-        position = ggplot2::position_nudge(y = x$y_offset)
-      )
-      
-      # Colors
-      gradient_colours <- .get_palette(
-        x = gradient_palette, 
-        palette_type = "divergent"
-      )
-      
-      # Add gradient palette.
-      p <- p + ggplot2::scale_colour_gradientn(
-        name = legend_label,
-        colors = gradient_colours,
-        limits = c(-1.0, 1.0)
-      )
-      
-    } else if (is.null(color_by)) {
-      p <- p + ggplot2::geom_point(position = ggplot2::position_nudge(y = x$y_offset))
-      
-    } else {
-      p <- p + ggplot2::geom_jitter(
-        mapping = ggplot2::aes(color = !!sym("color_breaks")),
-        position = ggplot2::position_nudge(y = x$y_offset)
-      )
-      
-      # Set fill colours.
-      p <- p + ggplot2::scale_color_manual(
-        name = legend_label$guide_color,
-        values = g_color$color_values,
-        breaks = g_color$color_breaks,
-        drop = FALSE
-      )
-    }
-    
-  } else if (plot_type == "barplot") {
-    # Barplot ------------------------------------------------------------------
-    
-    if (is.null(color_by)) {
-      p <- p + ggplot2::geom_bar(
-        stat = "identity",
-        position = ggplot2::position_dodge(width = 0.9),
-      )
-      
-    } else {
-      # Add barplot.
-      p <- p + ggplot2::geom_bar(
-        mapping = ggplot2::aes(
-          fill = !!sym("color_breaks")
-        ),
-        stat = "identity",
-        position = ggplot2::position_dodge(width = 0.9)
-      )
-      
-      # Set fill colours.
-      p <- p + ggplot2::scale_fill_manual(
-        name = legend_label$guide_color,
-        values = g_color$color_values,
-        breaks = g_color$color_breaks,
-        drop = FALSE
-      )
-    }
-    
-  } else if (plot_type == "boxplot") {
-    # Boxplot ------------------------------------------------------------------
-    
-    if (is.null(color_by)) {
-      p <- p + ggplot2::geom_boxplot()
-      
-    } else {
-      p <- p + ggplot2::geom_boxplot(
-        mapping = ggplot2::aes(
-          colour = !!sym("color_breaks")
-        )
-      )
-      
-      # Set fill colours.
-      p <- p + ggplot2::scale_colour_manual(
-        name = legend_label$guide_color,
-        values = g_color$color_values,
-        breaks = g_color$color_breaks,
-        drop = FALSE
-      )
-    }
-    
-  } else if (plot_type == "violinplot") {
-    # Violinplot ---------------------------------------------------------------
-    
-    if (is.null(color_by)) {
-      # Create boxplot.
-      p <- p + ggplot2::geom_violin(
-        draw_quantiles = c(0.025, 0.5, 0.975),
-        scale = "width",
-        position = ggplot2::position_dodge(width = 1.0)
-      )
-      
-    } else {
-      # Create boxplot.
-      p <- p + ggplot2::geom_violin(
-        mapping = ggplot2::aes(
-          fill = !!sym("color_breaks")
-        ),
-        draw_quantiles = c(0.025, 0.5, 0.975),
-        scale = "width",
-        position = ggplot2::position_dodge(width = 1.0)
-      )
-      
-      # Set fill colours.
-      p <- p + ggplot2::scale_fill_manual(
-        name = legend_label$guide_color,
-        values = g_color$color_values,
-        breaks = g_color$color_breaks,
-        drop = FALSE
-      )
-    }
-  }
+      x = !!sym("x_start"),
+      xend = !!sym("x_start"),
+      y = !!sym("y") - 0.5,
+      yend = !!sym("y") + 0.45,
+    ),
+    color = "grey60"
+  )
+  p <- p + ggplot2::geom_segment(
+    data = x,
+    mapping = ggplot2::aes(
+      x = !!sym("x_end"),
+      xend = !!sym("x_end"),
+      y = !!sym("y") - 0.45,
+      yend = !!sym("y") + 0.5,
+    ),
+    color = "grey60"
+  )
   
   # Determine how things are faceted.
   facet_by_list <- .parse_plot_facet_by(
@@ -760,7 +660,7 @@ setMethod(
       )
     }
   }
-  
+  browser()
   # Update labels.
   p <- p + ggplot2::labs(
     x = x_label, 
@@ -780,7 +680,7 @@ setMethod(
   feature_value <- density <- y_offset <- NULL
   
   # Initialise.
-  x_start <- x_end <- numeric(length(x))
+  x_start <- x_end <- y <- y_seg_start <- y_seg_end <- numeric(length(x))
   
   # Set feature order.
   feature_order <- order(feature_name, decreasing = TRUE)
@@ -794,7 +694,10 @@ setMethod(
     previous_start <- x_start[ii]
   }
 
-  return(list("x_start" = x_start, "x_end" = x_end))
+  return(list(
+    "x_start" = x_start,
+    "x_end" = x_end
+  ))
 }
 
 
