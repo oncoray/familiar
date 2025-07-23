@@ -757,44 +757,48 @@ if (rlang::is_installed("ggplot2")) {
     coord,
     lineend = "butt", linejoin = "round", linemitre = 10
     ) {
-      # browser()
+      # Compute coordinates based on data.
       coords <- coord$transform(data, panel_params)
       
-      x <- y <- linewidth <- numeric(nrow(coords) * 5L)
-      id <- linetype <- integer(nrow(coords) * 5L)
-      colour <- fill <- character(nrow(coords) * 5L)
+      # Instantiate parameters to feed to grid::polygonGrob. These vectors are 
+      # sufficiently large to hold all polygons with taper.
+      x <- y <- numeric(nrow(coords) * 5L)
+      id <- integer(nrow(coords) * 5L)
       
+      # Iterate over features.
       idx_offset <- 0L
       for (ii in seq_len(nrow(coords))) {
+        # Set up coordinates.
         x_start = coords$x[ii]
         x_end = coords$xend[ii]
         y_down <- coords$ymin[ii]
         y_up <- coords$ymax[ii]
         
         if (abs(x_start - x_end) > 0.05) {
+          # Add taper if there is sufficient room on the plot.
           x_mid <- ifelse(x_start < x_end, x_end - 0.05, x_end + 0.05)
           y_mid <- (y_up + y_down) * 0.5
           
+          # Define coordinates for polygon.
           idx <- idx_offset + (1L:5L)
           x[idx] <- c(x_start, x_start, x_mid, x_end, x_mid)
           y[idx] <- c(y_down, y_up, y_up, y_mid, y_down)
           
         } else {
+          # Avoid taper if there is not sufficient room.
           idx <- idx_offset + (1L:4L)
           x[idx] <- c(x_start, x_start, x_end, x_end)
           y[idx] <- c(y_down, y_up, y_up, y_down)
         }
+        
+        # Set grouping.
         id[idx] <- ii
         
-        linewidth[idx] <- coords$linewidth[ii] * ggplot2::.pt
-        linetype[idx] <- coords$linetype[ii]
-        
-        colour[idx] <- coords$colour[ii]
-        fill[idx] <- ggplot2::fill_alpha(coords$fill[ii], coords$alpha[ii])
-        
+        # Update offset.
         idx_offset <- idx_offset + length(idx)
       }
       
+      # Select elements which are correctly set.
       valid_idx <- id > 0L
       
       return(grid::polygonGrob(
