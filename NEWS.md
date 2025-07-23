@@ -64,6 +64,11 @@
 
 - Palettes from the `paletteer` package can now be used to customise plots.
 
+- The default palette was updated to use more vivid colours, particularly for
+divergent and sequential palettes. The central part of the divergent palette,
+and the starting grey for sequential palettes, are now darker for better
+contrast with a white background.
+
 - Plausibility of datasets is now checked more thoroughly to detect common 
   issues:
 
