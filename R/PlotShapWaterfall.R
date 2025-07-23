@@ -738,82 +738,83 @@ setMethod(
 }
 
 
-
-GeomSHAPWaterfallForce <- ggplot2::ggproto(
-  "GeomPolygon",
-  ggplot2::Geom,
-  required_aes = c("x", "xend", "y", "ymin", "ymax"),
-  default_aes = ggplot2::aes(
-    colour = NA,
-    fill = "grey35",
-    linewidth = 0.5,
-    linetype = 1,
-    alpha = NA
-  ),
-  draw_key = ggplot2::draw_key_polygon,
-  draw_panel = function(
+if (rlang::is_installed("ggplot2")) {
+  GeomSHAPWaterfallForce <- ggplot2::ggproto(
+    "GeomPolygon",
+    ggplot2::Geom,
+    required_aes = c("x", "xend", "y", "ymin", "ymax"),
+    default_aes = ggplot2::aes(
+      colour = NA,
+      fill = "grey35",
+      linewidth = 0.5,
+      linetype = 1,
+      alpha = NA
+    ),
+    draw_key = ggplot2::draw_key_polygon,
+    draw_panel = function(
     data,
     panel_params,
     coord,
     lineend = "butt", linejoin = "round", linemitre = 10
-  ) {
-    # browser()
-    coords <- coord$transform(data, panel_params)
-    
-    x <- y <- linewidth <- numeric(nrow(coords) * 5L)
-    id <- linetype <- integer(nrow(coords) * 5L)
-    colour <- fill <- character(nrow(coords) * 5L)
-    
-    idx_offset <- 0L
-    for (ii in seq_len(nrow(coords))) {
-      x_start = coords$x[ii]
-      x_end = coords$xend[ii]
-      y_down <- coords$ymin[ii]
-      y_up <- coords$ymax[ii]
+    ) {
+      # browser()
+      coords <- coord$transform(data, panel_params)
       
-      if (abs(x_start - x_end) > 0.05) {
-        x_mid <- ifelse(x_start < x_end, x_end - 0.05, x_end + 0.05)
-        y_mid <- (y_up + y_down) * 0.5
+      x <- y <- linewidth <- numeric(nrow(coords) * 5L)
+      id <- linetype <- integer(nrow(coords) * 5L)
+      colour <- fill <- character(nrow(coords) * 5L)
+      
+      idx_offset <- 0L
+      for (ii in seq_len(nrow(coords))) {
+        x_start = coords$x[ii]
+        x_end = coords$xend[ii]
+        y_down <- coords$ymin[ii]
+        y_up <- coords$ymax[ii]
         
-        idx <- idx_offset + (1L:5L)
-        x[idx] <- c(x_start, x_start, x_mid, x_end, x_mid)
-        y[idx] <- c(y_down, y_up, y_up, y_mid, y_down)
+        if (abs(x_start - x_end) > 0.05) {
+          x_mid <- ifelse(x_start < x_end, x_end - 0.05, x_end + 0.05)
+          y_mid <- (y_up + y_down) * 0.5
+          
+          idx <- idx_offset + (1L:5L)
+          x[idx] <- c(x_start, x_start, x_mid, x_end, x_mid)
+          y[idx] <- c(y_down, y_up, y_up, y_mid, y_down)
+          
+        } else {
+          idx <- idx_offset + (1L:4L)
+          x[idx] <- c(x_start, x_start, x_end, x_end)
+          y[idx] <- c(y_down, y_up, y_up, y_down)
+        }
+        id[idx] <- ii
         
-      } else {
-        idx <- idx_offset + (1L:4L)
-        x[idx] <- c(x_start, x_start, x_end, x_end)
-        y[idx] <- c(y_down, y_up, y_up, y_down)
+        linewidth[idx] <- coords$linewidth[ii] * ggplot2::.pt
+        linetype[idx] <- coords$linetype[ii]
+        
+        colour[idx] <- coords$colour[ii]
+        fill[idx] <- ggplot2::fill_alpha(coords$fill[ii], coords$alpha[ii])
+        
+        idx_offset <- idx_offset + length(idx)
       }
-      id[idx] <- ii
       
-      linewidth[idx] <- coords$linewidth[ii] * ggplot2::.pt
-      linetype[idx] <- coords$linetype[ii]
+      valid_idx <- id > 0L
       
-      colour[idx] <- coords$colour[ii]
-      fill[idx] <- ggplot2::fill_alpha(coords$fill[ii], coords$alpha[ii])
-      
-      idx_offset <- idx_offset + length(idx)
+      return(grid::polygonGrob(
+        x[valid_idx],
+        y[valid_idx],
+        id = id[valid_idx],
+        default.units = "native",
+        gp = grid::gpar(
+          col = coords$colour,
+          fill = ggplot2::fill_alpha(coords$fill, coords$alpha),
+          lwd = coords$linewidth * ggplot2::.pt,
+          lty = coords$linetype,
+          lineend = lineend,
+          linejoin = linejoin,
+          linemitre = linemitre
+        )
+      ))
     }
-    
-    valid_idx <- id > 0L
-    
-    return(grid::polygonGrob(
-      x[valid_idx],
-      y[valid_idx],
-      id = id[valid_idx],
-      default.units = "native",
-      gp = grid::gpar(
-        col = coords$colour,
-        fill = ggplot2::fill_alpha(coords$fill, coords$alpha),
-        lwd = coords$linewidth * ggplot2::.pt,
-        lty = coords$linetype,
-        lineend = lineend,
-        linejoin = linejoin,
-        linemitre = linemitre
-      )
-    ))
-  }
-)
+  )
+}
 
 
 
