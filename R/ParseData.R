@@ -748,10 +748,18 @@
 .check_data_plausibility <- function(
     data,
     settings,
+    message_indent = 0L,
+    verbose = TRUE,
     cl = NULL
 ) {
   # Avoid CRAN NOTE due to non-standard evaluation in data.table.
   score <- NULL
+  
+  logger_message(
+    "Setup report: Preliminary data-checks.",
+    indent = message_indent,
+    verbose = verbose
+  )
   
   feature_cols <- get_feature_columns(data, outcome_type = settings$data$outcome_type)
   outcome_cols <- get_outcome_columns(settings$data$outcome_type)
