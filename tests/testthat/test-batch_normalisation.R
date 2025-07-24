@@ -23,7 +23,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
       batch_ids <- unique(data_copy@data[[familiar:::get_id_columns("batch")]])
       
       # Create a list of featureInfo objects.
-      feature_info_list <- test_create_generic_info(data = data_copy)
+      feature_info_list <- familiar:::test_create_generic_info(data = data_copy)
 
       # Combat requires global standardisation
       if (batch_normalisation_method %in% familiar:::.get_available_batch_normalisation_methods("combat")) {

@@ -725,13 +725,13 @@ setMethod(
     if (!x_categorical && is.integer(x)) x <- as.numeric(x)
     if (!y_categorical && is.integer(y)) y <- as.numeric(y)
     
-    require_package(
-      x = "praznik",
-      purpose = paste0(
-        "to compute similarity using the ",
-        object@similarity_metric, " metric"
-      )
-    )
+    # require_package(
+    #   x = "praznik",
+    #   purpose = paste0(
+    #     "to compute similarity using the ",
+    #     object@similarity_metric, " metric"
+    #   )
+    # )
     
     # Compute normalised mutual information.
     return(
