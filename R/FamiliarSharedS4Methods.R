@@ -2,7 +2,13 @@
   # Adds the version of the familiar package used to generate the object. This
   # allows for backward compatibility.
 
-  current_version <- utils::packageVersion("familiar")
+  # Look-up of the familiar version takes more time than one would expect. Use
+  # caching.
+  current_version <- rlang::env_cache(
+    familiar_global_env,
+    "familiar_version",
+    default = utils::packageVersion("familiar")
+  )
   
   if (is.null(object@familiar_version)) {
     # Set package version.
