@@ -120,12 +120,12 @@ setMethod(
 
     # Identify invariant features and remove them.
     available_features <- get_feature_columns(x = data)
-    is_invariant <- sapply(
-      available_features,
-      function(feature, data) is_singular_data(data[, get(feature)]),
-      data = data@data
+    is_invariant <- fam_sapply(
+      X = data@data[, mget(available_features)],
+      FUN = is_singular_data,
+      progress_bar = FALSE,
+      chopchop = TRUE
     )
-    
     invariant_features <- available_features[is_invariant]
     
     # Remove invariant features.
