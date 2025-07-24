@@ -2251,6 +2251,8 @@ setMethod(
 
 
 # batch_normalise_features -----------------------------------------------------
+
+## batch_normalise_features (dataObject) ---------------------------------------
 setMethod(
   "batch_normalise_features",
   signature(data = "dataObject"),
@@ -2285,36 +2287,65 @@ setMethod(
     if (is_empty(data)) return(data)
     
     # Find the columns containing features
-    feature_columns <- get_feature_columns(x = data)
+    features <- get_feature_columns(x = data)
     
     # Update feature_info_list by adding info for missing batches
     feature_info_list <- add_batch_normalisation_parameters(
-      feature_info_list = feature_info_list[feature_columns],
+      feature_info_list = feature_info_list[features],
       data = data
     )
     
-    # Apply batch-normalisation
+    # Apply normalisation
+    data@data <- batch_normalise_features(
+      data = data@data,
+      feature_info_list = feature_info_list,
+      features = features,
+      invert = invert
+    )
+    
+    return(data)
+  }
+)
+
+
+
+## batch_normalise_features (data.table) ---------------------------------------
+setMethod(
+  "batch_normalise_features",
+  signature(data = "data.table"),
+  function(
+    data,
+    feature_info_list,
+    features,
+    invert = FALSE
+  ) {
+    
+    # Check if data is empty.
+    if (is_empty(data)) return(data)
+    
+    # Apply batch normalisation.
     batch_normalised_list <- lapply(
-      feature_columns,
-      function(ii, data, feature_info_list, invert) {
-        # Dispatch to apply-method.
+      features,
+      function(ii, data, batch_data, feature_info_list, invert) {
         x <- apply_feature_info_parameters(
           object = feature_info_list[[ii]]@batch_normalisation_parameters,
-          data = data@data[, mget(c(ii, get_id_columns("batch")))],
+          data = data[[ii]],
+          batch_data = batch_data,
           invert = invert
         )
         
         return(x)
       },
       data = data,
+      batch_data = data[[get_id_columns("batch")]],
       feature_info_list = feature_info_list,
       invert = invert
     )
     
-    # Update name of data in columns
-    names(batch_normalised_list) <- feature_columns
+    # Update name of data in columns.
+    names(batch_normalised_list) <- features
     
-    # Update with replacement in the data object
+    # Update with replacement in the data object.
     data <- update_with_replacement(
       data = data,
       replacement_list = batch_normalised_list
@@ -2323,7 +2354,6 @@ setMethod(
     return(data)
   }
 )
-
 
 
 # impute_features --------------------------------------------------------------

@@ -434,14 +434,17 @@ setMethod(
   function(
     object,
     data,
+    batch_data,
     ...
   ) {
+    
+    if (object@method == "none") return(data)
     
     # Suppress NOTES due to non-standard evaluation in data.table
     batch_normalisation_ordering_id <- NULL
     
     # Find the batch identifiers in the data.
-    batch_ids <- unique(data[[get_id_columns(id_depth = "batch")]])
+    batch_ids <- unique(batch_data)
     
     # Sanity check: batch normalisation objects are available for all
     # batch identifiers.
@@ -462,7 +465,10 @@ setMethod(
     }
     
     # Avoid updating by reference.
-    data <- data.table::copy(data)
+    data <- data.table::data.table(
+      "feature" = data,
+      "batch_id" = batch_data
+    )
     
     # Insert ordering variable.
     data[, "batch_normalisation_ordering_id" := .I]
@@ -471,7 +477,7 @@ setMethod(
     data <- fam_mapply(
       FUN = apply_feature_info_parameters,
       object = object@batch_parameters[batch_ids],
-      data = split(data, by = get_id_columns(id_depth = "batch"))[batch_ids],
+      data = split(data, by = "batch_id")[batch_ids],
       MoreArgs = list(...)
     )
     
@@ -482,7 +488,7 @@ setMethod(
     data <- data[order(batch_normalisation_ordering_id)]
     
     # Extract the feature values and return.
-    return(data[[object@name]])
+    return(data$feature)
   }
 )
 
