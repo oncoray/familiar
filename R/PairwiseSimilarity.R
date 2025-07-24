@@ -717,7 +717,7 @@ setMethod(
     y <- y[valid_elements]
     
     # Check if there are more than one unique values in x and or y.
-    if (length(unique(x)) == 1L && length(unique(y)) == 1L) return(1.0)
+    if (all(x == x[1L]) && all(y == y[1L])) return(1.0)
     
     # Ensure that numeric values are actually encoded as numeric, because
     # praznik handles integers as categorical variables. This is not the
