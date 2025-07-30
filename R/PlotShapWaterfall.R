@@ -8,17 +8,13 @@ NULL
 
 #' @title Create SHAP waterfall plot
 #'
-#' @description This method creates plots that show a summary of SHAP values
-#'   obtained from the data stored in a familiarCollection object. .
+#' @description This method creates plots that show a waterfall of SHAP values
+#'   obtained from the data stored in a familiarCollection object.
 #'
-#' @param dir_path (*optional*) Path to the directory where created performance
+#' @param dir_path (*optional*) Path to the directory where created 
 #'   plots are saved to. Output is saved in the `explanation` subdirectory. If
 #'   `NULL` no figures are saved, but are returned instead.
-#' @param plot_type (*optional*) Type of plot to draw. This is one of
-#'   `waterfall` or `stacked`.
-#'
-#'   The choice for `plot_type` affects several other arguments.
-#' @param gradient_palette (*optional*) Sequential or divergent palette used to
+#' @param gradient_palette (*optional*) Divergent palette used to
 #'   colour the elements of waterfall plots. `familiar` has a default
 #'   palette. Other palettes are supported by the `paletteer` package,
 #'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
@@ -35,14 +31,14 @@ NULL
 #' @inheritDotParams as_familiar_collection -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units -path -filename -plot
 #'
-#' @details This function plots model performance based on empirical bootstraps,
-#'   using various plot representations.
+#' @details This function creates SHAP waterfall plots, which show the
+#'   individual marginal contributions of feature values to the predicted value.
 #'
 #'   Available splitting variables are: `vimp_method`, `learner`,
 #'   `evaluation_time` (survival outcome only) and `positive_class` (categorical
-#'   outcomes). The default for is to facet by `evaluation_time` or 
-#'   `positive_class`, and split by `vimp_method` and
-#'   `learner`. `color_by` is not used.
+#'   outcomes), `sample_id`. The default for is to facet by `evaluation_time` or 
+#'   `positive_class`, and split by `vimp_method`,
+#'   `learner` and `sample_id`. `color_by` is not used.
 #'
 #'   Labelling methods such as `set_vimp_method_names` or `set_learner_names`
 #'   can be applied to the `familiarCollection` object to update labels, and
@@ -62,10 +58,8 @@ setGeneric(
     split_by = NULL,
     x_axis_by = NULL,
     y_axis_by = NULL,
-    color_by = NULL,
     facet_by = NULL,
     facet_wrap_cols = NULL,
-    plot_type = NULL,
     ggtheme = NULL,
     gradient_palette = NULL,
     x_label = waiver(),
@@ -102,10 +96,8 @@ setMethod(
     split_by = NULL,
     x_axis_by = NULL,
     y_axis_by = NULL,
-    color_by = NULL,
     facet_by = NULL,
     facet_wrap_cols = NULL,
-    plot_type = NULL,
     ggtheme = NULL,
     gradient_palette = NULL,
     x_label = waiver(),
@@ -144,11 +136,9 @@ setMethod(
         "split_by" = split_by,
         "x_axis_by" = x_axis_by,
         "y_axis_by" = y_axis_by,
-        "color_by" = color_by,
         "facet_by" = facet_by,
         "facet_wrap_cols" = facet_wrap_cols,
         "ggtheme" = ggtheme,
-        "plot_type" = plot_type,
         "gradient_palette" = gradient_palette,
         "x_label" = x_label,
         "y_label" = y_label,
@@ -183,10 +173,8 @@ setMethod(
     split_by = NULL,
     x_axis_by = NULL,
     y_axis_by = NULL,
-    color_by = NULL,
     facet_by = NULL,
     facet_wrap_cols = NULL,
-    plot_type = NULL,
     ggtheme = NULL,
     gradient_palette = NULL,
     x_label = waiver(),
@@ -249,22 +237,6 @@ setMethod(
       return(NULL)
     }
     
-    # Check and set plot_type.
-    value_data <- x@data[, list("n" = .N), by = setdiff(x@grouping_column, c("sample_id", "feature_value", "feature_label"))]
-    is_single_sample <- all(value_data$n == 1L)
-    
-    if (is.null(plot_type)) {
-      plot_type <- ifelse(is_single_sample, "waterfall", "stacked")
-    }
-    
-    # Check plot_type.
-    .check_parameter_value_is_valid(
-      x = plot_type,
-      var_name = "plot_type",
-      values = c("waterfall", "stacked")
-    )
-    
-    
     # Add evaluation time or class as a splitting variable.
     additional_variable <- NULL
     if (object@outcome_type %in% c("survival")) {
@@ -279,30 +251,25 @@ setMethod(
     # Add default splitting variables.
     if (
       is.null(split_by) &&
-      is.null(color_by) &&
       is.null(facet_by)
     ) {
       # Split by vimp_method, learner and sample id.
-      split_by <- c("vimp_method", "learner")
-      if (plot_type == "waterfall") split_by <- c(split_by, "sample_id")
+      split_by <- c("vimp_method", "learner", "sample_id")
       facet_by <- additional_variable
     }
     
-    all_variables <- c("vimp_method", "learner", additional_variable)
-    if (plot_type == "waterfall") all_variables <- c(all_variables, "sample_id")
+    all_variables <- c("vimp_method", "learner", "sample_id", additional_variable)
     
     # Check splitting variables and generate sanitised output
     split_var_list <- .check_plot_splitting_variables(
       x = x@data,
       split_by = split_by,
-      color_by = color_by,
       facet_by = facet_by,
       available = all_variables
     )
     
     # Update splitting variables
     split_by <- split_var_list$split_by
-    color_by <- split_var_list$color_by
     facet_by <- split_var_list$facet_by
     
     # x_label
@@ -357,7 +324,7 @@ setMethod(
       # Add evaluation time as subtitle component if it is not used
       # otherwise.
       if (
-        !"evaluation_time" %in% c(split_by, color_by, facet_by) &&
+        !"evaluation_time" %in% c(split_by, facet_by) &&
         object@outcome_type %in% c("survival")
       ) {
         additional_subtitle <- c(
@@ -377,7 +344,6 @@ setMethod(
       # Generate plot
       p <- .plot_shap_waterfall_plot(
         x = x_split[[ii]],
-        color_by = color_by,
         facet_by = facet_by,
         facet_wrap_cols = facet_wrap_cols,
         plot_type = plot_type,
@@ -391,8 +357,7 @@ setMethod(
         caption = caption,
         x_range = x_range,
         x_n_breaks = x_n_breaks,
-        x_breaks = x_breaks,
-        outcome_type = object@outcome_type
+        x_breaks = x_breaks
       )
       
       # Check empty output
@@ -420,7 +385,7 @@ setMethod(
               "object" = object,
               "dir_path" = dir_path,
               "type" = "explanation",
-              "subtype" = paste0(plot_type),
+              "subtype" = "shap_waterfall",
               "x" = x_split[[ii]],
               "split_by" = split_by,
               "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
@@ -451,7 +416,6 @@ setMethod(
 
 .plot_shap_waterfall_plot <- function(
     x,
-    color_by,
     facet_by,
     facet_wrap_cols,
     plot_type,
@@ -465,8 +429,7 @@ setMethod(
     caption,
     x_range,
     x_n_breaks,
-    x_breaks,
-    outcome_type
+    x_breaks
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   shap_value <- vimp <- feature_value <- feature_name <- NULL
@@ -500,9 +463,9 @@ setMethod(
   # Derive information for the average prediction and extract the instance
   # prediction.
   if (!is.null(facet_by)) {
-    f_average_data <- x[, list("prediction" = max(prediction) + sum(shap_value)), by = facet_by]
+    f_average_data <- x[, list("prediction" = max(prediction) - sum(shap_value)), by = facet_by]
   } else {
-    f_average_data <- x[, list("prediction" = max(prediction) + sum(shap_value))]
+    f_average_data <- x[, list("prediction" = max(prediction) - sum(shap_value))]
   }
   
   f_instance_data <- unique(x[, mget(c("prediction", facet_by))])
@@ -759,7 +722,7 @@ setMethod(
 
 
 if (rlang::is_installed("ggplot2")) {
-  GeomSHAPWaterfallForce <- ggplot2::ggproto(
+  GeomSHAPWaterfall <- ggplot2::ggproto(
     "GeomPolygon",
     ggplot2::Geom,
     required_aes = c("x", "xend", "y", "ymin", "ymax"),
@@ -842,7 +805,7 @@ if (rlang::is_installed("ggplot2")) {
 
 
 
-geom_fam_force_shap <- function(
+geom_waterfall_shap <- function(
     mapping = NULL,
     data = NULL,
     stat = "identity",
@@ -853,7 +816,7 @@ geom_fam_force_shap <- function(
     ...
 ) {
   ggplot2::layer(
-    geom = GeomSHAPWaterfallForce,
+    geom = GeomSHAPWaterfall,
     mapping = mapping,
     data = data, 
     stat = stat, 
