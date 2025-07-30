@@ -469,7 +469,8 @@ setMethod(
     outcome_type
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  shap_value <- vimp <- feature_value <- feature_name <- feature_label <- prediction <- y <- NULL
+  shap_value <- vimp <- feature_value <- feature_name <- NULL
+  feature_label <- prediction <- y <- label_text <- NULL
   
   # Sort features by importance (mean absolute SHAP).
   feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = c(facet_by, "feature_name")]
@@ -483,9 +484,10 @@ setMethod(
   y_label_table <- unique(x[, mget(c("feature_name", "feature_value", "feature_label", "y"))])
   y_label_table[, "feature_name_value" := ..set_shap_waterfall_feature_name_value(feature_name, feature_value, feature_label)]
   y_label_table <- y_label_table[order(y)]
-  
+
   # Common base for formatting prediction and shap values.
   common_base <- ..format_get_common_base(c(x$shap_value, x$prediction))
+  n_small <- max(c(-(common_base - 2L), 0.0))
 
   # Update start and end positions for force elements.
   if (!is.null(facet_by)) {
@@ -545,17 +547,17 @@ setMethod(
     legend_label = legend_label
   )
   
-  # Generate a guide table
-  guide_list <- .create_plot_guide_table(
-    x = x,
-    color_by = color_by
+  # Add gradient palette.
+  gradient_colours <- .get_palette(
+    x = gradient_palette, 
+    palette_type = "divergent"
   )
   
-  # Extract data
-  x <- guide_list$data
-  
-  # Extract guide_table for color.
-  g_color <- guide_list$guide_color
+  # Set up shap value labels
+  x[, "label_align" := data.table::fifelse(shap_value >= 0.0, yes = "left", no = "right")]
+  x[, "label_colour" := data.table::fifelse(shap_value >= 0.0, yes = head(gradient_colours, n = 1L), no = tail(gradient_colours, n = 1L))]
+  x[, "label_text" := format(round(shap_value, digits = n_small), nsmall = n_small)]
+  x[, "label_text" := paste0(" ", label_text, " ")]
   
   # Set up basic waterfall plot.
   p <- ggplot2::ggplot(data = x)
@@ -572,15 +574,15 @@ setMethod(
     )
   )
   
+  # Set labels for y-axis.
   p <- p + ggplot2::scale_y_continuous(
     breaks = y_label_table$y,
     labels = y_label_table$feature_name_value
   )
   
-  # Add gradient palette.
-  gradient_colours <- .get_palette(
-    x = gradient_palette, 
-    palette_type = "divergent"
+  # Add spacing for text values.
+  p <- p + ggplot2::scale_x_continuous(
+    expand = ggplot2::expansion(mult = 0.2)
   )
   
   p <- p + ggplot2::scale_fill_gradientn(
@@ -623,6 +625,24 @@ setMethod(
       yend = !!sym("y") + 0.5,
     ),
     color = "grey60"
+  )
+  
+  text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
+  
+  # Add shap label.
+  p <- p + ggplot2::geom_text(
+    data = x,
+    mapping = ggplot2::aes(
+      x = !!sym("x_end"),
+      y = !!sym("y"),
+      label = !!sym("label_text"),
+      hjust = !!sym("label_align"),
+      colour = !!sym("label_colour")
+    ),
+    family = text_settings$family,
+    fontface = text_settings$face,
+    size = text_settings$geom_text_size,
+    show.legend = FALSE
   )
   
   # Determine how things are faceted.
