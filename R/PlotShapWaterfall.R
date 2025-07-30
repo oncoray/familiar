@@ -346,7 +346,6 @@ setMethod(
         x = x_split[[ii]],
         facet_by = facet_by,
         facet_wrap_cols = facet_wrap_cols,
-        plot_type = plot_type,
         ggtheme = ggtheme,
         gradient_palette = gradient_palette,
         x_label = x_label,
@@ -371,7 +370,6 @@ setMethod(
         # Obtain decent default values for the plot.
         def_plot_dims <- .determine_shap_waterfall_plot_dimensions(
           x = x_split[[ii]],
-          plot_type = plot_type,
           facet_by = facet_by,
           facet_wrap_cols = facet_wrap_cols
         )
@@ -418,7 +416,6 @@ setMethod(
     x,
     facet_by,
     facet_wrap_cols,
-    plot_type,
     ggtheme,
     gradient_palette,
     x_label,
@@ -693,7 +690,6 @@ setMethod(
 
 .determine_shap_waterfall_plot_dimensions <- function(
     x,
-    plot_type,
     x_axis_by,
     y_axis_by,
     facet_by,
