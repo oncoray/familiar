@@ -108,7 +108,7 @@ prior to export. Paths to such files can also be provided.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
-\item{dir_path}{(\emph{optional}) Path to the directory where created performance
+\item{dir_path}{(\emph{optional}) Path to the directory where created SHAP summary
 plots are saved to. Output is saved in the \code{explanation} subdirectory. If
 \code{NULL} no figures are saved, but are returned instead.}
 
@@ -386,11 +386,11 @@ a prompt will appear asking to create a new directory when necessary.}
 }
 \description{
 This method creates plots that show a summary of SHAP values
-obtained from the data stored in a familiarCollection object. .
+obtained from the data stored in a familiarCollection object.
 }
 \details{
-This function plots model performance based on empirical bootstraps,
-using various plot representations.
+This function creates SHAP summary plots, which provide an overview
+of marginal contributions of feature values to the predicted values.
 
 Available splitting variables are: \code{vimp_method}, \code{learner},
 \code{evaluation_time} (survival outcome only) and \code{positive_class} (categorical

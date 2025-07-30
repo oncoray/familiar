@@ -9,9 +9,9 @@ NULL
 #' @title Plot SHAP summary.
 #'
 #' @description This method creates plots that show a summary of SHAP values
-#'   obtained from the data stored in a familiarCollection object. .
+#'   obtained from the data stored in a familiarCollection object.
 #'
-#' @param dir_path (*optional*) Path to the directory where created performance
+#' @param dir_path (*optional*) Path to the directory where created SHAP summary
 #'   plots are saved to. Output is saved in the `explanation` subdirectory. If
 #'   `NULL` no figures are saved, but are returned instead.
 #' @param plot_type (*optional*) Type of plot to draw. This is one of
@@ -68,8 +68,8 @@ NULL
 #' @inheritDotParams as_familiar_collection -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units -path -filename -plot
 #'
-#' @details This function plots model performance based on empirical bootstraps,
-#'   using various plot representations.
+#' @details This function creates SHAP summary plots, which provide an overview
+#'   of marginal contributions of feature values to the predicted values.
 #'
 #'   Available splitting variables are: `vimp_method`, `learner`,
 #'   `evaluation_time` (survival outcome only) and `positive_class` (categorical
@@ -508,7 +508,7 @@ setMethod(
               "object" = object,
               "dir_path" = dir_path,
               "type" = "explanation",
-              "subtype" = paste0(plot_type, "_", value_representation),
+              "subtype" = paste0("shap", "_", plot_type, "_", value_representation),
               "x" = x_split[[ii]],
               "split_by" = split_by,
               "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
