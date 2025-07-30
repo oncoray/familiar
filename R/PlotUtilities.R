@@ -3095,3 +3095,10 @@ theme_familiar <- function(
 
   return(edge_points)
 }
+
+
+
+..get_luminosity <- function(col) {
+  values <- as.vector(grDevices::col2rgb(col)) / 255.0
+  return ((min(values) + max(values)) / 2.0)
+}

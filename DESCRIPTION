@@ -185,6 +185,7 @@ Collate:
     'PlotModelPerformance.R'
     'PlotPermutationVariableImportance.R'
     'PlotSampleClustering.R'
+    'PlotShapForce.R'
     'PlotShapSummary.R'
     'PlotShapWaterfall.R'
     'PlotUnivariateImportance.R'
