@@ -515,14 +515,14 @@ setMethod(
   
   # Set up shap value labels
   x[, "label_align" := data.table::fifelse(shap_value >= 0.0, yes = "left", no = "right")]
-  x[, "label_colour" := data.table::fifelse(shap_value >= 0.0, yes = head(gradient_colours, n = 1L), no = tail(gradient_colours, n = 1L))]
+  x[, "label_colour" := data.table::fifelse(shap_value >= 0.0, yes = tail(gradient_colours, n = 1L), no = head(gradient_colours, n = 1L))]
   x[, "label_text" := format(round(shap_value, digits = n_small), nsmall = n_small)]
   x[, "label_text" := paste0(" ", label_text, " ")]
   
   # Set up basic waterfall plot.
   p <- ggplot2::ggplot(data = x)
   p <- p + ggtheme
-  p <- p + geom_fam_force_shap(
+  p <- p + geom_waterfall_shap(
     data = x,
     mapping = ggplot2::aes(
       x = !!sym("x_start"),
@@ -590,20 +590,22 @@ setMethod(
   text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
   
   # Add shap label.
-  p <- p + ggplot2::geom_text(
-    data = x,
-    mapping = ggplot2::aes(
-      x = !!sym("x_end"),
-      y = !!sym("y"),
-      label = !!sym("label_text"),
-      hjust = !!sym("label_align"),
-      colour = !!sym("label_colour")
-    ),
-    family = text_settings$family,
-    fontface = text_settings$face,
-    size = text_settings$geom_text_size,
-    show.legend = FALSE
-  )
+  for (x_text in split(x, by = "label_colour", drop = TRUE)) {
+    p <- p + ggplot2::geom_text(
+      data = x_text,
+      mapping = ggplot2::aes(
+        x = !!sym("x_end"),
+        y = !!sym("y"),
+        label = !!sym("label_text"),
+        hjust = !!sym("label_align")
+      ),
+      colour = head(x_text$label_colour, n = 1L),
+      family = text_settings$family,
+      fontface = text_settings$face,
+      size = text_settings$geom_text_size,
+      show.legend = FALSE
+    )
+  }
   
   # Determine how things are faceted.
   facet_by_list <- .parse_plot_facet_by(
@@ -716,6 +718,8 @@ setMethod(
   return(c(height, width))
 }
 
+
+# GeomSHAPWaterfall ------------------------------------------------------------
 
 if (rlang::is_installed("ggplot2")) {
   GeomSHAPWaterfall <- ggplot2::ggproto(
