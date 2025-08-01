@@ -1961,7 +1961,7 @@ setMethod(
 
 
       # Remove linetype from the legend.
-      p <- p + ggplot2::scale_linetype(guide = FALSE)
+      p <- p + ggplot2::scale_linetype(guide = "none")
       
     } else if (conf_int_style[1L] == "ribbon") {
       if (show_novelty) conf_int_alpha <- conf_int_alpha * ice_default_alpha

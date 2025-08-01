@@ -928,7 +928,7 @@ setMethod(
       }
       
       # Do not show dashed lines in the legend.
-      p <- p + ggplot2::scale_linetype(guide = FALSE)
+      p <- p + ggplot2::scale_linetype(guide = "none")
       
     } else if (conf_int_style[1L] == "ribbon") {
       if (is.null(color_by)) {
