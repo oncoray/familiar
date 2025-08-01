@@ -257,6 +257,7 @@ setMethod(
     ) {
       # Split by vimp_method, learner and sample id.
       split_by <- c("vimp_method", "learner")
+      facet_by <- additional_variable
     }
     
     all_variables <- c("vimp_method", "learner", additional_variable)
@@ -275,12 +276,12 @@ setMethod(
     
     # x_label
     if (is.waive(x_label)) {
-      x_label <- "predicted value"
+      x_label <- "sample"
     }
     
     # y_label
     if (is.waive(y_label)) {
-      y_label <- "feature"
+      y_label <- "predicted value"
     }
     
     .check_input_plot_args(
@@ -432,26 +433,37 @@ setMethod(
   shap_value <- vimp <- feature_value <- feature_name <- NULL
   feature_label <- prediction <- y <- label_text <- NULL
   
-  # Sort features by importance (mean absolute SHAP).
-  feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = c(facet_by, "feature_name")]
-  feature_importance <- feature_importance[, list("vimp" = max(vimp)), by = "feature_name"][order(vimp)]
-  x$feature_name <- factor(
-    x = x$feature_name,
-    levels = feature_importance$feature_name
-  )
-  browser()
+  # The force plot has two axes: a sample axis, and a prediction axis. By
+  # default, samples are sorted according to the prediction value within the
+  # facet. For each sample, the marginal feature value contributions to the
+  # prediction are sorted by the absolute value of the contribution.
   
-  # Common base for formatting prediction and shap values.
-  common_base <- ..format_get_common_base(c(x$shap_value, x$prediction))
-  n_small <- max(c(-(common_base - 2L), 0.0))
+
+  # Set sample order in each facet.
+  prediction_table <- unique(x[, mget(c("prediction", "sample_id", facet_by))])
+  if (!is.null(facet_by)) {
+    prediction_table[, "sample_order" := order(prediction, decreasing = FALSE), by = facet_by]
+  } else {
+    prediction_table[, "sample_order" := order(prediction, decreasing = FALSE)]
+  }
+  x <- merge(
+    x = x,
+    y = prediction_table[, "prediction" := NULL],
+    by = c("sample_id", facet_by)
+  )
   
   # Update start and end positions for force elements.
-  if (!is.null(facet_by)) {
-    x[, (c("x_start", "x_end")) := ..set_shap_force_positions(shap_value, prediction, feature_name), by = facet_by]
+  x[
+    ,
+    (c("shap_start", "shap_end")) := ..set_shap_force_positions(shap_value, prediction),
+    by = c(facet_by, "sample_id")
+  ]
+
+  # y_label_table <- x[, mget(c("sample_id", "sample_order"))]
     
-  } else {
-    x[, (c("x_start", "x_end")) := ..set_shap_force_positions(shap_value, prediction, feature_name)]
-  }
+  # Common base for formatting prediction and shap values.
+  # common_base <- ..format_get_common_base(c(x$shap_value, x$prediction))
+  # n_small <- max(c(-(common_base - 2L), 0.0))
   
   # Check x-range.
   if (!is.null(x_range)) {
@@ -496,65 +508,82 @@ setMethod(
   # Add gradient palette.
   discrete_palette <- .get_palette(
     x = discrete_palette, 
-    palette_type = "qualitative"
+    palette_type = "qualitative",
+    n = 2L
   )
+  x[, "shap_positive" := shap_value >= 0.0]
+  # TODO: test if feature should be highlighted.
+  x[, "shap_highlight" := FALSE]
   
   # Set up shap value labels
-  x[, "label_align" := data.table::fifelse(shap_value >= 0.0, yes = "left", no = "right")]
-  x[, "label_colour" := data.table::fifelse(shap_value >= 0.0, yes = head(gradient_colours, n = 1L), no = tail(gradient_colours, n = 1L))]
-  x[, "label_text" := format(round(shap_value, digits = n_small), nsmall = n_small)]
-  x[, "label_text" := paste0(" ", label_text, " ")]
+  # x[, "label_align" := data.table::fifelse(shap_value >= 0.0, yes = "left", no = "right")]
+  # x[, "label_colour" := data.table::fifelse(shap_value >= 0.0, yes = head(gradient_colours, n = 1L), no = tail(gradient_colours, n = 1L))]
+  # x[, "label_text" := format(round(shap_value, digits = n_small), nsmall = n_small)]
+  # x[, "label_text" := paste0(" ", label_text, " ")]
   
-  # Set up basic waterfall plot.
+  # Set up basic force plot.
   p <- ggplot2::ggplot(data = x)
   p <- p + ggtheme
   p <- p + geom_fam_force_shap(
     data = x,
     mapping = ggplot2::aes(
-      x = !!sym("x_start"),
-      xend = !!sym("x_end"),
-      y = !!sym("y"),
-      ymin = !!sym("y") - 0.4,
-      ymax = !!sym("y") + 0.4,
-      fill = !!sym("shap_value")
+      x = !!sym("sample_order"),
+      xmin = !!sym("sample_order") - 0.4,
+      xmax = !!sym("sample_order") + 0.4,
+      y = !!sym("prediction"),
+      ymin = !!sym("shap_start"),
+      ymax = !!sym("shap_end"),
+      fill = !!sym("shap_positive"),
+      colour = !!sym("shap_positive"),
+      alpha = !!sym("shap_highlight")
     )
   )
   
-  # Set labels for y-axis.
-  p <- p + ggplot2::scale_y_continuous(
-    breaks = y_label_table$y,
-    labels = y_label_table$feature_name_value
+  p <- p + ggplot2::scale_alpha_manual(
+    values = c("TRUE" = 1.0, "FALSE" = 0.4),
+    guide = "none"
   )
   
-  # Add spacing for text values.
-  p <- p + ggplot2::scale_x_continuous(
-    expand = ggplot2::expansion(mult = 0.2)
+  p <- p + ggplot2::scale_fill_manual(
+    values = c("FALSE" = discrete_palette[1L], "TRUE" = discrete_palette[2L]),
+    guide = "none",
+    aesthetics = c("colour", "fill")
   )
-  
-  p <- p + ggplot2::scale_fill_gradientn(
-    name = legend_label,
-    colors = gradient_colours,
-    limits = c(-max(abs(x$shap_value)), max(abs(x$shap_value)))
-  )
-  
-  
-  text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
-  
-  # Add shap label.
-  p <- p + ggplot2::geom_text(
-    data = x,
-    mapping = ggplot2::aes(
-      x = !!sym("x_end"),
-      y = !!sym("y"),
-      label = !!sym("label_text"),
-      hjust = !!sym("label_align"),
-      colour = !!sym("label_colour")
-    ),
-    family = text_settings$family,
-    fontface = text_settings$face,
-    size = text_settings$geom_text_size,
-    show.legend = FALSE
-  )
+  # 
+  # p <- p + ggplot2::scale_y_continuous(
+  #   breaks = y_label_table$y,
+  #   labels = y_label_table$feature_name_value
+  # )
+  # 
+  # # Set labels for y-axis.
+  # p <- p + ggplot2::scale_y_continuous(
+  #   breaks = y_label_table$y,
+  #   labels = y_label_table$feature_name_value
+  # )
+  # 
+  # # Add spacing for text values.
+  # p <- p + ggplot2::scale_x_continuous(
+  #   expand = ggplot2::expansion(mult = 0.2)
+  # )
+  # 
+  # 
+  # text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
+  # 
+  # # Add shap label.
+  # p <- p + ggplot2::geom_text(
+  #   data = x,
+  #   mapping = ggplot2::aes(
+  #     x = !!sym("x_end"),
+  #     y = !!sym("y"),
+  #     label = !!sym("label_text"),
+  #     hjust = !!sym("label_align"),
+  #     colour = !!sym("label_colour")
+  #   ),
+  #   family = text_settings$family,
+  #   fontface = text_settings$face,
+  #   size = text_settings$geom_text_size,
+  #   show.legend = FALSE
+  # )
   
   # Determine how things are faceted.
   facet_by_list <- .parse_plot_facet_by(
@@ -599,16 +628,17 @@ setMethod(
 
 
 
-..set_shap_force_positions <- function(x, predictions, feature_name) {
+..set_shap_force_positions <- function(x, predictions) {
   # Prevent notes.
   feature_value <- density <- y_offset <- NULL
-
+  
   # Initialise.
   x_start <- x_end <- numeric(length(x))
 
-  # Set feature order.
-  feature_order <- order(feature_name, decreasing = TRUE)
+  # Set feature order based on the absolute shap value.
+  feature_order <- order(abs(x), decreasing = TRUE)
 
+  # Initialise positions.
   previous_end_pos <- previous_end_neg <- utils::head(predictions, n = 1L)
   
   # We fill start and end positions starting with the most
@@ -616,17 +646,17 @@ setMethod(
   for (ii in feature_order) {
     if (x[ii] >= 0.0){
       x_start[ii] <- previous_end_pos
-      previous_end_pos <- x_end[ii] <- previous_end_pos + x[ii]
+      previous_end_pos <- x_end[ii] <- previous_end_pos - x[ii]
       
     } else {
       x_start[ii] <- previous_end_neg
-      previous_end_neg <- x_end[ii] <- previous_end_neg + x[ii]
+      previous_end_neg <- x_end[ii] <- previous_end_neg - x[ii]
     }
   }
 
   return(list(
-    "x_start" = x_start,
-    "x_end" = x_end
+    "shap_start" = x_start,
+    "shap_end" = x_end
   ))
 }
 
@@ -673,12 +703,13 @@ setMethod(
   return(c(height, width))
 }
 
+# GeomSHAPForce ----------------------------------------------------------------
 
 if (rlang::is_installed("ggplot2")) {
   GeomSHAPForce <- ggplot2::ggproto(
     "GeomPolygon",
     ggplot2::Geom,
-    required_aes = c("x", "xend", "y", "ymin", "ymax"),
+    required_aes = c("x", "xmin", "xmax", "y", "ymin", "ymax"),
     default_aes = ggplot2::aes(
       colour = NA,
       fill = "grey35",
@@ -688,44 +719,45 @@ if (rlang::is_installed("ggplot2")) {
     ),
     draw_key = ggplot2::draw_key_polygon,
     draw_panel = function(
-    data,
-    panel_params,
-    coord,
-    lineend = "butt", linejoin = "round", linemitre = 10
+      data,
+      panel_params,
+      coord,
+      lineend = "butt",
+      linejoin = "round",
+      linemitre = 10
     ) {
       # Compute coordinates based on data.
       coords <- coord$transform(data, panel_params)
-      
+
       # Instantiate parameters to feed to grid::polygonGrob. These vectors are 
       # sufficiently large to hold all polygons with taper.
-      x <- y <- numeric(nrow(coords) * 5L)
-      id <- integer(nrow(coords) * 5L)
+      x <- y <- numeric(nrow(coords) * 6L)
+      id <- integer(nrow(coords) * 6L)
       
       # Iterate over features.
       idx_offset <- 0L
       for (ii in seq_len(nrow(coords))) {
-        # Set up coordinates.
-        x_start = coords$x[ii]
-        x_end = coords$xend[ii]
-        y_down <- coords$ymin[ii]
-        y_up <- coords$ymax[ii]
+        # x is over the samples; y is over the predictions.
+        x_min <- coords$xmin[ii]
+        x_max <- coords$xmax[ii]
+        y_min <- coords$ymin[ii]
+        y_max <- coords$ymax[ii]
         
-        if (abs(x_start - x_end) > 0.05) {
-          # Add taper if there is sufficient room on the plot.
-          x_mid <- ifelse(x_start < x_end, x_end - 0.05, x_end + 0.05)
-          y_mid <- (y_up + y_down) * 0.5
-          
-          # Define coordinates for polygon.
-          idx <- idx_offset + (1L:5L)
-          x[idx] <- c(x_start, x_start, x_mid, x_end, x_mid)
-          y[idx] <- c(y_down, y_up, y_up, y_mid, y_down)
+        idx <- idx_offset + (1L:6L)
+        
+        if (y_max <= y_min) {
+          y_max_flank <- y_max - 0.01
+          y_min_flank <- y_min - 0.01
           
         } else {
-          # Avoid taper if there is not sufficient room.
-          idx <- idx_offset + (1L:4L)
-          x[idx] <- c(x_start, x_start, x_end, x_end)
-          y[idx] <- c(y_down, y_up, y_up, y_down)
+          y_max_flank <- y_max + 0.01
+          y_min_flank <- y_min + 0.01
         }
+        
+        x_mid <- (x_min + x_max) / 2.0
+        
+        x[idx] <- c(x_min, x_mid, x_max, x_max, x_mid, x_min)
+        y[idx] <- c(y_max_flank, y_max, y_max_flank, y_min_flank, y_min, y_min_flank)
         
         # Set grouping.
         id[idx] <- ii
