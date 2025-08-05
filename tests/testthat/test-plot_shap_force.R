@@ -24,6 +24,28 @@ familiar:::test_plots(
   debug = debug_flag
 )
 
+# Test with highlight feature.
+familiar:::test_plots(
+  plot_function = familiar::plot_shap_force,
+  data_element = "shap",
+  shap_max_iterations = 10L,
+  evaluation_time = c(1.0, 2.0, 3.5),
+  plot_args = list("highlight_feature" = c("feature_1", "feature_4")),
+  test_config = "normal",
+  debug = debug_flag
+)
+
+# Test with original sample order.
+familiar:::test_plots(
+  plot_function = familiar::plot_shap_force,
+  data_element = "shap",
+  shap_max_iterations = 10L,
+  evaluation_time = c(1.0, 2.0, 3.5),
+  plot_args = list("sample_order" = "original"),
+  test_config = "normal",
+  debug = debug_flag
+)
+
 # Test with single instance
 familiar:::test_plots(
   plot_function = familiar::plot_shap_force,

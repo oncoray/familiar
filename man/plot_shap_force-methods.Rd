@@ -18,14 +18,18 @@ plot_shap_force(
   ggtheme = NULL,
   discrete_palette = NULL,
   x_label = waiver(),
+  x_label_shared = "column",
   y_label = waiver(),
+  y_label_shared = "row",
   legend_label = waiver(),
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
-  x_range = NULL,
-  x_n_breaks = 5L,
-  x_breaks = NULL,
+  y_range = NULL,
+  y_n_breaks = 5L,
+  y_breaks = NULL,
+  highlight_feature = NULL,
+  sample_order = "prediction",
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -45,14 +49,18 @@ plot_shap_force(
   ggtheme = NULL,
   discrete_palette = NULL,
   x_label = waiver(),
+  x_label_shared = "column",
   y_label = waiver(),
+  y_label_shared = "row",
   legend_label = waiver(),
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
-  x_range = NULL,
-  x_n_breaks = 5L,
-  x_breaks = NULL,
+  y_range = NULL,
+  y_n_breaks = 5L,
+  y_breaks = NULL,
+  highlight_feature = NULL,
+  sample_order = "prediction",
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -72,14 +80,18 @@ plot_shap_force(
   ggtheme = NULL,
   discrete_palette = NULL,
   x_label = waiver(),
+  x_label_shared = "column",
   y_label = waiver(),
+  y_label_shared = "row",
   legend_label = waiver(),
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
-  x_range = NULL,
-  x_n_breaks = 5L,
-  x_breaks = NULL,
+  y_range = NULL,
+  y_n_breaks = 5L,
+  y_breaks = NULL,
+  highlight_feature = NULL,
+  sample_order = "prediction",
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -128,19 +140,40 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Discrete palette used to
-colour the elements of force plots. \code{familiar} has a default
-palette. Other palettes are supported by the \code{paletteer} package,
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0). You may also specify your own palette by providing a
-vector of colour names listed by \code{grDevices::colors()} or through
-hexadecimal RGB strings.}
+\item{discrete_palette}{(\emph{optional}) Discrete palette used to colour the
+elements of force plots. \code{familiar} has a default palette. Other palettes
+are supported by the \code{paletteer} package, \code{grDevices::palette.pals()}
+(requires R >= 4.0.0), \code{grDevices::hcl.pals()} (requires R >= 3.6.0). You
+may also specify your own palette by providing a vector of colour names
+listed by \code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
 
+\item{x_label_shared}{(\emph{optional}) Sharing of x-axis labels between facets.
+One of three values:
+\itemize{
+\item \code{overall}: A single label is placed at the bottom of the figure. Tick
+text (but not the ticks themselves) is removed for all but the bottom facet
+plot(s).
+\item \code{column}: A label is placed at the bottom of each column. Tick text (but
+not the ticks themselves) is removed for all but the bottom facet plot(s).
+\item \code{individual}: A label is placed below each facet plot. Tick text is kept.
+}}
+
 \item{y_label}{(\emph{optional}) Label to provide to the y-axis. If NULL, no label
 is shown.}
+
+\item{y_label_shared}{(\emph{optional}) Sharing of y-axis labels between facets.
+One of three values:
+\itemize{
+\item \code{overall}: A single label is placed to the left of the figure. Tick text
+(but not the ticks themselves) is removed for all but the left-most facet
+plot(s).
+\item \code{row}: A label is placed to the left of each row. Tick text (but not the
+ticks themselves) is removed for all but the left-most facet plot(s).
+\item \code{individual}: A label is placed below each facet plot. Tick text is kept.
+}}
 
 \item{legend_label}{(\emph{optional}) Label to provide to the legend. If NULL, the
 legend will not have a name.}
@@ -154,13 +187,24 @@ NULL, no subtitle is shown.}
 \item{caption}{(\emph{optional}) Label to provide as figure caption. If NULL, no
 caption is shown.}
 
-\item{x_range}{(\emph{optional}) Value range for the x-axis.}
+\item{y_range}{(\emph{optional}) Value range for the y-axis.}
 
-\item{x_n_breaks}{(\emph{optional}) Number of breaks to show on the x-axis of the
-plot. \code{x_n_breaks} is used to determine the \code{x_breaks} argument in case it
+\item{y_n_breaks}{(\emph{optional}) Number of breaks to show on the y-axis of the
+plot. \code{y_n_breaks} is used to determine the \code{y_breaks} argument in case it
 is unset.}
 
-\item{x_breaks}{(\emph{optional}) Break points on the x-axis of the plot.}
+\item{y_breaks}{(\emph{optional}) Break points on the y-axis of the plot.}
+
+\item{highlight_feature}{(\emph{optional}) Name of one or more features that
+should be highlighted in the force plot.}
+
+\item{sample_order}{(\emph{optional}) Ordering of samples, one of:
+\itemize{
+\item \code{prediction}: samples are ordered by increasing predicted value. Sample
+order between facets may differ.
+\item \code{original}: samples retain the original ordering. Sample order between
+facets is consistent.
+}}
 
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
@@ -340,8 +384,8 @@ using various plot representations.
 Available splitting variables are: \code{vimp_method}, \code{learner},
 \code{evaluation_time} (survival outcome only) and \code{positive_class} (categorical
 outcomes). The default for is to facet by \code{evaluation_time} or
-\code{positive_class}, and split by \code{vimp_method} and
-\code{learner}. \code{color_by} is not used.
+\code{positive_class}, and split by \code{vimp_method} and \code{learner}. \code{color_by} is
+not used.
 
 Labelling methods such as \code{set_vimp_method_names} or \code{set_learner_names}
 can be applied to the \code{familiarCollection} object to update labels, and

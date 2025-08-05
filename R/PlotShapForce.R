@@ -14,13 +14,22 @@ NULL
 #' @param dir_path (*optional*) Path to the directory where created SHAP force
 #'   plots are saved to. Output is saved in the `explanation` subdirectory. If
 #'   `NULL` no figures are saved, but are returned instead.
-#' @param discrete_palette (*optional*) Discrete palette used to
-#'   colour the elements of force plots. `familiar` has a default
-#'   palette. Other palettes are supported by the `paletteer` package,
-#'   `grDevices::palette.pals()` (requires R >= 4.0.0), `grDevices::hcl.pals()`
-#'   (requires R >= 3.6.0). You may also specify your own palette by providing a
-#'   vector of colour names listed by `grDevices::colors()` or through
-#'   hexadecimal RGB strings.
+#' @param discrete_palette (*optional*) Discrete palette used to colour the
+#'   elements of force plots. `familiar` has a default palette. Other palettes
+#'   are supported by the `paletteer` package, `grDevices::palette.pals()`
+#'   (requires R >= 4.0.0), `grDevices::hcl.pals()` (requires R >= 3.6.0). You
+#' may also specify your own palette by providing a vector of colour names
+#' listed by `grDevices::colors()` or through hexadecimal RGB strings.
+#' @param highlight_feature (*optional*) Name of one or more features that
+#'   should be highlighted in the force plot.
+#' @param sample_order (*optional*) Ordering of samples, one of:
+#'
+#'   * `prediction`: samples are ordered by increasing predicted value. Sample
+#'   order between facets may differ.
+#'
+#'   * `original`: samples retain the original ordering. Sample order between
+#'   facets is consistent.
+#' 
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
 #' @inheritParams .check_input_plot_args
@@ -34,9 +43,9 @@ NULL
 #'
 #'   Available splitting variables are: `vimp_method`, `learner`,
 #'   `evaluation_time` (survival outcome only) and `positive_class` (categorical
-#'   outcomes). The default for is to facet by `evaluation_time` or 
-#'   `positive_class`, and split by `vimp_method` and
-#'   `learner`. `color_by` is not used.
+#'   outcomes). The default for is to facet by `evaluation_time` or
+#'   `positive_class`, and split by `vimp_method` and `learner`. `color_by` is
+#'   not used.
 #'
 #'   Labelling methods such as `set_vimp_method_names` or `set_learner_names`
 #'   can be applied to the `familiarCollection` object to update labels, and
@@ -71,6 +80,8 @@ setGeneric(
     y_range = NULL,
     y_n_breaks = 5L,
     y_breaks = NULL,
+    highlight_feature = NULL,
+    sample_order = "prediction",
     width = waiver(),
     height = waiver(),
     units = waiver(),
@@ -111,6 +122,8 @@ setMethod(
     y_range = NULL,
     y_n_breaks = 5L,
     y_breaks = NULL,
+    highlight_feature = NULL,
+    sample_order = "prediction",
     width = waiver(),
     height = waiver(),
     units = waiver(),
@@ -153,6 +166,8 @@ setMethod(
         "y_range" = y_range,
         "y_n_breaks" = y_n_breaks,
         "y_breaks" = y_breaks,
+        "highlight_feature" = highlight_feature,
+        "sample_order" = sample_order,
         "width" = width,
         "height" = height,
         "units" = units,
@@ -192,6 +207,8 @@ setMethod(
     y_range = NULL,
     y_n_breaks = 5L,
     y_breaks = NULL,
+    highlight_feature = NULL,
+    sample_order = "prediction",
     width = waiver(),
     height = waiver(),
     units = waiver(),
@@ -315,6 +332,27 @@ setMethod(
       caption = caption
     )
     
+    # Check that highlight_feature appears as a feature.
+    if (!is.null(highlight_feature)) {
+      features_in_data <- highlight_feature %in% levels(x@data$feature_name)
+      
+      if (!all(features_in_data)) {
+        ..warning(
+          paste0(
+            "Not all features to highlight for SHAP force plots were found in the dataset. Missing: ",
+            paste_s(highlight_feature[!features_in_data])
+          )
+        )
+      }
+    }
+    
+    # sample_order
+    .check_parameter_value_is_valid(
+      x = sample_order, 
+      var_name = "sample_order", 
+      values = c("prediction", "original")
+    )
+    
     # Create plots -------------------------------------------------------------
     
     # Determine if subtitle should be generated.
@@ -381,7 +419,9 @@ setMethod(
         caption = caption,
         y_range = y_range,
         y_n_breaks = y_n_breaks,
-        y_breaks = y_breaks
+        y_breaks = y_breaks,
+        highlight_feature = highlight_feature,
+        sample_order = sample_order
       )
       
       # Check empty output
@@ -453,7 +493,9 @@ setMethod(
     caption,
     y_range,
     y_n_breaks,
-    y_breaks
+    y_breaks,
+    highlight_feature,
+    sample_order
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   shap_value <- prediction <- NULL
@@ -533,7 +575,9 @@ setMethod(
       plot_sub_title = plot_sub_title,
       caption = caption,
       y_range = y_range,
-      y_breaks = y_breaks
+      y_breaks = y_breaks,
+      highlight_feature = highlight_feature,
+      sample_order = sample_order
     )
     
     # Extract plot elements from the main calibration plot.
@@ -598,7 +642,9 @@ setMethod(
     plot_sub_title,
     caption,
     y_range,
-    y_breaks
+    y_breaks,
+    highlight_feature,
+    sample_order
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   shap_value <- vimp <- feature_value <- feature_name <- NULL
@@ -609,21 +655,32 @@ setMethod(
   # facet. For each sample, the marginal feature value contributions to the
   # prediction are sorted by the absolute value of the contribution.
   
-
   # Set sample order in each facet.
-  prediction_table <- unique(x[, mget(c("prediction", "sample_id", facet_by))])
-  if (!is.null(facet_by)) {
+  if (sample_order == "prediction") {
     
-    prediction_table[, "sample_order" := order(order(prediction, decreasing = FALSE)), by = facet_by]
-  } else {
+    # Order samples by increasing predicted value.
+    prediction_table <- unique(x[, mget(c("prediction", "sample_id"))])
     prediction_table[, "sample_order" := order(order(prediction, decreasing = FALSE))]
+    
+    x <- merge(
+      x = x,
+      y = prediction_table[, "prediction" := NULL],
+      by = "sample_id"
+    )
+    
+  } else if (sample_order == "original") {
+    sample_table <- unique(x[, mget(c("sample_id"))])
+    sample_table[, "sample_order" := .I]
+    
+    x <- merge(
+      x = x,
+      y = sample_table,
+      by = "sample_id"
+    )
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("encountered invalid value for sample_order: ", sample_order))
   }
-  
-  x <- merge(
-    x = x,
-    y = prediction_table[, "prediction" := NULL],
-    by = c("sample_id", facet_by)
-  )
   
   # Update start and end positions for force elements.
   x[
@@ -651,8 +708,7 @@ setMethod(
     n = 2L
   )
   x[, "shap_positive" := shap_value >= 0.0]
-  # TODO: test if feature should be highlighted.
-  x[, "shap_highlight" := FALSE]
+  x[, "shap_highlight" := feature_name %in% highlight_feature]
   
   # Set up basic force plot.
   p <- ggplot2::ggplot(data = x)
