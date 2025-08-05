@@ -442,10 +442,12 @@ setMethod(
   # Set sample order in each facet.
   prediction_table <- unique(x[, mget(c("prediction", "sample_id", facet_by))])
   if (!is.null(facet_by)) {
-    prediction_table[, "sample_order" := order(prediction, decreasing = FALSE), by = facet_by]
+    
+    prediction_table[, "sample_order" := order(order(prediction, decreasing = FALSE)), by = facet_by]
   } else {
-    prediction_table[, "sample_order" := order(prediction, decreasing = FALSE)]
+    prediction_table[, "sample_order" := order(order(prediction, decreasing = FALSE))]
   }
+  
   x <- merge(
     x = x,
     y = prediction_table[, "prediction" := NULL],
