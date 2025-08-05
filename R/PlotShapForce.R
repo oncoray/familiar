@@ -61,14 +61,16 @@ setGeneric(
     ggtheme = NULL,
     discrete_palette = NULL,
     x_label = waiver(),
+    x_label_shared = "column",
     y_label = waiver(),
+    y_label_shared = "row",
     legend_label = waiver(),
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_range = NULL,
-    x_n_breaks = 5L,
-    x_breaks = NULL,
+    y_range = NULL,
+    y_n_breaks = 5L,
+    y_breaks = NULL,
     width = waiver(),
     height = waiver(),
     units = waiver(),
@@ -99,14 +101,16 @@ setMethod(
     ggtheme = NULL,
     discrete_palette = NULL,
     x_label = waiver(),
+    x_label_shared = "column",
     y_label = waiver(),
+    y_label_shared = "row",
     legend_label = waiver(),
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_range = NULL,
-    x_n_breaks = 5L,
-    x_breaks = NULL,
+    y_range = NULL,
+    y_n_breaks = 5L,
+    y_breaks = NULL,
     width = waiver(),
     height = waiver(),
     units = waiver(),
@@ -139,14 +143,16 @@ setMethod(
         "ggtheme" = ggtheme,
         "discrete_palette" = discrete_palette,
         "x_label" = x_label,
+        "x_label_shared" = x_label_shared,
         "y_label" = y_label,
+        "y_label_shared" = y_label_shared,
         "legend_label" = legend_label,
         "plot_title" = plot_title,
         "plot_sub_title" = plot_sub_title,
         "caption" = caption,
-        "x_range" = x_range,
-        "x_n_breaks" = x_n_breaks,
-        "x_breaks" = x_breaks,
+        "y_range" = y_range,
+        "y_n_breaks" = y_n_breaks,
+        "y_breaks" = y_breaks,
         "width" = width,
         "height" = height,
         "units" = units,
@@ -176,14 +182,16 @@ setMethod(
     ggtheme = NULL,
     discrete_palette = NULL,
     x_label = waiver(),
+    x_label_shared = "column",
     y_label = waiver(),
+    y_label_shared = "row",
     legend_label = waiver(),
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_range = NULL,
-    x_n_breaks = 5L,
-    x_breaks = NULL,
+    y_range = NULL,
+    y_n_breaks = 5L,
+    y_breaks = NULL,
     width = waiver(),
     height = waiver(),
     units = waiver(),
@@ -284,6 +292,20 @@ setMethod(
       y_label <- "predicted value"
     }
     
+    # x_label_shared
+    if (!is.waive(x_label_shared)) {
+      .check_input_plot_args(x_label_shared = x_label_shared)
+    } else {
+      x_label_shared <- "column"
+    }
+    
+    # y_label_shared
+    if (!is.waive(y_label_shared)) {
+      .check_input_plot_args(y_label_shared = y_label_shared)
+    } else {
+      y_label_shared <- "row"
+    }
+    
     .check_input_plot_args(
       facet_wrap_cols = facet_wrap_cols,
       x_label = x_label,
@@ -350,14 +372,16 @@ setMethod(
         ggtheme = ggtheme,
         discrete_palette = discrete_palette,
         x_label = x_label,
+        x_label_shared = x_label_shared,
         y_label = y_label,
+        y_label_shared = y_label_shared,
         legend_label = legend_label,
         plot_title = plot_title,
         plot_sub_title = plot_sub_title,
         caption = caption,
-        x_range = x_range,
-        x_n_breaks = x_n_breaks,
-        x_breaks = x_breaks
+        y_range = y_range,
+        y_n_breaks = y_n_breaks,
+        y_breaks = y_breaks
       )
       
       # Check empty output
@@ -420,14 +444,161 @@ setMethod(
     ggtheme,
     discrete_palette,
     x_label,
+    x_label_shared,
+    y_label,
+    y_label_shared,
+    legend_label,
+    plot_title,
+    plot_sub_title,
+    caption,
+    y_range,
+    y_n_breaks,
+    y_breaks
+) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  shap_value <- prediction <- NULL
+  
+  # Split by facet. This generates a list of data splits with faceting
+  # information that allows for positioning.
+  plot_layout_table <- .get_plot_layout_table(
+    x = x,
+    facet_by = facet_by,
+    facet_wrap_cols = facet_wrap_cols
+  )
+  
+  # Set the y-range, as this should be fixed across facets.
+  if (is.null(y_range)) {
+    # Find the correct y-range
+    y_range_data <- x[
+      ,
+      list(
+        "y_min" = prediction - sum(pmax(shap_value, 0.0)),
+        "y_max" = prediction - sum(pmin(shap_value, 0.0))
+      ),
+      by = c("sample_id", facet_by)
+    ]
+    y_range <- c(min(y_range_data$y_min), max(y_range_data$y_max))
+  }
+
+  .check_input_plot_args(y_range = y_range)
+  
+  # x_breaks
+  if (is.null(y_breaks)) {
+    .check_input_plot_args(
+      y_range = y_range,
+      y_n_breaks = y_n_breaks
+    )
+    
+    # Create breaks and update x_range
+    y_breaks <- labeling::extended(
+      m = y_n_breaks,
+      dmin = y_range[1L],
+      dmax = y_range[2L],
+      only.loose = TRUE
+    )
+    
+    y_range <- c(
+      head(y_breaks, n = 1L),
+      tail(y_breaks, n = 1L)
+    )
+    
+  } else {
+    .check_input_plot_args(y_breaks = y_breaks)
+  }
+  
+  # Split data into facets. This is done by row.
+  data_facet_list <- .split_data_by_plot_facet(
+    x = x,
+    plot_layout_table = plot_layout_table
+  )
+  
+  
+  # Placeholders for plots.
+  figure_list <- list()
+  extracted_element_list <- list()
+  
+  # Iterate over facets
+  for (ii in names(data_facet_list)) {
+    # Create calibration plot.
+    p_shap_force <- .create_shap_force_plot(
+      x = data_facet_list[[ii]],
+      facet_by = facet_by,
+      facet_wrap_cols = facet_wrap_cols,
+      ggtheme = ggtheme,
+      discrete_palette = discrete_palette,
+      x_label = x_label,
+      y_label = y_label,
+      legend_label = legend_label,
+      plot_title = plot_title,
+      plot_sub_title = plot_sub_title,
+      caption = caption,
+      y_range = y_range,
+      y_breaks = y_breaks
+    )
+    
+    # Extract plot elements from the main calibration plot.
+    extracted_elements <- .extract_plot_grobs(p = p_shap_force)
+    
+    # Remove extracted elements from the plot.
+    p_shap_force <- .remove_plot_grobs(p = p_shap_force)
+    
+    # Rename plot elements.
+    g_shap_force <- .rename_plot_grobs(
+      g = .convert_to_grob(p_shap_force),
+      extension = "main"
+    )
+    
+    # Add combined grob to list
+    figure_list <- c(
+      figure_list,
+      list(g_shap_force)
+    )
+    
+    # Add extract elements to the grob_element_list
+    extracted_element_list <- c(
+      extracted_element_list,
+      list(extracted_elements)
+    )
+  }
+  
+  # Update the layout table.
+  plot_layout_table <- .update_plot_layout_table(
+    plot_layout_table = plot_layout_table,
+    grobs = figure_list,
+    x_text_shared = x_label_shared,
+    x_label_shared = x_label_shared,
+    y_text_shared = y_label_shared,
+    y_label_shared = y_label_shared,
+    facet_wrap_cols = facet_wrap_cols
+  )
+  
+  # Combine features.
+  g <- .arrange_plot_grobs(
+    grobs = figure_list,
+    plot_layout_table = plot_layout_table,
+    element_grobs = extracted_element_list,
+    ggtheme = ggtheme
+  )
+  
+  return(g)
+}
+
+
+
+.create_shap_force_plot <- function(
+    x,
+    facet_by,
+    facet_wrap_cols,
+    ggtheme,
+    discrete_palette,
+    x_label,
     y_label,
     legend_label,
     plot_title,
     plot_sub_title,
     caption,
-    x_range,
-    x_n_breaks,
-    x_breaks
+    y_range,
+    y_breaks
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   shap_value <- vimp <- feature_value <- feature_name <- NULL
@@ -461,40 +632,6 @@ setMethod(
     by = c(facet_by, "sample_id")
   ]
 
-  # y_label_table <- x[, mget(c("sample_id", "sample_order"))]
-    
-  # Common base for formatting prediction and shap values.
-  # common_base <- ..format_get_common_base(c(x$shap_value, x$prediction))
-  # n_small <- max(c(-(common_base - 2L), 0.0))
-  
-  # Check x-range.
-  if (!is.null(x_range)) {
-    .check_input_plot_args(x_range = x_range)
-    
-    # x_breaks
-    if (is.null(x_breaks)) {
-      .check_input_plot_args(
-        x_range = x_range,
-        x_n_breaks = x_n_breaks
-      )
-      
-      # Create breaks and update x_range
-      x_breaks <- labeling::extended(
-        m = x_n_breaks,
-        dmin = x_range[1L],
-        dmax = x_range[2L],
-        only.loose = TRUE
-      )
-      
-      x_range <- c(
-        head(x_breaks, n = 1L),
-        tail(x_breaks, n = 1L)
-      )
-      
-    } else {
-      .check_input_plot_args(x_breaks = x_breaks)
-    }
-  }
   
   # Create a legend label.
   legend_label <- .create_plot_legend_title(
@@ -517,12 +654,6 @@ setMethod(
   # TODO: test if feature should be highlighted.
   x[, "shap_highlight" := FALSE]
   
-  # Set up shap value labels
-  # x[, "label_align" := data.table::fifelse(shap_value >= 0.0, yes = "left", no = "right")]
-  # x[, "label_colour" := data.table::fifelse(shap_value >= 0.0, yes = head(gradient_colours, n = 1L), no = tail(gradient_colours, n = 1L))]
-  # x[, "label_text" := format(round(shap_value, digits = n_small), nsmall = n_small)]
-  # x[, "label_text" := paste0(" ", label_text, " ")]
-  
   # Set up basic force plot.
   p <- ggplot2::ggplot(data = x)
   p <- p + ggtheme
@@ -541,56 +672,23 @@ setMethod(
     )
   )
   
+  # Set alpha values.
   p <- p + ggplot2::scale_alpha_manual(
     values = c("TRUE" = 1.0, "FALSE" = 0.4),
     guide = "none"
   )
   
+  # Set colour and fill.
   p <- p + ggplot2::scale_fill_manual(
     values = c("FALSE" = discrete_palette[1L], "TRUE" = discrete_palette[2L]),
     guide = "none",
     aesthetics = c("colour", "fill")
   )
-  # 
-  # p <- p + ggplot2::scale_y_continuous(
-  #   breaks = y_label_table$y,
-  #   labels = y_label_table$feature_name_value
-  # )
-  # 
-  # # Set labels for y-axis.
-  # p <- p + ggplot2::scale_y_continuous(
-  #   breaks = y_label_table$y,
-  #   labels = y_label_table$feature_name_value
-  # )
-  # 
-  # # Add spacing for text values.
-  # p <- p + ggplot2::scale_x_continuous(
-  #   expand = ggplot2::expansion(mult = 0.2)
-  # )
-  # 
-  # 
-  # text_settings <- .get_plot_geom_text_settings(ggtheme = ggtheme)
-  # 
-  # # Add shap label.
-  # p <- p + ggplot2::geom_text(
-  #   data = x,
-  #   mapping = ggplot2::aes(
-  #     x = !!sym("x_end"),
-  #     y = !!sym("y"),
-  #     label = !!sym("label_text"),
-  #     hjust = !!sym("label_align"),
-  #     colour = !!sym("label_colour")
-  #   ),
-  #   family = text_settings$family,
-  #   fontface = text_settings$face,
-  #   size = text_settings$geom_text_size,
-  #   show.legend = FALSE
-  # )
   
   # Determine how things are faceted.
   facet_by_list <- .parse_plot_facet_by(
-    x = x, 
-    facet_by = facet_by, 
+    x = x,
+    facet_by = facet_by,
     facet_wrap_cols = facet_wrap_cols
   )
   
@@ -598,16 +696,14 @@ setMethod(
     if (is.null(facet_wrap_cols)) {
       # Use a grid
       p <- p + ggplot2::facet_grid(
-        rows = facet_by_list$facet_rows, 
+        rows = facet_by_list$facet_rows,
         cols = facet_by_list$facet_cols,
-        scales = ifelse(is.null(x_range), "free_x", "fixed"),
         labeller = "label_context"
       )
       
     } else {
       p <- p + ggplot2::facet_wrap(
-        facets = facet_by_list$facet_by, 
-        scales = ifelse(is.null(x_range), "free_x", "fixed"),
+        facets = facet_by_list$facet_by,
         labeller = "label_context"
       )
     }
@@ -622,8 +718,9 @@ setMethod(
     caption = caption
   )
   
-  # Prevent clipping of confidence intervals.
-  if (!is.null(x_range)) p <- p + ggplot2::coord_cartesian(xlim = x_range)
+  # Set breaks and  limits on the x and y-axis
+  # p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
+  p <- p + ggplot2::scale_y_continuous(breaks = y_breaks, limits = y_range)
   
   return(p)
 }
