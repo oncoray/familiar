@@ -260,10 +260,6 @@ setMethod(
       return(NULL)
     }
     
-    # Check and set plot_type.
-    value_data <- x@data[, list("n" = .N), by = setdiff(x@grouping_column, c("sample_id", "feature_value", "feature_label"))]
-    is_single_sample <- all(value_data$n == 1L)
-
     # Add evaluation time or class as a splitting variable.
     additional_variable <- NULL
     if (object@outcome_type %in% c("survival")) {
@@ -280,7 +276,7 @@ setMethod(
       is.null(split_by) &&
       is.null(facet_by)
     ) {
-      # Split by vimp_method, learner and sample id.
+      # Split by vimp_method, learner.
       split_by <- c("vimp_method", "learner")
       facet_by <- additional_variable
     }

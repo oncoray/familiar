@@ -360,6 +360,8 @@ theme_familiar <- function(
             split_variable_name <- "time point"
           } else if (split_variable_name == "sample_id") {
             split_variable_name <- "sample"
+          } else if (split_variable_name %in% c("feature_name", "feature")) {
+            split_variabel_name <- "feature"
           }
 
           # Remove all underscores.
