@@ -340,7 +340,7 @@ theme_familiar <- function(
 ) {
   # Do not create a subtitle if there is no subtitle to be created.
   subtitle <- NULL
-
+  
   # Generate subtitle from splitting variables and data.
   if (!is.null(split_by)) {
     subtitle <- c(
@@ -361,7 +361,7 @@ theme_familiar <- function(
           } else if (split_variable_name == "sample_id") {
             split_variable_name <- "sample"
           } else if (split_variable_name %in% c("feature_name", "feature")) {
-            split_variabel_name <- "feature"
+            split_variable_name <- "feature"
           }
 
           # Remove all underscores.
@@ -381,7 +381,7 @@ theme_familiar <- function(
       )
     )
   }
-
+  
   # Generate additional strings from additional.
   if (!is.null(additional)) {
     subtitle <- c(
