@@ -14,17 +14,30 @@ NULL
 #' @param dir_path (*optional*) Path to the directory where created SHAP
 #'   dependence plots are saved to. Output is saved in the `explanation`
 #'   subdirectory. If `NULL` no figures are saved, but are returned instead.
-#' @param gradient_palette (*optional*) Divergent palette used to colour the
-#'   elements of dependence plots for interactions with another feature.
-#'   `familiar` has a default palette. Other palettes are supported by the
-#'   `paletteer` package, `grDevices::palette.pals()` (requires R >= 4.0.0),
-#'   `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`, `heat.colors`,
-#'   `terrain.colors`, `topo.colors` and `cm.colors`, which correspond to the
-#'   palettes of the same name in `grDevices`. You may also specify your own
-#'   palette by providing a vector of colour names listed by
+#' @param discrete_palette (*optional*) Divergent or sequential palette used to
+#'   colour the elements of dependence plots for interactions with another
+#'   **categorical** feature. `familiar` has a default palette. Other palettes
+#'   are supported by the `paletteer` package, `grDevices::palette.pals()`
+#'   (requires R >= 4.0.0), `grDevices::hcl.pals()` (requires R >= 3.6.0) and
+#'   `rainbow`, `heat.colors`, `terrain.colors`, `topo.colors` and `cm.colors`,
+#'   which correspond to the palettes of the same name in `grDevices`. You may
+#'   also specify your own palette by providing a vector of colour names listed
+#'   by `grDevices::colors()` or through hexadecimal RGB strings.
+#'
+#'   If no `interaction_feature` is set, or is a numerical feature, the gradient
+#'   palette is not used.
+#' @param gradient_palette (*optional*) Divergent or sequential palette used to
+#'   colour the elements of dependence plots for interactions with another
+#'   **numeric** feature. `familiar` has a default palette. Other palettes are
+#'   supported by the `paletteer` package, `grDevices::palette.pals()` (requires
+#'   R >= 4.0.0), `grDevices::hcl.pals()` (requires R >= 3.6.0) and `rainbow`,
+#'   `heat.colors`, `terrain.colors`, `topo.colors` and `cm.colors`, which
+#'   correspond to the palettes of the same name in `grDevices`. You may also
+#'   specify your own palette by providing a vector of colour names listed by
 #'   `grDevices::colors()` or through hexadecimal RGB strings.
 #'
-#'   If no `interaction_feature` is set, the gradient palette is not used.
+#'   If no `interaction_feature` is set, or is a categorical feature, the
+#'   gradient palette is not used.
 #'
 #' @param shap_feature (*optional*)
 #' @param interaction_feature (*optional*)
@@ -65,6 +78,7 @@ setGeneric(
     facet_by = NULL,
     facet_wrap_cols = NULL,
     ggtheme = NULL,
+    discrete_palette = NULL,
     gradient_palette = NULL,
     x_label = waiver(),
     y_label = waiver(),
@@ -106,6 +120,7 @@ setMethod(
     facet_by = NULL,
     facet_wrap_cols = NULL,
     ggtheme = NULL,
+    discrete_palette = NULL,
     gradient_palette = NULL,
     x_label = waiver(),
     y_label = waiver(),
@@ -149,6 +164,7 @@ setMethod(
         "facet_by" = facet_by,
         "facet_wrap_cols" = facet_wrap_cols,
         "ggtheme" = ggtheme,
+        "discrete_palette" = discrete_palette,
         "gradient_palette" = gradient_palette,
         "x_label" = x_label,
         "y_label" = y_label,
@@ -189,6 +205,7 @@ setMethod(
     facet_by = NULL,
     facet_wrap_cols = NULL,
     ggtheme = NULL,
+    discrete_palette = NULL,
     gradient_palette = NULL,
     x_label = waiver(),
     y_label = waiver(),
@@ -349,6 +366,7 @@ setMethod(
     # Select plot data based on split.
     plot_data <- list()
     plot_data_index <- 1L
+    
     for (ii in seq_along(x_split)) {
       main_data <- x_split[[ii]]
       if (is_empty(main_data)) next
@@ -367,8 +385,8 @@ setMethod(
           plot_data[[plot_data_index]] <- list(
             "main_data" = main_data,
             "interaction_data" = interaction_data,
-            "feature" = current_shap_feature,
-            "interaction_feature" = current_interaction_feature
+            "feature" = as.character(current_shap_feature),
+            "interaction_feature" = as.character(current_interaction_feature)
           )
           plot_data_index <- plot_data_index + 1L
         }
@@ -377,7 +395,7 @@ setMethod(
         plot_data[[plot_data_index]] <- list(
           "main_data" = main_data,
           "interaction_data" = NULL,
-          "feature" = current_shap_feature,
+          "feature" = as.character(current_shap_feature),
           "interaction_feature" = NULL
         )
         plot_data_index <- plot_data_index + 1L
@@ -413,7 +431,7 @@ setMethod(
           list("feature", current_data$feature)
         )
       }
-      
+      browser()
       # Add interaction feature as subtitle component.
       if (!is.null(current_data$interaction_feature)) {
         additional_subtitle <- c(
@@ -427,16 +445,21 @@ setMethod(
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
           additional = additional_subtitle,
-          x = plot_data$main_data
+          x = current_data$main_data
         )
       }
       
       # Generate plot
       p <- .plot_shap_dependence_plot(
         x = current_data$main_data,
+        x_feature = current_data$feature,
+        z = current_data$interaction_data,
+        z_feature = current_data$interaction_feature,
+        split_by = split_by,
         facet_by = facet_by,
         facet_wrap_cols = facet_wrap_cols,
         ggtheme = ggtheme,
+        discrete_palette = discrete_palette,
         gradient_palette = gradient_palette,
         x_label = x_label,
         y_label = y_label,
@@ -449,8 +472,7 @@ setMethod(
         x_breaks = x_breaks,
         y_range = y_range,
         y_n_breaks = y_n_breaks,
-        y_breaks = y_breaks,
-        outcome_type = object@outcome_type
+        y_breaks = y_breaks
       )
       
       # Check empty output
@@ -470,7 +492,9 @@ setMethod(
         
         # Set subtype
         subtype <- "shap_dependence"
-        if (!is.null(current_data$interaction_feature)
+        if (!is.null(current_data$interaction_feature)){
+          subtype <- paste0(subtype, "int_", current_data$interaction_feature)
+        }
         
         # Save to file.
         do.call(
@@ -481,7 +505,7 @@ setMethod(
               "object" = object,
               "dir_path" = dir_path,
               "type" = "explanation",
-              "subtype" = paste0("shap_dependence"),
+              "subtype" = subtype,
               "x" = current_data$main_data,
               "split_by" = split_by,
               "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
@@ -512,11 +536,12 @@ setMethod(
 
 .plot_shap_dependence_plot <- function(
     x,
-    color_by,
+    x_feature,
+    z,
+    z_feature,
     facet_by,
+    split_by,
     facet_wrap_cols,
-    plot_type,
-    value_representation,
     ggtheme,
     discrete_palette,
     gradient_palette,
@@ -529,258 +554,200 @@ setMethod(
     x_range,
     x_n_breaks,
     x_breaks,
-    outcome_type
+    y_range,
+    y_n_breaks,
+    y_breaks
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   shap_value <- vimp <- feature_value <- NULL
+
+  # Check that the interaction feature is not the same as the main feature.
+  if (!is.null(z_feature)) {
+     if (z_feature == x_feature) z <- NULL
+  }
+  
+  # Make local copies to prevent updating by reference.
+  x <- data.table::copy(x)
+  if (!is_empty(z)) z <- data.table::copy(z)
   
   # x_label
   if (is.waive(x_label)) {
-    browser()
+    x_label <- paste0(x_feature, " value")
   }
   
-  value_group_columns <- c("vimp_method", "learner", "feature_name")
-  if ("evaluation_time" %in% colnames(x)) value_group_columns <- c(value_group_columns, "evaluation_time")
-  if ("positive_class" %in% colnames(x)) value_group_columns <- c(value_group_columns, "positive_class")
+  # Check if the main feature is numeric.
+  x_numeric <- all(is.na(x$feature_label))
+  z_numeric <- TRUE
+  if (!is_empty(z)) z_numeric <- all(is.na(z$feature_label))
   
-  # Apply representation.
-  if (value_representation == "abs") {
-    x[, "shap_value" := abs(shap_value)]
-    
-  } else if (value_representation == "abs_mean") {
-    x <- x[, list("shap_value" = mean(abs(shap_value))), by = value_group_columns]
-    
-  } else if (value_representation == "abs_max") {
-    x <- x[, list("shap_value" = max(abs(shap_value))), by = value_group_columns]
-    
-  } else if (value_representation == "abs_min") {
-    x <- x[, list("shap_value" = min(abs(shap_value))), by = value_group_columns]
-  }
-  
-  # Map feature values to (-1, 1) range for raw representation.
-  if (value_representation == "raw") {
-    x[
-      ,
-      "feature_value" := 2.0 * (feature_value - min(feature_value)) / (max(feature_value) - min(feature_value))- 1.0,
-      by = "feature_name"
-    ]
-  }
-  
-  # Sort features by importance (mean absolute SHAP).
-  feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = value_group_columns]
-  feature_importance <- feature_importance[, list("vimp" = max(vimp)), by = "feature_name"][order(vimp)]
-  x$feature_name <- factor(
-    x = x$feature_name,
-    levels = feature_importance$feature_name
-  )
-  
-  # Check x-range.
-  if (is.null(x_range)) {
-    if (value_representation == "raw") {
-      x_range <- c(min(x$shap_value), max(x$shap_value))
+  if (x_numeric) {
+    # Check x_range.
+    if (is.null(x_range)) {
+      x_range <- range(x$feature_value)
       
     } else {
-      x_range <- c(0.0, max(x$shap_value))
+      .check_input_plot_args(x_range = x_range)
     }
     
-  } else {
-    .check_input_plot_args(x_range = x_range)
+    # x_breaks
+    if (is.null(x_breaks)) {
+      .check_input_plot_args(
+        x_range = x_range,
+        x_n_breaks = x_n_breaks
+      )
+      
+      # Create breaks and update x_range
+      x_breaks <- labeling::extended(
+        m = x_n_breaks,
+        dmin = x_range[1L],
+        dmax = x_range[2L],
+        only.loose = TRUE
+      )
+      
+      x_range <- c(
+        head(x_breaks, n = 1L),
+        tail(x_breaks, n = 1L)
+      )
+      
+    } else {
+      .check_input_plot_args(x_breaks = x_breaks)
+    }
   }
   
-  # x_breaks
-  if (is.null(x_breaks)) {
+  # Check y_range.
+  if (is.null(y_range)) {
+    y_range <- range(x$shap_value)
+    
+  } else {
+    .check_input_plot_args(y_range = y_range)
+  }
+  
+  # y_breaks
+  if (is.null(y_breaks)) {
     .check_input_plot_args(
-      x_range = x_range,
-      x_n_breaks = x_n_breaks
+      y_range = y_range,
+      y_n_breaks = y_n_breaks
     )
     
     # Create breaks and update x_range
-    x_breaks <- labeling::extended(
-      m = x_n_breaks,
-      dmin = x_range[1L],
-      dmax = x_range[2L],
+    y_breaks <- labeling::extended(
+      m = y_n_breaks,
+      dmin = y_range[1L],
+      dmax = y_range[2L],
       only.loose = TRUE
     )
     
-    x_range <- c(
-      head(x_breaks, n = 1L),
-      tail(x_breaks, n = 1L)
+    y_range <- c(
+      head(y_breaks, n = 1L),
+      tail(y_breaks, n = 1L)
     )
     
   } else {
-    .check_input_plot_args(x_breaks = x_breaks)
+    .check_input_plot_args(y_breaks = y_breaks)
   }
   
   # Create a legend label.
-  legend_label <- .create_plot_legend_title(
-    user_label = legend_label,
-    color_by = if(value_representation == "raw") "feature_value" else color_by
-  )
+  if (is.waive(legend_label) && !is_empty(z)) {
+    legend_label <- z_feature
+  }
   
   # Check remaining input arguments.
   .check_input_plot_args(
+    x_label = x_label,
     legend_label = legend_label
   )
   
-  # Generate a guide table
-  guide_list <- .create_plot_guide_table(
-    x = x,
-    color_by = color_by,
-    discrete_palette = discrete_palette
+  # Set numeric or categorical feature values.
+  if (x_numeric) {
+    x[, "x_value" := feature_value]
+  } else {
+    feature_labels <- unique(x[, mget(c("feature_value", "feature_label"))])[order(feature_value)]
+    x[, "x_value" := factor(
+      feature_value,
+      levels = feature_labels$feature_value,
+      labels = feature_labels$feature_label
+    )]
+  }
+  
+  # Set numeric or categorical feature values for the interaction feature.
+  if (!is_empty(z)) {
+    if (z_numeric) {
+      z[, "z_value" := feature_value]
+    } else {
+      feature_labels <- unique(z[, mget(c("feature_value", "feature_label"))])[order(feature_value)]
+      z[, "z_value" := factor(
+        feature_value,
+        levels = feature_labels$feature_value,
+        labels = feature_labels$feature_label
+      )]
+    }
+    
+    split_by <- setdiff(split_by, "feature_name")
+    x <- merge(
+      x = x, 
+      y = z[, mget(c(split_by, "sample_id", "z_value"))],
+      by = c(split_by, "sample_id")
+    )
+  }
+  
+  mapping <- ggplot2::aes(
+    x = !!sym("x_value"),
+    y = !!sym("shap_value")
   )
-  
-  # Extract data
-  x <- guide_list$data
-  
-  # Extract guide_table for color.
-  g_color <- guide_list$guide_color
+  if (!is_empty(z)) {
+    mapping <- ggplot2::aes(
+      x = !!sym("x_value"),
+      y = !!sym("shap_value"),
+      colour = !!sym("z_value")
+    )
+  }
   
   # Create basic plot
   p <- ggplot2::ggplot(
     data = x,
-    mapping = ggplot2::aes(
-      x = !!sym("shap_value"),
-      y = !!sym("feature_name")
-    ))
+    mapping = mapping
+  )
   p <- p + ggtheme
   
   # Set breaks and range.
-  p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
-  p <- p + ggplot2::coord_cartesian(xlim = x_range)
+  if (x_numeric) p <- p + ggplot2::scale_x_continuous(breaks = x_breaks, limits = x_range)
+  p <- p + ggplot2::scale_y_continuous(breaks = y_breaks, limits = y_range)
   
-  if (plot_type == "swarmplot") {
-    # Swarm plot ---------------------------------------------------------------
+  # Set main plot type.
+  if (x_numeric) {
+    p <- p + ggplot2::geom_point()
+  } else {
+    # Jitter only possible along x-axis for categorical features.
+    p <- p + ggplot2::geom_jitter(height = 0.0)
+  }
+  
+  
+  # Set colours for interactions.
+  if (!is_empty(z) && z_numeric) {
+    # Gradient palette for numeric interaction features.
+    gradient_colours <- .get_palette(
+      x = gradient_palette, 
+      palette_type = "divergent"
+    )
     
-    # Determine the density of points for each feature as function of the
-    # shap-value.
-    grouping_variables <- c("feature_name", facet_by)
-    if (!is.null(color_by)) {
-      grouping_variables <- c(grouping_variables, "color_breaks")
-    }
+    p <- p + ggplot2::scale_colour_gradientn(
+      name = legend_label,
+      colors = gradient_colours
+    )
     
-    x[
-      ,
-      "y_offset" := ..set_shap_swarmplot_jitter(shap_value, feature_value, value_representation = value_representation),
-      by = c("feature_name", facet_by, color_by)
-    ]
+  } else if (!is_empty(z) && !z_numeric) {
+    # Discrete palette for categorical interaction features.
+    discrete_colours <- .get_palette(
+      x = discrete_palette, 
+      palette_type = "qualitative",
+      n = nlevels(x$z_value)
+    )
     
-    if (value_representation == "raw") {
-      p <- p + ggplot2::geom_point(
-        mapping = ggplot2::aes(color = !!sym("feature_value")),
-        position = ggplot2::position_nudge(y = x$y_offset)
-      )
-      
-      # Colors
-      gradient_colours <- .get_palette(
-        x = gradient_palette, 
-        palette_type = "divergent"
-      )
-      
-      # Add gradient palette.
-      p <- p + ggplot2::scale_colour_gradientn(
-        name = legend_label,
-        colors = gradient_colours,
-        limits = c(-1.0, 1.0)
-      )
-      
-    } else if (is.null(color_by)) {
-      p <- p + ggplot2::geom_point(position = ggplot2::position_nudge(y = x$y_offset))
-      
-    } else {
-      p <- p + ggplot2::geom_jitter(
-        mapping = ggplot2::aes(color = !!sym("color_breaks")),
-        position = ggplot2::position_nudge(y = x$y_offset)
-      )
-      
-      # Set fill colours.
-      p <- p + ggplot2::scale_color_manual(
-        name = legend_label$guide_color,
-        values = g_color$color_values,
-        breaks = g_color$color_breaks,
-        drop = FALSE
-      )
-    }
-    
-  } else if (plot_type == "barplot") {
-    # Barplot ------------------------------------------------------------------
-    
-    if (is.null(color_by)) {
-      p <- p + ggplot2::geom_bar(
-        stat = "identity",
-        position = ggplot2::position_dodge(width = 0.9),
-      )
-      
-    } else {
-      # Add barplot.
-      p <- p + ggplot2::geom_bar(
-        mapping = ggplot2::aes(
-          fill = !!sym("color_breaks")
-        ),
-        stat = "identity",
-        position = ggplot2::position_dodge(width = 0.9)
-      )
-      
-      # Set fill colours.
-      p <- p + ggplot2::scale_fill_manual(
-        name = legend_label$guide_color,
-        values = g_color$color_values,
-        breaks = g_color$color_breaks,
-        drop = FALSE
-      )
-    }
-    
-  } else if (plot_type == "boxplot") {
-    # Boxplot ------------------------------------------------------------------
-    
-    if (is.null(color_by)) {
-      p <- p + ggplot2::geom_boxplot()
-      
-    } else {
-      p <- p + ggplot2::geom_boxplot(
-        mapping = ggplot2::aes(
-          colour = !!sym("color_breaks")
-        )
-      )
-      
-      # Set fill colours.
-      p <- p + ggplot2::scale_colour_manual(
-        name = legend_label$guide_color,
-        values = g_color$color_values,
-        breaks = g_color$color_breaks,
-        drop = FALSE
-      )
-    }
-    
-  } else if (plot_type == "violinplot") {
-    # Violinplot ---------------------------------------------------------------
-    
-    if (is.null(color_by)) {
-      # Create boxplot.
-      p <- p + ggplot2::geom_violin(
-        draw_quantiles = c(0.025, 0.5, 0.975),
-        scale = "width",
-        position = ggplot2::position_dodge(width = 1.0)
-      )
-      
-    } else {
-      # Create boxplot.
-      p <- p + ggplot2::geom_violin(
-        mapping = ggplot2::aes(
-          fill = !!sym("color_breaks")
-        ),
-        draw_quantiles = c(0.025, 0.5, 0.975),
-        scale = "width",
-        position = ggplot2::position_dodge(width = 1.0)
-      )
-      
-      # Set fill colours.
-      p <- p + ggplot2::scale_fill_manual(
-        name = legend_label$guide_color,
-        values = g_color$color_values,
-        breaks = g_color$color_breaks,
-        drop = FALSE
-      )
-    }
+    p <- p + ggplot2::scale_colour_manual(
+      name = legend_label,
+      values = discrete_colours,
+      breaks = levels(x$z_value)
+    )
   }
   
   # Determine how things are faceted.
