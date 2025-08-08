@@ -14,7 +14,7 @@ familiar:::test_plots(
   not_available_no_samples = FALSE
 )
 
-# Test only bog-standard data: no edge cases.
+# Test without interaction.
 familiar:::test_plots(
   plot_function = familiar::plot_shap_dependence,
   data_element = "shap",
@@ -24,8 +24,7 @@ familiar:::test_plots(
   debug = debug_flag
 )
 
-
-# Test only bog-standard data: no edge cases.
+# Test with interaction.
 familiar:::test_plots(
   plot_function = familiar::plot_shap_dependence,
   data_element = "shap",

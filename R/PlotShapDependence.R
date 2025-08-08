@@ -428,18 +428,17 @@ setMethod(
       if (!"feature_name" %in% c(split_by)) {
         additional_subtitle <- c(
           additional_subtitle,
-          list("feature", current_data$feature)
+          list("feature" = current_data$feature)
         )
       }
-      browser()
+      
       # Add interaction feature as subtitle component.
       if (!is.null(current_data$interaction_feature)) {
         additional_subtitle <- c(
           additional_subtitle,
-          list("interaction", current_data$interaction_feature)
+          list("interaction" = current_data$interaction_feature)
         )
       }
-      
       
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
@@ -685,8 +684,8 @@ setMethod(
     split_by <- setdiff(split_by, "feature_name")
     x <- merge(
       x = x, 
-      y = z[, mget(c(split_by, "sample_id", "z_value"))],
-      by = c(split_by, "sample_id")
+      y = z[, mget(c(split_by, facet_by, "sample_id", "z_value"))],
+      by = c(split_by, facet_by, "sample_id")
     )
   }
   
