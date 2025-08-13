@@ -11,6 +11,25 @@
 
 ## Major changes
 
+- SHAP values can now be computed with familiar. SHAP values can be directly
+  exported using the `export_shap` method. Moreover, familiar now supports four
+  types of SHAP plots:
+  
+  - Summary plots (`plot_shap_summary`) provide a global overview of the 
+    relationship of feature values and SHAP-values. More impactful features 
+    tend to have a wider range of SHAP-values.
+    
+  - Force plots (`plot_shap_force`) shows how positive and negative SHAP 
+    values impact the predicted value. Specific features can be isolated.
+    
+  - Waterfall plots (`plot_shap_waterfall`) provide a detailed, local 
+    overview of how each SHAP value contributes to the predicted value for each
+    sample.
+    
+  - SHAP dependence plots (`plot_shap_dependence`) show how the SHAP values
+    depend on values of a feature. Interactions with other features can be shown
+    as well.
+
 - Some functionality was deprecated because of redundancy and stability issues:
 
   - The `count` outcome type has been deprecated. `count` is a subset of 
