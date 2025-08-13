@@ -676,6 +676,51 @@
 
 
 
+..error_cannot_update_object <- function(
+    object,
+    fam_version,
+    call = rlang::caller_env()
+) {
+  # Version of the object.
+  object_fam_version <- tail(object@familiar_version, n = 1L)
+  
+  err_message <- paste0(
+    "Familiar version ", fam_version, " introduces breaking changes to ",
+    paste_s(class(object)), " objects. ",
+    "To use this object, you need to install version familiar ", 
+    object_fam_version, ". ",
+    "This can be achieved using devtools::install_version('familiar', version = '",
+    object_fam_version, "') or remotes::install_version('familiar', version = '",
+    object_fam_version, "')."
+  )
+  
+  ..error(
+    err_message,
+    error_class = "object_update_error",
+    call = call
+  )
+}
+
+
+
+..error_updated_object_invalid <- function(
+    object,
+    call = rlang::caller_env()
+) {
+  err_message <- paste0(
+    "The provided ", paste_s(class(object)), " failed consistency checks after updating. ",
+    "Please contact the developers."
+  )
+  
+  ..error(
+    err_message,
+    error_class = c("object_update_error", "developer_error"),
+    call = call
+  )
+}
+
+
+
 ..error_message_no_training_data_available <- function() {
   return("No data was available to train the model.")
 }
