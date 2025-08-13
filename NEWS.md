@@ -9,6 +9,11 @@
 
 - Ensembles are now no longer explicitly stored, but are formed at run-time.
 
+- Models now have and use new attributes related to variable importance that 
+  cannot be obtained from models trained prior to version 2.0.0. Models trained
+  with version 1 cannot be assessed. You will need to reinstall version 1.5.0 of
+  familiar.
+
 ## Major changes
 
 - SHAP values can now be computed with familiar. SHAP values can be directly
