@@ -584,6 +584,10 @@ setMethod(
     if (is.null(x_range)) {
       x_range <- range(x$feature_value)
       
+      if (diff(x_range) == 0.0) {
+        x_range <- c(x_range[1L] - 0.01, x_range[2L] + 0.01)
+      }
+      
     } else {
       .check_input_plot_args(x_range = x_range)
     }
@@ -616,6 +620,10 @@ setMethod(
   # Check y_range.
   if (is.null(y_range)) {
     y_range <- range(x$shap_value)
+    
+    if (diff(y_range) == 0.0) {
+      y_range <- c(y_range[1L] - 0.01, y_range[2L] + 0.01)
+    }
     
   } else {
     .check_input_plot_args(y_range = y_range)
