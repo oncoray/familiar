@@ -63,8 +63,9 @@ devtools::install_github("https://github.com/alexzwanenburg/familiar", dependenc
 ## Pipeline
 
 The pipeline implemented in familiar follows a standard machine learning
-process. A development dataset is used to perform the steps listed below. Many
-aspects of these steps can be configured, but the overall process is fixed:
+workflow. A development (training) dataset is used to perform the steps listed
+below. Many aspects of these steps can be configured, but the overall process is
+fixed:
 
 - **Data processing**: Features in the development dataset are assessed during this step:
 
@@ -78,21 +79,21 @@ aspects of these steps can be configured, but the overall process is fixed:
     transformation to make these features behave more according to a normal
     distribution?
 
-    - Normalisation: How should numeric features be normalised to reduce
-      differences in scale between features the dataset? Note that familiar also
-      allows for normalisation at the batch level to remove systematic differences
-      in feature values between different batches or cohorts.
+  - Normalisation: How should numeric features be normalised to reduce
+    differences in scale between features the dataset? Note that familiar also
+    allows for normalisation at the batch level to remove systematic differences
+    in feature values between different batches or cohorts.
 
-    - Robustness: Should non-robust features, assessed using repeated 
-      measurements, be filtered?
+  - Robustness: Should non-robust features, assessed using repeated 
+    measurements, be filtered?
 
-    - Importance: Should generally unimportant features be filtered after 
-      univariate analysis?
+  - Importance: Should generally unimportant features be filtered after 
+    univariate analysis?
 
-    - Imputation: How should missing feature values be imputed?
+  - Imputation: How should missing feature values be imputed?
 
-    - Redundancy clustering: Which features are similar and should be clustered
-      together?
+  - Redundancy clustering: Which features are similar and should be clustered
+    together?
 
 - **Variable importance**: Which features are important for the endpoint of
   interest? Familiar supports various univariate and multivariate variable
@@ -108,23 +109,23 @@ aspects of these steps can be configured, but the overall process is fixed:
   During hyperparameter optimisation, the aim is to find the set of
   hyperparameters that leads to a generalisable model. Since hyperparameter spaces
   can be high-dimensional, familiar uses Bayesian optimisation for efficiently
-  exploring hyperparameter space. The *learning algorithms and hyperparameter
-  optimisation* vignette describes model-specific hyperparameters and
-  hyperparameter optimisation in more detail.
+  exploring hyperparameter space. The *learning algorithms and hyperparameter optimisation*
+  vignette describes model-specific hyperparameters and hyperparameter 
+  optimisation in more detail.
 
 - **Model training**: During the final model training step, the development data
   are fitted using the previously determined set of hyperparameters. By default,
   the models are trimmed after creation to remove extraneous information such as
-  copies of the development data. The model objects that are created in this step
-  contain more than just the model. Notably, the following information is included
-  to allow for prospective use and evaluation:
+  copies of the development dataset. The model objects that are created in this
+  step contain more than just the model. Notably, the following information is
+  included to allow for prospective use and evaluation:
 
-  - Feature information, as generated during the data processing step, is stored
+  - Feature metadata, as generated during the data processing step, is stored
     to allow for preparing datasets in the same manner as the development dataset
     and for checking if new datasets are formatted as expected. It is also used to
     create default ranges for individual conditional expectation and partial
     dependence plots.
-  - Outcome information is stored. This is primarily used to check whether
+  - Outcome metadata is stored. This is primarily used to check whether
     outcome data in new datasets are formatted in accordance with the development
     data. It is also used in computing several performance metrics.
   - A novelty detector is trained to detect out-of-distribution samples and
@@ -180,10 +181,10 @@ familiar::summon_familiar(
   outcome_type = "multinomial",
   outcome_column = "Species",
   experimental_design = "fs+mb",
-  cluster_method = "none",
   vimp_method = "mrmr",
   learner = "glm",
-  parallel = FALSE)
+  parallel = FALSE
+)
 ```
 
 It is also possible to use a formula instead. This is generally feasible only
@@ -429,27 +430,23 @@ complex nested cross-validation with external validation. Experimental design is
 defined using the `experimental_design` parameter and consists of basic workflow
 components and subsampling methods. The basic workflow components are:
 
-- `fs`: positions the variable importance computation step. This component 
-  should always be present, even if `vimp_method="none"`.
+- `fs`: positions the variable importance computation step. If absent, variable 
+  importances are determined just in time to optimise model hyperparameters.
 
 - `mb`: positions the model building step. This component should always be present.
 
 - `ev`: positions the external validation step. This should be used in 
   conjunction with the `validation_batch_id` parameter to specify
-  which batches/cohorts should be used for external validation. Unlike `fs` 
-  and `mb` components, `ev` is optional.
+  which batches/cohorts should be used for external validation. This element can
+  be omitted.
 
 Each basic workflow component can only appear once in the experimental design.
 It is possible to form an experiment using just the basic workflow components,
-i.e. `fs+mb` or `fs+mb+ev`. In these experiments, variable importance
+i.e. `fs+mb`, `mb`, or `fs+mb+ev`. In these experiments, variable importance
 computation is directly followed by modelling, with external validation of the
 model on one or more validation cohorts for `fs+mb+ev`. These options correspond
 to TRIPOD type 1a and 3, respectively. TRIPOD analysis types 1b and 2 require
 more complicated experimental designs, which are facilitated by subsampling.
-
-Hyperparameter optimisation does not require explicit specification.
-Hyperparameter optimisation is conducted when required to determine variable
-importance and prior to building a model.
 
 Subsampling methods are used to (randomly) sample the data that are not used for
 external validation, and divide these data into internal development and
