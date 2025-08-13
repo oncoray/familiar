@@ -1344,7 +1344,7 @@ setMethod(
   sem_values <- sqrt(shap_variance$shap_var / shap_variance$n)
   if (any(!is.finite(sem_values))) return(FALSE)
   # TODO: remove
-  cat(paste0("sum SEM: ", sum(sem_values), " ; total converged: ", sum(sem_values <= tolerance), "\n"))
+  # cat(paste0("sum SEM: ", sum(sem_values), " ; total converged: ", sum(sem_values <= tolerance), "\n"))
   return(all(sem_values <= tolerance))
 }
 
