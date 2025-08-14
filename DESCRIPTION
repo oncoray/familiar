@@ -24,8 +24,8 @@ Description: Single unified interface for end-to-end modelling of regression,
     tabular format and plotted, and may also be computed manually using export
     and plot functions. Where possible, metrics and values obtained during the
     evaluation process come with confidence intervals.
-URL: https://github.com/alexzwanenburg/familiar
-BugReports: https://github.com/alexzwanenburg/familiar/issues
+URL: https://github.com/oncoray/familiar
+BugReports: https://github.com/oncoray/familiar/issues
 Depends: R (>= 4.0.0)
 License: EUPL
 Encoding: UTF-8
