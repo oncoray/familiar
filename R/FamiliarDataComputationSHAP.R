@@ -846,11 +846,17 @@ setMethod(
   # Convert to data.table and add identifiers.
   data <- data.table::as.data.table(data)
   
-  return(as_data_object(
+  data <- as_data_object(
     data = data,
     object = object,
     check_stringency = "external"
-  ))
+  )
+  
+  # Update pre-processing level from none to signature, because we are strictly
+  # working with model features here.
+  data@preprocessing_level <- "signature"
+  
+  return(data)
 }
 
 
