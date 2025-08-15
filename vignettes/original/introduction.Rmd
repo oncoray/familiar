@@ -524,6 +524,11 @@ Other designs, such as `experimental_design="bs(fs+mb,400)+ev"` allow for buildi
 large ensembles, and capturing the posterior distribution of the model
 predictions.
 
+Subsampling involves randomisation. By default, every new experiment will
+generate its own random assignment. However, samples will be assigned in the
+same way across experiments by setting the `iteration_seed` parameter, provided
+the underlying data doesn't change between experiments.
+
 As a final remark: Though it is possible to encapsulate the external validation
 (`ev`) workflow component in a subsampler, this is completely unnecessary.
 Unlike the variable importance computation (`fs`) and modelling (`mb`)
@@ -548,8 +553,7 @@ functions allow for generating data for a warm start:
 All of functions above create an `experimentData` object, which contains
 data that can be used to warm-start other familiar experiments that use the same
 data. This object can then be supplied as the `experiment_data` argument for
-`summon_familiar`, or `train_familiar`.
-
+`summon_familiar`.
 
 ```{r eval=FALSE, include=TRUE}
 # This creates both data assignment (5 bootstraps) and the corresponding feature
@@ -575,5 +579,13 @@ familiar::summon_familiar(
   parallel = FALSE
 )
 ```
+
+## Only training models
+
+`summon_familiar` also incorporates a model evaluation process, which may not be
+that useful if the aim is to simply train a model. In that case,
+`train_familiar` can be used instead. `train_familiar` and `summon_familiar`
+share the same configuration parameters. However, `train_familiar` will simply
+return the model(s) after training, and forgo their evaluation.
 
 # References
