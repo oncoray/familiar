@@ -541,7 +541,9 @@ summon_familiar <- function(
 #'   cross-validation with nested variable importance computation on 20
 #'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) variable importance step.
+#'   * `fs`: (optional) variable importance computation step. If not explicitly
+#'      declared, feature selection will be done just in time for hyperparameter
+#'      optimisation.
 #'
 #'   * `mb`: (required) model building step.
 #'
@@ -657,7 +659,9 @@ precompute_data_assignment <- function(
 #'   cross-validation with nested variable importance computation on 20
 #'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) variable importance step.
+#'   * `fs`: (optional) variable importance computation step. If not explicitly
+#'      declared, feature selection will be done just in time for hyperparameter
+#'      optimisation.
 #'
 #'   * `mb`: (required) model building step.
 #'
@@ -775,7 +779,10 @@ precompute_feature_info <- function(
 #'   cross-validation with nested variable importance computation on 20
 #'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) variable importance step.
+#'   * `fs`: (required) variable importance computation step. No variable
+#'   importances will be prepared if this step is not explicitly used, instead,
+#'   feature selection will be done just in time for hyperparameter
+#'   optimisation.
 #'
 #'   * `mb`: (required) model building step. Though models are not learned by
 #'   `precompute_vimp`, this element is still required to prevent issues when
@@ -921,7 +928,9 @@ precompute_vimp <- function(
 #'   cross-validation with nested variable importance computation on 20
 #'   bootstraps and model-building. The basic workflow components are:
 #'
-#'   * `fs`: (required) variable importance step.
+#'   * `fs`: (optional) variable importance computation step. If not explicitly
+#'   declared, feature selection will be done just in time for hyperparameter
+#'   optimisation.
 #'
 #'   * `mb`: (required) model building step.
 #'

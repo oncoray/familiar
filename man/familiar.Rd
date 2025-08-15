@@ -24,8 +24,8 @@ evaluation process come with confidence intervals.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/alexzwanenburg/familiar}
-  \item Report bugs at \url{https://github.com/alexzwanenburg/familiar/issues}
+  \item \url{https://github.com/oncoray/familiar}
+  \item Report bugs at \url{https://github.com/oncoray/familiar/issues}
 }
 
 }

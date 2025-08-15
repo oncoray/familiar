@@ -51,7 +51,9 @@ like, e.g. \code{cv(bt(fs,20)+mb,3,2)} for 2 times repeated 3-fold
 cross-validation with nested variable importance computation on 20
 bootstraps and model-building. The basic workflow components are:
 \itemize{
-\item \code{fs}: (required) variable importance step.
+\item \code{fs}: (optional) variable importance computation step. If not explicitly
+declared, feature selection will be done just in time for hyperparameter
+optimisation.
 \item \code{mb}: (required) model building step.
 \item \code{ev}: (optional) external validation. Setting this is not required for
 \code{train_familiar}, but if validation batches or cohorts are present in the

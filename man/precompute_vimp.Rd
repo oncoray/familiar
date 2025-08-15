@@ -51,7 +51,10 @@ like, e.g. \code{cv(bt(fs,20)+mb,3,2)} for 2 times repeated 3-fold
 cross-validation with nested variable importance computation on 20
 bootstraps and model-building. The basic workflow components are:
 \itemize{
-\item \code{fs}: (required) variable importance step.
+\item \code{fs}: (required) variable importance computation step. No variable
+importances will be prepared if this step is not explicitly used, instead,
+feature selection will be done just in time for hyperparameter
+optimisation.
 \item \code{mb}: (required) model building step. Though models are not learned by
 \code{precompute_vimp}, this element is still required to prevent issues when
 using the resulting \code{experimentData} object to warm-start the experiments.

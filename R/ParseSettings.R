@@ -679,7 +679,9 @@
 #'   bootstraps and model-building, and external validation. The basic workflow
 #'   components are:
 #'
-#'   * `fs`: (required) variable importance computation step.
+#'   * `fs`: (optional) variable importance computation step. If not explicitly
+#'      declared, feature selection will be done just in time for hyperparameter
+#'      optimisation.
 #'
 #'   * `mb`: (required) model building step.
 #'
