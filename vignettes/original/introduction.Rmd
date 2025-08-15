@@ -548,7 +548,7 @@ functions allow for generating data for a warm start:
 All of functions above create an `experimentData` object, which contains
 data that can be used to warm-start other familiar experiments that use the same
 data. This object can then be supplied as the `experiment_data` argument for
-`summon_familiar`.
+`summon_familiar`, or `train_familiar`.
 
 
 ```{r eval=FALSE, include=TRUE}
@@ -560,7 +560,6 @@ experiment_data <- familiar::precompute_feature_info(
   outcome_type = "multinomial",
   outcome_column = "Species",
   experimental_design = "bs(fs+mb,5)",
-  cluster_method = "none",
   parallel = FALSE
 )
 
