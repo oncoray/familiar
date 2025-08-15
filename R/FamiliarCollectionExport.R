@@ -197,6 +197,13 @@ setMethod(
       aggregate_results = aggregate_results
     )
     
+    # Export SHAP data.
+    shap_data <- export_shap(
+      object = object,
+      dir_path = dir_path,
+      aggregate_results = aggregate_results
+    )
+    
     if (is.null(dir_path)) {
       return(list(
         "fs_vimp" = list(
@@ -222,7 +229,8 @@ setMethod(
         "feature_expressions" = feature_expressions,
         "feature_similarity" = feature_similarity,
         "pd_data" = pd_data,
-        "ice_data" = ice_data
+        "ice_data" = ice_data,
+        "shap_data" = shap_data
       ))
     }
   }
