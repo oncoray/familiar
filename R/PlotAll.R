@@ -226,6 +226,54 @@ setMethod(
       )
     )
     
+    # SHAP summary.
+    do.call(
+      plot_shap_summary,
+      args = c(
+        list(
+          "object" = object,
+          "dir_path" = dir_path
+        ),
+        list(...)
+      )
+    )
+    
+    # SHAP waterfall.
+    do.call(
+      plot_shap_waterfall,
+      args = c(
+        list(
+          "object" = object,
+          "dir_path" = dir_path
+        ),
+        list(...)
+      )
+    )
+    
+    # SHAP force.
+    do.call(
+      plot_shap_force,
+      args = c(
+        list(
+          "object" = object,
+          "dir_path" = dir_path
+        ),
+        list(...)
+      )
+    )
+    
+    # SHAP dependence.
+    do.call(
+      plot_shap_dependence,
+      args = c(
+        list(
+          "object" = object,
+          "dir_path" = dir_path
+        ),
+        list(...)
+      )
+    )
+    
     return(invisible(NULL))
   }
 )
