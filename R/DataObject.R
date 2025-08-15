@@ -866,8 +866,16 @@ setMethod(
     
     # Check whether model data- and run-ids should be used.
     if (data@defer_to_model_data_and_run_id) {
+      # This forces data to be read at the ensemble level. Other pathways (e.g.
+      # predict) defer directly to the models, and reads data there.
       data@data_id <- object@data_id
       data@run_id <- object@run_id
+      
+      # Specific to ensemble models: if data should be read at the ensemble
+      # level, then validation should always be false. For external data,
+      # data is never forced to be read at the model level, and this attribute
+      # is not reset.
+      data@validation <- FALSE
     }
     
     # Read required features.
