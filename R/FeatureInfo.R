@@ -349,11 +349,13 @@ compute_feature_distribution_data <- function(
     # Number of samples
     distr_list[["n"]] <- length(x)
 
+    if (anyNA(x)) x <- x[!is.na(x)]
+    
     # Five-number summary of feature values
-    distr_list[["fivenum"]] <- fivenum_summary(x, na.rm = TRUE)
+    distr_list[["fivenum"]] <- fivenum_summary(x, na.rm = FALSE)
 
     # Mean value
-    distr_list[["mean"]] <- mean(x, na.rm = TRUE)
+    distr_list[["mean"]] <- mean(x, na.rm = FALSE)
     
     # Percentile summary of feature values
     distr_list[["pctl"]] <- stats::spline(
