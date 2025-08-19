@@ -1,6 +1,5 @@
 *.html
 *.R
-*.Rmd
 !license.html
 !familiar_logo.html
 !compile.R
