@@ -2415,17 +2415,17 @@
 #'   The *feature selection methods* vignette provides additional information.
 #'
 #' @param vimp_aggregation_rank_threshold (*optional*) The threshold used to
-#'   define the subset of highly important features. If not set, this threshold
-#'   is determined by maximising the variance in the occurrence value over all
-#'   features over the subset size.
+#'   define the subset of highly important features. If set to `NULL`, this
+#'   threshold is determined by maximising the variance in the occurrence value
+#'   over all features over the subset size. The default value is `5`.
 #'
 #'   This parameter is only relevant for `stability`, `exponential`,
 #'   `enhanced_borda`, `truncated_borda` and `enhanced_truncated_borda` methods.
 #' @param parallel_vimp (*optional*) Enable parallel processing for
-#'   the variable importance workflow. Defaults to `TRUE`. When set to `FALSE`,
+#'   variable importance tasks. Defaults to `TRUE`. When set to `FALSE`,
 #'   this will disable the use of parallel processing while performing feature
 #'   selection, regardless of the settings of the `parallel` parameter.
-#'   `parallel_vimp` is ignored if `parallel=FALSE`.
+#'   `parallel_vimp` is ignored if `parallel = FALSE`.
 #' @param ... Unused arguments.
 #'
 #' @return List of parameters related to variable importance computation.

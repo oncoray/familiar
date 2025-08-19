@@ -421,7 +421,8 @@ setMethod(
     metric_objects,
     data,
     iteration_list,
-    fixed_set) {
+    fixed_set
+) {
   # Make local copy of the data prior to filtering features.
   data <- data.table::copy(data)
   
