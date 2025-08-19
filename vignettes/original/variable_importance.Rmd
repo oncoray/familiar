@@ -306,10 +306,10 @@ below:
 ## Random forest-based methods
 
 Several feature selection methods are based on random forests. All these methods
-require that a random forest model exists. Hence, `familiar` will train a random
-forest based on the training data. Random forest learners have a set of
-hyperparameters that are optimised prior to training, and these make up most of
-the method-specific parameters. These parameters, which are slightly different
+require training a random forest. Hence, `familiar` will train a random
+forest based on the training data prior to determining variable importance.
+Random forest learners have a set of hyperparameters that can be optimised prior
+to training. These parameters, which are slightly different
 for `ranger`-based and `randomForestSRC`-based methods, are shown below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
@@ -354,7 +354,7 @@ and variable importance determined on the other [@Janitza2018-kl].
 The hold-out variable importance method implemented in the `randomForestSRC`
 package (`random_forest_holdout` and `random_forest_holdout_default`) is
 implemented using `randomForestSRC::holdout.vimp`. It is similar to the previous
-variant, but does not cross-validation folds. Instead, out-of-bag prediction
+variant, but does not use cross-validation folds. Instead, out-of-bag prediction
 errors for models trained with and without each feature are compared.
 
 ### Minimum depth variable selection
@@ -362,15 +362,6 @@ errors for models trained with and without each feature are compared.
 Important features tend to appear closer to the root of trees in random forests.
 Therefore, the position of each feature within a tree is assessed in minimum
 depth variable selection [@Ishwaran2010-zv].
-
-### Variable hunting
-
-Variable hunting is implemented using the variable hunting algorithm implemented
-in `randomForestSRC`. Ishwaran suggest using it when minimum depth variable
-selection leads to high computational load, or a larger set of variables should
-be found [@Ishwaran2010-zv].
-
-The variable hunting selection method has several parameters which can be set.
 
 ### Impurity importance
 
@@ -395,8 +386,8 @@ can be used for establishing feature rankings.
 
 As the name suggests, the `none` method avoids computing variable importances
 altogether. All features are passed into a model. Feature order is randomly
-shuffled prior to building a model to avoid influence of the provided feature
-order.
+shuffled prior to building a model to avoid influence of the order of provided
+features.
 
 ### Random variable importance
 
@@ -416,7 +407,7 @@ may be used.
 
 # Aggregating variable importance
 
-In case of variable importance or modelling in the presence of resampling (e.g.
+In case of variable importance or modelling in the presence of subsampling (e.g.
 bootstraps), the ranks of features may need to be aggregated across the
 different instances [@Wald2012-zk]. The rank aggregation methods shown in the
 table below can be used for this purpose. Several methods require a threshold to
@@ -443,7 +434,7 @@ Let $N$ be the number of ranking experiments that should be aggregated. Feature
 $i$ for experiment $j$ of $N$ then has rank $r_{ij}$. A lower rank indicates a
 more important feature. Some features may not receive a score during a ranking
 experiment, for example for multivariate variable importance methods such as
-lasso regression, or by use of a threshold $\tau$. This is designated by
+lasso regression, or through use of a threshold $\tau$. This is designated by
 $\delta_{ij}$, which is $0$ if the feature is absent, and $1$ if it is present.
 
 In case a threshold is used, $\delta_{ij} = 1$ if $r_{ij} \leq \tau$, and $0$
