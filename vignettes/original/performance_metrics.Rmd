@@ -65,14 +65,14 @@ The area under the receiver-operating curve is quite literally that. It is the
 area under the curve created by plotting the true positive rate (sensitivity)
 against the false positive rate (1-specificity). TPR and FPR are derived from a
 contingency table, which is created by comparing predicted class probabilities
-against a threshold. The receiver-operating curve is created by iterating over1
+against a threshold. The receiver-operating curve is created by iterating over
 threshold values. The AUC of a model that predicts perfectly is $1.0$, while
 $0.5$ indicates predictions that are no better than random.
 
-The implementation in `familiar` does not use the ROC curve to compute the AUC.
+The implementation in `familiar` does not directly use the ROC curve to compute the AUC.
 Instead, an algebraic equation by @Hand2001-ij is used. For `multinomial`
 outcomes the AUC is computed for each pairwise comparison of outcome classes,
-and averaged [@Hand2001-ij].
+i.e. one-versus-all, and averaged [@Hand2001-ij].
 
 ## Brier score
 
@@ -87,7 +87,7 @@ outcomes, the score is divided by 2, so that it falls in the $[0.0, 1.0]$ range.
 
 ## Contingency table-based metrics
 
-A contingency table or confusion matrix displays the observed and predicted
+A contingency table or confusion matrix shows observed and predicted
 classes. When dealing with two classes, e.g. *a* and *b*, one of the classes is
 usually termed 'positive' and the other 'negative'. For example, let *b* be the
 'positive' class. Then we can define the following four categories:
@@ -271,7 +271,7 @@ performs winsorising (clipping) and trimming (truncating) based on the absolute
 prediction error, prior to computing the metric. Winsorising clips the predicted
 values for 5% of the instances with the most extreme absolute errors prior to
 computing the performance metric, whereas trimming removes these instances. For
-example, winsored and trimmed versions of the mean squared error metric are
+example, winsorised and trimmed versions of the mean squared error metric are
 specified as `mse_winsor` and `mse_trim` respectively.
 
 Let $y$ be the set of observed values, and $\hat{y}$ the corresponding predicted
