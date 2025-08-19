@@ -87,28 +87,32 @@ that sufficient models are created. Experimental designs such as
 `experimental_design="bs(fs+mb,400)+ev"` allow for this, but are computationally
 expensive.
 
-| Name                                     | Plot function                                                                     | Export function                       | Estimation type | Detail level | Sample limit | Stand-alone |
-|------------------------------------------|-----------------------------------------------------------------------------------|---------------------------------------|:---------------:|:------------:|:------------:|:-----------:|
-| AUC-PR^a^                                | `plot_auc_precision_recall_curve`                                                 | `export_auc_data`                     |        ×        |      ×       |              |      ×      |
-| AUC-ROC^a^                               | `plot_auc_roc_curve`                                                              | `export_auc_data`                     |        ×        |      ×       |              |      ×      |
-| Calibration info^c^                      |                                                                                   | `export_calibration_info`             |                 |      ×       |              |             |
-| Confusion matrix^a^                      | `plot_confusion_matrix`                                                           | `export_confusion_matrix_data`        |                 |      ×       |              |      ×      |
-| Decision curve analysis^ab^              | `plot_decision_curve`                                                             | `export_decision_curve_analysis_data` |        ×        |      ×       |              |      ×      |
-| Feature expression^c^                    | `plot_sample_clustering`                                                          | `export_feature_expressions`          |                 |              |              |             |
-| Feature selection variable importance^c^ | `plot_feature_selection_occurrence`; `plot_feature_selection_variable_importance` | `export_fs_vimp`                      |                 |              |              |             |
-| Feature similarity^c^                    | `plot_feature_similarity`                                                         | `export_feature_similarity`           |        ×        |              |              |             |
-| Hyperparameters^c^                       |                                                                                   | `export_hyperparameters`              |                 |              |              |             |
-| Individual conditional expectation^c^    | `plot_ice`                                                                        | `export_ice_data`                     |      ×^d^       |      ×       |      ×       |             |
-| Model calibration^ce^                    | `plot_calibration_data`                                                           | `export_calibration_data`             |        ×        |      ×       |              |             |
-| Model performance^c^                     | `plot_model_performance`                                                          | `export_model_performance`            |        ×        |      ×       |              |      ×      |
-| Model predictions^c^                     |                                                                                   | `export_prediction_data`              |      ×^d^       |      ×       |              |      x      |
-| Model variable importance^ce^            | `plot_model_signature_occurrence`; `plot_model_signature_variable_importance`     | `export_model_vimp`                   |                 |              |              |             |
-| Partial dependence^c^                    | `plot_pd`                                                                         | `export_partial_dependence_data`      |      ×^d^       |      ×       |      ×       |             |
-| Permutation variable importance^c^       | `plot_permutation_variable_importance`                                            | `export_permutation_vimp`             |        ×        |      ×       |              |             |
-| Risk stratification info^b^              |                                                                                   | `export_risk_stratification_info`     |                 |      ×       |              |             |
-| Risk stratification data^b^              | `plot_kaplan_meier`                                                               | `export_risk_stratification_data`     |                 |      ×       |              |      ×      |
-| Sample similarity^c^                     |                                                                                   | `export_sample_similarity`            |        ×        |              |      ×       |             |
-| Univariate analysis^c^                   | `plot_univariate_importance`                                                      | `export_univariate_analysis_data`     |                 |              |              |             |
+Several methods do not require any more information than that provided in a 
+list of predictions, and can be used as a stand-alone method.
+
+| Name                                     | Plot function                                                                         | Export function                       | Estimation type | Detail level | Sample limit | Stand-alone |
+|------------------------------------------|---------------------------------------------------------------------------------------|---------------------------------------|:---------------:|:------------:|:------------:|:-----------:|
+| AUC-PR^a^                                | `plot_auc_precision_recall_curve`                                                     | `export_auc_data`                     |        ×        |      ×       |              |      ×      |
+| AUC-ROC^a^                               | `plot_auc_roc_curve`                                                                  | `export_auc_data`                     |        ×        |      ×       |              |      ×      |
+| Calibration info^c^                      |                                                                                       | `export_calibration_info`             |                 |      ×       |              |             |
+| Confusion matrix^a^                      | `plot_confusion_matrix`                                                               | `export_confusion_matrix_data`        |                 |      ×       |              |      ×      |
+| Decision curve analysis^ab^              | `plot_decision_curve`                                                                 | `export_decision_curve_analysis_data` |        ×        |      ×       |              |      ×      |
+| Feature expression^c^                    | `plot_sample_clustering`                                                              | `export_feature_expressions`          |                 |              |              |             |
+| Feature selection variable importance^c^ | `plot_feature_selection_occurrence`; `plot_feature_selection_variable_importance`     | `export_fs_vimp`                      |                 |              |              |             |
+| Feature similarity^c^                    | `plot_feature_similarity`                                                             | `export_feature_similarity`           |        ×        |              |              |             |
+| Hyperparameters^c^                       |                                                                                       | `export_hyperparameters`              |                 |              |              |             |
+| Individual conditional expectation^c^    | `plot_ice`                                                                            | `export_ice_data`                     |      ×^d^       |      ×       |      ×       |             |
+| Model calibration^ce^                    | `plot_calibration_data`                                                               | `export_calibration_data`             |        ×        |      ×       |              |             |
+| Model performance^c^                     | `plot_model_performance`                                                              | `export_model_performance`            |        ×        |      ×       |              |      ×      |
+| Model predictions^c^                     |                                                                                       | `export_prediction_data`              |      ×^d^       |      ×       |              |      x      |
+| Model variable importance^ce^            | `plot_model_signature_occurrence`; `plot_model_signature_variable_importance`         | `export_model_vimp`                   |                 |              |              |             |
+| Partial dependence^c^                    | `plot_pd`                                                                             | `export_partial_dependence_data`      |      ×^d^       |      ×       |      ×       |             |
+| Permutation variable importance^c^       | `plot_permutation_variable_importance`                                                | `export_permutation_vimp`             |        ×        |      ×       |              |             |
+| Risk stratification info^b^              |                                                                                       | `export_risk_stratification_info`     |                 |      ×       |              |             |
+| Risk stratification data^b^              | `plot_kaplan_meier`                                                                   | `export_risk_stratification_data`     |                 |              |              |      ×      |
+| Sample similarity^c^                     |                                                                                       | `export_sample_similarity`            |        ×        |              |      ×       |             |
+| SHAP values                              | `plot_shap_summary`, `plot_shap_waterfall`, `plot_shap_force`, `plot_shap_dependence` | `export_shap`                         |                 |      ×       |      ×       |             |
+| Univariate analysis^c^                   | `plot_univariate_importance`                                                          | `export_univariate_analysis_data`     |                 |              |              |             |
 
 : Evaluation and explanation steps.\
 ^a^ Available for binomial and multinomial outcomes.\
@@ -122,95 +126,46 @@ automatically. The corresponding plot and export functions can all be used exter
 as is described in the *Using familiar prospectively* vignette. Indeed, to
 showcase some of the functionality we will employ the techniques discussed there.
 
-We will first create two models. We train the first model using (a subset of)
-the Wisconsin breast cancer dataset [@Wolberg1990-gn] to predict cell malignancy
-from biopsies, which constitutes a classification problem.
+We will first create two models. The first model aims to predict the risk for
+ischemic stroke based on clinical and image features. This is a classification problem.
 
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="breast-data-preparation"}
-# Get a dataset.
-binomial_data <- familiar:::test_create_good_data(outcome_type = "binomial")
+# Get a dataset. Note that there are several features encoded with integers
+# that could be encoded as categorical variables. For brevity, we will forgo 
+# this,
+ischemic_stroke_data <- modeldata::ischemic_stroke
 
-# Call familiar to create models. Note that we skip hyperparameter optimisation
-# by manually defining the hyperparameters, and that we skip evaluation steps.
-# This is to save time when creating the vignette.
-familiar::summon_familiar(
-  data = binomial_data,
-  project_dir = file.path(tempdir()),
-  experiment_dir = "binomial",
-  experimental_design = "fs+mb",
-  cluster_method = "none",
+# Call familiar to create models. We don't use summon_familiar here, but call
+# train_familiar instead, which returns familiar models.
+ischemic_stroke_model <- familiar::train_familiar(
+  data = ischemic_stroke_data,
+  outcome_column = "stroke",
+  class_levels = c("no", "yes"),
   vimp_method = "none",
-  hyperparameter = list(
-    "random_forest_ranger" = list(
-      "n_tree" = 4,
-      "sample_size" = 0.7,
-      "m_try" = 0.5,
-      "node_size" = 20,
-      "tree_depth" = 3
-    )
-  ),
-  learner = "random_forest_ranger",
+  learner = "random_forest_ranger_default",
   parallel = FALSE,
-  skip_evaluation_elements = "all"
+  verbose = FALSE
 )
 
-# Create path to the directory containing the models.
-model_directory_path <- file.path(
-  tempdir(), "binomial", "trained_models", "random_forest_ranger", "none"
-)
-model_path <- file.path(
-  model_directory_path,
-  list.files(model_directory_path, pattern = "model")[1L]
-)
-
-# Load the model.
-binomial_model <- readRDS(model_path)
 ```
 
-The second model is a survival model, and is trained on (a subset of) a colon
-chemotherapy clinical trial dataset [@Moertel1995-bh] to predict overall
-survival after treatment.
+The second model is a survival model, and is trained on a colon
+chemotherapy clinical trial dataset [@Moertel1995-bh] to predict recurrence 
+after treatment.
 
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="colon-data-preparation"}
 # Get a dataset.
-survival_data <- familiar:::test_create_good_data(outcome_type = "survival")
+survival_data <- data.table::as.data.table(survival::colon)
+survival_data <- survival_data[etype == 1L][, ":=" ("id" = NULL, "study" = NULL, "etype" = NULL)]
 
-# Call familiar to create models. Note that we skip hyperparameter optimisation
-# by manually defining the hyperparameters, and that we skip evaluation steps.
-# This is to save time when creating the vignette.
-familiar::summon_familiar(
+survival_model <- familiar::train_familiar(
   data = survival_data,
-  project_dir = file.path(tempdir()),
-  experiment_dir = "survival",
-  experimental_design = "fs+mb",
-  cluster_method = "none",
+  outcome_column = c("status", "time"),
   vimp_method = "none",
-  hyperparameter = list(
-    "random_forest_ranger" = list(
-      "n_tree" = 9,
-      "sample_size" = 0.95,
-      "m_try" = 0.68,
-      "node_size" = 30,
-      "tree_depth" = 2,
-      "alpha" = 0.25
-    )
-  ),
-  learner = "random_forest_ranger",
+  learner = "random_forest_ranger_default",
   parallel = FALSE,
-  skip_evaluation_elements = "all"
+  verbose = FALSE
 )
-
-# Create path to the directory containing the models.
-model_directory_path <- file.path(
-  tempdir(), "survival", "trained_models", "random_forest_ranger", "none"
-)
-model_path <- file.path(
-  model_directory_path, 
-  list.files(model_directory_path, pattern = "model")[1L]
-)
-
-# Load the model.
-survival_model <- readRDS(model_path)
 ```
 
 # Model performance
