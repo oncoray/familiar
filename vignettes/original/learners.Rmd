@@ -127,7 +127,7 @@ using the tags or arguments below:
 |:----------:|:-------------------------|:-----------:|
 | `learner` | The desired learner. Multiple learners may be provided at the same time. This setting has no default and must be provided. | -- (required) |
 | `hyperparameter` | Each learner has one or more hyperparameters which can be specified. Sequential model-based optimisation is used to identify hyperparameter values from the data unless these are specifically specified here. See the section on hyperparameter optimisation for more details. | -- (optional) |
-| `parallel_model_development` | Enables parallel processing for model development. Ignored if `parallel=FALSE`. | `TRUE` |
+| `parallel_model_development` | Enables parallel processing for model development. Ignored if `parallel = FALSE`. Overrides `parallel = TRUE`. | `TRUE` |
 
 Table: Configuration options for model development.
 
@@ -142,8 +142,8 @@ $j$ is:
 $$y_j=\beta_0 + \beta_1 x_j + \epsilon_j$$
 Here, $\beta_0$ and $\beta_1$ are both model coefficients. $\beta_0$ is also
 called the model intercept. $\epsilon_j$ is an error term that describes the
-difference between the predicted and the actual response for sample $j$. When a
-linear model is developed, the $\beta$-coefficients are set in such manner that
+difference between the predicted and the observed outcome for sample $j$. When a
+linear model is developed, the $\beta$-coefficients are fitted so that
 the mean-squared error over the sample population is minimised.
 
 The above model is a univariate model as it includes only a single predictor. A
@@ -176,9 +176,7 @@ include linkage functions and are shown in the table below.
 
 ### Linear models for multinomial outcomes
 
-Prior to version 1.3.0 the linear model for multinomial outcomes was implemented
-using the `VGAM::vglm` function [@Yee1996-ql; @Yee2010-rg; @Yee2015-bw]. For
-better scalability, this has been replaced by the `nnet::multinom` function
+The linear model for multinomial outcomes is implemented using `nnet::multinom`
 [@Venables2002-ma]. Hyperparameters for this model are shown in the table below.
 
 | **parameter** | **tag** | **values** | **optimised** | **comments** |
@@ -355,8 +353,7 @@ trick the calculations are performed in an implicit high-dimensional feature
 space, which is considerably more efficient than explicit calculations
 [@Boser1992-nk].
 
-Familiar implements SVM using `e1071::svm`. We tried `kernlab::ksvm`, but this
-function would reproducibly freeze during unit testing. By default, both
+Familiar implements SVM using `e1071::svm`. By default, both
 features and outcome data are scaled internally. This was used to derive the
 default hyperparameter ranges specified in the table below.
 
@@ -364,7 +361,7 @@ default hyperparameter ranges specified in the table below.
 |:--------------|:--------|:----------:|:----------:|:-------------|
 | signature size | `sign_size` | $\mathbb{Z} \in \left[1,n\right]$ | yes | -- |
 | SVM kernel | `kernel` | `linear`, `polynomial`, `radial`, `sigmoid` | no | Default is `radial`, unless specified as part of the learner's name. |
-| $C$ | `c` | $\mathbb{R}$ | yes | The cost for violation of constraints is expressed on a $\log_{10}$ scale, i.e. the actual value is $10^\texttt{c}$. The default range is $\left[-5, 3\right]$. |
+| $C$ | `c` | $\mathbb{R}$ | yes | The cost for violating constraints is expressed on a $\log_{10}$ scale, i.e. the actual value is $10^\texttt{c}$. The default range is $\left[-5, 3\right]$. |
 | $\epsilon$ | `epsilon` | $\mathbb{R}$ | `continuous` outcomes | The error tolerance $\epsilon$ is only used for regression SVM. $\epsilon$ is expressed on a $\log_{10}$ scale. The default range is $\left[-5, 1\right]$. |
 | $\nu$ | `nu` | $\mathbb{R}$ | `nu` SVM type | `nu` provides upper bounds for the fraction of training errors and lower bounds for the fraction of support vectors [@Chang2011-ck]. It is expressed on a $\log_{10}$ scale. The default range is $\left[-5, 1\right]$. |
 | inverse kernel width | `gamma` | $\mathbb{R}$ | non-linear kernels | This parameter specifies the inverse of the kernel width. It is expressed on the $\log_{10}$ scale. The default range is $\left[-9, 3\right]$. |
@@ -389,11 +386,10 @@ The following kernels are implemented:
 
 # Hyperparameter optimization
 
-Hyperparameter optimisation is conducted to select model parameters that are
-more likely to lead to generalisable results. The main hyperparameter
-optimisation framework used by familiar is based on sequential model-based
-optimisation (SMBO) [@Hutter2011-ea], but with significant updates and
-extensions.
+Hyperparameter optimisation is conducted to select model parameters lead to
+good, generalisable models. The main hyperparameter optimisation framework used
+by familiar is based on sequential model-based optimisation (SMBO)
+[@Hutter2011-ea], but with significant updates and extensions.
 
 Overall, the following steps are conducted to optimise hyperparameters for a
 given learner and dataset:
@@ -739,12 +735,12 @@ Hyperparameter optimization may be configured using the tags/arguments in the ta
 | `smbo_step_bootstraps` | Number of bootstraps used within each step of an intensify iteration. | `3` |
 | `smbo_intensify_steps` | Number of intensify steps within each intensify iteration. | `5` |
 | `optimisation_metric` | The metric used for optimisation, e.g. `auc`. See the vignette on performance metrics for available options. More than one metric may be specified. | `auc_roc` (`binomial`, `multinomial`); `mse` (`continuous`); and `concordance_index` (`survival`) |
-| `optimisation_function` | The optimisation function used (see [Assessing goodness of hyperparameter sets]). | `balanced` |
+| `optimisation_function` | The optimisation function used (see [Assessing goodness of hyperparameter sets]). | `validation` |
 | `hyperparameter_learner` | Learner used to predict optimisation scores for new hyperparameter sets (see [Predicting optimisation score for new hyperparameter sets]). | `gaussian_process` |
 | `acquisition_function` | The function used to quantify utility of hyperparameter sets (see [Acquisition functions for utility of hyperparameter sets]). | `expected_improvement` |
 | `exploration_method` | Method used to explore challenger hyperparameter sets (see [Exploring challenger sets]). | `single_shot` |
 | `smbo_stochastic_reject_p_value` | The p-value level for stochastic pruning. | `0.05` |
-| `parallel_hyperparameter_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel=FALSE`. Can be `outer` to process multiple optimisation processes simultaneously. | `TRUE` |
+| `parallel_hyperparameter_optimisation` | Enables parallel processing for hyperparameter optimisation. Ignored if `parallel = FALSE`. Can be `outer` to process multiple optimisation processes simultaneously. Overrides `parallel = TRUE`. | `TRUE` |
 
 Table: Configuration options for hyperparameter optimisation.
 
