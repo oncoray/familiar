@@ -128,14 +128,17 @@ showcase some of the functionality we will employ the techniques discussed there
 
 We will first create two models. The first model aims to predict the risk for
 ischemic stroke based on clinical and image features. This is a classification problem.
+For illustration purposes, we will use the first 99 samples as development data,
+and the remaining as a holdout set.
 
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="ischemic-model"}
-ischemic_stroke_data <- modeldata::ischemic_stroke
+ischemic_stroke_data_train <- modeldata::ischemic_stroke[1L:99L, ]
+ischemic_stroke_data <- modeldata::ischemic_stroke[100L:126L, ]
 
 # Call familiar to create models. We don't use summon_familiar here, but call
 # train_familiar instead, which returns familiar models.
 ischemic_stroke_model <- familiar::train_familiar(
-  data = ischemic_stroke_data,
+  data = ischemic_stroke_data_train,
   outcome_column = "stroke",
   class_levels = c("no", "yes"),
   vimp_method = "none",
@@ -184,15 +187,8 @@ plots[[1L]]
 ```
 
 The plot shows distributions of the area under the receiver operating
-characteristic curve, the brier score and the f1-score. The plot indicates that
-the model predicts accurately for the given dataset. This behaviour is expected:
-The classification problem is quite easy, and we are evaluating the development
-dataset.
-
-To compute model performance metric scores for a dataset, familiar first
-predicts expected values for instances in a dataset. Familiar then compares the
-expected values against the observed values, and computes the value of the
-specified metric.
+characteristic curve, the brier score and the f1-score, based on bootstrap
+resampling of model predictions.
 
 Model performance can also be determined directly from predictions, which makes
 it possible to assess predictions made by non-familiar models. This involves
@@ -251,8 +247,8 @@ follows:
 
 ```{r, fig.align='center', fig.width=7, label="auc-roc-curve-bci"}
 plots <- familiar::plot_auc_roc_curve(
-  object = binomial_model,
-  data = binomial_data
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data
 )
 
 plots[[1L]]
@@ -260,9 +256,9 @@ plots[[1L]]
 
 Under ideal circumstances, the curve would lie in the top-left corner of the
 plot. If a model does not predict better than at random, the curve would lie
-along the diagonal, which corresponds to an AUC-ROC value of 0.50. The plot above
-indicates that the model can differentiate between benign and malignant
-cells in breast cancer biopsy.
+along the diagonal, which corresponds to an AUC-ROC value of 0.50. The plot
+above indicates that the model can somewhat differentiate between patients with
+and without stroke.
 
 Familiar creates an ROC curve by ascendingly sorting instances by the predicted
 probability of the positive class, and computing the number of true positive,
@@ -283,8 +279,8 @@ of a single model or the complete ensemble of models is evaluated
 
 ```{r, fig.align='center', fig.width=7, label="auc-roc-curve-point"}
 plots <- familiar::plot_auc_roc_curve(
-  object = binomial_model,
-  data = binomial_data,
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
   estimation_type = "point"
 )
 
@@ -309,8 +305,8 @@ follows:
 
 ```{r, fig.align='center', fig.width=7, label="auc-pr-curve-bci"}
 plots <- familiar::plot_auc_precision_recall_curve(
-  object = binomial_model,
-  data = binomial_data
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data
 )
 
 plots[[1L]]
@@ -319,7 +315,7 @@ plots[[1L]]
 Under ideal circumstances, the curve would lie in the top-right part of the
 plot. A random classifier would yield a curve that is mostly horizontal and
 located at the fraction of positive instances. This would equal a precision of
-45% for the current dataset.
+56% for the current dataset.
 
 Like the ROC curve, familiar forms the PR curve by ascendingly sorting instances
 by the predicted probability of the positive class and computing the number of
@@ -337,12 +333,12 @@ distribution of precision values at fixed recall values.
 Again, this is the general approach used by familiar. Familiar can plot an exact
 PR curve when evaluating the point estimate (`estimation_type="point"`) of a
 single model or of the complete ensemble of models (`detail_level="ensemble"`).
-In the breast cancer dataset, this produces the following curve:
+In the ischemic strok dataset, this produces the following curve:
 
 ```{r, fig.align='center', fig.width=7, label="auc-pr-curve-point"}
 plots <- familiar::plot_auc_precision_recall_curve(
-  object = binomial_model,
-  data = binomial_data,
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
   estimation_type = "point"
 )
 
@@ -357,8 +353,8 @@ potential weaknesses of classifiers, i.e. false positives or negatives.
 
 ```{r, fig.align='center', fig.width=7, label="confusion-matrix"}
 plots <- familiar::plot_confusion_matrix(
-  object = binomial_model,
-  data = binomial_data
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data
 )
 
 plots[[1L]]
