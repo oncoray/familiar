@@ -628,28 +628,8 @@ By default, similarity between features is assessed using McFadden's
 pseudo-$R^2$. This metric can assess similarity between different types of
 features, i.e. numeric and categorical. The default thresholds are 0.3 and 1.0
 that respectively cluster similar features and permute all features
-individually. The breast cancer dataset contains many features that are highly
+individually. The dataset contains many features that are highly
 similar and exceed the relatively stringent threshold of 0.3.
-
-```{r, fig.align='center', fig.width=7, label="permutation-variable-importance-bc-spearman"}
-plots <- familiar::plot_permutation_variable_importance(
-  object = ischemic_stroke_model,
-  data = ischemic_stroke_data,
-  estimation_type = "bias_correction",
-  feature_similarity_threshold = c(0.3, 0.5, 1.0)
-)
-
-plot(plots[[1L]])
-```
-
-This figure paints a different picture: the `cell_shape_uniformity`, `bare_nuclei`,
-`normal_nucleoli` and `epithelial_cell_size` features are moderately to strongly
-correlated. When permuted together, this has a major effect on model
-performance. This can also be observed in the performance decrease caused by
-shuffling `cell_shape_uniformity` alone, which only partially matches the
-performance decrease caused by shuffling the 4 features. The other 3 features
-have little individual impact on performance, yet shuffling them
-together directly shows that these features are important as well.
 
 # Partial dependence and individual conditional expectation plots
 
