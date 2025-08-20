@@ -344,7 +344,7 @@ plots <- familiar::plot_auc_precision_recall_curve(
   estimation_type = "point"
 )
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
 ## Confusion matrix
@@ -359,7 +359,7 @@ plots <- familiar::plot_confusion_matrix(
   data = ischemic_stroke_data
 )
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
 Familiar selects the class with the highest predicted class probability as the
@@ -407,8 +407,7 @@ plots <- familiar::plot_kaplan_meier(
   data = survival_data
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1L]])
+plot(plots[[1L]])
 ```
 
 In the plot above, familiar divides instances into two groups by the median
@@ -435,34 +434,29 @@ plots <- familiar::plot_calibration_data(
   data = ischemic_stroke_data
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1L]])
+plot(plots[[1L]])
 ```
 
-The calibration curve shows the expected (predicted) probability of malignant
-cells versus the observed proportion of malignant cells, together with a 95%
+The calibration curve shows the expected (predicted) probability of ischemic
+stroke versus the observed proportion of ischemic stroke, together with a 95%
 confidence interval. In an ideal calibration plot the calibration curve should
-lie on the diagonal (dashed) line. Here the upper part of the curve (expected
-probability \> 0.50) follows the diagonal nicely. The lower part of the curve
-dips below the diagonal, indicating that predicted probabilities in this range
-tend to overestimate malignancy. However, the density plot in the top panel
-indicates that predicted probabilities were generally close to 0.0 or 1.0, with
-very few instances in between.
+lie on the diagonal (dashed) line. Low expected probabilities tend to
+overestimate the observed probability, whereas high expected probabilities tend
+to underestimate the observed probability. The density plot in the top panel
+indicates that predicted probabilities were distributed around 0.5, with
+relatively few low- and high-probability cases being predicted.
 
 Familiar also performs several calibration tests to assess various degrees of
 calibration [@Van_Calster2016-ok]. First of all, we assess two aspects of the
-linear fit (solid line in the plot): the intercept (calibration-in-the-large) and slope.
-These are shown in the top-left of the main plot.
+linear fit (solid line in the plot): the intercept (calibration-in-the-large)
+and slope. These are shown in the top-left of the main plot.
 
-The intercept ideally is 0.00. In our example, it lies below this point, and is
-not contained in the 95% confidence interval. We therefore conclude that the
-intercept is significantly different at the $\alpha=0.05$ level. Note that this
-difference may not be relevant in practice, as it is quite small.
+The intercept ideally is 0.00. In our example, it lies below this point, but is
+still contained in the 95% confidence interval, owing to a small number of
+samples in the test set.
 
 In an ideal case, the slope of the linear fit is 1.00. In our example, the slope
-of the linear fit lies above this value. This indicates that, overall, the model
-tends to overestimate the probability of malignant cells, but not to a large
-degree.
+of the linear fit lies above this value.
 
 One issue with assessing calibration through a linear fit, is that the
 calibration curve can be decidedly non-linear and still produce good values for
@@ -499,29 +493,22 @@ We can observe the points thus created in a calibration plot when
 
 ```{r, fig.align='center', fig.width=7, label="calibration-data-point"}
 plots <- familiar::plot_calibration_data(
-  object = binomial_model,
-  data = binomial_data,
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
   estimation_type = "point"
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1L]])
+plot(plots[[1L]])
 ```
 
 The plot with point estimates and the earlier calibration plot with bootstrap
-confidence intervals lead to the same assessment. However, you may have observed
-that the number of points, and thus the number of groups, is certainly larger
-than the 10 groups commonly formed for assessing calibration. This is correct.
-
-Familiar introduces randomness into the assessment of calibration. First,
-familiar randomises the number of groups drawn because using a fixed number of
-10 groups is arbitrary. Second, the actual group sizes are randomised by drawing
-group identifiers with replacement for all instances. We then sort the set of
-drawn identifiers, and the instances, ordered by increasing expected value, are
-then assigned to their respective group. Thirdly, this process is repeated
-multiple times, i.e. 20 times for point estimates, again 20 times (on
-bootstraps) for bias-corrected estimates and more for bootstraps confidence
-intervals.
+confidence intervals lead to the same assessment. Moreover, you may not arrive
+at the same plot. This happens because familiar introduces randomness into the
+assessment of calibration. First, familiar randomises the number of groups drawn
+because using a fixed number of 10 groups is arbitrary. Second, the actual group
+sizes are randomised by drawing group identifiers with replacement for all
+instances. We then sort the set of drawn identifiers, and the instances, ordered
+by increasing expected value, are then assigned to their respective group.
 
 Linear fit intercept and slope as well as the goodness-of-fit test p-value are
 determined for each single set of groups. Intercept and slopes are then averaged
@@ -543,21 +530,22 @@ might constitute treatment of all patients, versus no treatment and treatment fo
 patients with malignancy predicted by the model. This produces the following
 figure:
 
-```{r, fig.align='center', fig.width=7, label="decision-curve-bci"}
+```{r, fig.align='center', fig.width=7, label="decision-curve-bci", warning=FALSE}
 plots <- familiar::plot_decision_curve(
-  object = binomial_model,
-  data = binomial_data,
-  y_range = c(-0.2, 0.5)
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  y_range = c(-0.2, 0.8)
 )
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
-The shaded curve is the decision curve produced by the model, with 95% confidence
-intervals. The declining curve represents the intervention for all, which offers
-no benefit for a malignancy probability of 45%. The horizontal line at a net
-benefit of 0.0 represent the no intervention option. As may be observed, the
-model offers a net benefit over the entire range of threshold probabilities.
+The shaded curve is the decision curve produced by the model, with 95%
+confidence intervals. The declining curve represents the intervention for all
+strategy, which offers no benefit for a probability of ischemic stroke of 56%.
+The horizontal line at a net benefit of 0.0 represent the no intervention
+strategy. As may be observed, the model offers an expected net benefit compared
+to either strategy, but not always significantly.
 
 For regression problems no definition of decision curves exists. However,
 familiar can perform decision curve analysis for survival outcomes, based on
@@ -581,17 +569,19 @@ measure of variable importance when features are normalised. In the case of the
 random forest model for the breast cancer dataset, permutation variable
 importance is determined. This produces the following plot:
 
-```{r, fig.align='center', fig.width=7, label="model-variable-importance"}
+```{r, fig.align='center', fig.width=7, label="model-variable-importance", warning=FALSE}
 plots <- familiar::plot_model_signature_variable_importance(
-  object = binomial_model,
-  data = binomial_data
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  rotate_x_tick_labels = TRUE
 )
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
 In such plots, we always order features so that the most important features are
-on the left, and the least important features on the right.
+on the left, and the least important features on the right. Letters indicate
+features that are clustered.
 
 In case an ensemble of models is assessed, scores are aggregated using an
 aggregation method (see the *feature selection methods* vignette). This method
@@ -609,21 +599,21 @@ Permutation variable importance is a model-agnostic variable importance method.
 It assesses importance by measuring the decrease in model performance caused by
 shuffling values of a feature across the instances in a dataset.
 
-For the breast cancer dataset, this results in the following figure:
+For the ischemic stroke dataset, this results in the following figure:
 
 ```{r, fig.align='center', fig.width=7, label="permutation-variable-importance-bc"}
 plots <- familiar::plot_permutation_variable_importance(
-  object = binomial_model,
-  data = binomial_data,
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
   estimation_type = "bias_correction"
 )
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
 The figure shows the features along the y-axis, and the loss in AUC-ROC caused
 by permuting the feature values along the x-axis. Accordingly,
-`cell_shape_uniformity` is considered to be the most important feature in the
+`max_remodeling_ratio` is considered to be the most important feature in the
 model.
 
 The figure shows two bars for each feature. A well-known issue with permutation
@@ -634,28 +624,22 @@ not decrease model performance as much. For this reason, familiar will permute
 features together depending on their mutual correlation, and the provided
 threshold values.
 
-By default, similarity between features is assessed using McFadden's pseudo-$R^2$.
-This metric can assess similarity between different types of features, i.e.
-numeric and categorical. The default thresholds are 0.3 and 1.0 that
-respectively cluster highly similar features and permute all features
-individually.
-
-The breast cancer dataset doesn't contain features that exceed the relatively
-stringent threshold of 0.3. Since the breast cancer dataset has only
-numerical features, we can also measure similarity differently. For example, if we
-measure similarity using the Spearman`s rank correlation coefficient, we arrive
-at the following:
+By default, similarity between features is assessed using McFadden's
+pseudo-$R^2$. This metric can assess similarity between different types of
+features, i.e. numeric and categorical. The default thresholds are 0.3 and 1.0
+that respectively cluster similar features and permute all features
+individually. The breast cancer dataset contains many features that are highly
+similar and exceed the relatively stringent threshold of 0.3.
 
 ```{r, fig.align='center', fig.width=7, label="permutation-variable-importance-bc-spearman"}
 plots <- familiar::plot_permutation_variable_importance(
-  object = binomial_model,
-  data = binomial_data,
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
   estimation_type = "bias_correction",
-  feature_similarity_metric = "spearman",
-  feature_similarity_threshold = c(0.6, 1.0)
+  feature_similarity_threshold = c(0.3, 0.5, 1.0)
 )
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
 This figure paints a different picture: the `cell_shape_uniformity`, `bare_nuclei`,
