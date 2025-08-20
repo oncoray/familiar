@@ -156,9 +156,11 @@ after treatment.
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="colon-model"}
 survival_data <- data.table::as.data.table(survival::colon)
 survival_data <- survival_data[etype == 1L][, ":=" ("id" = NULL, "study" = NULL, "etype" = NULL)]
+survival_data_train <- survival_data[1L:799L, ]
+survival_data <- survival_data[800L:929L, ]
 
 survival_model <- familiar::train_familiar(
-  data = survival_data,
+  data = survival_data_train,
   outcome_column = c("status", "time"),
   vimp_method = "none",
   learner = "random_forest_ranger_default",
@@ -374,7 +376,8 @@ Familiar applies one or more thresholds to stratify instances to risk groups.
 These thresholds are created during model development to avoid bias. The number
 and value of these thresholds is determined by two parameters:
 `stratification_method` and `stratification_threshold`. Both parameters are set
-when calling `summon_familiar`. `stratification_method` has three options:
+when calling `summon_familiar` or `train_familiar`.
+`stratification_method` has three options:
 
 -   `median`: Familiar uses the median predicted value in the development cohort
 to stratify instances into two risk groups.
@@ -388,9 +391,9 @@ threshold [@Lausen1992-qh; @Hothorn2003-qn] to stratify instances into two
 optimally separated risk groups.
 
 The `stratification_threshold` parameter is only used when
-`stratification_method="fixed"`. It allows for specifying the sample quantiles
+`stratification_method = "fixed"`. It allows for specifying the sample quantiles
 that are used to determine the thresholds. For example
-`stratification_threshold=c(0.25,0.75)` creates two thresholds that stratifies
+`stratification_threshold = c(0.25,0.75)` creates two thresholds that stratifies
 the development dataset into three groups: one with 25% of the instances with
 the highest risk, a group with 50% of the instances with medium risk, and a
 third group with 25% of instances with lowest risk.
@@ -418,21 +421,18 @@ between the two groups. Crosses indicate right-censored patients, of which there
 were few. The number of surviving patients in both groups at the time points
 along the x-axis are shown below the main plot.
 
-Note that the `predict` method allows for manually specifying stratification
-thresholds for existing models.
-
 # Model calibration
 
 Evaluating model performance is important as it allows us to assess how 
 accurate a model is. However, it often does not tell us how well we can rely on
 predictions for individual instances, e.g. how accurate an instance class
 probability is. Model calibration is assessed for this purpose. The model for
-the breast cancer dataset produces the following calibration plot:
+the ischemic stroke dataset produces the following calibration plot:
 
 ```{r, fig.align='center', fig.width=7, label="calibration-data-bci"}
 plots <- familiar::plot_calibration_data(
-  object = binomial_model,
-  data = binomial_data
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data
 )
 
 grid::grid.newpage()
