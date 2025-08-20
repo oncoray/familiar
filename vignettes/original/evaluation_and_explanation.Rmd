@@ -129,10 +129,7 @@ showcase some of the functionality we will employ the techniques discussed there
 We will first create two models. The first model aims to predict the risk for
 ischemic stroke based on clinical and image features. This is a classification problem.
 
-```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="breast-data-preparation"}
-# Get a dataset. Note that there are several features encoded with integers
-# that could be encoded as categorical variables. For brevity, we will forgo 
-# this,
+```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="ischemic-model"}
 ischemic_stroke_data <- modeldata::ischemic_stroke
 
 # Call familiar to create models. We don't use summon_familiar here, but call
@@ -153,8 +150,7 @@ The second model is a survival model, and is trained on a colon
 chemotherapy clinical trial dataset [@Moertel1995-bh] to predict recurrence 
 after treatment.
 
-```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="colon-data-preparation"}
-# Get a dataset.
+```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="colon-model"}
 survival_data <- data.table::as.data.table(survival::colon)
 survival_data <- survival_data[etype == 1L][, ":=" ("id" = NULL, "study" = NULL, "etype" = NULL)]
 
@@ -174,12 +170,12 @@ We assess model performance to evaluate accuracy of a model. Model accuracy is
 quantified using performance metrics that are documented in the *Performance metrics*
 vignette, and can be set using the `evaluation_metric` argument of the
 `summon_familiar` function or `metric` for plot and export functions. For
-example, this results in the following plot for the breast cancer dataset:
+example, this results in the following plot for the ischemic stroke dataset:
 
 ```{r, fig.align='center', fig.width=7, label="model-performance-plot"}
 plots <- familiar::plot_model_performance(
-  object = binomial_model,
-  data = binomial_data,
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
   metric = c("auc", "brier", "f1_score"),
   x_axis_by = "metric"
 )
@@ -198,12 +194,59 @@ predicts expected values for instances in a dataset. Familiar then compares the
 expected values against the observed values, and computes the value of the
 specified metric.
 
+Model performance can also be determined directly from predictions, which makes
+it possible to assess predictions made by non-familiar models. This involves
+conversion of the predictions to a prediction table object using `as_prediction_table`,
+as shown below:
+
+```{r, fig.align='center', fig.width=7, label="model-performance-plot-standalone"}
+predictions <- predict(
+  object = ischemic_stroke_model,
+  newdata = ischemic_stroke_data
+)
+
+# Create a prediction table object using as_prediction_table. The minimum
+# you need to provide here are: prediction probabilities for the positive class
+# (yes), the type of prediction (classification), and providing the class levels
+# (no, yes).
+predictions <- as_prediction_table(
+  x = predictions$yes,
+  type = "classification",
+  class_levels = c("no", "yes")
+)
+
+# The prediction table object is then provided as data.
+plots <- familiar::plot_model_performance(
+  data = predictions,
+  metric = c("auc", "brier", "f1_score"),
+  x_axis_by = "metric"
+)
+
+plots[[1L]]
+```
+This produces the exact same plot. Model performance can also be exported to a 
+table using using `export_model_performance`.
+
+```{r, label="model-performance-plot"}
+results <- familiar::export_model_performance(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  metric = c("auc", "brier", "f1_score"),
+  aggregate_results = TRUE
+)
+results
+```
+In the above table, `data_set` is randomly generated because we call this method
+on a (technically) *new* dataset. `ensemble_model_name` contains a placeholder
+for the same reason. `vimp_method` and `learner` are derived from the model, and
+metrics with 95% confidence intervals are shown.
+
 ## Receiver-operating characteristic curve
 
 The receiver-operating characteristic (ROC) curve visualises concordance between
 predicted class probabilities and the observed classes [@Hand2001-il]. It shows
 the trade-off between sensitivity and specificity of the model. The
-receiver-operating characteristic curve for the breast cancer dataset is as
+receiver-operating characteristic curve for the ischemic stroke dataset is as
 follows:
 
 ```{r, fig.align='center', fig.width=7, label="auc-roc-curve-bci"}
