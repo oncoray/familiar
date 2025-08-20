@@ -476,17 +476,17 @@ feature rank.
 
 The \emph{feature selection methods} vignette provides additional information.}
     \item{\code{vimp_aggregation_rank_threshold}}{(\emph{optional}) The threshold used to
-define the subset of highly important features. If not set, this threshold
-is determined by maximising the variance in the occurrence value over all
-features over the subset size.
+define the subset of highly important features. If set to \code{NULL}, this
+threshold is determined by maximising the variance in the occurrence value
+over all features over the subset size. The default value is \code{5}.
 
 This parameter is only relevant for \code{stability}, \code{exponential},
 \code{enhanced_borda}, \code{truncated_borda} and \code{enhanced_truncated_borda} methods.}
     \item{\code{parallel_vimp}}{(\emph{optional}) Enable parallel processing for
-the variable importance workflow. Defaults to \code{TRUE}. When set to \code{FALSE},
+variable importance tasks. Defaults to \code{TRUE}. When set to \code{FALSE},
 this will disable the use of parallel processing while performing feature
 selection, regardless of the settings of the \code{parallel} parameter.
-\code{parallel_vimp} is ignored if \code{parallel=FALSE}.}
+\code{parallel_vimp} is ignored if \code{parallel = FALSE}.}
     \item{\code{learner}}{(\strong{required}) One or more algorithms used for model
 development. A sizeable number learners is supported in \code{familiar}. Please
 see the vignette on learners for more information concerning the available

@@ -703,9 +703,9 @@ feature rank.
 
 The \emph{feature selection methods} vignette provides additional information.}
     \item{\code{vimp_aggregation_rank_threshold}}{(\emph{optional}) The threshold used to
-define the subset of highly important features. If not set, this threshold
-is determined by maximising the variance in the occurrence value over all
-features over the subset size.
+define the subset of highly important features. If set to \code{NULL}, this
+threshold is determined by maximising the variance in the occurrence value
+over all features over the subset size. The default value is \code{5}.
 
 This parameter is only relevant for \code{stability}, \code{exponential},
 \code{enhanced_borda}, \code{truncated_borda} and \code{enhanced_truncated_borda} methods.}
