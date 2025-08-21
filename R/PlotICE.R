@@ -633,7 +633,7 @@ setMethod(
       show_ice <- FALSE
       n_max_samples_shown <- NULL
     }
-    
+    browser()
     # Update the output so that it is more consistent.
     data <- mapply(
       .update_ice_and_pd_output,
@@ -641,6 +641,7 @@ setMethod(
       pd_data = pd_data,
       MoreArgs = list(
         "outcome_type" = object@outcome_type,
+        "class_levels" = get_outcome_class_levels(object),
         "anchor_values" = anchor_values,
         "n_samples" = n_max_samples_shown,
         "seed" = sample.int(n = 10000L, size = 1L)

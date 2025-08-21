@@ -770,10 +770,14 @@ setMethod(
     ice_data,
     pd_data,
     outcome_type,
+    class_levels = NULL,
     anchor_values = NULL,
     n_samples = NULL,
     seed
 ) {
+  
+  # Prevent NOTES
+  positive_class <- NULL
   
   if (is_empty(ice_data)) {
     return(list(
@@ -814,7 +818,7 @@ setMethod(
       ))
     }
   }
-
+  
   # Rename main value column to a consist name.
   if (outcome_type %in% c("binomial", "multinomial")) {
     old_value_column <- "probability"
@@ -888,6 +892,13 @@ setMethod(
       cropped_ice_data,
       use.names = TRUE
     )
+  }
+  
+  # Retain only positive class for binomial outcomes.
+  if (outcome_type == "binomial") {
+    selected_class <- tail(class_levels, n = 1L)
+    ice_data@data <- ice_data@data[positive_class == selected_class]
+    pd_data@data <- pd_data@data[positive_class == selected_class]
   }
   
   return(list(

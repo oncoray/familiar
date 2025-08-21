@@ -636,24 +636,21 @@ similar and exceed the relatively stringent threshold of 0.3.
 Variable importance does not explain how features influence the model. Partial
 dependence (PD) [@Friedman2001-jf] and individual conditional expectation (ICE)
 [@Goldstein2015-rv] plots can be used to visualise this behaviour. As an
-example, we can create an ICE plot for the `cell_shape_uniformity` feature that
-was found to be important for predicting cell malignancy in the breast cancer.
+example, we can create an ICE plot for the `max_remodeling_ratio` feature that
+was found to be important for predicting ischemic stroke.
 
-```{r, fig.align='center', fig.width=7, label="ice-cell-shap-uniformity"}
+```{r, fig.align='center', fig.width=7, label="ice-max-remodeling-ratio"}
 plots <- familiar::plot_ice(
-  object = binomial_model,
-  data = binomial_data,
-  features = "cell_shape_uniformity"
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  features = "max_remodeling_ratio"
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1L]])
+plot(plots[[1L]])
 ```
 
 The ICE plot shows multiple curves for individual samples, as well as their
-average, the partial dependence plot as a somewhat thicker curve. The ICE plot
-indicates that an increase in cell shape uniformity is associated by the model
-with a rise in malignancy.
+average, the partial dependence plot as a somewhat thicker curve. 
 
 It also shows novelty, which is a measure of how out-of-distribution the value
 is. Novelty is computed using extended isolation forests [@Hariri2019-xz] and is
