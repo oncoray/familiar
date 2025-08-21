@@ -1423,7 +1423,7 @@ theme_familiar <- function(
     # Check if the iterator exceeds the maximum number of available figures.
     if (length(selected_figure_id) == 0L) break
   }
-
+  browser()
   # Identify data that should be re-inserted.
   g <- ..insert_global_plot_grobs(
     grobs = g,
@@ -1600,6 +1600,7 @@ theme_familiar <- function(
   figure_list$main <- grobs
   
   # Add guide.
+  # TODO: Add additional guides.
   figure_list$guide <- element_grobs[[present_figure_id]]$guide
   
   # Determine if axis labels need to be added.
@@ -1710,6 +1711,23 @@ theme_familiar <- function(
 
 
 
+.all_guide_names <- function() {
+  element_names <- c(
+    "guide", "guide_r", "guide_l",
+    "guide_t", "guide_b", "guide_in"
+  )
+  gtable_names <- c(
+    "guide-box", "guide-box-right", "guide-box-left",
+    "guide-box-top", "guide-box-bottom", "guide-box-inside"
+  )
+  return(list(
+    "e" = element_names,
+    "g" = gtable_names
+  ))
+}
+
+
+
 .extract_plot_grobs <- function(p) {
   element_list <- list()
 
@@ -1724,13 +1742,21 @@ theme_familiar <- function(
     g = g,
     extension = "main"
   )
-
-  # Legend
-  element_list$guide <- .gtable_extract(
-    g = g,
-    element = "guide-box",
-    drop_empty = TRUE
+  
+  # Extract legend. The function below extract gtable elements corresponding
+  # to each of the possible guide-boxes. ggplot2 v3.5.0 introduces position-
+  # specific guide boxes.
+  element_list <- mapply(
+    .gtable_extract,
+    element = .all_guide_names()$g,
+    MoreArgs = list(
+      "g" = g,
+      "drop_empty" = TRUE
+    ),
+    SIMPLIFY = FALSE
   )
+  names(element_list) <- .all_guide_names()$e
+  element_list <- element_list[!sapply(element_list, is.null)]
 
   # Axis label
   element_list$axis_label_b <- .gtable_extract(
@@ -1927,6 +1953,7 @@ theme_familiar <- function(
   if (is.null(g)) return(g)
 
   # Re-insert guides.
+  browser()
   if ("guide" %in% elements && !is.null(grob_list$guide)) {
     # Find legend position
     legend_position <- ggtheme$legend.position
@@ -2957,10 +2984,10 @@ theme_familiar <- function(
   guide_position <- ggtheme$legend.position
 
   # Check if the guide position can be interpreted
-  if (!all(guide_position %in% c("none", "left", "right", "bottom", "top"))) {
+  if (!all(guide_position %in% c("none", "left", "right", "bottom", "top", "inside"))) {
     ..error_reached_unreachable_code(paste0(
       ".combine_guide_grobs: Guide position (legend.position in the ggplot2 ",
-      "theme) is expect to be one of none, left, right, bottom, top."
+      "theme) is expect to be one of none, left, right, bottom, top, inside."
     ))
   }
 

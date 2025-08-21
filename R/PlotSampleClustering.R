@@ -1444,6 +1444,8 @@ setMethod(
       # Convert to grob
       g_outcome <- .convert_to_grob(p_outcome)
 
+      # TODO: adapt to other guide positions.
+      
       # Extract guide from grob
       g_outcome_guide <- .gtable_extract(
         g = g_outcome,
@@ -1482,9 +1484,19 @@ setMethod(
       g_outcome_guide <- NULL
     }
 
+    # TODO: adapt to other guide positions.
+    
     # Combine main guide with the outcome guide
     extracted_elements$guide <- .combine_guide_grobs(
-      g = list(extracted_elements$guide, g_outcome_guide),
+      g = list(
+        extracted_elements$guide,
+        extracted_elements$guide_r,
+        extracted_elements$guide_l,
+        extracted_elements$guide_t,
+        extracted_elements$guide_b,
+        extracted_elements$guide_in,
+        g_outcome_guide
+      ),
       ggtheme = ggtheme,
       no_empty = FALSE
     )

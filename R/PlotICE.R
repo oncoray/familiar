@@ -1234,7 +1234,7 @@ setMethod(
       )
     }
   }
-
+  
   # Set novelty scales
   if (is.null(novelty_range) && novelty_scales == "figure") {
     # Keep only data that are used to set the scale.
@@ -1351,13 +1351,13 @@ setMethod(
     p_main <- .remove_plot_grobs(p = p_main)
 
     # Rename plot elements.
-    g_calibration <- .rename_plot_grobs(
+    g_ice <- .rename_plot_grobs(
       g = .convert_to_grob(p_main),
       extension = "main"
     )
 
     # Add combined grob to list
-    figure_list <- c(figure_list, list(g_calibration))
+    figure_list <- c(figure_list, list(g_ice))
 
     # Add extract elements to the grob_element_list
     extracted_element_list <- c(
@@ -1376,7 +1376,7 @@ setMethod(
     y_label_shared = y_label_shared,
     facet_wrap_cols = facet_wrap_cols
   )
-
+browser()
   # Combine features.
   g <- .arrange_plot_grobs(
     grobs = figure_list,
