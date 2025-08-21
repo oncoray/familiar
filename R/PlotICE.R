@@ -633,7 +633,7 @@ setMethod(
       show_ice <- FALSE
       n_max_samples_shown <- NULL
     }
-    browser()
+    
     # Update the output so that it is more consistent.
     data <- mapply(
       .update_ice_and_pd_output,
