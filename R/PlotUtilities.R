@@ -1601,6 +1601,7 @@ theme_familiar <- function(
   
   # Add guide.
   # TODO: Add additional guides.
+  browser()
   figure_list$guide <- element_grobs[[present_figure_id]]$guide
   
   # Determine if axis labels need to be added.
@@ -1953,113 +1954,150 @@ theme_familiar <- function(
   if (is.null(g)) return(g)
 
   # Re-insert guides.
-  browser()
-  if ("guide" %in% elements && !is.null(grob_list$guide)) {
-    # Find legend position
-    legend_position <- ggtheme$legend.position
-
-    if (legend_position == "right") {
-      # Align to right of the plot, and iterate inward to find valid reference elements.
-      for (ref_element in c("strip-r", "ylab-r", "axis-r", "panel-main", "panel")) {
-        if (.gtable_element_in_layout(
-          g = g, 
-          element = ref_element, 
-          partial_match = TRUE
-        )) {
-          # If the reference element exists, add and align along background.
-          g <- .gtable_insert_along(
-            g = g,
-            g_new = grob_list$guide,
-            ref_element = ref_element,
-            along_element = "panel",
-            spacer = list("l" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")),
-            where = legend_position,
-            partial_match_ref = TRUE,
-            partial_match_along = TRUE,
-            update_dimensions = FALSE
-          )
-          
-          break
-        }
+  guide_names <- .all_guide_names()
+  if (any(guide_names$e %in% elements)) {
+    
+    for (ii in seq_along(guide_names$e)) {
+      current_guide_element <- guide_names$e[ii]
+      if (is.null(g[[current_guide_element]])) next
+      
+      # Determine where the legend is placed.
+      legend_position <- switch(
+        current_guide_element,
+        "guide" = ggtheme$legend.position,
+        "guide_r" = "right",
+        "guide_l" = "left",
+        "guide_t" = "top",
+        "guide_b" = "bottom",
+        "guide_in" = "inside"
+      )
+      
+      if (legend_position == "right") {
+        available_reference_elements <- c("strip-r", "ylab-r", "axis-r", "panel-main", "panel")
+        spacer <- list("l" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y"))
+        
+      } else if (legend_position == "left") {
+        available_reference_elements <- c("strip-l", "ylab-l", "axis-l", "panel-main", "panel")
+        spacer <- list("r" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y"))
+        
+      } else if (legend_position == "top") {
+        available_reference_elements <- c("strip-t", "xlab-t", "axis-t", "panel-main", "panel")
+        spacer <- list("b" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x"))
+        
+      } else if (legend_position == "bottom") {
+        available_reference_elements <- c("strip-b", "xlab-b", "axis-b", "panel-main", "panel")
+        spacer <- list("t" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x"))
+        
+      } else if (legend_position == "inside") {
+        ..error("familiar does not support 'inside' positioning of plot legends.")
+        
+      } else {
+        ..error_reached_unreachable_code(paste0("unknown legend position: ", legend_position))
       }
       
-    } else if (legend_position == "left") {
-      # Align to left of the plot, and iterate inward to find valid reference
-      # elements.
-      for (ref_element in c("strip-l", "ylab-l", "axis-l", "panel-main", "panel")) {
-        if (.gtable_element_in_layout(
-          g = g, 
-          element = ref_element, 
-          partial_match = TRUE
-        )) {
-          # If the reference element exists, add and align along background.
-          g <- .gtable_insert_along(
-            g = g,
-            g_new = grob_list$guide,
-            ref_element = ref_element,
-            along_element = "panel",
-            spacer = list("r" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")),
-            where = legend_position,
-            partial_match_ref = TRUE,
-            partial_match_along = TRUE,
-            update_dimensions = FALSE
-          )
-
-          break
+      browser()
+      if (legend_position == "right") {
+        # Align to right of the plot, and iterate inward to find valid reference elements.
+        for (ref_element in c("strip-r", "ylab-r", "axis-r", "panel-main", "panel")) {
+          if (.gtable_element_in_layout(
+            g = g, 
+            element = ref_element, 
+            partial_match = TRUE
+          )) {
+            # If the reference element exists, add and align along background.
+            g <- .gtable_insert_along(
+              g = g,
+              g_new = grob_list$guide,
+              ref_element = ref_element,
+              along_element = "panel",
+              spacer = list("l" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")),
+              where = legend_position,
+              partial_match_ref = TRUE,
+              partial_match_along = TRUE,
+              update_dimensions = FALSE
+            )
+            
+            break
+          }
         }
-      }
-      
-    } else if (legend_position == "bottom") {
-      # Align to bottom of the plot, and iterate inward to find valid reference
-      # elements.
-      for (ref_element in c("strip-b", "xlab-b", "axis-b", "panel-main", "panel")) {
-        if (.gtable_element_in_layout(
-          g = g,
-          element = ref_element, 
-          partial_match = TRUE
-        )) {
-          # If the reference element exists, add and align along background.
-          g <- .gtable_insert_along(
-            g = g,
-            g_new = grob_list$guide,
-            ref_element = ref_element,
-            along_element = "panel",
-            spacer = list("t" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")),
-            where = legend_position,
-            partial_match_ref = TRUE,
-            partial_match_along = TRUE,
-            update_dimensions = FALSE
-          )
-
-          break
+        
+      } else if (legend_position == "left") {
+        # Align to left of the plot, and iterate inward to find valid reference
+        # elements.
+        for (ref_element in c("strip-l", "ylab-l", "axis-l", "panel-main", "panel")) {
+          if (.gtable_element_in_layout(
+            g = g, 
+            element = ref_element, 
+            partial_match = TRUE
+          )) {
+            # If the reference element exists, add and align along background.
+            g <- .gtable_insert_along(
+              g = g,
+              g_new = grob_list$guide,
+              ref_element = ref_element,
+              along_element = "panel",
+              spacer = list("r" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")),
+              where = legend_position,
+              partial_match_ref = TRUE,
+              partial_match_along = TRUE,
+              update_dimensions = FALSE
+            )
+            
+            break
+          }
         }
-      }
-      
-    } else if (legend_position == "top") {
-      # Align to top of the plot, and iterate inward to find valid reference
-      # elements.
-      for (ref_element in c("strip-t", "xlab-t", "axis-t", "panel-main", "panel")) {
-        if (.gtable_element_in_layout(
-          g = g, 
-          element = ref_element, 
-          partial_match = TRUE
-        )) {
-          # If the reference element exists, add and align along background.
-          g <- .gtable_insert_along(
+        
+      } else if (legend_position == "bottom") {
+        # Align to bottom of the plot, and iterate inward to find valid reference
+        # elements.
+        for (ref_element in c("strip-b", "xlab-b", "axis-b", "panel-main", "panel")) {
+          if (.gtable_element_in_layout(
             g = g,
-            g_new = grob_list$guide,
-            ref_element = ref_element,
-            along_element = "panel",
-            spacer = list("b" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")),
-            where = legend_position,
-            partial_match_ref = TRUE,
-            partial_match_along = TRUE,
-            update_dimensions = FALSE
-          )
-
-          break
+            element = ref_element, 
+            partial_match = TRUE
+          )) {
+            # If the reference element exists, add and align along background.
+            g <- .gtable_insert_along(
+              g = g,
+              g_new = grob_list$guide,
+              ref_element = ref_element,
+              along_element = "panel",
+              spacer = list("t" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")),
+              where = legend_position,
+              partial_match_ref = TRUE,
+              partial_match_along = TRUE,
+              update_dimensions = FALSE
+            )
+            
+            break
+          }
         }
-      }
+        
+      } else if (legend_position == "top") {
+        # Align to top of the plot, and iterate inward to find valid reference
+        # elements.
+        for (ref_element in c("strip-t", "xlab-t", "axis-t", "panel-main", "panel")) {
+          if (.gtable_element_in_layout(
+            g = g, 
+            element = ref_element, 
+            partial_match = TRUE
+          )) {
+            # If the reference element exists, add and align along background.
+            g <- .gtable_insert_along(
+              g = g,
+              g_new = grob_list$guide,
+              ref_element = ref_element,
+              along_element = "panel",
+              spacer = list("b" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")),
+              where = legend_position,
+              partial_match_ref = TRUE,
+              partial_match_along = TRUE,
+              update_dimensions = FALSE
+            )
+            
+            break
+          }
+        }
     }
   }
 
