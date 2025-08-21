@@ -113,6 +113,8 @@ contrast with a white background.
   lead to too few samples to allow for assessment. This affected 
   Leave-One-Out-Cross-Validation (LOOCV) schemes in particular.
 
+- Added support for `ggplot2` version 3.5.
+
 ## Fixes
 
 - Fixed errors when creating feature or similarity plots caused by sample or 
