@@ -580,7 +580,7 @@ familiar::summon_familiar(
 )
 ```
 
-## Only training models
+## Training models only
 
 `summon_familiar` also incorporates a model evaluation process, which may not be
 that useful if the aim is to simply train a model. In that case,
