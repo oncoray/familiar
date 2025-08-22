@@ -132,8 +132,17 @@ For illustration purposes, we will use the first 99 samples as development data,
 and the remaining as a holdout set.
 
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="ischemic-model"}
-ischemic_stroke_data_train <- modeldata::ischemic_stroke[1L:99L, ]
-ischemic_stroke_data <- modeldata::ischemic_stroke[100L:126L, ]
+ischemic_stroke_data <- data.table::as.data.table(modeldata::ischemic_stroke)
+ischemic_stroke_data$male <- factor(ischemic_stroke_data$male, levels = c(0, 1), labels = c("no", "yes"))
+ischemic_stroke_data$smoking_history <- factor(ischemic_stroke_data$smoking_history, levels = c(0, 1), labels = c("no", "yes"))
+ischemic_stroke_data$atrial_fibrillation <- factor(ischemic_stroke_data$atrial_fibrillation, levels = c(0, 1), labels = c("no", "yes"))
+ischemic_stroke_data$coronary_artery_disease <- factor(ischemic_stroke_data$coronary_artery_disease, levels = c(0, 1), labels = c("no", "yes"))
+ischemic_stroke_data$diabetes_history  <- factor(ischemic_stroke_data$diabetes_history , levels = c(0, 1), labels = c("no", "yes"))
+ischemic_stroke_data$hypercholesterolemia_history   <- factor(ischemic_stroke_data$hypercholesterolemia_history  , levels = c(0, 1), labels = c("no", "yes"))
+ischemic_stroke_data$hypertension_history  <- factor(ischemic_stroke_data$hypertension_history , levels = c(0, 1), labels = c("no", "yes"))
+
+ischemic_stroke_data_train <- ischemic_stroke_data[1L:99L, ]
+ischemic_stroke_data <- ischemic_stroke_data[100L:126L, ]
 
 # Call familiar to create models. We don't use summon_familiar here, but call
 # train_familiar instead, which returns familiar models.
@@ -555,11 +564,11 @@ Vickers et al. [@Vickers2008-uu].
 
 Not all features are strongly associated with the outcome of interest. One of
 the most critical points in machine learning is selecting those features that
-are important enough to incorporate into a model. Familiar prospectively
-assesses variable importance during the feature selection step using the methods
-detailed in the *Feature selection methods* vignette. Later, during evaluation,
-familiar employs both model-specific and model-agnostic methods to explaining
-which features are considered important by the model itself.
+are important enough to incorporate into a model. Familiar assesses variable
+importance using the methods detailed in the *Variable importance methods*
+vignette during training. Later, during evaluation, familiar employs both
+model-specific and model-agnostic methods to explaining which features are
+considered important by the model itself.
 
 ## Model-specific methods
 
@@ -584,7 +593,7 @@ on the left, and the least important features on the right. Letters indicate
 features that are clustered.
 
 In case an ensemble of models is assessed, scores are aggregated using an
-aggregation method (see the *feature selection methods* vignette). This method
+aggregation method (see the *variable importance methods* vignette). This method
 can be set using the `aggregation_method` argument, or the
 `eval_aggregation_method` configuration parameter (`summon_familiar`).
 
@@ -659,10 +668,8 @@ of the trees in the isolation forest [@Liu2008-kw]. Novelty values range between
 `0.00` and `1.00`. Novelty values should be interpreted with care. While increasing
 novelty values represent instances that lie further from the distribution, the
 values that represent in-distribution instances may vary. In the ICE plot above,
-novelty values range between `0.40` and `0.60`. In fact, the median novelty
-value for the training instances is `0.47` with an interquartile range of
-`0.07`. None of the points in ICE plot can therefore be considered
-out-of-distribution.
+novelty values range between `0.40` and `0.50`. None of the points in ICE plot
+can therefore be considered out-of-distribution.
 
 It is possible to anchor the curves in the ICE plot to a specific feature value.
 This allows for assessing the model response for individual instances versus a
@@ -670,60 +677,59 @@ fixed value. In effect this can reduce some of the offset caused by other
 (fixed) features in each instance, and may help to elucidate the observed
 behaviour:
 
-```{r, fig.align='center', fig.width=7, label="ice-cell-shape-uniformity-anchored"}
+```{r, fig.align='center', fig.width=7, label="ice-max-remodeling-ratio-anchored"}
 plots <- familiar::plot_ice(
-  object = binomial_model,
-  data = binomial_data,
-  features = "cell_shape_uniformity",
-  anchor_values = list("cell_shape_uniformity" = 10.0)
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  features = "max_remodeling_ratio",
+  anchor_values = list("max_remodeling_ratio" = 2.5)
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1L]])
+plot(plots[[1L]])
 ```
 
-In the plot above, we have anchored the values at `cell_shape_uniformity=10`,
-which is the maximum value that this feature can take. All curves are then drawn
-relative to the predicted probability found for this particular value. 
+In the plot above, we have anchored the values at `max-remodeling-ratio = 2.5`.
+All curves are then drawn relative to the predicted probability found for this
+particular value.
 
 It is also possible to show the partial dependence of two features at the same
 time:
 
 ```{r, fig.align='center', fig.width=7, label="ice-2d"}
 plots <- familiar::plot_ice(
-  object = binomial_model,
-  data = binomial_data,
-  features = c("cell_shape_uniformity", "bare_nuclei")
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  features = c("max_remodeling_ratio", "coronary_artery_disease")
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1L]])
+plot(plots[[1L]])
 ```
 
-The partial dependence plot above shows the `cell_shape_uniformity` along the
-x-axis and `bare_nuclei` along the y-axis. Higher intensities are associated
-with a higher expected probability of malignancy. The figure thus indicates that
-higher values of `cell_shape_uniformity` clearly affect the predicted malignancy
-probability. Higher values of `bare_nuclei` also lead to higher malignancy
-probabilities, but the effect is less pronounced. The average novelty score of
-the underlying instances determines the size of each point.
+The partial dependence plot above shows `max_remodeling_ratio` along the x-axis
+and `coronary_artery_disease` along the y-axis. Higher intensities are
+associated with a higher expected probability of malignancy. The figure thus
+indicates that higher values of `max_remodeling_ratio` clearly affect the
+predicted probability of ischemic stroke. The presence of
+`coronary_artery_disease` can be seen to decrease the probability of ischemic
+stroke - probably because these patients arrived at the hospital due to this
+condition, not necessarily cerebral stroke. The average novelty score of the
+underlying instances determines the size of each point.
 
 It also possible to anchor 2D partial dependence plots:
 
 ```{r, fig.align='center', fig.width=7, label="ice-2d-anchored"}
 plots <- familiar::plot_ice(
-  object = binomial_model,
-  data = binomial_data,
-  features = c("cell_shape_uniformity", "bare_nuclei"),
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  features = c("max_remodeling_ratio", "coronary_artery_disease"),
   anchor_values = list(
-    "cell_shape_uniformity" = 10.0,
-    "bare_nuclei" = 10.0
+    "max_remodeling_ratio" = 2.5,
+    "coronary_artery_disease" = "no"
   ),
   show_novelty = FALSE
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1L]])
+plot(plots[[1L]])
 ```
 
 We disabled novelty (`show_novelty=FALSE`) for plotting the 2D anchored plot.
