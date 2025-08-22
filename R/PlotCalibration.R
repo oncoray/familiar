@@ -826,7 +826,7 @@ setMethod(
         where = "top",
         ref_element = "panel-main",
         partial_match = TRUE,
-        spacer = list("b" = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x"))
+        spacer = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y")
       )
     }
 

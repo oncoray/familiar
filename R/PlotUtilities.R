@@ -1977,19 +1977,19 @@ theme_familiar <- function(
       
       if (legend_position == "right") {
         available_reference_elements <- c("strip-r", "ylab-r", "axis-r", "panel-main", "panel")
-        spacer <- list("l" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y"))
+        spacer <- .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")
         
       } else if (legend_position == "left") {
         available_reference_elements <- c("strip-l", "ylab-l", "axis-l", "panel-main", "panel")
-        spacer <- list("r" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y"))
+        spacer <- .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")
         
       } else if (legend_position == "top") {
         available_reference_elements <- c("strip-t", "xlab-t", "axis-t", "panel-main", "panel")
-        spacer <- list("b" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x"))
+        spacer <- .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")
         
       } else if (legend_position == "bottom") {
         available_reference_elements <- c("strip-b", "xlab-b", "axis-b", "panel-main", "panel")
-        spacer <- list("t" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x"))
+        spacer <- .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")
         
       } else if (legend_position == "inside") {
         ..error("familiar does not support 'inside' positioning of plot legends.")
