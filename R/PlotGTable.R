@@ -420,14 +420,13 @@
       req_length = 1L
     )
   }
-
+  
   # Create an offset.
-  offset <- integer(4L)
-  names(offset) <- c("t", "l", "b", "r")
-
-  spacer_offset <- integer(4L)
-  names(spacer_offset) <- c("t", "l", "b", "r")
-
+  ref_shift <- integer(4L)
+  names(ref_shift) <- c("t", "l", "b", "r")
+  elem_ref_offset <- integer(4L)
+  names(elem_ref_offset) <- c("t", "l", "b", "r")
+  
   # Find position to insert this element
   ref_position <- .gtable_get_position(
     g = g, 
@@ -435,53 +434,6 @@
     where = where, 
     partial_match = partial_match_ref
   )
-
-  # Add spacing
-  if (where %in% c("top", "bottom")) {
-    # Add space to top.
-    if (!is.null(spacer$t)) {
-      g_new <- gtable::gtable_add_rows(
-        g_new, 
-        heights = spacer$t, 
-        pos = 0L
-      )
-
-      # This shifts the actual element downward.
-      spacer_offset[["t"]] <- spacer_offset[["b"]] <- 1L
-    }
-
-    # Add space to bottom.
-    if (!is.null(spacer$b)) {
-      g_new <- gtable::gtable_add_rows(
-        g_new,
-        heights = spacer$b, 
-        pos = -1L
-      )
-    }
-    
-  } else {
-    # Add space to left.
-    if (!is.null(spacer$l)) {
-      g_new <- gtable::gtable_add_cols(
-        g_new,
-        widths = spacer$l, 
-        pos = 0L
-      )
-
-      # This shifts the actual element to the right.
-      spacer_offset[["r"]] <- spacer_offset[["l"]] <- 1L
-    }
-
-    # Add space to right.
-    if (!is.null(spacer$r)) {
-      g_new <- gtable::gtable_add_cols(
-        g_new, 
-        widths = spacer$r, 
-        pos = -1L
-      )
-    }
-    
-  }
 
   if (attempt_replace) {
     # Find if there is a grob with the same name at the intended position.
@@ -514,20 +466,46 @@
 
     # This shifts the rest of the elements (including the reference element)
     # down by a number of rows, which means that we need an offset.
-    offset[["t"]] <- offset[["b"]] <- length(g_new$heights)
+    ref_shift[["t"]] <- ref_shift[["b"]] <- length(g_new$heights)
+    
+    # Add space between the inserted element and the reference element.
+    if (!is.null(spacer)) {
+      g <- gtable::gtable_add_rows(
+        g,
+        heights = spacer,
+        pos = ref_position[["t"]] + ref_shift[["t"]] - 1L
+      )
+      ref_shift[["t"]] <- ref_shift[["t"]] + 1L
+      ref_shift[["b"]] <- ref_shift[["b"]] + 1L
+    }
+    
+    elem_ref_offset[["t"]] <- -ref_shift[["t"]]
+    elem_ref_offset[["b"]] <- -ref_shift[["b"]]
     
   } else if (where == "bottom") {
+    # This does not shift the reference element down.
+    ref_shift[["t"]] <- ref_shift[["b"]] <- 0L
+    
+    # Add space between the reference element and the element to be inserted.
+    if (!is.null(spacer)) {
+      g <- gtable::gtable_add_rows(
+        g,
+        heights = spacer,
+        pos = ref_position[["b"]]
+      )
+      elem_ref_offset[["t"]] <- elem_ref_offset[["b"]] <- 1L
+    }
+    
     # Add row below b (i.e. at b+1, and move existing rows down).
     g <- gtable::gtable_add_rows(
       g,
       heights = g_new$heights,
-      pos = ref_position[["b"]]
+      pos = ref_position[["b"]] + elem_ref_offset[["b"]]
     )
-
-    # This does not shift the reference element down, which means that the
-    # offset is -1L.
-    offset[["t"]] <- offset[["b"]] <- -1L
     
+    elem_ref_offset[["t"]] <- elem_ref_offset[["t"]] + 1L
+    elem_ref_offset[["b"]] <- elem_ref_offset[["b"]] + 1L
+
   } else if (where == "left") {
     # Add column at l-1 (i.e. at l, and move existing columns to right)
     g <- gtable::gtable_add_cols(
@@ -538,19 +516,46 @@
 
     # This shifts the rest of the elements (including the reference element) to
     # the right by a number of rows, which means that we need an offset.
-    offset[["l"]] <- offset[["r"]] <- length(g_new$widths)
+    ref_shift[["l"]] <- ref_shift[["r"]] <- length(g_new$widths)
+    
+    # Add space between the inserted element and the reference element.
+    if (!is.null(spacer)) {
+      g <- gtable::gtable_add_cols(
+        g,
+        widths = spacer,
+        pos = ref_position[["l"]] + ref_shift[["l"]] - 1L
+      )
+      ref_shift[["l"]] <- ref_shift[["l"]] + 1L
+      ref_shift[["r"]] <- ref_shift[["r"]] + 1L
+    }
+    
+    elem_ref_offset[["l"]] <- -ref_shift[["l"]]
+    elem_ref_offset[["r"]] <- -ref_shift[["r"]]
     
   } else if (where == "right") {
+    # This does not shift the reference element to the right.
+    ref_shift[["l"]] <- ref_shift[["r"]] <- 0L
+    
+    # Add space between the reference element and the element to be inserted.
+    if (!is.null(spacer)) {
+      g <- gtable::gtable_add_cols(
+        g,
+        widths = spacer,
+        pos = ref_position[["r"]]
+      )
+      
+      elem_ref_offset[["l"]] <- elem_ref_offset[["r"]] <- 1L
+    }
+    
     # Add column at r (i.e. at r+1, and move existing columns to the right).
     g <- gtable::gtable_add_cols(
       g,
       widths = g_new$widths,
-      pos = ref_position[["r"]]
+      pos = ref_position[["r"]] + elem_ref_offset[["r"]]
     )
-
-    # This does not shift the reference element to the right, which means that
-    # the offset can is -1L.
-    offset[["l"]] <- offset[["r"]] <- -1L
+    
+    elem_ref_offset[["l"]] <- elem_ref_offset[["l"]] + 1L
+    elem_ref_offset[["r"]] <- elem_ref_offset[["r"]] + 1L
     
   } else {
     ..error_reached_unreachable_code(paste0(
@@ -575,9 +580,9 @@
     element = along_element, 
     partial_match = partial_match_along
   )
-
+  
   # Set new position
-  new_position <- ref_position + spacer_offset - offset
+  new_position <- ref_position + elem_ref_offset
 
   if (where %in% c("top", "bottom")) {
     new_position[["l"]] <- extent[["l"]]
@@ -588,8 +593,9 @@
   }
 
   # Add element to g.
-  g <- gtable::gtable_add_grob(g,
-    grobs = g_new$grobs[[1L]],
+  g <- gtable::gtable_add_grob(
+    g,
+    grobs = g_new,
     t = new_position[["t"]],
     l = new_position[["l"]],
     b = new_position[["b"]],
