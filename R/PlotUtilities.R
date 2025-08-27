@@ -1712,11 +1712,11 @@ theme_familiar <- function(
 
 .all_guide_names <- function() {
   element_names <- c(
-    "guide", "guide_r", "guide_l",
+    "guide_r", "guide_l",
     "guide_t", "guide_b", "guide_in"
   )
   gtable_names <- c(
-    "guide-box", "guide-box-right", "guide-box-left",
+    "guide-box-right", "guide-box-left",
     "guide-box-top", "guide-box-bottom", "guide-box-inside"
   )
   return(list(
