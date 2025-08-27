@@ -755,7 +755,7 @@ plots <- familiar::plot_feature_similarity(
   rotate_x_tick_labels = TRUE
 )
 
-plot(plots[[1]])
+plot(plots[[1L]])
 ```
 
 Because we specify `feature_similarity_metric = "spearman"`The heatmap displays
@@ -777,31 +777,31 @@ plots <- familiar::plot_sample_clustering(
   rotate_x_tick_labels = TRUE
 )
 
-plot(plots[[1]])
+plot(plots[[1L]])
 ```
 
 As may be observed, samples in the breast cancer dataset form two main clusters
 that correspond closely to cell malignancy. The top dendrogram is the same as
 for feature clustering, as it should be. The right dendrogram is formed after
-computing Gower's distance between samples (by default), and shows the division
-of samples into two main clusters. The heatmap itself shows normalised values
-for the features, based on normalisation and transformation parameters obtained
-during model development.
+computing Gower's distance between samples (by default), and shows clustering of
+samples. No clear major clusters are observable. The heatmap itself shows
+normalised values for the features, based on normalisation and transformation
+parameters obtained during model development.
 
 Normalisation options can be altered by changing the `show_normalised_data`
-argument. In the breast cancer dataset all features have the same range, so we
+argument. In the ischemic stroke dataset all features have the same range, so we
 can also show the data directly:
 
 ```{r, fig.align='center', fig.width=7, label="sample-similarity-unnormalised"}
 plots <- familiar::plot_sample_clustering(
-  object = binomial_model,
-  data = binomial_data,
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
   feature_similarity_metric = "spearman",
-  show_normalised_data = "none"
+  show_normalised_data = "none",
+  rotate_x_tick_labels = TRUE
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1L]])
+plot(plots[[1L]])
 ```
 
 # References
