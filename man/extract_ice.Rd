@@ -12,7 +12,7 @@ extract_ice(
   features = NULL,
   feature_x_range = NULL,
   feature_y_range = NULL,
-  n_sample_points = 50L,
+  n_sample_points = 20L,
   ensemble_method = waiver(),
   evaluation_times = waiver(),
   sample_limit = waiver(),
