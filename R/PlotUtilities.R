@@ -2938,7 +2938,7 @@ theme_familiar <- function(
 .combine_guide_grobs <- function(g, ggtheme, no_empty = TRUE) {
   # Find how tables should be organised.
   guide_position <- ggtheme$legend.position
-
+  
   # Check if the guide position can be interpreted
   if (!all(guide_position %in% c("none", "left", "right", "bottom", "top", "inside"))) {
     ..error_reached_unreachable_code(paste0(
@@ -3006,7 +3006,7 @@ theme_familiar <- function(
       nrow = 1L
     )
   }
-
+  
   # Create a gtable that combines all guide-boxes.
   g <- gtable::gtable_matrix(
     name = "guide-box",
@@ -3017,13 +3017,12 @@ theme_familiar <- function(
     respect = TRUE,
     clip = "inherit"
   )
-
-  # Wrap the combined guides into a single grob.
+  
   g <- gtable::gtable_matrix(
     name = "guide-box",
     grobs = matrix(list(g), nrow = 1L, ncol = 1L),
-    widths = sum(widths),
-    heights = sum(heights),
+    widths = sum(g$widths),
+    heights = sum(g$heights),
     respect = TRUE,
     clip = "inherit"
   )

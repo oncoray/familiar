@@ -150,6 +150,7 @@
 }
 
 
+
 .gtable_drop_empty <- function(g, trim = TRUE) {
   # Find grob classes
   grob_classes <- lapply(g$grobs, class)
@@ -168,6 +169,7 @@
 
   return(g)
 }
+
 
 
 .gtable_filter_exact <- function(
@@ -447,12 +449,6 @@
 
   if (length(g_new) == 0L) {
     return(g)
-  } else if (length(g_new) > 1L) {
-    ..error_variable_has_too_many_values(
-      x = g_new, 
-      var_name = "g_new", 
-      req_length = 1L
-    )
   }
   
   # Create an offset.

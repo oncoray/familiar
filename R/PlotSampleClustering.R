@@ -1297,7 +1297,7 @@ setMethod(
       show_feature_dendrogram = show_feature_dendrogram,
       show_sample_dendrogram = show_sample_dendrogram
     )
-
+    
     # Extract plot elements from the heatmap.
     extracted_elements <- .extract_plot_grobs(p = p_heatmap)
 
@@ -1444,13 +1444,12 @@ setMethod(
       # Convert to grob
       g_outcome <- .convert_to_grob(p_outcome)
 
-      # TODO: adapt to other guide positions.
-      
       # Extract guide from grob
       g_outcome_guide <- .gtable_extract(
         g = g_outcome,
         element = "guide",
-        partial_match = TRUE
+        partial_match = TRUE,
+        drop_empty = TRUE
       )
 
       if (outcome_type %in% c("survival", "competing_risk")) {
@@ -1484,23 +1483,18 @@ setMethod(
       g_outcome_guide <- NULL
     }
 
-    # TODO: adapt to other guide positions.
+    # Combine main guide with the outcome guide. Most of the grobs from
+    # extracted_elements will be empty.
+    for (element_name in .all_guide_names()$e) {
+      if (!is.null(extracted_elements[[element_name]])) {
+        extracted_elements[[element_name]] <- .combine_guide_grobs(
+          g = list(extracted_elements[[element_name]], g_outcome_guide),
+          ggtheme = ggtheme,
+          no_empty = FALSE
+        )
+      }
+    }
     
-    # Combine main guide with the outcome guide
-    extracted_elements$guide <- .combine_guide_grobs(
-      g = list(
-        extracted_elements$guide,
-        extracted_elements$guide_r,
-        extracted_elements$guide_l,
-        extracted_elements$guide_t,
-        extracted_elements$guide_b,
-        extracted_elements$guide_in,
-        g_outcome_guide
-      ),
-      ggtheme = ggtheme,
-      no_empty = FALSE
-    )
-
     # Add combined grob to list
     figure_list <- c(figure_list, list(g_heatmap))
 
@@ -1882,29 +1876,41 @@ setMethod(
     levels = sample_order$name[order(sample_order$label_order)]
   )
 
-  # Create basic plot
-  p <- ggplot2::ggplot(
-    data = x,
-    mapping = ggplot2::aes(
-      x = !!sym("sample"),
-      y = !!sym("evaluation_point"),
-      fill = !!sym("value")
+  if (position %in% c("left", "right")) {
+    p <- ggplot2::ggplot(
+      data = x,
+      mapping = ggplot2::aes(
+        x = !!sym("evaluation_point"),
+        y = !!sym("sample"),
+        fill = !!sym("value")
+      )
     )
-  )
-
+    
+    # Limit margins along the axis with samples so it will fit one-to-one with
+    # the main heatmap.
+    p <- p + ggplot2::scale_y_discrete(expand = c(0.0, 0.0))
+    
+  } else {
+    p <- ggplot2::ggplot(
+      data = x,
+      mapping = ggplot2::aes(
+        x = !!sym("sample"),
+        y = !!sym("evaluation_point"),
+        fill = !!sym("value")
+      )
+    )
+    
+    # Limit margins along the axis with samples so it will fit one-to-one with
+    # the main heatmap.
+    p <- p + ggplot2::scale_x_discrete(expand = c(0.0, 0.0))
+  }
+  # Create basic plot
+  
   # Add plot theme
   p <- p + ggtheme
 
   # Plot heatmap
   p <- p + ggplot2::geom_raster()
-
-  # Limit margins along the axis with samples so it will fit one-to-one with the
-  # main heatmap.
-  p <- p + ggplot2::scale_x_discrete(expand = c(0.0, 0.0))
-  
-  if (position %in% c("left", "right")) {
-    p <- p + ggplot2::coord_flip()
-  }
 
   # Specify the colours.
   if (outcome_type %in% c("continuous")) {
