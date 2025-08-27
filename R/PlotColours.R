@@ -4,7 +4,7 @@
     n = NULL, 
     invert = FALSE,
     use_alternative = FALSE,
-    diverge_to_white = FALSE
+    diverge_to_white = TRUE
 ) {
   
   # Check whether the provided palette is known, a set of colours, or a default.
@@ -168,7 +168,7 @@
     palette_type,
     invert,
     use_alternative = FALSE,
-    diverge_to_white = FALSE
+    diverge_to_white = TRUE
 ) {
   
   .check_parameter_value_is_valid(
@@ -288,7 +288,7 @@
     if (!use_alternative) {
       # A palette with the same hues (blue and orange) as the first two colors
       # of the qualitative palette.
-      if (!diverge_to_white) {
+      if (diverge_to_white) {
         # Bright center.
         #
         # colorspace::diverge_hcl(n = 21, h = c(245, 35), c = c(130, 85), l =
@@ -318,7 +318,7 @@
     } else {
       # A palette based on the same hues the first two colours of the
       # alternative qualitative palette.
-      if (!diverge_to_white) {
+      if (diverge_to_white) {
         # Bright centre.
         #
         # colorspace::diverge_hcl(n = 21, h = c(185, 10), c = c(130, 85), l =

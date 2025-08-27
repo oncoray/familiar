@@ -732,8 +732,7 @@ setMethod(
   # Colors
   gradient_colours <- .get_palette(
     x = gradient_palette,
-    palette_type = palette_type,
-    diverge_to_white = TRUE
+    palette_type = palette_type
   )
   if (invert_palette) gradient_colours <- rev(gradient_colours)
 
