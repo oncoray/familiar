@@ -216,7 +216,7 @@ predictions <- predict(
 # you need to provide here are: prediction probabilities for the positive class
 # (yes), the type of prediction (classification), and providing the class levels
 # (no, yes).
-predictions <- as_prediction_table(
+predictions <- familiar::as_prediction_table(
   x = predictions$yes,
   type = "classification",
   class_levels = c("no", "yes")
@@ -740,27 +740,7 @@ feature values.
 Familiar automatically determines the values at which numerical features are
 sampled based on their distribution in the development dataset. Such values can
 also be manually set using the `feature_x_range` and `feature_y_range`
-arguments. Whereas for the breast cancer dataset the features are linearly
-sampled, for the `nodes` feature in the colon cancer dataset this is not the
-case:
-
-```{r, fig.align='center', fig.width=7, label="ice-2d-survival"}
-plots <- familiar::plot_ice(
-  object = survival_model,
-  data = survival_data,
-  features = c("nodes", "rx"),
-  evaluation_times = 1000,
-  show_novelty = FALSE
-)
-
-grid::grid.newpage()
-grid::grid.draw(plots[[1L]])
-```
-
-Here we see that the number of nodes was not sampled linearly. Survival
-probability at 1000 days drops with an increase in nodes. Moreover, the model
-predicts that patients in the Levamisole `Lev` and observation `Obs` arms
-have lower survival probabilities overall.
+arguments.
 
 # Feature and sample similarity
 
@@ -769,18 +749,19 @@ visualised using similarity heatmaps:
 
 ```{r, fig.align='center', fig.width=7, label="feature-similarity"}
 plots <- familiar::plot_feature_similarity(
-  object = binomial_model,
-  data = binomial_data,
-  feature_similarity_metric = "spearman"
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  feature_similarity_metric = "spearman",
+  rotate_x_tick_labels = TRUE
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+plot(plots[[1]])
 ```
 
-The heatmap displays Spearman's correlation coefficient between the different
-features. The features are also ordered by similarity, so that clusters of
-similar features can be identified. Note that the dendrograms depict cluster
+Because we specify `feature_similarity_metric = "spearman"`The heatmap displays
+Spearman's correlation coefficient between the different features (even
+categorical ones). The features are also ordered by similarity, so that clusters
+of similar features can be identified. Note that the dendrograms depict cluster
 distance, i.e. $1-|\rho|$ for Spearman's correlation coefficient.
 
 It is also possible to view the sample clustering. This can be used to identify
@@ -790,13 +771,13 @@ following heatmap:
 
 ```{r, fig.align='center', fig.width=7, label="sample-similarity"}
 plots <- familiar::plot_sample_clustering(
-  object = binomial_model,
-  data = binomial_data,
-  feature_similarity_metric = "spearman"
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  feature_similarity_metric = "spearman",
+  rotate_x_tick_labels = TRUE
 )
 
-grid::grid.newpage()
-grid::grid.draw(plots[[1]])
+plot(plots[[1]])
 ```
 
 As may be observed, samples in the breast cancer dataset form two main clusters
