@@ -2210,6 +2210,12 @@ setMethod(
     y_label = y_label
   )
 
+  # Set colours used for plotting
+  gradient_colours <- .get_palette(
+    x = gradient_palette,
+    palette_type = "sequential"
+  )
+  
   # Create basic plot.
   p <- ggplot2::ggplot(
     data = plot_data,
@@ -2219,11 +2225,10 @@ setMethod(
     )
   )
   p <- p + ggtheme
-
+  
   if (!all(is.finite(value_range))) {
     # Blank elements in case the value range is unset, e.g. because the model
-    # cannot compute survival probabilities. This happens for some mboost
-    # learners.
+    # cannot compute survival probabilities.
     p <- p + ggplot2::geom_blank()
     p <- p + ggplot2::theme(
       axis.line.x = ggplot2::element_blank(),
@@ -2248,6 +2253,13 @@ setMethod(
     p <- p + ggplot2::scale_size(
       trans = "reverse",
       limits = novelty_range
+    )
+    
+    # Add gradient palette as fill.
+    p <- p + ggplot2::scale_colour_gradientn(
+      name = legend_label,
+      colors = gradient_colours,
+      limits = value_range
     )
     
   } else {
@@ -2299,22 +2311,16 @@ setMethod(
       )
     )
 
+    # Add gradient palette as fill.
+    p <- p + ggplot2::scale_fill_gradientn(
+      name = legend_label,
+      colors = gradient_colours,
+      limits = value_range
+    )
+    
     # Draw points on top.
     p <- p + ggplot2::geom_point(colour = colour)
   }
-
-  # Set colours used for plotting
-  gradient_colours <- .get_palette(
-    x = gradient_palette,
-    palette_type = "sequential"
-  )
-
-  # Add gradient palette as fill.
-  p <- p + ggplot2::scale_fill_gradientn(
-    name = legend_label,
-    colors = gradient_colours,
-    limits = value_range
-  )
 
   # Update x and y scales
   if (!is.null(x_range)) p <- p + ggplot2::scale_x_continuous(breaks = x_breaks)
