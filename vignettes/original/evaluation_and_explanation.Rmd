@@ -789,8 +789,8 @@ normalised values for the features, based on normalisation and transformation
 parameters obtained during model development.
 
 Normalisation options can be altered by changing the `show_normalised_data`
-argument. In the ischemic stroke dataset all features have the same range, so we
-can also show the data directly:
+argument. However, in the ischemic stroke dataset features do not have the same
+value ranges, so without normalisation the plot looks strange:
 
 ```{r, fig.align='center', fig.width=7, label="sample-similarity-unnormalised"}
 plots <- familiar::plot_sample_clustering(
