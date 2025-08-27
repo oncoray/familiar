@@ -2976,6 +2976,11 @@ theme_familiar <- function(
     # Concatenate the widths.
     widths <- max(widths)
 
+    # Update widths of underlying guide elements.
+    for (ii in seq_along(g)) {
+      g[[ii]]$widths <- widths
+    }
+    
     # Provide the matrix to order the guides.
     order_matrix <- matrix(
       data = seq_along(g),
@@ -2993,6 +2998,11 @@ theme_familiar <- function(
     # Concatenate the heights.
     heights <- max(heights)
 
+    # Update heights of underlying guide elements.
+    for (ii in seq_along(g)) {
+      g[[ii]]$heights <- heights
+    }
+    
     # Provide the matrix to order the guides.
     order_matrix <- matrix(
       data = seq_along(g), 

@@ -1512,7 +1512,7 @@ setMethod(
     y_label_shared = y_label_shared,
     facet_wrap_cols = facet_wrap_cols
   )
-
+  
   # Combine features.
   g <- .arrange_plot_grobs(
     grobs = figure_list,
