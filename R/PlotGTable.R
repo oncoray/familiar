@@ -195,6 +195,40 @@
 
 
 
+.gtable_insert_spacer <- function(
+    g,
+    position,
+    width = NULL,
+    height = NULL,
+    name = NULL
+) {
+  # Generate name.
+  if (is.null(name)) name <- "spacer"
+  
+  # Create empty grob.
+  spacer <- grid::grob(cl = "spacerGrob", name = name)
+  
+  # Set width and height.
+  spacer$widths <- grid::unit(0.0, "cm")
+  if (!is.null(width)) spacer$widths <- width
+  spacer$heights <- grid::unit(0.0, "cm")
+  if (!is.null(height)) spacer$heights <- height
+  
+  g <- gtable::gtable_add_grob(
+    g,
+    grobs = spacer,
+    t = position[["t"]],
+    b = position[["b"]],
+    l = position[["l"]],
+    r = position[["r"]],
+    name = name
+  )
+  
+  return(g)
+}
+
+
+
 .gtable_insert <- function(
     g, 
     g_new, 
@@ -424,7 +458,8 @@
   # Create an offset.
   ref_shift <- integer(4L)
   names(ref_shift) <- c("t", "l", "b", "r")
-  elem_ref_offset <- integer(4L)
+  spacer_ref_offset <- elem_ref_offset <- integer(4L)
+  names(spacer_ref_offset) <- c("t", "l", "b", "r")
   names(elem_ref_offset) <- c("t", "l", "b", "r")
   
   # Find position to insert this element
@@ -475,12 +510,14 @@
         heights = spacer,
         pos = ref_position[["t"]] + ref_shift[["t"]] - 1L
       )
+      
+      spacer_ref_offset[["t"]] <- spacer_ref_offset[["b"]] <- -1L
       ref_shift[["t"]] <- ref_shift[["t"]] + 1L
       ref_shift[["b"]] <- ref_shift[["b"]] + 1L
     }
     
     elem_ref_offset[["t"]] <- -ref_shift[["t"]]
-    elem_ref_offset[["b"]] <- -ref_shift[["b"]]
+    elem_ref_offset[["b"]] <- -ref_shift[["b"]] + length(g_new$heights) - 1L
     
   } else if (where == "bottom") {
     # This does not shift the reference element down.
@@ -493,6 +530,8 @@
         heights = spacer,
         pos = ref_position[["b"]]
       )
+      
+      spacer_ref_offset[["t"]] <- spacer_ref_offset[["b"]] <- 1L
       elem_ref_offset[["t"]] <- elem_ref_offset[["b"]] <- 1L
     }
     
@@ -504,7 +543,7 @@
     )
     
     elem_ref_offset[["t"]] <- elem_ref_offset[["t"]] + 1L
-    elem_ref_offset[["b"]] <- elem_ref_offset[["b"]] + 1L
+    elem_ref_offset[["b"]] <- elem_ref_offset[["b"]] + length(g_new$heights)
 
   } else if (where == "left") {
     # Add column at l-1 (i.e. at l, and move existing columns to right)
@@ -525,12 +564,14 @@
         widths = spacer,
         pos = ref_position[["l"]] + ref_shift[["l"]] - 1L
       )
+      
+      spacer_ref_offset[["l"]] <- spacer_ref_offset[["r"]] <- -1L
       ref_shift[["l"]] <- ref_shift[["l"]] + 1L
       ref_shift[["r"]] <- ref_shift[["r"]] + 1L
     }
     
     elem_ref_offset[["l"]] <- -ref_shift[["l"]]
-    elem_ref_offset[["r"]] <- -ref_shift[["r"]]
+    elem_ref_offset[["r"]] <- -ref_shift[["r"]] + length(g_new$widths) - 1L
     
   } else if (where == "right") {
     # This does not shift the reference element to the right.
@@ -544,6 +585,7 @@
         pos = ref_position[["r"]]
       )
       
+      spacer_ref_offset[["l"]] <- spacer_ref_offset[["r"]] <- 1L
       elem_ref_offset[["l"]] <- elem_ref_offset[["r"]] <- 1L
     }
     
@@ -555,7 +597,7 @@
     )
     
     elem_ref_offset[["l"]] <- elem_ref_offset[["l"]] + 1L
-    elem_ref_offset[["r"]] <- elem_ref_offset[["r"]] + 1L
+    elem_ref_offset[["r"]] <- elem_ref_offset[["r"]] + length(g_new$widths)
     
   } else {
     ..error_reached_unreachable_code(paste0(
@@ -603,7 +645,33 @@
     name = element_name,
     clip = g_new$layout$clip[1L]
   )
+  
+  # Add spacer.
+  if (!is.null(spacer)) {
+    spacer_position <- ref_position + spacer_ref_offset
 
+    if (where %in% c("top", "bottom")) {
+      spacer_position[["l"]] <- extent[["l"]]
+      spacer_position[["r"]] <- extent[["r"]]
+      g <- .gtable_insert_spacer(
+        g = g,
+        position = spacer_position,
+        height = spacer
+      )
+      
+    } else {
+      spacer_position[["t"]] <- extent[["t"]]
+      spacer_position[["b"]] <- extent[["b"]]
+      
+      g <- .gtable_insert_spacer(
+        g = g,
+        position = spacer_position,
+        width = spacer
+      )
+    }
+    
+  }
+  
   # Update widths and heights.
   g <- .gtable_update_layout(g = g)
   
