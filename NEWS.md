@@ -113,7 +113,8 @@ contrast with a white background.
   lead to too few samples to allow for assessment. This affected 
   Leave-One-Out-Cross-Validation (LOOCV) schemes in particular.
 
-- Added support for `ggplot2` version 3.5.
+- Added support for `ggplot2` version 3.5. Due to changes in how legends are 
+  handled, the minimum `ggplot2` version is now `3.5.0`.
 
 ## Fixes
 

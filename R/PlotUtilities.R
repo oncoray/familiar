@@ -1207,11 +1207,7 @@ theme_familiar <- function(
 
   # Since ggplot 3.4.0, the width of a line is determined by linewidth instead
   # of size.
-  if (utils::packageVersion("ggplot2") >= "3.4.0") {
-    linewidth <- ggtheme$line$linewidth
-  } else {
-    linewidth <- ggtheme$line$size
-  }
+  linewidth <- ggtheme$line$linewidth
 
   return(linewidth)
 }

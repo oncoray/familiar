@@ -36,7 +36,7 @@ VignetteBuilder: knitr
 Imports:
     data.table,
     methods,
-    rlang (>= 0.3.4),
+    rlang (>= 1.0.0),
     rstream,
     survival
 Suggests:
@@ -49,11 +49,11 @@ Suggests:
     e1071 (>= 1.7.5),
     fastcluster,
     fastglm,
-    ggplot2 (>= 3.0.0),
+    ggplot2 (>= 3.5.0),
     glmnet,
     gtable,
     harmonicmeanp,
-    isotree (>= 0.3.0),
+    isotree (>= 0.6.0),
     knitr,
     labeling,
     laGP,

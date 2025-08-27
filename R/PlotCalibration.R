@@ -964,25 +964,12 @@ setMethod(
       )
       
     } else {
-      if (utils::packageVersion("ggplot2") >= "3.4.0") {
-        # Version 3.4.0 introduces the linewidth element for geom_line, and will
-        # produce deprecation warnings if the size argument is used instead.
-
-        # Add line for individual data points.
-        p <- p + ggplot2::geom_line(
-          mapping = ggplot2::aes(colour = !!sym("color_breaks")),
-          linewidth = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
-        )
-        
-      } else {
-        # For backward compatibility with ggplot2 versions prior to 3.4.0
-        p <- p + ggplot2::geom_line(
-          mapping = ggplot2::aes(colour = !!sym("color_breaks")),
-          size = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
-        )
-      }
+      # Add line for individual data points.
+      p <- p + ggplot2::geom_line(
+        mapping = ggplot2::aes(colour = !!sym("color_breaks")),
+        linewidth = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
+      )
     }
-
 
     # Add fit
     if (!is_empty(fit_guide_list$data)) {
@@ -1016,22 +1003,10 @@ setMethod(
       p <- p + ggplot2::geom_point()
       
     } else {
-      if (utils::packageVersion("ggplot2") >= "3.4.0") {
-        # Version 3.4.0 introduces the linewidth element for geom_line, and will
-        # produce deprecation warnings if the size argument is used instead.
-
-        # Add scatter for individual data points.
-        p <- p + ggplot2::geom_line(
-          linewidth = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
-        )
-        
-      } else {
-        # For backward compatibility with ggplot2 versions prior to version
-        # 3.4.0.
-        p <- p + ggplot2::geom_line(
-          size = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
-        )
-      }
+      # Add scatter for individual data points.
+      p <- p + ggplot2::geom_line(
+        linewidth = ..get_plot_theme_linewidth(ggtheme = ggtheme) * 3.0
+      )
     }
 
     # Add fit

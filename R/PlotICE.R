@@ -1634,134 +1634,66 @@ setMethod(
     
   } else if (show_novelty) {
     # Plot with novelty.
-
-    if (utils::packageVersion("ggplot2") >= "3.4.0") {
-      # Version 3.4.0 introduces the linewidth element for geom_line, and will
-      # produce deprecation warnings if the size argument is used instead.
-
-      if (show_ice) {
-        if (!is.null(color_by)) {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = ice_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              alpha = !!sym("novelty"),
-              colour = !!sym("color_breaks"),
-              group = !!sym("color_breaks_sample")
-            ),
-            linewidth = ice_line_size
-          )
-          
-        } else {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = ice_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              group = !!sym("sample"),
-              alpha = !!sym("novelty")
-            ),
-            linewidth = ice_line_size
-          )
-        }
-      }
-
-      if (show_pd) {
-        if (!is.null(color_by)) {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = pd_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              alpha = !!sym("novelty"),
-              colour = !!sym("color_breaks"),
-              group = pd_group_variable
-            ),
-            linewidth = pd_line_size
-          )
-          
-        } else {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = pd_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              alpha = !!sym("novelty"),
-              group = pd_group_variable
-            ),
-            linewidth = pd_line_size
-          )
-        }
-      }
-    } else {
-      # For backward compatibility with versions of ggplot2 before version
-      # 3.4.0.
-      if (show_ice) {
-        if (!is.null(color_by)) {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = ice_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              alpha = !!sym("novelty"),
-              colour = !!sym("color_breaks"),
-              group = !!sym("color_breaks_sample")
-            ),
-            size = ice_line_size
-          )
-          
-        } else {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = ice_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              group = !!sym("sample"),
-              alpha = !!sym("novelty")
-            ),
-            size = ice_line_size
-          )
-        }
-      }
-
-      if (show_pd) {
-        if (!is.null(color_by)) {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = pd_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              alpha = !!sym("novelty"),
-              colour = !!sym("color_breaks"),
-              group = pd_group_variable
-            ),
-            size = pd_line_size
-          )
-          
-        } else {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = pd_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              alpha = !!sym("novelty"),
-              group = pd_group_variable
-            ),
-            size = pd_line_size
-          )
-        }
+    if (show_ice) {
+      if (!is.null(color_by)) {
+        # Create lines with alpha.
+        p <- p + ggplot2::geom_line(
+          data = ice_guide_list$data,
+          mapping = ggplot2::aes(
+            x = !!sym("feature_x_value"),
+            y = !!sym("value"),
+            alpha = !!sym("novelty"),
+            colour = !!sym("color_breaks"),
+            group = !!sym("color_breaks_sample")
+          ),
+          linewidth = ice_line_size
+        )
+        
+      } else {
+        # Create lines with alpha.
+        p <- p + ggplot2::geom_line(
+          data = ice_guide_list$data,
+          mapping = ggplot2::aes(
+            x = !!sym("feature_x_value"),
+            y = !!sym("value"),
+            group = !!sym("sample"),
+            alpha = !!sym("novelty")
+          ),
+          linewidth = ice_line_size
+        )
       }
     }
-
+    
+    if (show_pd) {
+      if (!is.null(color_by)) {
+        # Create lines with alpha.
+        p <- p + ggplot2::geom_line(
+          data = pd_guide_list$data,
+          mapping = ggplot2::aes(
+            x = !!sym("feature_x_value"),
+            y = !!sym("value"),
+            alpha = !!sym("novelty"),
+            colour = !!sym("color_breaks"),
+            group = pd_group_variable
+          ),
+          linewidth = pd_line_size
+        )
+        
+      } else {
+        # Create lines with alpha.
+        p <- p + ggplot2::geom_line(
+          data = pd_guide_list$data,
+          mapping = ggplot2::aes(
+            x = !!sym("feature_x_value"),
+            y = !!sym("value"),
+            alpha = !!sym("novelty"),
+            group = pd_group_variable
+          ),
+          linewidth = pd_line_size
+        )
+      }
+    }
+    
     # Invert novelty values, since higher values indicates greater novelty.
     p <- p + ggplot2::scale_alpha(
       trans = "reverse",
@@ -1771,126 +1703,62 @@ setMethod(
     
   } else {
     # Plot without novelty.
-
-    if (utils::packageVersion("ggplot2") >= "3.4.0") {
-      # Version 3.4.0 introduces the linewidth element for geom_line, and will
-      # produce deprecation warnings if the size argument is used instead.
-      if (show_ice) {
-        if (!is.null(color_by)) {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = ice_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              group = !!sym("color_breaks_sample"),
-              colour = !!sym("color_breaks")
-            ),
-            linewidth = ice_line_size,
-            alpha = ice_default_alpha
-          )
-          
-        } else {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = ice_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              group = !!sym("sample")
-            ),
-            linewidth = ice_line_size,
-            alpha = ice_default_alpha
-          )
-        }
+  
+    if (show_ice) {
+      if (!is.null(color_by)) {
+        # Create lines with alpha.
+        p <- p + ggplot2::geom_line(
+          data = ice_guide_list$data,
+          mapping = ggplot2::aes(
+            x = !!sym("feature_x_value"),
+            y = !!sym("value"),
+            group = !!sym("color_breaks_sample"),
+            colour = !!sym("color_breaks")
+          ),
+          linewidth = ice_line_size,
+          alpha = ice_default_alpha
+        )
+        
+      } else {
+        # Create lines with alpha.
+        p <- p + ggplot2::geom_line(
+          data = ice_guide_list$data,
+          mapping = ggplot2::aes(
+            x = !!sym("feature_x_value"),
+            y = !!sym("value"),
+            group = !!sym("sample")
+          ),
+          linewidth = ice_line_size,
+          alpha = ice_default_alpha
+        )
       }
+    }
 
-      if (show_pd) {
-        if (!is.null(color_by)) {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = pd_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              colour = !!sym("color_breaks"),
-              group = pd_group_variable
-            ),
-            linewidth = pd_line_size
-          )
-          
-        } else {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = pd_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              group = pd_group_variable
-            ),
-            linewidth = pd_line_size
-          )
-        }
-      }
-    } else {
-      # For backwards compatibility with ggplot2 versions prior to version
-      # 3.4.0.
-      if (show_ice) {
-        if (!is.null(color_by)) {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = ice_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              group = !!sym("color_breaks_sample"),
-              colour = !!sym("color_breaks")
-            ),
-            size = ice_line_size,
-            alpha = ice_default_alpha
-          )
-          
-        } else {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = ice_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              group = !!sym("sample")
-            ),
-            size = ice_line_size,
-            alpha = ice_default_alpha
-          )
-        }
-      }
-
-      if (show_pd) {
-        if (!is.null(color_by)) {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = pd_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              colour = !!sym("color_breaks"),
-              group = pd_group_variable
-            ),
-            size = pd_line_size
-          )
-          
-        } else {
-          # Create lines with alpha.
-          p <- p + ggplot2::geom_line(
-            data = pd_guide_list$data,
-            mapping = ggplot2::aes(
-              x = !!sym("feature_x_value"),
-              y = !!sym("value"),
-              group = pd_group_variable
-            ),
-            size = pd_line_size
-          )
-        }
+    if (show_pd) {
+      if (!is.null(color_by)) {
+        # Create lines with alpha.
+        p <- p + ggplot2::geom_line(
+          data = pd_guide_list$data,
+          mapping = ggplot2::aes(
+            x = !!sym("feature_x_value"),
+            y = !!sym("value"),
+            colour = !!sym("color_breaks"),
+            group = pd_group_variable
+          ),
+          linewidth = pd_line_size
+        )
+        
+      } else {
+        # Create lines with alpha.
+        p <- p + ggplot2::geom_line(
+          data = pd_guide_list$data,
+          mapping = ggplot2::aes(
+            x = !!sym("feature_x_value"),
+            y = !!sym("value"),
+            group = pd_group_variable
+          ),
+          linewidth = pd_line_size
+        )
       }
     }
   }
