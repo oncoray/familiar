@@ -640,13 +640,73 @@ that respectively cluster similar features and permute all features
 individually. The dataset contains many features that are highly
 similar and exceed the relatively stringent threshold of 0.3.
 
-# Partial dependence and individual conditional expectation plots
+## SHAP summary plots
 
-Variable importance does not explain how features influence the model. Partial
-dependence (PD) [@Friedman2001-jf] and individual conditional expectation (ICE)
-[@Goldstein2015-rv] plots can be used to visualise this behaviour. As an
-example, we can create an ICE plot for the `max_remodeling_ratio` feature that
-was found to be important for predicting ischemic stroke.
+A SHAP value is the marginal contributions of a feature value to the predicted
+value. For example, if you were to predict the number of daily ice cream sales,
+season could be a feature. A SHAP value for the summer season is likely
+positive, whereas the SHAP value for the winter season would likely be negative.
+Important features have larger SHAP values than less important features. Thus
+a SHAP summary plot can be used to evaluate feature importance.
+
+```{r, fig.align='center', fig.width=7, label="shap_summary"}
+plots <- familiar::plot_shap_summary(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data
+)
+
+plot(plots[[1L]])
+```
+The SHAP summary plot shows several things: features are listed along the
+y-axis, with the most important feature on top, i.e. the feature that has the
+highest mean absolute SHAP value. Each point corresponds to the value in an
+instance (a patient), and each point is coloured according to its (normalised)
+value. For the purpose of representation, all feature values are mapped to the
+$[-1.0, 1.0]$ range.
+
+The default presentation might provide too much detail. It is therefore possible
+to change the `plot_type` or `value_representation`. For example,
+the above data could be presented as violin plots:
+
+```{r, fig.align='center', fig.width=7, label="shap_summary_violin"}
+plots <- familiar::plot_shap_summary(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  plot_type = "violinplot"
+)
+
+plot(plots[[1L]])
+```
+The violin plot shows the distribution of values more clearly, at the cost 
+of losing information concerning underlying feature values.
+
+If just variable importance is relevant, the SHAP summary plot can also be shown
+as a bar plot (`plot_type = "barplot"`) showing the mean absolute SHAP value by
+default (`value_representation = "abs_mean"`):
+
+```{r, fig.align='center', fig.width=7, label="shap_summary_violin"}
+plots <- familiar::plot_shap_summary(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  value_representation = "abs_mean"
+)
+
+plot(plots[[1L]])
+```
+
+# Feature effects
+
+Variable importance does not explain how features influence the model, although
+the SHAP summary plot already provided some hints. Familiar offers multiple
+methods for assessing the effect of features.
+
+## Partial dependence and individual conditional expectation plots
+
+Partial dependence (PD) [@Friedman2001-jf] and individual conditional
+expectation (ICE) [@Goldstein2015-rv] plots can be used to visualise how
+features influence the model. As an example, we can create an ICE plot for the
+`max_remodeling_ratio` feature that was found to be important for predicting
+ischemic stroke.
 
 ```{r, fig.align='center', fig.width=7, label="ice-max-remodeling-ratio"}
 plots <- familiar::plot_ice(
@@ -659,9 +719,15 @@ plot(plots[[1L]])
 ```
 
 The ICE plot shows multiple curves for individual samples, as well as their
-average, the partial dependence plot as a somewhat thicker curve. 
+average, the partial dependence plot as a somewhat thicker curve. These curves
+are created by iteratively updating the value of `max_remodeling_ratio` and then
+observing the predicted outcome. To generate the sample points, familiar samples
+the feature value distribution, as observed in the training dataset, at regular
+percentile intervals. Also note that by default, ICE plots only show a limited
+number of samples to prevent clutter. This can be specified through
+`n_max_samples_shown`.
 
-It also shows novelty, which is a measure of how out-of-distribution the value
+The plot also shows novelty, which is a measure of how out-of-distribution the value
 is. Novelty is computed using extended isolation forests [@Hariri2019-xz] and is
 the average normalised height at which a sample is found in a terminal leaf node
 of the trees in the isolation forest [@Liu2008-kw]. Novelty values range between
@@ -669,7 +735,8 @@ of the trees in the isolation forest [@Liu2008-kw]. Novelty values range between
 novelty values represent instances that lie further from the distribution, the
 values that represent in-distribution instances may vary. In the ICE plot above,
 novelty values range between `0.40` and `0.50`. None of the points in ICE plot
-can therefore be considered out-of-distribution.
+can therefore be considered out-of-distribution. Move to a conformal prediction
+framework is planned for future versions.
 
 It is possible to anchor the curves in the ICE plot to a specific feature value.
 This allows for assessing the model response for individual instances versus a
@@ -741,6 +808,10 @@ Familiar automatically determines the values at which numerical features are
 sampled based on their distribution in the development dataset. Such values can
 also be manually set using the `feature_x_range` and `feature_y_range`
 arguments.
+
+## SHAP dependence plots
+
+## SHAP waterfall plots
 
 # Feature and sample similarity
 
