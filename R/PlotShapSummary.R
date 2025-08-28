@@ -886,12 +886,12 @@ setMethod(
     offset[offset < -0.3] <- -0.3
     offset[offset > 0.3] <- 0.3
     data[, "y_offset" := (feature_value + offset) * density]
-    data[, "y_offset" := 0.35 * y_offset / max(abs(y_offset))]
+    data[, "y_offset" := 0.25 * y_offset / max(abs(y_offset))]
     
   } else {
     offset <- stats::runif(n = length(x), min = -1.0, max = 1.0)
     data[, "y_offset" := offset * density]
-    data[, "y_offset" := 0.35 * y_offset / max(abs(y_offset))]
+    data[, "y_offset" := 0.25 * y_offset / max(abs(y_offset))]
   }
   
   # Replace NaN-values.
