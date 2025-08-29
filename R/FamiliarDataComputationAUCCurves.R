@@ -110,6 +110,14 @@ setMethod(
       bootstrap_ci_method = bootstrap_ci_method
     )
     
+    # Check the level detail.
+    detail_level <- .parse_detail_level(
+      x = detail_level,
+      object = object,
+      default = "hybrid",
+      data_element = "auc_data"
+    )
+    
     # Determine whether a single curve is obtained for point estimates.
     # When more than one model exists, these may be averaged for hybrid
     # estimation types.
