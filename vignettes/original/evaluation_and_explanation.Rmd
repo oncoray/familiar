@@ -133,14 +133,31 @@ and the remaining as a holdout set.
 
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="ischemic-model"}
 ischemic_stroke_data <- data.table::as.data.table(modeldata::ischemic_stroke)
-ischemic_stroke_data$male <- factor(ischemic_stroke_data$male, levels = c(0, 1), labels = c("no", "yes"))
-ischemic_stroke_data$smoking_history <- factor(ischemic_stroke_data$smoking_history, levels = c(0, 1), labels = c("no", "yes"))
-ischemic_stroke_data$atrial_fibrillation <- factor(ischemic_stroke_data$atrial_fibrillation, levels = c(0, 1), labels = c("no", "yes"))
-ischemic_stroke_data$coronary_artery_disease <- factor(ischemic_stroke_data$coronary_artery_disease, levels = c(0, 1), labels = c("no", "yes"))
-ischemic_stroke_data$diabetes_history  <- factor(ischemic_stroke_data$diabetes_history , levels = c(0, 1), labels = c("no", "yes"))
-ischemic_stroke_data$hypercholesterolemia_history   <- factor(ischemic_stroke_data$hypercholesterolemia_history  , levels = c(0, 1), labels = c("no", "yes"))
-ischemic_stroke_data$hypertension_history  <- factor(ischemic_stroke_data$hypertension_history , levels = c(0, 1), labels = c("no", "yes"))
 
+# Set categorical variables.
+ischemic_stroke_data$male <- factor(
+  ischemic_stroke_data$male, levels = c(0, 1), labels = c("no", "yes")
+)
+ischemic_stroke_data$smoking_history <- factor(
+  ischemic_stroke_data$smoking_history, levels = c(0, 1), labels = c("no", "yes")
+)
+ischemic_stroke_data$atrial_fibrillation <- factor(
+  ischemic_stroke_data$atrial_fibrillation, levels = c(0, 1), labels = c("no", "yes")
+)
+ischemic_stroke_data$coronary_artery_disease <- factor(
+  ischemic_stroke_data$coronary_artery_disease, levels = c(0, 1), labels = c("no", "yes")
+)
+ischemic_stroke_data$diabetes_history  <- factor(
+  ischemic_stroke_data$diabetes_history, levels = c(0, 1), labels = c("no", "yes")
+)
+ischemic_stroke_data$hypercholesterolemia_history   <- factor(
+  ischemic_stroke_data$hypercholesterolemia_history, levels = c(0, 1), labels = c("no", "yes")
+)
+ischemic_stroke_data$hypertension_history  <- factor(
+  ischemic_stroke_data$hypertension_history, levels = c(0, 1), labels = c("no", "yes")
+)
+
+# Create training and hold-out test set.
 ischemic_stroke_data_train <- ischemic_stroke_data[1L:99L, ]
 ischemic_stroke_data <- ischemic_stroke_data[100L:126L, ]
 
@@ -164,7 +181,40 @@ after treatment.
 
 ```{r, results=FALSE, eval=TRUE, message=FALSE, warning=FALSE, label="colon-model"}
 survival_data <- data.table::as.data.table(survival::colon)
-survival_data <- survival_data[etype == 1L][, ":=" ("id" = NULL, "study" = NULL, "etype" = NULL)]
+
+# Select data corresponding to tumour recurrence.
+survival_data <- survival_data[etype == 1L]
+
+# Remove unncessary columns.
+survival_data[, ":=" ("id" = NULL, "study" = NULL, "etype" = NULL, "node4" = NULL)]
+
+# Set categorical variables.
+survival_data$sex <- factor(
+  survival_data$sex, levels = c(0, 1), labels = c("female", "male")
+)
+survival_data$obstruct <- factor(
+  survival_data$obstruct, levels = c(0, 1), labels = c("no", "yes")
+)
+survival_data$adhere <- factor(
+  survival_data$adhere, levels = c(0, 1), labels = c("no", "yes")
+)
+survival_data$differ <- factor(
+  survival_data$differ,
+  levels = c(1, 2, 3),
+  labels = c("well", "moderate", "poor"),
+  ordered = TRUE
+)
+survival_data$extent <- factor(
+  survival_data$extent,
+  levels = c(1, 2, 3, 4),
+  labels = c("submucosa", "muscle", "serosa", "contiguous structures"),
+  ordered = TRUE
+)
+survival_data$surg <- factor(
+  survival_data$surg, levels = c(0, 1), labels = c("short", "long")
+)
+
+# Create training and hold-out test set.
 survival_data_train <- survival_data[1L:799L, ]
 survival_data <- survival_data[800L:929L, ]
 
@@ -311,7 +361,7 @@ greatly exceeds the number of positive instances, a large change in the number
 of false positives reduces the ROC curve somewhat, but this change is far easier
 observed in the PR curve [@Davis2006-xb]. Hence the PR curve is commonly
 assessed if the positive class is more important than and rare compared to the
-negative class. For the breast cancer dataset, the precision-recall curve is as
+negative class. For the ischemic stroke dataset, the precision-recall curve is as
 follows:
 
 ```{r, fig.align='center', fig.width=7, label="auc-pr-curve-bci"}
@@ -534,7 +584,7 @@ models, introduced by Vickers and Elkin [@Vickers2006-be]. The decision curve
 compares the model benefit for different threshold probabilities against two or
 more options. The two standard options are that all instances receive an
 intervention, and none receive an intervention. What constitutes an intervention
-is model-dependent [@Vickers2019-ar]. For our breast cancer cohort, intervention
+is model-dependent [@Vickers2019-ar]. For our ischemic stroke cohort, intervention
 might constitute treatment of all patients, versus no treatment and treatment for
 patients with malignancy predicted by the model. This produces the following
 figure:
@@ -575,7 +625,7 @@ considered important by the model itself.
 Model-specific methods rely on aspects of the models themselves to determine
 variable importance. For instance, the coefficients of regression models are a
 measure of variable importance when features are normalised. In the case of the
-random forest model for the breast cancer dataset, permutation variable
+random forest model for the ischemic stroke dataset, permutation variable
 importance is determined. This produces the following plot:
 
 ```{r, fig.align='center', fig.width=7, label="model-variable-importance", warning=FALSE}
@@ -932,7 +982,7 @@ distance, i.e. $1-|\rho|$ for Spearman's correlation coefficient.
 
 It is also possible to view the sample clustering. This can be used to identify
 if samples are readily stratified into clusters, which may or may not correlate
-to the endpoint of interest. For the breast cancer dataset, this yields the
+to the endpoint of interest. For the ischemic stroke dataset, this yields the
 following heatmap:
 
 ```{r, fig.align='center', fig.width=7, label="sample-similarity"}
@@ -946,17 +996,17 @@ plots <- familiar::plot_sample_clustering(
 plot(plots[[1L]])
 ```
 
-As may be observed, samples in the breast cancer dataset form two main clusters
-that correspond closely to cell malignancy. The top dendrogram is the same as
-for feature clustering, as it should be. The right dendrogram is formed after
-computing Gower's distance between samples (by default), and shows clustering of
-samples. No clear major clusters are observable. The heatmap itself shows
-normalised values for the features, based on normalisation and transformation
-parameters obtained during model development.
+The sample clustering figure shows an absence of clear structure among the
+samples, nor a clear ordering of features with their observed class label
+(ischemic stroke). The top dendrogram is the same as for feature clustering, as
+it should be. The right dendrogram is formed after computing Gower's distance
+between samples (by default), and shows clustering of samples. The heatmap
+itself shows normalised values for the features, based on normalisation and
+transformation parameters obtained during model development.
 
 Normalisation options can be altered by changing the `show_normalised_data`
 argument. However, in the ischemic stroke dataset features do not have the same
-value ranges, so without normalisation the plot looks strange:
+value ranges, so without normalisation the figure looks less interpretable:
 
 ```{r, fig.align='center', fig.width=7, label="sample-similarity-unnormalised"}
 plots <- familiar::plot_sample_clustering(
