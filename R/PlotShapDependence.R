@@ -307,7 +307,7 @@ setMethod(
     
     # y_label
     if (is.waive(y_label)) {
-      y_label <- "shap value"
+      y_label <- "SHAP value"
     }
     
     .check_input_plot_args(
