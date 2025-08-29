@@ -861,8 +861,52 @@ plot(plots[[1L]])
 The `max_dilation_by_area` feature, however, is much more strongly correlated,
 as shown in the SHAP dependence plot above.
 
+## SHAP force plots
+
+SHAP force plots show the *force* exerted by features for individual samples.
+Samples are (by default) ordered by increasing predicted value, and the 
+positive and negative marginal contributions are shown for each sample.
+
+```{r, fig.align='center', fig.width=7, label="shap_force_plot"}
+plots <- familiar::plot_shap_force(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data
+)
+
+plot(plots[[1L]])
+```
+Force plots are not highly informative. However, one can set one or more highlight
+features. For example, setting `max_remodeling_ratio` as a highlight yields the
+following figure:
+
+```{r, fig.align='center', fig.width=7, label="shap_force_plot_highlight"}
+plots <- familiar::plot_shap_force(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  highlight_feature = "max_remodeling_ratio"
+)
+
+plot(plots[[1L]])
+```
 
 ## SHAP waterfall plots
+
+SHAP waterfall plots show how SHAP values for each feature value contribute to
+the predicted value for an individual sample.
+
+```{r, fig.align='center', fig.width=7, label="shap_waterfall"}
+plots <- familiar::plot_shap_waterfall(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data
+)
+
+plot(plots[[1L]])
+```
+The above plot shows a waterfall plot for the first sample, which has a
+predicted value of $0.43$, where the average predicted value in
+`ischemic_stroke_data` (i.e. the hold-out test set that we initially defined) is
+$0.54$. Feature values are shown on the left, and all features are ordered by
+the magnitude of their corresponding SHAP value.
 
 # Feature and sample similarity
 
@@ -880,7 +924,7 @@ plots <- familiar::plot_feature_similarity(
 plot(plots[[1L]])
 ```
 
-Because we specify `feature_similarity_metric = "spearman"`The heatmap displays
+Because we specify `feature_similarity_metric = "spearman"` the heatmap displays
 Spearman's correlation coefficient between the different features (even
 categorical ones). The features are also ordered by similarity, so that clusters
 of similar features can be identified. Note that the dendrograms depict cluster
