@@ -811,6 +811,57 @@ arguments.
 
 ## SHAP dependence plots
 
+SHAP dependence plots function similar to dependence plots. The SHAP dependence
+plot below shows how the SHAP values of `max_remodeling_ratio` are related
+to its feature values.
+
+```{r, fig.align='center', fig.width=7, label="shap-dependence"}
+plots <- familiar::plot_shap_dependence(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  shap_feature = "max_remodeling_ratio"
+)
+
+plot(plots[[1L]])
+```
+The above plot shows that with increasing value of `max_remodeling_ratio`, the
+marginal contribution to the prediction changes from negative (low values
+decrease the probability of the ischemic stroke) to positive (high values
+increase the probability of the ischemic stroke).
+
+SHAP dependence plots can also show interaction with other features. For
+example, we can show the interaction with the `coronary_artery_disease`
+feature. 
+
+```{r, fig.align='center', fig.width=7, label="shap-dependence-interaction"}
+plots <- familiar::plot_shap_dependence(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  shap_feature = "max_remodeling_ratio",
+  interaction_feature = "coronary_artery_disease"
+)
+
+plot(plots[[1L]])
+```
+The addition of an interaction feature does not alter the shape of the plot, but
+now individual values are coloured by the value of the `coronary_artery_disease`
+feature for the same sample. It appears that `coronary_artery_disease` is not
+strongly interacting with `max_remodeling_ratio`.
+
+```{r, fig.align='center', fig.width=7, label="shap-dependence_interaction_2"}
+plots <- familiar::plot_shap_dependence(
+  object = ischemic_stroke_model,
+  data = ischemic_stroke_data,
+  shap_feature = "max_remodeling_ratio",
+  interaction_feature = "max_dilation_by_area"
+)
+
+plot(plots[[1L]])
+```
+The `max_dilation_by_area` feature, however, is much more strongly correlated,
+as shown in the SHAP dependence plot above.
+
+
 ## SHAP waterfall plots
 
 # Feature and sample similarity
