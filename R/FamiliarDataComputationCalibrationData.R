@@ -1064,7 +1064,7 @@ setMethod(
     # Get observed and expected probabilities over the groups
     for (jj in seq_along(groups)) {
       # Find data for the current group
-      group_data <- data[unique(groups[[jj]]), on = .NATURAL]
+      group_data <- data[groups[[jj]], on = .NATURAL]
       
       # Mean expected probability in a group.
       exp_prob[jj] <- mean(group_data$exp_prob)
