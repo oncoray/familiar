@@ -764,8 +764,7 @@ setMethod(
     observed_class <- exp_prob <- NULL
     
     positive_class <- data_element@identifiers$positive_class
-    n_groups <- 1L
-    
+
     # Identify the real outcome columns
     outcome_column <- get_outcome_columns(x = "binomial")
     
@@ -790,35 +789,31 @@ setMethod(
     # Sort by probability
     data <- data[order(exp_prob)]
     
-    # Repeatedly split into groups. The number of groups is determined using
+    # Randomly split into groups. The number of groups is determined using
     # sturges rule.
-    repeated_groups <- lapply(
-      seq_len(n_groups),
-      function(ii, x, sample_identifiers) {
-        
-        return(create_randomised_groups(
-          x = x,
-          sample_identifiers = sample_identifiers
-        ))
-      },
+    group_data <- .calibration_create_randomised_groups(
       x = data$exp_prob,
       sample_identifiers = data[, mget(sample_identifiers)]
     )
     
-    # Iterate over groups
+    # Merge with prediction table.
+    group_data <- merge(
+      x = data,
+      y = group_data,
+      by = sample_identifiers,
+      allow.cartesian = TRUE
+    )
+    browser()
+    # Compute calibration data from each group.
     calibration_data <- lapply(
-      seq_along(repeated_groups),
-      function(ii, object, groups, data) {
-        return(...compute_calibration_data(
+      split(group_data, by = "group_id"),
+      function(x, object) {
+        ...compute_calibration_data(
           object = object,
-          data = data,
-          groups = groups[[ii]],
-          ii = ii
-        ))
+          data = x
+        )
       },
-      object = object,
-      data = data,
-      groups = repeated_groups
+      object = object
     )
     
     # Combine to a single list.
@@ -1048,48 +1043,38 @@ setMethod(
   signature(object = "predictionTableClassification"),
   function(
     object,
-    groups,
-    data,
-    ii
+    data
   ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     .NATURAL <- NULL
-    
-    # Set placeholders.
-    obs_prob <- exp_prob <- n_g <- n_pos <- n_neg <- numeric(length(groups))
+    browser()
     
     # Check that the groups list contains at least one entry.
-    if (is_empty(groups)) return(NULL)
+    if (is_empty(data)) return(NULL)
+  
+     # Mean expected probability in a group.
+    exp_prob <- mean(data$exp_prob)
     
-    # Get observed and expected probabilities over the groups
-    for (jj in seq_along(groups)) {
-      # Find data for the current group
-      group_data <- data[groups[[jj]], on = .NATURAL]
-      
-      # Mean expected probability in a group.
-      exp_prob[jj] <- mean(group_data$exp_prob)
-      
-      # Observed proportion of positive class in a group.
-      obs_prob[jj] <- mean(group_data$observed_class)
-      
-      # Number of samples in the group
-      n_g[jj] <- nrow(group_data)
-      
-      # Number of samples with the positive class in each group.
-      n_pos[jj] <- sum(group_data$observed_class)
-      
-      # Number of samples with the negative class in each group.
-      n_neg[jj] <- sum(!group_data$observed_class)
-    }
+    # Observed proportion of positive class in a group.
+    obs_prob <- mean(data$observed_class)
+    
+    # Number of samples in the group
+    n_g <- nrow(data)
+    
+    # Number of samples with the positive class in each group.
+    n_pos <- sum(data$observed_class)
+    
+    # Number of samples with the negative class in each group.
+    n_neg <- sum(!data$observed_class)
     
     # Create table
-    calibration_table <- data.table::data.table(
+    calibration_table <- list(
       "expected" = exp_prob,
       "observed" = obs_prob,
       "n_g" = n_g,
       "n_pos" = n_pos,
       "n_neg" = n_neg,
-      "rep_id" = ii
+      "rep_id" = data$group_id[[1L]]
     )
     
     return(calibration_table)
@@ -1143,6 +1128,150 @@ setMethod(
     return(calibration_table)
   }
 )
+
+
+
+#' Create randomised groups Creates randomised groups, e.g. for tests that
+#' depend on splitting (continuous) data into groups, such as the
+#' Hosmer-Lemeshow test
+#'
+#' The default fast mode is based on random sampling, whereas the slow mode is
+#' based on probabilistic joining of adjacent groups. As the name suggests, fast
+#' mode operates considerably more efficient.
+#'
+#' @param x Vector with data used for sorting. Groups are formed based on
+#'   adjacent values.
+#' @param y Vector with markers, e.g. the events. Should be 0 or 1 (for an
+#'   event).
+#' @param sample_identifiers data.table with sample_identifiers. If provide, a
+#'   list of grouped sample_identifiers will be returned, and integers
+#'   otherwise.
+#' @param n_max_groups Maximum number of groups that need to be formed.
+#' @param n_min_groups Minimum number of groups that need to be formed.
+#' @param n_min_y_in_group Minimum number of y=1 in each group for a valid
+#'   group.
+#'
+#' @details Creates randomised groups, e.g. for tests that depend on splitting
+#'   (continuous) data into groups, such as the Hosmer-Lemeshow test
+#'
+#' @return data.table with sample identifiers and random group ids.
+#' @md
+#' @keywords internal
+.calibration_create_randomised_groups <- function(
+    x, 
+    y = NULL, 
+    sample_identifiers, 
+    n_max_groups = NULL, 
+    n_min_groups = NULL, 
+    n_min_y_in_group = NULL, 
+    unique_samples_only = TRUE
+) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  group_id <- cum_y <- weight <- cum_prob_lower <- cum_prob_upper <- NULL
+  exclude <- y_in_group <- NULL
+  
+  # Populate the generic table.
+  data <- data.table::copy(sample_identifiers[, mget(get_id_columns(id_depth = "series"))])
+  data[, "x" := x]
+  if (is.null(y)) {
+    data[, "y" := 0L]
+  } else {
+    data[, "y" := y]
+  }
+  if (unique_samples_only) data <- unique(data)
+  
+  # - Get number of x
+  n_x <- nrow(data)
+  
+  # - Get number of y
+  n_y <- sum(data$y)
+  
+  # - Get the maximum of groups
+  if (is.null(n_max_groups)) {
+    n_max_groups <- ceiling(2.5 * n_x^(1.0 / 3.0))
+  }
+  
+  # - Update maximum number of groups
+  if (n_y > 0.0 && !is.null(n_min_y_in_group)) {
+    n_max_groups <- min(c(n_max_groups, floor(n_y / n_min_y_in_group)))
+  }
+  
+  # - Update mininum number of groups based on n_max_groups
+  if (is.null(n_min_groups)) {
+    n_min_groups <- min(c(n_max_groups, ceiling(1.0 * n_x^(1.0 / 3.0))))
+  }
+  
+  # Some checks
+  if (n_max_groups < n_min_groups || n_max_groups > n_x || n_max_groups < 2L) {
+    return(NULL)
+  }
+  data <- data[order(x)]
+  
+  # Initial loop counter
+  loop_iter <- 0L
+  
+  while (TRUE) {
+    # Draw a random number of groups between n_min_groups and n_max_groups
+    if (n_min_groups == n_max_groups) {
+      n_group_draw <- n_max_groups
+    } else {
+      n_group_draw <- fam_sample(
+        x = seq.int(from = n_min_groups, to = n_max_groups, by = 1L),
+        size = 1L, 
+        replace = FALSE
+      )
+    }
+    
+    # Draw a randomised groups assignment
+    random_group_id <- sort(
+      fam_sample(
+        x = seq_len(n_group_draw),
+        size = n_x, 
+        replace = TRUE
+      )
+    )
+    
+    # Assign group id
+    data[, "group_id" := random_group_id]
+    
+    # Check if all groups have the minimum required y (e.g. events/group size)
+    if (n_y > 0L && !is.null(n_min_y_in_group)) {
+      dt_y <- data[, list(y_in_group = sum(y)), by = group_id]
+      if (all(dt_y$y_in_group >= n_min_y_in_group)) break
+      
+    } else {
+      # If there is no minimum number of events required, only run one
+      # iteration
+      break
+    }
+    
+    # Update loop_iter in case the sample was not good enough
+    loop_iter <- loop_iter + 1L
+    
+    # Break from outer loop after 10 unsuccessful random samplings and create
+    # a static split instead
+    if (loop_iter >= 10L) {
+      # Cumulative sum over y
+      data[, "cum_y" := cumsum(y)]
+      
+      # Assign static group ids
+      data[, "group_id" := findInterval(
+        x = cum_y,
+        vec = c(
+          -Inf,
+          stats::quantile(x = cum_y, (1L:(n_min_groups - 1L)) / n_min_groups),
+          Inf
+        )
+      )]
+      
+      # Break from loop
+      break
+    }
+  }
+  
+  # Get sample identifiers for each group
+  return(data[, mget(c(get_id_columns(id_depth = "series"), "group_id"))])
+}
 
 
 
