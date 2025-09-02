@@ -1070,40 +1070,19 @@ setMethod(
   signature(object = "predictionTableRegression"),
   function(
     object,
-    groups,
-    data,
-    ii
+    data
   ) {
-    # Suppress NOTES due to non-standard evaluation in data.table
-    .NATURAL <- NULL
-    
-    # Set placeholders.
-    obs_prob <- exp_prob <- n_g <- numeric(length(groups))
-    
     # Check that the groups list contains at least one entry.
-    if (is_empty(groups)) return(NULL)
-    
-    # Get observed and expected probabilities over the groups
-    for (jj in seq_along(groups)) {
-      # Find data for the current group
-      group_data <- data[unique(groups[[jj]]), on = .NATURAL]
-      
-      # Mean expected probability in a group.
-      exp_prob[jj] <- mean(group_data$expected)
-      
-      # Observed proportion of positive class in a group.
-      obs_prob[jj] <- mean(group_data$observed)
-      
-      # Number of samples in the group
-      n_g[jj] <- nrow(group_data)
-    }
+    if (is_empty(data)) return(NULL)
     
     # Create table
-    calibration_table <- data.table::data.table(
-      "expected" = exp_prob,
-      "observed" = obs_prob,
-      "n_g" = n_g,
-      "rep_id" = ii
+    calibration_table <- list(
+      # Mean expected value in the group.
+      "expected" = mean(data$expected),
+      # Observed value in the group.
+      "observed" = mean(data$observed),
+      # Number of samples in the group
+      "n_g" = nrow(data)
     )
     
     return(calibration_table)
