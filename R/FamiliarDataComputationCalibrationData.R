@@ -578,13 +578,9 @@ setMethod(
   calibration_data <- calibration_data$calibration
 
   if (!is_empty(calibration_data) && data_element@estimation_type != "point") {
-    # Interpolate data to regular expected values, unless point data is used.
-    calibration_data <- calibration_data[
-      ,
-      ..compute_calibration_data_interpolated(.SD),
-      by = c("rep_id"),
-      .SDcols = c("expected", "observed")
-    ]
+    calibration_data <- ..compute_calibration_data_interpolated(
+      data = calibration_data
+    )
     
     # Keep only finite predictions,
     calibration_data <- calibration_data[is.finite(observed)]
@@ -803,7 +799,7 @@ setMethod(
       by = sample_identifiers,
       allow.cartesian = TRUE
     )
-    browser()
+    
     # Compute calibration data from each group.
     calibration_data <- lapply(
       split(group_data, by = "group_id"),
@@ -828,7 +824,7 @@ setMethod(
     # Set column order
     data.table::setcolorder(
       x = calibration_data,
-      neworder = c("expected", "observed", "n_g", "n_pos", "n_neg", "rep_id")
+      neworder = c("expected", "observed", "n_g", "n_pos", "n_neg")
     )
     
     # Calibration-in-the-large and calibration slope
@@ -869,6 +865,9 @@ setMethod(
     # Extract data.
     data <- data.table::copy(.as_data_table(object))
     
+    # Find sample identifiers.
+    sample_identifiers <- get_id_columns(id_depth = "series")
+    
     # Determine the outcome range
     outcome_range <- object@observed_value_range
     if (anyNA(outcome_range)) outcome_range <- range(data$outcome, na.rm = TRUE, finite = TRUE)
@@ -886,37 +885,34 @@ setMethod(
       "observed" = (outcome - norm_shift) / norm_scale
     )]
     
-    # Repeatedly split into groups. The number of groups is determined using
+    # Randomly split into groups. The number of groups is determined using
     # sturges rule.
-    repeated_groups <- lapply(
-      seq_len(n_groups),
-      function(ii, x, sample_identifiers) {
-        return(create_randomised_groups(
-          x = x,
-          sample_identifiers = sample_identifiers
-        ))
-      },
+    group_data <- .calibration_create_randomised_groups(
       x = data$expected,
-      sample_identifiers = data[, mget(get_id_columns(id_depth = "series"))]
+      sample_identifiers = data[, mget(sample_identifiers)]
     )
     
-    # Iterate over groups
+    # Merge with prediction table.
+    group_data <- merge(
+      x = data,
+      y = group_data,
+      by = sample_identifiers,
+      allow.cartesian = TRUE
+    )
+    
+    # Compute calibration data from each group.
     calibration_data <- lapply(
-      seq_along(repeated_groups),
-      function(ii, object, groups, data) {
-        return(...compute_calibration_data(
+      split(group_data, by = "group_id"),
+      function(x, object) {
+        ...compute_calibration_data(
           object = object,
-          data = data,
-          groups = groups[[ii]],
-          ii = ii
-        ))
+          data = x
+        )
       },
-      object = object,
-      data = data,
-      groups = repeated_groups
+      object = object
     )
     
-    # Concatenate to a single table
+    # Combine to a single list.
     calibration_data <- data.table::rbindlist(
       calibration_data,
       use.names = TRUE
@@ -928,7 +924,7 @@ setMethod(
     # Make columns match the expected order
     data.table::setcolorder(
       x = calibration_data,
-      neworder = c("expected", "observed", "n_g", "rep_id")
+      neworder = c("expected", "observed", "n_g")
     )
     
     # Calibration-in-the-large and calibration slope
@@ -1045,36 +1041,21 @@ setMethod(
     object,
     data
   ) {
-    # Suppress NOTES due to non-standard evaluation in data.table
-    .NATURAL <- NULL
-    browser()
-    
     # Check that the groups list contains at least one entry.
     if (is_empty(data)) return(NULL)
   
-     # Mean expected probability in a group.
-    exp_prob <- mean(data$exp_prob)
-    
-    # Observed proportion of positive class in a group.
-    obs_prob <- mean(data$observed_class)
-    
-    # Number of samples in the group
-    n_g <- nrow(data)
-    
-    # Number of samples with the positive class in each group.
-    n_pos <- sum(data$observed_class)
-    
-    # Number of samples with the negative class in each group.
-    n_neg <- sum(!data$observed_class)
-    
     # Create table
     calibration_table <- list(
-      "expected" = exp_prob,
-      "observed" = obs_prob,
-      "n_g" = n_g,
-      "n_pos" = n_pos,
-      "n_neg" = n_neg,
-      "rep_id" = data$group_id[[1L]]
+      # Mean expected probability in a group.
+      "expected" = mean(data$exp_prob),
+      # Observed proportion of positive class in a group.
+      "observed" = mean(data$observed_class),
+      # Number of samples in the group
+      "n_g" = nrow(data),
+      # Number of samples with the positive class in each group.
+      "n_pos" = sum(data$observed_class),
+      # Number of samples with the negative class in each group.
+      "n_neg" = sum(!data$observed_class)
     )
     
     return(calibration_table)
@@ -1380,14 +1361,10 @@ setMethod(
   if (nrow(calibration_data) < 2L) return(NULL)
   
   # Fit per repeated measurement.
-  fit_data <- lapply(
-    split(calibration_data, by = "rep_id"),
-    ..compute_calibration_fit,
+  fit_data <- ..compute_calibration_fit(
+    calibration_data,
     outcome_type = outcome_type
   )
-  
-  # Concatenate to a single table.
-  fit_data <- data.table::rbindlist(fit_data, use.names = TRUE)
   
   # Remove NaNs
   fit_data <- fit_data[is.finite(p_value)]
@@ -1417,7 +1394,7 @@ setMethod(
   fit_coef <- stats::coef(fit)
   
   # Determine if there is no slope.
-  no_slope <- is.na(fit_coef["expected"]) && data.table::uniqueN(calibration_data$expected)
+  no_slope <- is.na(fit_coef["expected"]) && data.table::uniqueN(calibration_data$expected) == 1L
   if (no_slope) fit_coef["expected"] <- 0.0
   
   # Get confidence intervals
@@ -1439,7 +1416,7 @@ setMethod(
   if (outcome_type %in% c("binomial", "multinomial", "survival")) {
     
     # Determine the number of groups.
-    n_groups <- data.table::uniqueN(calibration_data, by = "rep_id")
+    n_groups <- 1L
     
     # Recompute the standard deviation
     fit_summary[, 2L] <- fit_summary[, 2L] * sqrt(n_groups)
@@ -1456,24 +1433,15 @@ setMethod(
     fit_conf_int[, 2L] <- fit_summary[, 1L] + fit_summary[, 2L] * stats::qnorm(0.975)
   }
   
-  # Construct data table
+  # Construct data table and update the slope so that the expected slope
+  # (slope+1) is shown instead.
   calibration_at_large <- data.table::data.table(
     "type" = c("offset", "slope"),
-    "value" = fit_coef,
-    "ci_low" = fit_conf_int[, 1L],
-    "ci_up" = fit_conf_int[, 2L],
+    "value" = fit_coef + c(0.0, 1.0),
+    "ci_low" = fit_conf_int[, 1L] + c(0.0, 1.0),
+    "ci_up" = fit_conf_int[, 2L] + c(0.0, 1.0),
     "p_value" = fit_summary[, 4L]
   )
-  
-  # Update the slope so that the expected slope (slope+1) is shown instead
-  calibration_at_large[
-    type == "slope",
-    ":="(
-      "value" = value + 1.0,
-      "ci_low" = ci_low + 1.0,
-      "ci_up" = ci_up + 1.0
-    )
-  ]
   
   return(calibration_at_large)
 }
@@ -1509,8 +1477,7 @@ setMethod(
   # Compute test statistic for each time point
   gof_table <- calibration_data[
     ,
-    list("statistic" = sum(hm_group, na.rm = TRUE), n_groups = .N),
-    by = "rep_id"
+    list("statistic" = sum(hm_group, na.rm = TRUE), n_groups = .N)
   ]
   
   # Remove all entries with n_groups < 3
@@ -1525,14 +1492,12 @@ setMethod(
       q = statistic,
       df = n_groups - 2L,
       lower.tail = FALSE
-    )),
-    by = "rep_id"
+    ))
   ]
   
-  # Add type and drop rep_id.
+  # Add type.
   gof_table[, "type" := "hosmer_lemeshow"]
-  gof_table[, "rep_id" := NULL]
-  
+
   # Reorder columns
   data.table::setcolorder(gof_table, c("type", "p_value"))
   
@@ -1774,7 +1739,7 @@ setMethod(
   }
   
   # Set expected values and the corresponding interpolated observed values.
-  return(list(
+  return(data.table::data.table(
     "expected" = expected_interpolated,
     "observed" = observed_interpolated
   ))
