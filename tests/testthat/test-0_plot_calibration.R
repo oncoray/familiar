@@ -162,15 +162,18 @@ familiar:::test_plot_ordering(
   debug = debug_flag
 )
 
-
+p <- profvis::profvis({
+  familiar:::test_plots(
+    plot_function = familiar:::plot_calibration_data,
+    data_element = "calibration_data",
+    not_available_all_prospective = TRUE,
+    not_available_any_prospective = TRUE,
+    not_available_single_sample = TRUE,
+    debug_config = "normal",
+    debug_outcome_type = "survival",
+    debug = TRUE
+  )
+})
+htmlwidgets::saveWidget(p, "C:/Users/alexz/OneDrive/Bureaublad/profile.html")
 # Use this for profiling.
-familiar:::test_plots(
-  plot_function = familiar:::plot_calibration_data,
-  data_element = "calibration_data",
-  not_available_all_prospective = TRUE,
-  not_available_any_prospective = TRUE,
-  not_available_single_sample = TRUE,
-  debug_config = "normal",
-  debug_outcome_type = "multinomial",
-  debug = TRUE
-)
+

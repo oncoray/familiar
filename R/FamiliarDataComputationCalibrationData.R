@@ -650,9 +650,11 @@ setMethod(
     # Suppress NOTES due to non-standard evaluation in data.table
     exp_prob <- NULL
     
-    # Set time and n_groups.
+    # Set time.
     time <- data_element@identifiers$evaluation_time
-    n_groups <- 1L
+
+    # Find sample identifiers.
+    sample_identifiers <- get_id_columns(id_depth = "series")
     
     # Rename the survival column to standard name.
     data <- data.table::copy(.as_data_table(object))
@@ -665,46 +667,40 @@ setMethod(
     # Sort by survival probability.
     data <- data[order(exp_prob)]
     
-    # Repeatedly split into groups. The number of groups is determined using
+    # Randomly split into groups. The number of groups is determined using
     # sturges rule.
-    repeated_groups <- lapply(
-      seq_len(n_groups),
-      function(ii, x, y, sample_identifiers) {
-        
-        return(create_randomised_groups(
-          x = x,
-          y = y,
-          sample_identifiers = sample_identifiers,
-          n_min_y_in_group = 4L
-        ))
-      },
+    group_data <- .calibration_create_randomised_groups(
       x = data$exp_prob,
       y = data$event,
-      sample_identifiers = data[, mget(get_id_columns(id_depth = "series"))]
+      sample_identifiers = data[, mget(sample_identifiers)],
+      n_min_y_in_group = 4L
+    )
+    
+    # Merge with prediction table.
+    group_data <- merge(
+      x = data,
+      y = group_data,
+      by = sample_identifiers,
+      allow.cartesian = TRUE
     )
     
     # Iterate over groups and add details by comparing the kaplan-meier survival
     # curve within each group at time with the mean survival probability in
     # the group.
     calibration_data <- lapply(
-      seq_along(repeated_groups),
-      function(ii, object, groups, data, time) {
-        
-        return(...compute_calibration_data(
+      split(group_data, by = "group_id"),
+      function(x, object, time) {
+        ...compute_calibration_data(
           object = object,
-          data = data,
-          groups = groups[[ii]],
-          time = time,
-          ii = ii
-        ))
+          data = x,
+          time = time
+        )
       },
       object = object,
-      groups = repeated_groups,
-      data = data,
       time = time
     )
     
-    # Concatenate to table.
+    # Combine to a single list.
     calibration_data <- data.table::rbindlist(
       calibration_data,
       use.names = TRUE
@@ -716,7 +712,7 @@ setMethod(
     # Set column order.
     data.table::setcolorder(
       x = calibration_data,
-      neworder = c("expected", "observed", "km_var", "n_g", "rep_id")
+      neworder = c("expected", "observed", "km_var", "n_g")
     )
     
     # Calibration-in-the-large and calibration slope
@@ -955,76 +951,52 @@ setMethod(
   function(
     object,
     data,
-    groups,
-    time,
-    ii
+    time
   ) {
-    # Suppress NOTES due to non-standard evaluation in data.table
-    .NATURAL <- NULL
+    # Set default values.
+    obs_prob <- exp_prob <- km_var <- NA_real_
+    n_g <- NA_integer_
     
-    # Placeholder variables
-    obs_prob <- exp_prob <- n_g <- km_var <- numeric(length(groups))
-    
-    # Check that the groups list contains at least one entry.
-    if (is_empty(groups)) return(NULL)
-    
-    # Get observed and expected probabilities over the groups
-    for (jj in seq_along(groups)) {
+    if (nrow(data) >= 2L) {
       
-      # Find data for the current group
-      group_data <- data[unique(groups[[jj]]), on = .NATURAL]
+      # Fit a Kaplan-Meier curve for the current group
+      km_fit <- survival::survfit(Surv(time, event) ~ 1, data = data)
       
-      if (nrow(group_data) >= 2L) {
+      if (length(km_fit$time) >= 2L) {
         
-        # Fit a Kaplan-Meier curve for the current group
-        km_fit <- survival::survfit(Surv(time, event) ~ 1, data = group_data)
+        # Get observed probability
+        obs_prob <- stats::approx(
+          x = km_fit$time,
+          y = km_fit$surv,
+          xout = time,
+          method = "linear",
+          rule = 2L
+        )$y
         
-        if (length(km_fit$time) >= 2L) {
-          
-          # Get observed probability
-          obs_prob[jj] <- stats::approx(
-            x = km_fit$time,
-            y = km_fit$surv,
-            xout = time,
-            method = "linear",
-            rule = 2L
-          )$y
-          
-          # Get expected probability
-          exp_prob[jj] <- mean(group_data$exp_prob)
-          
-          # Get group size
-          n_g[jj] <- length(groups[[jj]])
-          
-          # Get greenwood variance estimate.
-          km_var[jj] <- stats::approx(
-            x = km_fit$time,
-            y = km_fit$std.err,
-            xout = time,
-            method = "linear",
-            rule = 2L
-          )$y^2.0
-          
-        } else {
-          # Set NA values.
-          obs_prob[jj] <- exp_prob[jj] <- km_var[jj] <- NA_real_
-          n_g[jj] <- NA_integer_
-        }
+        # Get expected probability
+        exp_prob <- mean(data$exp_prob)
         
-      } else {
-        # Set NA values.
-        obs_prob[jj] <- exp_prob[jj] <- km_var[jj] <- NA_real_
-        n_g[jj] <- NA_integer_
-      }
+        # Get group size
+        n_g <- nrow(data)
+        
+        # Get greenwood variance estimate.
+        km_var <- stats::approx(
+          x = km_fit$time,
+          y = km_fit$std.err,
+          xout = time,
+          method = "linear",
+          rule = 2L
+        )$y^2.0
+        
+      } 
     }
     
     # Create table.
-    calibration_table <- data.table::data.table(
+    calibration_table <- list(
       "expected" = exp_prob,
       "observed" = obs_prob,
       "n_g" = n_g,
-      "km_var" = km_var,
-      "rep_id" = ii
+      "km_var" = km_var
     )
     
     return(calibration_table)
@@ -1581,8 +1553,7 @@ setMethod(
       "nam_dagostino" = sum(nd_group, na.rm = TRUE),
       "greenwood_nam_dagostino" = sum(gnd_group, na.rm = TRUE),
       "n_groups" = .N
-    ),
-    by = "rep_id"
+    )
   ]
   
   # Compute test score for both test tests.
@@ -1599,8 +1570,7 @@ setMethod(
         df = n_groups - 1L,
         lower.tail = FALSE
       )
-    ),
-    by = "rep_id"
+    )
   ]
   
   # Check for an empty goodness-of-fit table.
@@ -1609,14 +1579,11 @@ setMethod(
   # Melt so that each test is on a separate row
   gof_table <- data.table::melt(
     gof_table,
-    id.vars = "rep_id",
     variable.name = "type",
     value.name = "p_value",
+    measure.vars = colnames(gof_table),
     variable.factor = FALSE
   )
-  
-  # Drop rep_id.
-  gof_table[, "rep_id" := NULL]
   
   # Reorder columns
   data.table::setcolorder(
