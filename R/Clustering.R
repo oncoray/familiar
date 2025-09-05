@@ -438,7 +438,7 @@ setMethod(
       if (is.null(x@cluster_parameters)) return(NULL)
       
       if (show_weights) {
-        return(data.table::data.table(
+        return(list(
           "cluster_name" = x@cluster_parameters@cluster_name,
           "feature_name" = x@cluster_parameters@cluster_features,
           "feature_required" = x@cluster_parameters@cluster_features %in% x@cluster_parameters@required_features,
@@ -446,7 +446,7 @@ setMethod(
         ))
         
       } else {
-        return(data.table::data.table(
+        return(list(
           "cluster_name" = x@cluster_parameters@cluster_name,
           "feature_name" = x@cluster_parameters@cluster_features,
           "feature_required" = x@cluster_parameters@cluster_features %in% x@cluster_parameters@required_features
