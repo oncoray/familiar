@@ -180,14 +180,14 @@ is_package_installed <- function(name) {
   
   if (length(name) == 0L) return(TRUE)
   
-  # Try to obtain the package version. This perhaps the cleanest way to check
-  # whether a package exists. require and requireNameSpace attach and load
-  # packages, which is not required here. The find.package documentation
-  # actively discourages its use to identify whether a package is installed.
-  installed_version <- tryCatch(
-    utils::packageVersion(name),
-    error = identity
-  )
+  # Attempt to get the installed version of the package. If it fails, the
+  # package is not installed.
+  #
+  # This perhaps the cleanest way to check whether a package exists. require and
+  # requireNameSpace attach and load packages, which is not required here. The
+  # find.package documentation actively discourages its use to identify whether
+  # a package is installed.
+  installed_version <- .get_installed_package_version(name)
   
   return(!inherits(installed_version, "error"))
 }
@@ -199,10 +199,7 @@ is_package_outdated <- function(name, version) {
   if (length(name) == 0L) return(TRUE)
   
   # Obtain the installed version of the package.
-  installed_version <- tryCatch(
-    utils::packageVersion(name),
-    error = identity
-  )
+  installed_version <- .get_installed_package_version(name)
   
   if (inherits(installed_version, "error")) {
     ..error_package_not_installed(name)
@@ -221,10 +218,7 @@ is_package_newer <- function(name, version) {
   if (length(name) == 0L) return(TRUE)
   
   # Obtain the installed version of the package.
-  installed_version <- tryCatch(
-    utils::packageVersion(name),
-    error = identity
-  )
+  installed_version <- .get_installed_package_version(name)
   
   if (inherits(installed_version, "error")) {
     ..error_package_not_installed(name)
@@ -234,6 +228,23 @@ is_package_newer <- function(name, version) {
   version <- as.package_version(version)
   
   return(version < installed_version)
+}
+
+
+
+.get_installed_package_version <- function(name) {
+  # Lookup version of the package using utils::packageVersion. The result is
+  # cached to reduce lookup times.
+  installed_version <- rlang::env_cache(
+    familiar_global_env,
+    paste0(name, "_version"),
+    default = tryCatch(
+      utils::packageVersion(name),
+      error = identity
+    )
+  )
+  
+  return(installed_version)
 }
 
 
