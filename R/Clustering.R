@@ -556,7 +556,9 @@ set_clustered_data <- function(
   feature_required <- NULL
   
   # Only use required data.
-  cluster_table <- cluster_table[feature_required == TRUE]
+  if (!all(cluster_table$feature_required)){
+    cluster_table <- cluster_table[feature_required == TRUE]
+  }
   
   # For singular clusters or clusters represented by a single feature, simply
   # return the data in the respective column.
