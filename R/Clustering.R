@@ -520,9 +520,6 @@ features_after_clustering <- function(
 ) {
   # Convert input features to features after clustering
   
-  # Suppress NOTES due to non-standard evaluation in data.table
-  feature_name <- NULL
-  
   # Check if features are set.
   if (is_empty(features)) return(NULL)
   
@@ -541,7 +538,7 @@ features_after_clustering <- function(
   }
   
   # Find and return feature names after clustering.
-  return(unique(cluster_table[feature_name %in% features]$cluster_name))
+  return(unique(cluster_table$cluster_name[cluster_table$feature_name %in% features]))
 }
 
 
