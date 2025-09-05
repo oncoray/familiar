@@ -247,28 +247,11 @@ add_batch_normalisation_parameters <- function(
     batch_parameter_data = NULL
 ) {
   
-  # Combine data and batch column data into a data.table again. The primary
-  # reason for splitting is to prevent dispatching the full dataset to each
-  # node.
-  data <- data.table::data.table(
-    "batch_column_id" = batch_column_data,
-    "feature_value" = data
-  )
-  
-  # Rename columns to original names.
-  data.table::setnames(
-    data,
-    old = c("batch_column_id", "feature_value"),
-    new = c(
-      get_id_columns("batch", single_column = TRUE),
-      feature_info@batch_normalisation_parameters@name
-    )
-  )
-  
   # Pass to underlying function that adds the feature info.
   object <- add_feature_info_parameters(
     object = feature_info@batch_normalisation_parameters,
     data = data,
+    batch_column_data = batch_column_data,
     batch_parameter_data = batch_parameter_data
   )
   
@@ -280,39 +263,20 @@ add_batch_normalisation_parameters <- function(
 
 
 
-# add_feature_info_parameters (container, data object) -------------------------
-setMethod(
-  "add_feature_info_parameters",
-  signature(object = "featureInfoParametersBatchNormalisationContainer", data = "dataObject"),
-  function(
-    object,
-    data,
-    ...
-  ) {
-    # Pass to method with signature data=data.table.
-    return(add_feature_info_parameters(
-      object = object,
-      data = data@data,
-      ...
-    ))
-  }
-)
-
-
 # add_feature_info_parameters (container, data.table) --------------------------
 setMethod(
   "add_feature_info_parameters",
-  signature(object = "featureInfoParametersBatchNormalisationContainer", data = "data.table"),
+  signature(object = "featureInfoParametersBatchNormalisationContainer", data = "vector"),
   function(
     object,
     data,
+    batch_column_data,
     ...
   ) {
-    
     ## Populate container with batch parameter objects -------------------------
     
     # Find the batch identifiers in the data.
-    batch_ids <- unique(data[[get_id_columns(id_depth = "batch")]])
+    batch_ids <- unique(batch_column_data)
     
     # Determine which normalisation objects already exist.
     visited_batch <- names(object@batch_parameters)
@@ -342,7 +306,7 @@ setMethod(
         normalisation_objects
       )
     }
-
+    
     ## Determine batch parameters ----------------------------------------------
     
     # Select normalisation objects that have not been completed. 
@@ -356,7 +320,7 @@ setMethod(
       normalisation_objects <- fam_mapply(
         FUN = add_feature_info_parameters,
         object = object@batch_parameters[batch_to_update],
-        data = split(data, by = get_id_columns(id_depth = "batch"))[batch_to_update],
+        data = split(data, f = batch_column_data)[batch_to_update],
         MoreArgs = list(...)
       )
       
@@ -425,6 +389,7 @@ setMethod(
     return(object)
   }
 )
+
 
 
 # apply_feature_info_parameters (container, ANY) -------------------------------
