@@ -2010,11 +2010,12 @@ setMethod(
 setMethod(
   "get_bootstrap_sample",
   signature(data = "familiarDataElementPredictionTable"),
-  function(data, seed = NULL, ...) {
+  function(data, seed = NULL, rstream_object = NULL, ...) {
     data <- .merge_slots_into_data(data)
     data@data <- get_bootstrap_sample(
       data = data@data,
-      seed = seed
+      seed = seed,
+      rstream_object = rstream_object
     )
     
     return(data)

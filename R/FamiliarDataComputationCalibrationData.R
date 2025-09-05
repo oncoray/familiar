@@ -561,15 +561,19 @@ setMethod(
   # Suppress NOTES due to non-standard evaluation in data.table
   observed <- NULL
   
+  # Start random number generator.
+  rstream_object <- .start_random_number_stream(seed = bootstrap_seed)
+  
   # Bootstrap the data.
   if (bootstrap) {
-    object <- get_bootstrap_sample(data = object, seed = bootstrap_seed)
+    object <- get_bootstrap_sample(data = object, rstream_object = rstream_object)
   }
   
   # Compute calibration, linear and gof test data.
   calibration_data <- ..compute_calibration_data(
     object,
-    data_element = data_element
+    data_element = data_element,
+    rstream_object = rstream_object
   )
   
   # Extract data.
@@ -642,7 +646,7 @@ setGeneric(
 setMethod(
   "..compute_calibration_data",
   signature(object = "predictionTableSurvivalProbability"),
-  function(object, data_element) {
+  function(object, data_element, rstream_object = NULL) {
     # Generate baseline calibration data for survival models from an input table
     # (data) containing survival probabilities for each sample and
     # corresponding time and event status.
@@ -673,7 +677,8 @@ setMethod(
       x = data$exp_prob,
       y = data$event,
       sample_identifiers = data[, mget(sample_identifiers)],
-      n_min_y_in_group = 4L
+      n_min_y_in_group = 4L,
+      rstream_object = rstream_object
     )
     
     # Merge with prediction table.
@@ -740,7 +745,7 @@ setMethod(
 setMethod(
   "..compute_calibration_data",
   signature(object = "predictionTableClassification"),
-  function(object, data_element) {
+  function(object, data_element, rstream_object = NULL) {
     # For assessing the calibration of categorical outcomes, we require expected
     # and observed probabilities for 1 (binomial) or all classes (multinomial).
     # Expected probabilities are easy, as the model predicts them. Observed
@@ -785,7 +790,8 @@ setMethod(
     # sturges rule.
     group_data <- .calibration_create_randomised_groups(
       x = data$exp_prob,
-      sample_identifiers = data[, mget(sample_identifiers)]
+      sample_identifiers = data[, mget(sample_identifiers)],
+      rstream_object = rstream_object
     )
     
     # Merge with prediction table.
@@ -847,7 +853,7 @@ setMethod(
 setMethod(
   "..compute_calibration_data",
   signature(object = "predictionTableRegression"),
-  function(object, data_element) {
+  function(object, data_element, rstream_object = NULL) {
     # Calibration for regression problems is pretty straightforward. However, for
     # goodness-of-fit tests, we need to constrain expected and observed value
     # ranges to [0, 1]. To do so, we use the range of outcome values from the
@@ -885,7 +891,8 @@ setMethod(
     # sturges rule.
     group_data <- .calibration_create_randomised_groups(
       x = data$expected,
-      sample_identifiers = data[, mget(sample_identifiers)]
+      sample_identifiers = data[, mget(sample_identifiers)],
+      rstream_object = rstream_object
     )
     
     # Merge with prediction table.
@@ -1096,7 +1103,8 @@ setMethod(
     n_max_groups = NULL, 
     n_min_groups = NULL, 
     n_min_y_in_group = NULL, 
-    unique_samples_only = TRUE
+    unique_samples_only = TRUE,
+    rstream_object = NULL
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   group_id <- cum_y <- weight <- cum_prob_lower <- cum_prob_upper <- NULL
@@ -1150,7 +1158,8 @@ setMethod(
       n_group_draw <- fam_sample(
         x = seq.int(from = n_min_groups, to = n_max_groups, by = 1L),
         size = 1L, 
-        replace = FALSE
+        replace = FALSE,
+        rstream_object = rstream_object
       )
     }
     
@@ -1159,7 +1168,8 @@ setMethod(
       fam_sample(
         x = seq_len(n_group_draw),
         size = n_x, 
-        replace = TRUE
+        replace = TRUE,
+        rstream_object = rstream_object
       )
     )
     

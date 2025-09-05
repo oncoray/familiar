@@ -718,21 +718,23 @@ setMethod(
 setMethod(
   "get_bootstrap_sample",
   signature(data = "dataObject"),
-  function(data, seed = NULL, ...) {
+  function(data, seed = NULL, rstream_object = NULL, ...) {
     if (.as_preprocessing_level(data) > "none") {
       # Indicating that some preprocessing has taken please.
 
       # Bootstrap the data element.
       data@data <- get_bootstrap_sample(
         data = data@data,
-        seed = seed
+        seed = seed,
+        rstream_object = rstream_object
       )
       
     } else if (length(data@sample_set_on_load) > 0L) {
       if (data.table::is.data.table(data@sample_set_on_load)) {
         data@sample_set_on_load <- get_bootstrap_sample(
           data = data@sample_set_on_load,
-          seed = seed
+          seed = seed,
+          rstream_object = rstream_object
         )
         
       } else {
@@ -741,7 +743,8 @@ setMethod(
           x = unique(data@sample_set_on_load),
           size = length(data@sample_set_on_load),
           replace = TRUE,
-          seed = seed
+          seed = seed,
+          rstream_object = rstream_object
         )
       }
     } else {
@@ -758,7 +761,7 @@ setMethod(
 setMethod(
   "get_bootstrap_sample", 
   signature(data = "data.table"),
-  function(data, seed = NULL, ...) {
+  function(data, seed = NULL, rstream_object = NULL, ...) {
     # Find identifier columns at the sample level, i.e. excluding repetitions
     # and series.
     id_columns <- intersect(
@@ -772,7 +775,8 @@ setMethod(
         x = seq_len(nrow(data)),
         size = nrow(data),
         replace = TRUE,
-        seed = seed
+        seed = seed,
+        rstream_object = rstream_object
       )
 
       # Create a subset.
@@ -787,7 +791,8 @@ setMethod(
         x = seq_len(nrow(id_table)),
         size = nrow(id_table),
         replace = TRUE,
-        seed = seed
+        seed = seed,
+        rstream_object = rstream_object
       )
 
       # Create subsample.
@@ -811,7 +816,7 @@ setMethod(
 setMethod(
   "get_bootstrap_sample",
   signature(data = "NULL"), 
-  function(data, seed = NULL, ...) {
+  function(data, seed = NULL, rstream_object = NULL, ...) {
     return(NULL)
   }
 )
