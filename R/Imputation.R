@@ -319,6 +319,15 @@ add_imputation_info <- function(
   # Use data variable for masking uncensored data.
   if (is.null(mask_data)) mask_data <- data
   
+  # Check if any features have missing values, otherwise we can just skip
+  # imputation.
+  has_missing_values <- sapply(
+    X = mask_data@data[, mget(feature_names)],
+    FUN = function(x) (return(sum(!is_valid_data(x))))
+  ) > 0L
+  
+  if (!any(has_missing_values)) return(data)
+  
   # Impute data.  
   imputation_list <- fam_mapply(
     cl = cl,
