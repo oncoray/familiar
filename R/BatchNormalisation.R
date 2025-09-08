@@ -435,6 +435,9 @@ setMethod(
       "batch_id" = batch_data
     )
     
+    # Set feature name.
+    data.table::setnames(data, old = "feature", new = object@name)
+    
     # Insert ordering variable.
     data[, "batch_normalisation_ordering_id" := .I]
     
@@ -453,7 +456,7 @@ setMethod(
     data <- data[order(batch_normalisation_ordering_id)]
     
     # Extract the feature values and return.
-    return(data$feature)
+    return(data[[object@name]])
   }
 )
 
