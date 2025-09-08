@@ -1402,10 +1402,10 @@ setMethod(
 
     # Export to console.
     cat(feature_str)
-    if (length(transform_str) > 0L) cat(transform_str)
-    if (length(normalisation_str) > 0L) cat(normalisation_str)
-    if (length(batch_norm_str) > 0L) cat(batch_norm_str)
-    if (length(cluster_str) > 0L) cat(cluster_str)
+    if (length(transform_str) > 0L) cat(transform_str, sep = "")
+    if (length(normalisation_str) > 0L) cat(normalisation_str, sep = "")
+    if (length(batch_norm_str) > 0L) cat(batch_norm_str, sep = "")
+    if (length(cluster_str) > 0L) cat(cluster_str, sep = "")
   }
 )
 
