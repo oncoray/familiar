@@ -89,19 +89,3 @@ familiar:::test_plot_ordering(
   outcome_type_available = c("multinomial"),
   debug = debug_flag
 )
-
-
-p <- profvis::profvis({
-  familiar:::test_plots(
-    plot_function = familiar:::plot_permutation_variable_importance,
-    data_element = "permutation_vimp",
-    not_available_all_prospective = TRUE,
-    not_available_any_prospective = TRUE,
-    not_available_single_sample = TRUE,
-    not_available_some_predictions_fail = FALSE,
-    debug_config = "normal",
-    debug_outcome_type = "survival",
-    debug = TRUE
-  )
-})
-htmlwidgets::saveWidget(p, "C:/Users/alexz/OneDrive/Bureaublad/profile.html")
