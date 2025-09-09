@@ -206,11 +206,3 @@ familiar:::test_hyperparameter_optimisation(
   debug = FALSE,
   parallel = FALSE
 )
-
-
-
-
-familiar:::test_all_learners_train_predict_vimp(
-  learners = "glm_loglog",
-  debug = TRUE
-)

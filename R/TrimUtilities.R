@@ -55,7 +55,7 @@
 .replace_broken_functions <- function(object, trimmed_object, timeout = 60000.0) {
   # Find all methods that are trimmable.
   trimmable_methods <- names(..trim_functions())
-
+  
   # Load packages associated with the model into the namespace so that all
   # associated methods may be found.
   require_package(object)
@@ -117,11 +117,15 @@
     return(NULL)
   }
   initial_info <- initial_info$value
-
+  
   # Attempt to extract the results from the trimmed object.
-  new_info <- do.call_with_handlers(
-    FUN,
-    args = list(trimmed_object@model)
+  new_info <- do.call_external(
+    what = do.call_with_handlers,
+    args = list(
+      "what" = FUN,
+      "args" = list(trimmed_object@model)
+    ),
+    additional_packages = object@package
   )
 
   # If an error occurs, it means that the information required to create the
