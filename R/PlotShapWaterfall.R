@@ -720,7 +720,8 @@ setMethod(
 
 
 # GeomSHAPWaterfall ------------------------------------------------------------
-
+# Placeholder to prevent NOTES if ggplot2 is not installed.
+GeomSHAPWaterfall <- NULL
 if (rlang::is_installed("ggplot2")) {
   GeomSHAPWaterfall <- ggplot2::ggproto(
     "GeomPolygon",

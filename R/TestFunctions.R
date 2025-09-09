@@ -5398,6 +5398,11 @@ get_test_collection_generation <- function(...) {
       x@vimp_method <- "mifs"
       return(x)
     }
+    
+    # Prevent CRAN notes due to lazy binding
+    good_data_1 <- good_data_2 <- empty_data_1 <- NULL
+    good_one_feature_data_1 <- good_one_feature_data_2 <- NULL
+    
     # Allow for debugging specific outcome types
     all_outcome_types <- c("continuous", "binomial", "multinomial", "survival")
     if (!is.null(debug_outcome_type)) all_outcome_types <- debug_outcome_type

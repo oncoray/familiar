@@ -860,7 +860,11 @@ setMethod(
       "original_order" = seq_along(x),
       "shap_value" = x,
       "feature_value" = value,
-      "density" = approx(x = density_object$x, y = density_object$y, xout = x)$y
+      "density" = stats::approx(
+        x = density_object$x,
+        y = density_object$y, 
+        xout = x
+      )$y
     )
     data[, "density" := density / max(density)]
     

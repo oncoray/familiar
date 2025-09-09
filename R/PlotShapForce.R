@@ -856,6 +856,8 @@ setMethod(
 
 # GeomSHAPForce ----------------------------------------------------------------
 
+# Placeholder to prevent NOTES if ggplot2 is not installed.
+GeomSHAPForce <- NULL
 if (rlang::is_installed("ggplot2")) {
   GeomSHAPForce <- ggplot2::ggproto(
     "GeomPolygon",

@@ -1047,7 +1047,7 @@ setMethod(
 ..restrict_ice_samples <- function(x, n_samples, seed = NULL) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  sample <- NULL
+  sample <- .NATURAL <- NULL
   
   if (is.null(n_samples)) return(x)
 

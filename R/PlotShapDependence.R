@@ -229,6 +229,9 @@ setMethod(
     export_collection = FALSE,
     ...
   ) {
+    # Prevent NOTES.
+    .NATURAL <- NULL
+    
     # Make sure the collection object is updated.
     object <- update_object(object = object)
     
