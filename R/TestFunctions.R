@@ -5256,11 +5256,11 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
   if (length(p) == 0L) return(FALSE)
   
   # Check that the top element is a gtable or ggplot.
-  if (gtable::is.gtable(p) || ggplot2::is.ggplot(p)) {
+  if (gtable::is.gtable(p) || ggplot2::is_ggplot(p)) {
     return(TRUE)
   }
   
-  plot_present <- sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot)
+  plot_present <- sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is_ggplot)
   if (any(plot_present)) {
     return(plot_present)
   }
@@ -5275,7 +5275,7 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
   if (is.null(p)) return(FALSE)
   if (length(p) == 0L) return(FALSE)
   
-  return(sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is.ggplot))
+  return(sapply(p, gtable::is.gtable) | sapply(p, ggplot2::is_ggplot))
 }
 
 

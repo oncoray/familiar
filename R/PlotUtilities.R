@@ -2434,7 +2434,7 @@ theme_familiar <- function(
 .convert_to_grob <- function(plots_or_grobs) {
   # Convert to list if the input is a single grob or
   unlist_grobs <- FALSE
-  if (grid::is.grob(plots_or_grobs) || ggplot2::is.ggplot(plots_or_grobs)) {
+  if (grid::is.grob(plots_or_grobs) || ggplot2::is_ggplot(plots_or_grobs)) {
     plots_or_grobs <- list(plots_or_grobs)
 
     # Set a flag so that we unlist the results after conversion.
@@ -2532,7 +2532,7 @@ theme_familiar <- function(
 
 
 ..draw_plot <- function(plot_or_grob) {
-  if (ggplot2::is.ggplot(plot_or_grob)) {
+  if (ggplot2::is_ggplot(plot_or_grob)) {
     show(plot_or_grob)
     
   } else if (grid::is.grob(plot_or_grob)) {
