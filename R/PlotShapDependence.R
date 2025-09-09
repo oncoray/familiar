@@ -39,8 +39,10 @@ NULL
 #'   If no `interaction_feature` is set, or is a categorical feature, the
 #'   gradient palette is not used.
 #'
-#' @param shap_feature (*optional*)
-#' @param interaction_feature (*optional*)
+#' @param shap_feature (*optional*) Feature(s) whose SHAP values are used for
+#'   creating the SHAP dependence plot.
+#' @param interaction_feature (*optional*) Feature(s) whose values are used to
+#'   colour points of the `shap_feature`.
 #' @inheritParams as_familiar_collection
 #' @inheritParams plot_univariate_importance
 #' @inheritParams .check_input_plot_args

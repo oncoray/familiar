@@ -188,9 +188,11 @@ is unset.}
 
 \item{y_breaks}{(\emph{optional}) Break points on the y-axis of the plot.}
 
-\item{shap_feature}{(\emph{optional})}
+\item{shap_feature}{(\emph{optional}) Feature(s) whose SHAP values are used for
+creating the SHAP dependence plot.}
 
-\item{interaction_feature}{(\emph{optional})}
+\item{interaction_feature}{(\emph{optional}) Feature(s) whose values are used to
+colour points of the \code{shap_feature}.}
 
 \item{width}{(\emph{optional}) Width of the plot. A default value is derived from
 the number of facets.}
