@@ -22,7 +22,7 @@ familiar:::test_plots(
   plot_function = familiar:::plot_decision_curve,
   outcome_type_available = c("binomial", "multinomial", "survival"),
   data_element = "decision_curve_analyis",
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("conf_int_style" = "step"),
   debug = debug_flag
 )
@@ -32,7 +32,7 @@ familiar:::test_plots(
   plot_function = familiar:::plot_decision_curve,
   outcome_type_available = c("binomial", "multinomial", "survival"),
   data_element = "decision_curve_analyis",
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("conf_int_style" = "none"),
   debug = debug_flag
 )
@@ -43,7 +43,7 @@ familiar:::test_plots(
   outcome_type_available = c("binomial", "multinomial", "survival"),
   data_element = "decision_curve_analyis",
   estimation_type = "point",
-  test_specific_config = TRUE,
+  test_config = "normal",
   debug = debug_flag
 )
 
@@ -63,7 +63,7 @@ familiar:::test_plot_ordering(
   data_element = "decision_curve_analyis",
   estimation_type = "point",
   outcome_type_available = c("binomial", "multinomial", "survival"),
-  use_prediction_table = TRUE,
+  test_config = "normal",
   prediction_type = list("survival" = "survival_probability"),
   debug = debug_flag
 )

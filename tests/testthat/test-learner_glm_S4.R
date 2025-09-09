@@ -9,7 +9,8 @@ testthat::skip_on_cran()
 testthat::skip_on_ci()
 
 familiar:::test_all_learners_train_predict_vimp(
-  learners = familiar:::.get_available_glm_learners(show_general = FALSE)
+  learners = familiar:::.get_available_glm_learners(show_general = FALSE),
+  debug = TRUE
 )
 
 familiar:::test_all_learners_parallel_train_predict_vimp(
@@ -204,4 +205,12 @@ familiar:::test_hyperparameter_optimisation(
   learners = familiar:::.get_available_glm_learners(show_general = TRUE),
   debug = FALSE,
   parallel = FALSE
+)
+
+
+
+
+familiar:::test_all_learners_train_predict_vimp(
+  learners = "glm_loglog",
+  debug = TRUE
 )

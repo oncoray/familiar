@@ -51,7 +51,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("show_density" = FALSE),
   debug = debug_flag
 )
@@ -60,7 +60,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("show_goodness_of_fit" = FALSE),
   debug = debug_flag
 )
@@ -69,7 +69,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("show_calibration_fit" = FALSE),
   debug = debug_flag
 )
@@ -78,7 +78,7 @@ familiar:::test_plots(
 familiar:::test_plots(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list(
     "show_calibration_fit" = FALSE,
     "show_goodness_of_fit" = FALSE),

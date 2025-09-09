@@ -22,7 +22,7 @@ familiar:::test_plots(
   plot_function = familiar::plot_auc_roc_curve,
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("conf_int_style" = "step"),
   debug = debug_flag
 )
@@ -32,7 +32,7 @@ familiar:::test_plots(
   plot_function = familiar::plot_auc_roc_curve,
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("conf_int_style" = "none"),
   debug = debug_flag
 )
@@ -43,7 +43,7 @@ familiar:::test_plots(
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
   estimation_type = "point",
-  test_specific_config = TRUE,
+  test_config = "normal",
   debug = debug_flag
 )
 
@@ -83,7 +83,7 @@ familiar:::test_plots(
   plot_function = familiar::plot_auc_precision_recall_curve,
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("conf_int_style" = "step"),
   debug = debug_flag
 )
@@ -93,7 +93,7 @@ familiar:::test_plots(
   plot_function = familiar::plot_auc_precision_recall_curve,
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("conf_int_style" = "none"),
   debug = debug_flag
 )
@@ -104,7 +104,7 @@ familiar:::test_plots(
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
   estimation_type = "point",
-  test_specific_config = TRUE,
+  test_config = "normal",
   debug = debug_flag
 )
 

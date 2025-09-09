@@ -27,7 +27,7 @@ familiar:::test_export(
   aggregate_results = TRUE,
   create_novelty_detector = TRUE,
   n_models = 100,
-  test_specific_config = TRUE,
+  test_config = "normal",
   debug = debug_flag
 )
 
@@ -43,6 +43,6 @@ familiar:::test_export(
   aggregate_results = TRUE,
   create_novelty_detector = TRUE,
   n_models = 20,
-  test_specific_config = TRUE,
+  test_config = "normal",
   debug = debug_flag
 )

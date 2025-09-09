@@ -20,7 +20,7 @@ familiar:::test_plots(
   plot_function = familiar:::plot_confusion_matrix,
   data_element = "confusion_matrix",
   outcome_type_available = c("binomial", "multinomial"),
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("show_alpha" = "none"),
   debug = debug_flag
 )
@@ -30,7 +30,7 @@ familiar:::test_plots(
   plot_function = familiar:::plot_confusion_matrix,
   data_element = "confusion_matrix",
   outcome_type_available = c("binomial", "multinomial"),
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("show_alpha" = "by_class"),
   debug = debug_flag
 )
@@ -40,7 +40,7 @@ familiar:::test_plots(
   plot_function = familiar:::plot_confusion_matrix,
   data_element = "confusion_matrix",
   outcome_type_available = c("binomial", "multinomial"),
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("show_alpha" = "by_figure"),
   debug = debug_flag
 )
@@ -50,7 +50,7 @@ familiar:::test_plots(
   plot_function = familiar:::plot_confusion_matrix,
   data_element = "confusion_matrix",
   outcome_type_available = c("binomial", "multinomial"),
-  test_specific_config = TRUE,
+  test_config = "normal",
   plot_args = list("show_alpha" = "by_all"),
   debug = debug_flag
 )
@@ -68,7 +68,7 @@ familiar:::test_plot_ordering(
   plot_function = familiar:::plot_confusion_matrix,
   data_element = "confusion_matrix",
   outcome_type_available = c("binomial", "multinomial"),
-  use_prediction_table = TRUE,
+  test_config = "normal",
   debug = debug_flag
 )
 
