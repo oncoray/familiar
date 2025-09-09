@@ -204,6 +204,58 @@ do.call_with_handlers <- function(
 
 
 
+do.call_external <- function(
+    what, 
+    args, 
+    additional_packages = NULL
+) {
+  
+  bg_function_wrapper <- function(
+    what, 
+    args, 
+    additional_packages
+  ) {
+    if (!is.null(bg_function_wrapper)) {
+      for (package in additional_packages) {
+        requireNamespace(package)
+      }
+    }
+    
+    do.call(
+      what = what,
+      args = args
+    )
+  }
+  
+  # Launch as background.
+  bg_process <- callr::r_bg(
+    func = bg_function_wrapper,
+    args = list(
+      "what" = what,
+      "args" = args,
+      "additional_packages" = additional_packages
+    ),
+    package = TRUE
+  )
+  
+  # Wait until the background process completes.
+  bg_process$wait()
+  
+  # Check if the external process crashed.
+  if (bg_process$get_exit_status() >= 0L) {
+    # If TRUE, results can be read.
+    results <- bg_process$get_result()
+    
+  } else {
+    # If FALSE, the external process disconnected.
+    results <- list("error" = paste0("External process was lost with exit status", bg_process$get_exit_status()))
+  }
+  
+  return(results)
+}
+
+
+
 condition_parser <- function(x, ...) {
   # Based on print.condition
 
