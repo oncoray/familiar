@@ -13,7 +13,8 @@ Hosmer-Lemeshow test}
   n_max_groups = NULL,
   n_min_groups = NULL,
   n_min_y_in_group = NULL,
-  unique_samples_only = TRUE
+  unique_samples_only = TRUE,
+  rstream_object = NULL
 )
 }
 \arguments{
