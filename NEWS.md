@@ -1,4 +1,4 @@
-# Version 2.0.0 (Development)
+# Version 2.0.0 (Astonishing Anteater)
 
 ## Breaking changes
 
