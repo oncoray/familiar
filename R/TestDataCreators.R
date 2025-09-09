@@ -27,6 +27,10 @@ test_create_good_data <- function(
   outcome_raw <- feature_1 + 0.1 * feature_2a + 0.3 * feature_3a + 0.1 * feature_4
   
   if (outcome_type == "binomial") {
+    # Because outcome_raw is strongly correlated with feature 1, this may lead to
+    # numerical issues. To prevent this, we add some noise to the outcome.
+    outcome_raw <- outcome_raw + fam_rnorm(n = n_series_instances, mean = 0.75, sd = 0.2, rstream_object = r)
+    
     # Convert to 0, 1
     outcome_value <- outcome_raw > 0.75
     outcome_value <- factor(
