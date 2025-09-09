@@ -7,12 +7,8 @@ Authors@R: c(
            role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0342-9545")),
     person("Steffen", "Löck", role="aut"),
-    person("Stefan", "Leger", role="ctb"),
-    person("Iram", "Shahzadi", role="ctb"),
-    person("Asier", "Rabasco Meneghetti", role="ctb"),
-    person("Sebastian", "Starke", role="ctb"),
-    person("Technische Universität Dresden", role="cph"),
     person("German Cancer Research Center (DKFZ)", role="cph"))
+    person("Technische Universität Dresden", role="cph"),
 Description: Single unified interface for end-to-end modelling of regression, 
     categorical and time-to-event (survival) outcomes. Models created using
     familiar are self-containing, and their use does not require additional
