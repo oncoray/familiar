@@ -1760,10 +1760,14 @@ setMethod(
 #'
 #'@description Extract and export individual conditional expectation data.
 #'
+#'@param feature_x (*optional*) Feature(s) whose SHAP values are used for
+#'  determining dependence.
+#'@param feature_y (*optional*) Feature(s) whose values are used to show 
+#'  interaction with the feature(s) in `feature_x`.
+#'
 #'@inheritParams export_all
 #'@inheritParams export_univariate_analysis_data
 #'
-#'@inheritDotParams extract_ice
 #'@inheritDotParams as_familiar_collection
 #'
 #'@details Data is usually collected from a `familiarCollection` object.
@@ -1788,6 +1792,8 @@ setGeneric(
     dir_path = NULL,
     aggregate_results = TRUE,
     export_collection = FALSE,
+    feature_x = NULL,
+    feature_y = NULL,
     ...
   ) {
     standardGeneric("export_shap")
