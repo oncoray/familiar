@@ -284,7 +284,7 @@ plots[[1L]]
 This produces the exact same plot. Model performance can also be exported to a 
 table using using `export_model_performance`.
 
-```{r, label="model-performance-plot"}
+```{r, label="model-performance-table"}
 results <- familiar::export_model_performance(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
@@ -734,7 +734,7 @@ If just variable importance is relevant, the SHAP summary plot can also be shown
 as a bar plot (`plot_type = "barplot"`) showing the mean absolute SHAP value by
 default (`value_representation = "abs_mean"`):
 
-```{r, fig.align='center', fig.width=7, label="shap_summary_violin"}
+```{r, fig.align='center', fig.width=7, label="shap_summary_bar"}
 plots <- familiar::plot_shap_summary(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
