@@ -8,7 +8,8 @@ outcome_type <- "survival"
 for (n_numeric_features in c(4L, 3L, 2L, 1L, 0L)) {
   data <- familiar:::test_create_synthetic_series_data(
     outcome_type = outcome_type,
-    n_numeric = n_numeric_features)
+    n_numeric = n_numeric_features
+  )
 
   for (batch_normalisation_method in familiar:::.get_available_batch_normalisation_methods()) {
     testthat::test_that(paste0(

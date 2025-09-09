@@ -34,12 +34,12 @@ setClass(
 
 
 
-# add_feature_info_parameters (parametric ComBat, data.table) ------------------
+# add_feature_info_parameters (parametric ComBat, numeric) ---------------------
 setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationParametricCombat",
-    data = "data.table"
+    data = "numeric"
   ),
   function(
     object, 
@@ -99,12 +99,12 @@ setMethod(
 
 
 
-# add_feature_info_parameters (non-parametric ComBat, data.table) --------------
+# add_feature_info_parameters (non-parametric ComBat, numeric) -----------------
 setMethod(
   "add_feature_info_parameters",
   signature(
     object = "featureInfoParametersNormalisationNonParametricCombat",
-    data = "data.table"
+    data = "numeric"
   ),
   function(
     object, 
@@ -112,7 +112,6 @@ setMethod(
     batch_parameter_data,
     ...
   ) {
-    
     # Suppress NOTES due to non-standard evaluation in data.table
     feature <- batch_id <- NULL
     

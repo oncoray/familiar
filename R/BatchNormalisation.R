@@ -246,7 +246,6 @@ add_batch_normalisation_parameters <- function(
     batch_column_data,
     batch_parameter_data = NULL
 ) {
-  
   # Pass to underlying function that adds the feature info.
   object <- add_feature_info_parameters(
     object = feature_info@batch_normalisation_parameters,
@@ -263,10 +262,10 @@ add_batch_normalisation_parameters <- function(
 
 
 
-# add_feature_info_parameters (container, data.table) --------------------------
+# add_feature_info_parameters (container, numeric) -----------------------------
 setMethod(
   "add_feature_info_parameters",
-  signature(object = "featureInfoParametersBatchNormalisationContainer", data = "vector"),
+  signature(object = "featureInfoParametersBatchNormalisationContainer", data = "numeric"),
   function(
     object,
     data,
