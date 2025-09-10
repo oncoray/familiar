@@ -681,6 +681,8 @@ setMethod(
       rstream_object = rstream_object
     )
     
+    if (is_empty(group_data)) return(NULL)
+    
     # Merge with prediction table.
     group_data <- merge(
       x = data,
@@ -794,6 +796,8 @@ setMethod(
       rstream_object = rstream_object
     )
     
+    if (is_empty(group_data)) return(NULL)
+    
     # Merge with prediction table.
     group_data <- merge(
       x = data,
@@ -894,6 +898,8 @@ setMethod(
       sample_identifiers = data[, mget(sample_identifiers)],
       rstream_object = rstream_object
     )
+    
+    if (is_empty(group_data)) return(NULL)
     
     # Merge with prediction table.
     group_data <- merge(
