@@ -562,7 +562,7 @@ setMethod(
   observed <- NULL
   
   # Start random number generator.
-  rstream_object <- .start_random_number_stream(seed = bootstrap_seed)
+  rstream_object <- .start_random_number_stream(seed = ifelse(is.finite(bootstrap_seed), bootstrap_seed, 19L))
   
   # Bootstrap the data.
   if (bootstrap) {
