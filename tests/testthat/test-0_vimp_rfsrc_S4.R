@@ -103,40 +103,6 @@ data <- familiar:::test_create_good_data("continuous")
 # Process dataset.
 vimp_object <- familiar:::test_create_vimp_method(
   data = data,
-  vimp_method = "random_forest_rfsrc_minimum_depth",
-  vimp_method_parameter_list = list(
-    "n_tree" = 8,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5),
-  outcome_type = "continuous",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest minimum depth method correctly ranks continuous data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-    
-    # Expect that the vimp table has at most six rows.
-    testthat::expect_lte(nrow(vimp_table), 6L)
-    
-    # Expect that the names are the same as that of the features.
-    testthat::expect_true(
-      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
-    
-    # Feature 1 is most important.
-    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::test_create_vimp_method(
-  data = data,
   vimp_method = "random_forest_rfsrc_permutation",
   vimp_method_parameter_list = list(
     "n_tree" = 8,
@@ -205,39 +171,6 @@ testthat::test_that(
 
 # Binomial outcome -------------------------------------------------------------
 data <- familiar:::test_create_good_data("binomial")
-
-# Process dataset.
-vimp_object <- familiar:::test_create_vimp_method(
-  data = data,
-  vimp_method = "random_forest_rfsrc_minimum_depth",
-  vimp_method_parameter_list = list(
-    "n_tree" = 8,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5),
-  outcome_type = "binomial",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest minimum depth method correctly ranks binomial data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-    
-    # Expect that the vimp table has at most six rows.
-    testthat::expect_lte(nrow(vimp_table), 6L)
-    
-    # Expect that the names are the same as that of the features.
-    testthat::expect_true(
-      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
-    
-    # Feature 1 is most important.
-    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
-  }
-)
 
 # Process dataset.
 vimp_object <- familiar:::test_create_vimp_method(
@@ -313,39 +246,6 @@ data <- familiar:::test_create_good_data("multinomial")
 # Process dataset.
 vimp_object <- familiar:::test_create_vimp_method(
   data = data,
-  vimp_method = "random_forest_rfsrc_minimum_depth",
-  vimp_method_parameter_list = list(
-    "n_tree" = 8,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5),
-  outcome_type = "multinomial",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest minimum depth method correctly ranks multinomial outcome data."),
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-    
-    # Expect that the vimp table has at most six rows.
-    testthat::expect_lte(nrow(vimp_table), 6L)
-    
-    # Expect that the names are the same as that of the features.
-    testthat::expect_true(
-      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
-    
-    # Feature 1 is most important.
-    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::test_create_vimp_method(
-  data = data,
   vimp_method = "random_forest_rfsrc_permutation",
   vimp_method_parameter_list = list(
     "n_tree" = 8,
@@ -412,39 +312,6 @@ testthat::test_that(
 
 # Survival outcome -------------------------------------------------------------
 data <- familiar:::test_create_good_data("survival")
-
-# Process dataset.
-vimp_object <- familiar:::test_create_vimp_method(
-  data = data,
-  vimp_method = "random_forest_rfsrc_minimum_depth",
-  vimp_method_parameter_list = list(
-    "n_tree" = 8,
-    "sample_size" = 0.50,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5),
-  outcome_type = "survival",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0(
-    "The RFSRC random forest minimum depth method correctly ranks survival outcome data."), 
-  {
-    vimp_table <- suppressWarnings(
-      familiar:::get_vimp_table(familiar:::.vimp(vimp_object, data)))
-    
-    # Expect that the vimp table has at most six rows.
-    testthat::expect_lte(nrow(vimp_table), 6L)
-    
-    # Expect that the names are the same as that of the features.
-    testthat::expect_true(
-      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
-    
-    # Feature 1 is most important.
-    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
-  }
-)
 
 # Process dataset.
 vimp_object <- familiar:::test_create_vimp_method(

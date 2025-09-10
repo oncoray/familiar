@@ -221,7 +221,7 @@ setMethod(
     param$fs_vimp_method <- .set_hyperparameter(
       default = "permutation",
       type = "factor",
-      range = c("permutation", "minimum_depth", "holdout"),
+      range = c("permutation", "holdout"),
       randomise = FALSE
     )
 
@@ -281,7 +281,7 @@ setMethod(
     param$fs_vimp_method <- .set_hyperparameter(
       default = "permutation",
       type = "factor",
-      range = c("permutation", "minimum_depth", "holdout"),
+      range = c("permutation", "holdout"),
       randomise = FALSE
     )
 
@@ -714,52 +714,8 @@ setMethod(
       return(vimp_object)
       
     } else if (vimp_method == "minimum_depth") {
-      # Check if the model is anonymous, and rebuild if it is. VIMP does not
-      # work otherwise.
-      if (inherits(object@model, "anonymous")) {
-        object <- .train(
-          object = object,
-          data = data,
-          get_additional_info = FALSE,
-          trim_model = FALSE,
-          anonymous = FALSE
-        )
-
-        # Check that the non-anonymous model is trained.
-        if (!model_is_trained(object)) return(callNextMethod())
-      }
-
-      # Determine minimum depth variable importance
-      vimp_score <- randomForestSRC::var.select(
-        object = object@model,
-        method = "md",
-        verbose = FALSE
-      )$md.obj$order
-
-      # Check that the variable importance score is not empty.
-      if (is_empty(vimp_score)) return(callNextMethod())
-
-      # Select the "min depth" column, which is the first column
-      if (is.matrix(vimp_score)) {
-        vimp_score_names <- rownames(vimp_score)
-        vimp_score <- vimp_score[, 1L]
-        
-      } else {
-        vimp_score_names <- names(vimp_score)
-      }
-
-      # Create variable importance object.
-      vimp_object <- methods::new(
-        "vimpTable",
-        vimp_table = data.table::data.table(
-          "score" = vimp_score, 
-          "name" = vimp_score_names
-        ),
-        score_aggregation = "max",
-        invert = FALSE
-      )
-
-      return(vimp_object)
+      ..deprecation_rfsrc_minimum_depth()
+      return(callNextMethod())
       
     } else if (vimp_method == "variable_hunting") {
       ..deprecation_rfsrc_variable_hunting()
@@ -936,7 +892,7 @@ setMethod(
         "random_forest_rfsrc_minimum_depth"
       )
     )) {
-      vimp_method <- "minimum_depth"
+      ..deprecation_rfsrc_minimum_depth(as_error = TRUE)
       
     } else if (startswith_any(
       method,
@@ -1023,8 +979,7 @@ setMethod(
 
 .get_available_rfsrc_vimp_methods <- function(show_general = TRUE) {
   return(c(
-    "random_forest_permutation", "random_forest_minimum_depth", 
-    "random_forest_rfsrc_permutation", "random_forest_rfsrc_minimum_depth",
+    "random_forest_permutation", "random_forest_rfsrc_permutation",
     "random_forest_holdout", "random_forest_rfsrc_holdout"
   ))
 }

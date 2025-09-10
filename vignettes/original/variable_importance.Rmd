@@ -71,8 +71,6 @@ how many features should be included in the model.
 | **random forest (RFSRC) variable importance**|
 | permutation^b^ | `random_forest_permutation`                                     | × | × | × | × |
 | permutation (unoptimised) | `random_forest_permutation_default`                  | × | × | × | × |
-| minimum depth^b^ | `random_forest_minimum_depth`                                 | × | × | × | × |
-| minimum depth (unoptimised) | `random_forest_minimum_depth_default`              | × | × | × | × |
 | hold-out ^b^ | `random_forest_holdout`                                           | × | × | × | × |
 | hold-out (unoptimised) | `random_forest_holdout_default`                         | × | × | × | × |
 | **random forest (ranger) variable importance**|

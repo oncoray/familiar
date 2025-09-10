@@ -187,6 +187,33 @@
 
 
 
+..deprecation_rfsrc_minimum_depth <- function(as_error = FALSE) {
+  message_string <- paste0(
+    "The minimum depth feature selection method of randomForestSRC has been ",
+    "deprecated in familiar version 2.0.0 due removal in randomForestSRC version ",
+    "3.4.0."
+  )
+  
+  if (as_error) {
+    rlang::abort(
+      message = message_string,
+      class = c("familiar_error", "deprecation_error")
+    )
+  }
+  
+  if (!.is_testing()) {
+    rlang::warn(
+      message = message_string,
+      class = c("familiar_warning", "deprecation_warning"),
+      .frequency = "once",
+      .frequency_id = "deprecation_warning_rfsrc_minimum_depth"
+    )
+  }
+  
+}
+
+
+
 ..error <- function(
     ...,
     error_class = NULL,

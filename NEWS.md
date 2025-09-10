@@ -51,6 +51,9 @@
 
   - The variable hunting feature selection method for random forests was removed
     due to stability issues in unit tests.
+    
+  - The minimum depth feature selection method for random forests was removed
+    due to deprecation of the underlying function in `RandomForestSRC`.
 
 - Many evaluation steps that only require model predictions can now be called 
   externally by providing a `familiarDataElementPredictionTable` object that 
