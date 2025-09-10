@@ -242,7 +242,7 @@ do.call_external <- function(
   bg_process$wait()
   
   # Check if the external process crashed.
-  if (bg_process$get_exit_status() >= 0L) {
+  if (bg_process$get_exit_status() == 0L) {
     # If TRUE, results can be read.
     results <- bg_process$get_result()
     
