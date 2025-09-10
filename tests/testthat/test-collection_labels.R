@@ -15,7 +15,7 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
   )
 
   # Data elements to skip.
-  skip_data_elements <- c("ice_data", "permutation_vimp")
+  skip_data_elements <- c("ice_data", "permutation_vimp", "shap")
 
   # Create experiment data.
   experiment_data <- familiar::summon_familiar(
