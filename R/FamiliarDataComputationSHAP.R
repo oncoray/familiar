@@ -594,7 +594,7 @@ setMethod(
     # Select (numeric) feature values from the data.
     feature_values <- NULL
     if (!is_empty(data)) {
-      feature_values <- unique(data@data[[feature]])
+      feature_values <- unique_na(data@data[[feature]])
     }
     
     # Check number of values to sample.
@@ -1136,6 +1136,10 @@ setMethod(
   # We follow the recipe by Covert and Lee (2021), which means that we update
   # the A and b matrices each iteration.
   
+  # Replace NA in samples and mapping.
+  samples[is.na(samples)] <- 0L
+  mapping[is.na(mapping)] <- 0L
+  
   # Compute A and b matrices for each sample.
   new_matrices <- mapply(
     ..compute_shap_matrices,
@@ -1297,6 +1301,7 @@ setMethod(
 
 
 ..compute_shap_value <- function(x) {
+  if (is.null(x)) return(NULL)
   
   A_inv <- matrix_pseudo_inverse(x$A)
   b <- x$b
