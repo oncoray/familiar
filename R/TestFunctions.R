@@ -5069,7 +5069,8 @@ integrated_test <- function(
     outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
     warning_good = NULL,
     warning_bad = NULL,
-    debug = FALSE
+    debug = FALSE,
+    test_situations = c("good", "bad")
 ) {
   if (debug) {
     test_fun <- debug_test_that
@@ -5095,99 +5096,118 @@ integrated_test <- function(
       .warning_bad <- warning_bad[[outcome_type]]
     }
     
-    test_fun(
-      paste0(
-        "Experiment for a good dataset with ", outcome_type, 
-        " outcome functions correctly."
-      ),
-      {
-        # Create datasets
-        full_data <- test_create_good_data(outcome_type)
-        
-        if (learner_unset) {
-          # Set learner
-          learner <- "lasso"
+    if ("good" %in% test_situations) {
+      test_fun(
+        paste0(
+          "Experiment for a good dataset with ", outcome_type, 
+          " outcome functions correctly."
+        ),
+        {
+          # Create datasets
+          full_data <- test_create_good_data(outcome_type)
           
-          # Parse hyperparameter list
-          hyperparameters <- list(
-            "sign_size" = get_n_features(full_data),
-            "family" = switch(
-              outcome_type,
-              "continuous" = "gaussian",
-              "binomial" = "binomial",
-              "multinomial" = "multinomial",
-              "survival" = "cox"
+          if (learner_unset) {
+            # Set learner
+            learner <- "lasso"
+            
+            # Parse hyperparameter list
+            hyperparameters <- list(
+              "sign_size" = get_n_features(full_data),
+              "family" = switch(
+                outcome_type,
+                "continuous" = "gaussian",
+                "binomial" = "binomial",
+                "multinomial" = "multinomial",
+                "survival" = "cox"
+              )
             )
-          )
+            
+            # Parse as list.
+            hyperparameters <- list("lasso" = hyperparameters)
+          }
           
-          # Parse as list.
-          hyperparameters <- list("lasso" = hyperparameters)
-        }
-        
-        if (!is.null(.warning_good)) {
-          testthat::expect_warning(
-            output <- suppress_fun_messages(summon_familiar(
+          if (!is.null(.warning_good)) {
+            testthat::expect_warning(
+              output <- suppress_fun_messages(summon_familiar(
+                data = full_data,
+                learner = learner,
+                hyperparameter = hyperparameters,
+                time_max = 3.5,
+                verbose = debug,
+                ...
+              )),
+              .warning_good
+            )
+            
+          } else {
+            output <- suppress_fun(summon_familiar(
               data = full_data,
               learner = learner,
               hyperparameter = hyperparameters,
               time_max = 3.5,
               verbose = debug,
               ...
-            )),
-            .warning_good
-          )
+            ))
+          }
           
-        } else {
-          output <- suppress_fun(summon_familiar(
-            data = full_data,
-            learner = learner,
-            hyperparameter = hyperparameters,
-            time_max = 3.5,
-            verbose = debug,
-            ...
-          ))
+          testthat::expect_equal(is.null(output), FALSE)
         }
-        
-        testthat::expect_equal(is.null(output), FALSE)
-      }
-    )
+      )
+    }
     
-    test_fun(
-      paste0(
-        "Experiment for a bad dataset with ", outcome_type, 
-        " outcome functions correctly."
-      ), 
-      {
-        # Create datasets. We explicitly insert NA data to circumvent an initial
-        # plausibility check.
-        bad_data <- test_create_bad_data(
-          outcome_type = outcome_type,
-          add_na_data = TRUE
-        )
-        
-        if (learner_unset) {
-          # Set learner
-          learner <- "lasso"
-          
-          # Parse hyperparameter list
-          hyperparameters <- list(
-            "sign_size" = get_n_features(bad_data),
-            "family" = switch(
-              outcome_type,
-              "continuous" = "gaussian",
-              "binomial" = "binomial",
-              "multinomial" = "multinomial",
-              "survival" = "cox"
-            )
+    if ("bad" %in% test_situations) {
+      test_fun(
+        paste0(
+          "Experiment for a bad dataset with ", outcome_type, 
+          " outcome functions correctly."
+        ), 
+        {
+          # Create datasets. We explicitly insert NA data to circumvent an initial
+          # plausibility check.
+          bad_data <- test_create_bad_data(
+            outcome_type = outcome_type,
+            add_na_data = TRUE
           )
           
-          # Parse as list.
-          hyperparameters <- list("lasso" = hyperparameters)
-        }
-        
-        if (!is.null(.warning_bad)) {
-          testthat::expect_warning(
-            output <- suppress_fun_messages(summon_familiar(
+          if (learner_unset) {
+            # Set learner
+            learner <- "lasso"
+            
+            # Parse hyperparameter list
+            hyperparameters <- list(
+              "sign_size" = get_n_features(bad_data),
+              "family" = switch(
+                outcome_type,
+                "continuous" = "gaussian",
+                "binomial" = "binomial",
+                "multinomial" = "multinomial",
+                "survival" = "cox"
+              )
+            )
+            
+            # Parse as list.
+            hyperparameters <- list("lasso" = hyperparameters)
+          }
+          
+          if (!is.null(.warning_bad)) {
+            testthat::expect_warning(
+              output <- suppress_fun_messages(summon_familiar(
+                data = bad_data,
+                learner = learner,
+                hyperparameter = hyperparameters,
+                feature_max_fraction_missing = 0.95,
+                time_max = 3.5,
+                verbose = debug,
+                ...
+              )),
+              .warning_bad
+            )
+            
+          } else {
+            # Note that we set a very high feature_max_fraction_missing to deal
+            # with NA rows in the dataset. Also time is explicitly set to prevent
+            # an error.
+            output <- suppress_fun(summon_familiar(
               data = bad_data,
               learner = learner,
               hyperparameter = hyperparameters,
@@ -5195,28 +5215,13 @@ integrated_test <- function(
               time_max = 3.5,
               verbose = debug,
               ...
-            )),
-            .warning_bad
-          )
+            ))
+          }
           
-        } else {
-          # Note that we set a very high feature_max_fraction_missing to deal
-          # with NA rows in the dataset. Also time is explicitly set to prevent
-          # an error.
-          output <- suppress_fun(summon_familiar(
-            data = bad_data,
-            learner = learner,
-            hyperparameter = hyperparameters,
-            feature_max_fraction_missing = 0.95,
-            time_max = 3.5,
-            verbose = debug,
-            ...
-          ))
+          testthat::expect_equal(is.null(output), FALSE)
         }
-        
-        testthat::expect_equal(is.null(output), FALSE)
-      }
-    )
+      )
+    }
   }
 }
 
