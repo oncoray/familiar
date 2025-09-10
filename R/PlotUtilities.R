@@ -2341,10 +2341,11 @@ theme_familiar <- function(
     ggplot2::zeroGrob(),
     simplify = FALSE
   )
-  
+
   # Identify the panel grobs.
   if (keep_implicit) {
     for (grob_id in which(grepl(pattern = "panel", x = repl_grob$layout$name))) {
+      
       # Determine the location of the panel.
       position <- as.list(repl_grob$layout[grob_id, c("t", "l", "b", "r")])
 
@@ -2360,7 +2361,7 @@ theme_familiar <- function(
           grob_height <- grid::unit(1.0, "null")
         }
 
-        if (as.numeric(grob_height) == 0.0) {
+        if (as.numeric(max(grob_height)) == 0.0) {
           grob_height <- grid::unit(1.0, "null")
         }
 
@@ -2380,7 +2381,7 @@ theme_familiar <- function(
           grob_width <- grid::unit(1.0, "null")
         }
 
-        if (as.numeric(grob_width) == 0.0) {
+        if (as.numeric(max(grob_width)) == 0.0) {
           grob_width <- grid::unit(1.0, "null")
         }
 
