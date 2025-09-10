@@ -31,7 +31,7 @@ output <- familiar:::summon_familiar(
   skip_evaluation_elements = c(
     "auc_data", "calibration_data", "calibration_info",
     "decision_curve_analyis", "feature_expressions", "feature_similarity",
-    "fs_vimp", "hyperparameters", "ice_data",
+    "fs_vimp", "hyperparameters", "ice_data", "shap",
     "model_vimp", "permutation_vimp", "sample_similarity",
     "risk_stratification_data", "risk_stratification_info", "univariate_analysis"
   ),
