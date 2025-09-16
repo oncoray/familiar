@@ -225,3 +225,96 @@ testthat::test_that("all output is present", {
   )
   testthat::expect_length(export_dirs, 4L)
 })
+
+
+
+# Train with special feature selection methods ---------------------------------
+
+data <- familiar:::test_create_good_data(
+  outcome_type = "binomial",
+  to_data_object = FALSE
+)
+
+# Train baseline model
+model <- familiar::train_familiar(
+  data = data,
+  experimental_design = "mb",
+  vimp_method = "mim",
+  learner = "glm_logistic",
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = verbose,
+  parallel = FALSE
+)
+
+testthat::test_that("model is correctly formed", {
+  testthat::expect_true(familiar:::model_is_trained(model))
+  testthat::expect_false(any(sapply(model@vimp_table, is.null)))
+})
+
+# Train model using none.
+model <- familiar::train_familiar(
+  data = data,
+  experimental_design = "mb",
+  vimp_method = "none",
+  learner = "glm_logistic",
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = verbose,
+  parallel = FALSE
+)
+testthat::test_that("model is correctly formed", {
+  testthat::expect_true(familiar:::model_is_trained(model))
+  testthat::expect_true(is.null(model@vimp_table))
+})
+
+# Train model using random.
+model <- familiar::train_familiar(
+  data = data,
+  experimental_design = "mb",
+  vimp_method = "random",
+  learner = "glm_logistic",
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = verbose,
+  parallel = FALSE
+)
+testthat::test_that("model is correctly formed", {
+  testthat::expect_true(familiar:::model_is_trained(model))
+  testthat::expect_true(is.null(model@vimp_table))
+})
+
+# Train model using random.
+model <- familiar::train_familiar(
+  data = data,
+  signature = c("feature_1", "feature_2a"),
+  experimental_design = "mb",
+  vimp_method = "signature_only",
+  learner = "glm_logistic",
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  class_levels = c("red", "green"),
+  verbose = verbose,
+  parallel = FALSE
+)
+testthat::test_that("model is correctly formed", {
+  testthat::expect_true(familiar:::model_is_trained(model))
+  testthat::expect_true(is.null(model@vimp_table))
+  testthat::expect_equal(model@hyperparameters$sign_size, 2L)
+  testthat::expect_setequal(c("feature_1", "feature_2a"), model@model_features)
+})

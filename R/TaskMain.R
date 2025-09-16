@@ -131,6 +131,22 @@ setMethod(
       # Find the data and run ids corresponding to variable importance tables
       # relevant to the current run. First we will figure out the data id and
       # run id for ALL variable importance tables.
+      
+      # Check that the variable importance stage actually exists --> this may be
+      # lacking if variable importance is determined during hyperparameter
+      # optimisation.
+      if (all(!experiment_data@experiment_setup$vimp)) {
+        if (object@vimp_method %in% c(
+          .get_available_random_vimp_methods(),
+          .get_available_none_vimp_methods(),
+          .get_available_signature_only_vimp_methods()
+        )) {
+          return(NULL)
+        }
+        
+        ..error_reached_unreachable_code("Cannot form variable importance tables. Something is wrong.")
+      }
+      
       vimp_data_id <- experiment_data@experiment_setup[vimp == TRUE, ]$main_data_id[1L]
       vimp_run_ids <- seq_len(experiment_data@experiment_setup[main_data_id == vimp_data_id, ]$n_runs[1L])
       
