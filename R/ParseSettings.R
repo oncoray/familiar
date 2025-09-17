@@ -3441,6 +3441,9 @@
 #'  
 #'  * `sample_similarity`: data for assessing sample similarity are computed.
 #'  
+#'  * `shap`: data for assessing marginal contributions of feature values in
+#'  a SHAP analysis.
+#'  
 #'  * `univariate_analysis`: data for assessing and plotting univariate feature
 #'  importance are computed.
 #'  

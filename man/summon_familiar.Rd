@@ -1085,6 +1085,8 @@ survival curves are collected.
 \item \code{risk_stratification_info}: data for assessing stratification into risk
 groups are computed.
 \item \code{sample_similarity}: data for assessing sample similarity are computed.
+\item \code{shap}: data for assessing marginal contributions of feature values in
+a SHAP analysis.
 \item \code{univariate_analysis}: data for assessing and plotting univariate feature
 importance are computed.
 }
