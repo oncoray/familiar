@@ -532,7 +532,8 @@
 .update_experimental_design_settings <- function(
     section_table,
     data,
-    settings
+    settings,
+    verbose = FALSE
 ) {
 
   # Find out if any external validation is performed as part of the workflow
@@ -672,19 +673,23 @@
     )
     
     if (length(new_validation_batch_id) > 0L && perform_external_validation) {
-      message(paste0(
-        "One or more batches/cohorts were not used for development and are now ",
-        "used for external validation: ",
-        paste_s(new_validation_batch_id)
-      ))
+      if (verbose) {
+        message(paste0(
+          "One or more batches/cohorts were not used for development and are now ",
+          "used for external validation: ",
+          paste_s(new_validation_batch_id)
+        ))
+      }
       
       settings$data$valid_cohorts <- new_validation_batch_id
       
     } else if (length(new_validation_batch_id)) {
-      message(paste0(
-        "One or more batches/cohorts in the data are not used for development because they ",
-        "were not provided in the development_batch_id variable."
-      ))
+      if (verbose) {
+        message(paste0(
+          "One or more batches/cohorts in the data are not used for development because they ",
+          "were not provided in the development_batch_id variable."
+        ))
+      }
     }
   }
   
@@ -700,11 +705,13 @@
     )
     
     if (length(new_development_batch_id) > 0L) {
-      message(paste0(
-        "One or more batches/cohorts were not used for external validation and are now ",
-        "used for development: ",
-        paste_s(new_development_batch_id)
-      ))
+      if (verbose) {
+        message(paste0(
+          "One or more batches/cohorts were not used for external validation and are now ",
+          "used for development: ",
+          paste_s(new_development_batch_id)
+        ))
+      }
       
       settings$data$train_cohorts <- new_development_batch_id
     }
@@ -720,10 +727,12 @@
   )
   
   if (length(unused_batch_id) > 0L) {
-    message(paste0(
-      "One or more batches/cohorts are not used for development or external validation: ",
-      paste_s(unused_batch_id)
-    ))
+    if (verbose) {
+      message(paste0(
+        "One or more batches/cohorts are not used for development or external validation: ",
+        paste_s(unused_batch_id)
+      ))
+    }
   }
   
   return(settings)

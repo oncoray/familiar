@@ -247,7 +247,8 @@ summon_familiar <- function(
   settings <- .update_experimental_design_settings(
     section_table = experiment_setup,
     data = data,
-    settings = settings
+    settings = settings,
+    verbose = verbose
   )
   
   # Import remaining settings
@@ -282,7 +283,8 @@ summon_familiar <- function(
     settings <- .update_experimental_design_settings(
       section_table = experiment_setup,
       data = data,
-      settings = settings
+      settings = settings,
+      verbose = verbose
     )
   }
   
