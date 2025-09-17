@@ -50,7 +50,9 @@
 #'   `RData` files. See documentation for the `data_files` argument for more
 #'   information.
 #'   
-#' @param experiment_data Experimental data may provided in the form of 
+#' @param experiment_data Experimental data may provided in the form of the 
+#'   output of `precompute_data_assignment`, `precompute_feature_info` or
+#'   `precompute_vimp`. This allows for warm-starting experiments.
 #' 
 #' @param cl Cluster created using the `parallel` package. This cluster is then
 #'   used to speed up computation through parallelisation. When a cluster is not

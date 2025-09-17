@@ -35,7 +35,9 @@ In case paths are provided, the data should be stored as \code{csv}, \code{rds} 
 \code{RData} files. See documentation for the \code{data_files} argument for more
 information.}
 
-\item{experiment_data}{Experimental data may provided in the form of}
+\item{experiment_data}{Experimental data may provided in the form of the
+output of \code{precompute_data_assignment}, \code{precompute_feature_info} or
+\code{precompute_vimp}. This allows for warm-starting experiments.}
 
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallelisation. When a cluster is not
