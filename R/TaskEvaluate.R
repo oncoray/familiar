@@ -460,7 +460,8 @@ setMethod(
 ) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  train <- can_pre_process <- perturbation_level <- main_data_id <- NULL
+  train <- internal_validation <- external_validation <- NULL
+  can_pre_process <- perturbation_level <- main_data_id <- NULL
   data_id <- run_id <- NULL
   
   # collection tasks -----------------------------------------------------------
@@ -477,7 +478,11 @@ setMethod(
   
   # Find the data_id related to ensembling of models.
   train_data_id <- experiment_data@experiment_setup[train == TRUE, ]$main_data_id[1L]
-  if (is_empty(train_data_id)) return(NULL)
+  internal_validation_data_id <- experiment_data@experiment_setup[internal_validation == TRUE, ]$main_data_id[1L]
+  external_validation_data_id <- experiment_data@experiment_setup[external_validation == TRUE, ]$main_data_id[1L]
+  
+  # If there is no train data id, we have an issue.
+  if (is.na(train_data_id)) return(NULL)
   
   # Determine which parts of the experiment can be used for internal validation..
   run_table <- .get_run_table_from_experiment_setup(
@@ -485,11 +490,7 @@ setMethod(
     experiment_setup = experiment_data@experiment_setup
   )
   
-  # Internal validation could exist at the level where pre-processing for
-  # training is allowed.
-  internal_validation_data_id <- tail(run_table[main_data_id <= train_data_id & can_pre_process == TRUE], n = 1L)$main_data_id[1L]
-  
-  if (!pool_only) {
+  if (!pool_only && !is.na(internal_validation_data_id)) {
     # Determine the collections at the last experimental level that can
     # pre-process and is part of the model-building branch.
     collection_run_ids <- seq_len(run_table[main_data_id == internal_validation_data_id]$n_runs[1L])
@@ -510,21 +511,18 @@ setMethod(
   # evaluation tasks -----------------------------------------------------------
   
   n_min_model_instances <- Inf
-  evaluate_external_validation <- evaluate_internal_validation <- evaluate_development <- FALSE
   
   # External validation: the top level has associated validation data.
-  if (experiment_data@experiment_setup[main_data_id == 1L]$max_validation_instances > 0L) {
-    evaluate_external_validation <- TRUE
+  if (!is.na(external_validation_data_id)) {
     n_min_model_instances <- min(
-      c(experiment_data@experiment_setup[main_data_id == 1L]$max_validation_instances),
+      c(experiment_data@experiment_setup[main_data_id == external_validation_data_id]$max_validation_instances),
       n_min_model_instances
     )
   }
   
   # Internal validation: the lowest model ensembling level has associated
   # validation data.
-  if (experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_validation_instances > 0L) {
-    evaluate_internal_validation <- TRUE
+  if (!is.na(internal_validation_data_id)) {
     n_min_model_instances <- min(
       c(experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_validation_instances),
       n_min_model_instances
@@ -533,10 +531,9 @@ setMethod(
   
   # Development data: the lowest model ensembling level has associated
   # development data. NOTE: this should always be the case.
-  if (experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_training_instances > 0L) {
-    evaluate_development <- TRUE
+  if (!is.na(train_data_id)) {
     n_min_model_instances <- min(
-      c(experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_training_instances),
+      c(experiment_data@experiment_setup[main_data_id == train_data_id]$max_training_instances),
       n_min_model_instances
     )
   }
@@ -558,11 +555,11 @@ setMethod(
         
         ## external validation -------------------------------------------------
         
-        if (evaluate_external_validation) {
+        if (!is.na(external_validation_data_id)) {
           # Initialise task.
           evaluate_task <- methods::new(
             "familiarTaskEvaluate",
-            data_id = 1L,
+            data_id = external_validation_data_id,
             run_id = 1L,
             validation = TRUE,
             ensemble_data_id = collect_task_list[[jj]]@data_id,
@@ -590,7 +587,7 @@ setMethod(
         
         # internal validation --------------------------------------------------
         
-        if (experiment_data@experiment_setup[main_data_id == internal_validation_data_id]$max_validation_instances > 0L) {
+        if (!is.na(internal_validation_data_id)) {
           # Initialise task.
           evaluate_task <- methods::new(
             "familiarTaskEvaluate",
@@ -622,7 +619,7 @@ setMethod(
         
         # development ----------------------------------------------------------
         
-        if (evaluate_development) {
+        if (!is.na(train_data_id)) {
           # Initialise task.
           evaluate_task <- methods::new(
             "familiarTaskEvaluate",

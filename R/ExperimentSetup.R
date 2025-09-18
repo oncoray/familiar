@@ -137,6 +137,7 @@ extract_experimental_setup <- function(
     "main_data_id" = 0L,
     "vimp" = FALSE,
     "train" = FALSE,
+    "internal_validation" = FALSE,
     "external_validation" = FALSE,
     "perturb_method" = "none",
     "perturb_n_rep" = 0L,
@@ -171,7 +172,7 @@ extract_experimental_setup <- function(
   # Set can_pre_process to FALSE for select perturbation methods.
   section_table[
     perturb_method %in% c("limited_bootstrap"),
-    "can_pre_process" := FALSE
+    ":="(can_pre_process = FALSE, internal_validation = FALSE)
   ]
   
   return(section_table)
@@ -404,7 +405,11 @@ extract_experimental_setup <- function(
           var_name = "The number of bootstraps",
           range = c(1L, Inf)
         )
-
+        
+        if (section_table$perturb_method[ii] == "full_bootstrap") {
+          section_table$internal_validation[ii] <- TRUE
+        }
+        
         # Add the number of bootstraps to the section table
         section_table$perturb_n_rep[ii] <- n_reps
       }
@@ -435,6 +440,9 @@ extract_experimental_setup <- function(
           var_name = "The number of cross-validations folds",
           range = c(2L, Inf)
         )
+        
+        # Set internal validation.
+        section_table$internal_validation[ii] <- TRUE
         
         # Add number of folds to the section_table
         section_table$perturb_n_folds[ii] <- n_folds
@@ -467,6 +475,9 @@ extract_experimental_setup <- function(
       
       # Read leave-one-out-cross-validation settings
       if (section_table$perturb_method[ii] == "loocv") {
+        # Set internal validation.
+        section_table$internal_validation[ii] <- TRUE
+        
         section_table$perturb_n_folds[ii] <- -1L
         section_table$perturb_n_rep[ii] <- 1L
       }
