@@ -743,9 +743,6 @@ setClass(
 #'   loading.
 #' @slot sample_set_on_load NULL or vector of sample identifiers to be loaded.
 #'   Overrides any `sample_seed` that may have been provided.
-#' @slot defer_to_model_data_and_run_id logical. Determines whether the provided
-#'   data_id and run_id should be used (`FALSE`), or data_id and run_id of a
-#'   model (`TRUE`).
 setClass(
   "delayedDataObject",
   contains = "dataObject",
@@ -753,17 +750,11 @@ setClass(
     # Flag for aggregation after loading and pre-processing
     aggregate_on_load = "logical",
     # Samples to be loaded. 
-    sample_set_on_load = "ANY",
-    # Flag for deferring loading of data depending on data_id and run_id of
-    # models. Used to ensure that development data and internal validation data
-    # are correctly handled. Overrides and data_id and run_id that may have been
-    # provided.
-    defer_to_model_data_and_run_id = "logical"
+    sample_set_on_load = "ANY"
   ),
   prototype = list(
     aggregate_on_load = NA,
-    sample_set_on_load = NULL,
-    defer_to_model_data_and_run_id = NA
+    sample_set_on_load = NULL
   )
 )
 

@@ -176,9 +176,7 @@ setClass(
   contains = "familiarTask",
   slots = list(
     "validation" = "logical",
-    "ensemble_data_id" = "integer",
-    "ensemble_run_id" = "integer",
-    "get_predictions_at_model_level" = "logical",
+    "predict_data_id" = "integer",
     "force_ensemble_detail_level" = "logical",
     "vimp_method" = "character",
     "learner" = "character",
@@ -189,15 +187,7 @@ setClass(
     validation = NA, 
     # Whereas data_id describes where the overall data comes from, the
     # ensemble_data_id describes where ensembles are formed.
-    ensemble_data_id = NA_integer_,
-    ensemble_run_id = NA_integer_,
-    # This parameter determines which data is used for generating predictions.
-    # If FALSE, data will be obtained using data_id and run_id of the task. If
-    # TRUE, data will be obtained using the data_id and run_id associated with
-    # each model. In practice, for internal runs this will be set to TRUE except
-    # for external validation data, whereas for external tasks (e.g. on existing
-    # models) this will be FALSE, and the provided data will be used directly.
-    get_predictions_at_model_level = FALSE,
+    predict_data_id = NA_integer_,
     # If individual models do not have sufficient data to perform hybrid
     # analysis (each model is used to compute part of the bootstraps when
     # computing confidence intervals) for an evaluation step, that evaluation
@@ -228,8 +218,6 @@ setMethod(
       run_id = object@run_id,
       learner = object@learner,
       vimp_method = object@vimp_method,
-      ensemble_data_id = object@ensemble_data_id,
-      ensemble_run_id = object@ensemble_run_id,
       name = object@data_set_name,
       project_id = object@project_id,
       dir_path = file_paths$fam_data_dir
@@ -252,8 +240,6 @@ setMethod(
       object@run_id, "_", 
       object@vimp_method, "_", 
       object@learner, "_",
-      object@ensemble_data_id, "_",
-      object@ensemble_run_id, "_",
       object@data_set_name
     ))
   }
@@ -289,25 +275,14 @@ setMethod(
     data <- methods::new(
       "delayedDataObject",
       data = NULL,
+      data_id = object@data_id,
+      run_id = object@run_id,
       preprocessing_level = "none",
       outcome_type = outcome_info@outcome_type,
       outcome_info = outcome_info,
       validation = object@validation,
       aggregate_on_load = FALSE
     )
-    
-    # Set the data_id and run_id for the data itself.
-    if (object@force_ensemble_detail_level) {
-      data@data_id <- object@ensemble_data_id
-      data@run_id <- object@ensemble_run_id
-      
-    } else {
-      data@data_id <- object@data_id
-      data@run_id <- object@run_id
-    }
-    
-    # Determine whether model data and run ids should be used for predictions.
-    data@defer_to_model_data_and_run_id <- object@get_predictions_at_model_level
     
     # Pass to method that dispatches with dataObject for further processing.
     return(.perform_task(
@@ -365,8 +340,8 @@ setMethod(
       model_list = as.list(object@model_files),
       learner = object@learner,
       vimp_method = object@vimp_method,
-      data_id = object@ensemble_data_id,
-      run_id = object@ensemble_run_id
+      data_id = object@data_id,
+      run_id = object@run_id
     )
     
     # Add package version.
@@ -384,8 +359,8 @@ setMethod(
         fam_ensemble@model_list,
         function(fam_model) fam_model@run_table
       ),
-      "ensemble_data_id" = object@ensemble_data_id,
-      "ensemble_run_id" = object@ensemble_run_id
+      "ensemble_data_id" = object@data_id,
+      "ensemble_run_id" = object@run_id
     )
     
     # Complete the ensemble using information provided by the model
@@ -465,7 +440,7 @@ setMethod(
   data_id <- run_id <- NULL
   
   # collection tasks -----------------------------------------------------------
-  
+  browser()
   # Always created the top-layer pooled collection.
   collect_task_list <- list(
     methods::new(
@@ -562,9 +537,7 @@ setMethod(
             data_id = external_validation_data_id,
             run_id = 1L,
             validation = TRUE,
-            ensemble_data_id = collect_task_list[[jj]]@data_id,
-            ensemble_run_id = collect_task_list[[jj]]@run_id,
-            get_predictions_at_model_level = FALSE,
+            predict_data_id = external_validation_data_id,
             force_ensemble_detail_level = force_ensemble_detail_level,
             learner = learner,
             vimp_method = vimp_method,
@@ -594,9 +567,7 @@ setMethod(
             data_id = collect_task_list[[jj]]@data_id,
             run_id = collect_task_list[[jj]]@run_id,
             validation = TRUE,
-            ensemble_data_id = collect_task_list[[jj]]@data_id,
-            ensemble_run_id = collect_task_list[[jj]]@run_id,
-            get_predictions_at_model_level = TRUE,
+            predict_data_id = internal_validation_data_id,
             force_ensemble_detail_level = force_ensemble_detail_level,
             learner = learner,
             vimp_method = vimp_method,
@@ -626,9 +597,7 @@ setMethod(
             data_id = collect_task_list[[jj]]@data_id,
             run_id = collect_task_list[[jj]]@run_id,
             validation = FALSE,
-            ensemble_data_id = collect_task_list[[jj]]@data_id,
-            ensemble_run_id = collect_task_list[[jj]]@run_id,
-            get_predictions_at_model_level = TRUE,
+            predict_data_id = internal_validation_data_id,
             force_ensemble_detail_level = force_ensemble_detail_level,
             learner = learner,
             vimp_method = vimp_method,
@@ -684,14 +653,16 @@ setMethod(
   # data id and run id.
   for (ii in seq_along(evaluate_task_list)) {
     # Select run tables where the ensemble data and run identifiers appear.
-    selected_run_tables <- run_tables[sapply(
-      run_tables,
-      function(x, ensemble_data_id, ensemble_run_id) {
-        return(!is_empty(x[data_id == ensemble_data_id & run_id == ensemble_run_id]))
-      },
-      ensemble_data_id = evaluate_task_list[[ii]]@ensemble_data_id,
-      ensemble_run_id = evaluate_task_list[[ii]]@ensemble_run_id
-    )]
+    selected_run_tables <- run_tables[
+      sapply(
+        run_tables,
+        function(x, task_data_id, task_run_id) {
+          return(!is_empty(x[data_id == task_data_id & run_id == task_run_id]))
+        },
+        task_data_id = evaluate_task_list[[ii]]@data_id,
+        task_run_id = evaluate_task_list[[ii]]@run_id
+      )
+    ]
     
     # Create corresponding model object names.
     evaluate_task_list[[ii]]@model_files <- unname(sapply(
