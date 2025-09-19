@@ -310,7 +310,6 @@ setMethod(
     aggregate_results,
     cl,
     ...) {
-  browser()
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
   

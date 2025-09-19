@@ -358,14 +358,6 @@ setMethod(
     # Test if the models are loaded, and load the models if they are not.
     object <- load_models(object, dir_path = dir_path)
     
-    # This makes models predict at the data_id indicated by
-    # object@predict_data_id when data is a delayedDataObject/
-    if (!is.na(object@predict_data_id) && is(data, "delayedDataObject")) {
-      browser()
-      data@data_id <- object@predict_data_id
-      data@run_id <- NA_integer_
-    }
-    
     # Extract predictions for each individual model
     if (length(object@model_list) > 0L) {
       predict_list <- lapply(

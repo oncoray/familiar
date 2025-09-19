@@ -117,7 +117,6 @@ setMethod(
       feature_info = feature_info_list,
       data_id = object@data_id,
       run_id = object@run_id,
-      predict_data_id = object@predict_data_id,
       run_table = object@run_table,
       calibration_info = calibration_info,
       model_dir_path = object@model_dir_path,

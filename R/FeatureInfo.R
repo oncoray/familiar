@@ -955,8 +955,8 @@ trim_unused_features_from_list <- function(feature_info_list) {
     set_descriptor = feature_info_list[[1L]]@set_descriptor,
     feature_type = feature_info_list[[1L]]@feature_type,
     levels = feature_info_list[[1L]]@levels,
-    data_id = as.integer(object@run_table$ensemble_data_id),
-    run_id = as.integer(object@run_table$ensemble_run_id),
+    data_id = as.integer(object@data_id),
+    run_id = as.integer(object@run_id),
     in_signature = feature_info_list[[1L]]@in_signature
   )
 

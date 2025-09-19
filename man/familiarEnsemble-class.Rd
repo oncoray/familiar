@@ -47,9 +47,6 @@ evaluate the ensemble.}
 \item{\code{run_id}}{Internal identifier for the specific subset of the dataset used
 used to train or evaluate the ensemble.}
 
-\item{\code{predict_data_id}}{Internal identifier for the subset of data where the
-models in the ensemble should predict.}
-
 \item{\code{run_table}}{Run table for the data used to train the ensemble. Used
 internally.}
 

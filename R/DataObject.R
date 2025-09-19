@@ -711,7 +711,6 @@ setMethod(
     
     if (is.na(data@run_id)) {
       data@run_id <- object@run_table[data_id == data@data_id, ]$run_id[1L]
-      browser()
     }
     
     # Get columns in data frame which are not features, but identifiers and
@@ -757,11 +756,14 @@ setMethod(
     stop_at,
     ...
   ) {
+    # Prevent notes.
+    data_id <- NULL
+    
     # Read required features.
     required_features <- object@required_features
     
     if (is.na(data@run_id)) {
-      browser()
+      data@run_id <- object@run_table[data_id == data@data_id, ]$run_id[1L]
     }
     
     # Get columns in data frame which are not features, but identifiers instead.
@@ -807,11 +809,14 @@ setMethod(
     keep_novelty = FALSE,
     ...
   ) {
+    # Prevent notes.
+    data_id <- NULL
+    
     # Read required features.
     required_features <- object@required_features
     
     if (is.na(data@run_id)) {
-      browser()
+      data@run_id <- object@run_table[data_id == data@data_id, ]$run_id[1L]
     }
     
     # Get columns in data frame which are not features, but identifiers and
@@ -858,8 +863,31 @@ setMethod(
     keep_novelty = FALSE,
     ...
   ) {
+    # Prevent notes.
+    data_id <- NULL
+    
     # Read required features.
     required_features <- object@required_features
+    
+    # Leaving the run id NA signals that the run_id is determined by the data_id
+    # of the data. For ensembles, this data_id may not actually be contained
+    # in the run table (which is a composite of the underlying models).
+    if (is.na(data@run_id)) {
+      run_table <- tail(object@run_table[data_id <= data@data_id, ], n = 1L)
+      
+      if (run_table$data_id == data@data_id) {
+        data@run_id <- run_table$run_id
+        
+      } else {
+        # In this case, we are considering a higher subset of data, and
+        # we should only consider the training set, because the actually 
+        # requested subset is contained in the training set at that level --
+        # but not within the validation subset.
+        data@data_id <- run_table$data_id
+        data@run_id <- run_table$run_id
+        data@validation <- FALSE
+      }
+    }
     
     # Get columns in data frame which are not features, but identifiers and
     # outcome instead.

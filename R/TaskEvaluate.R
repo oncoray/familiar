@@ -275,8 +275,8 @@ setMethod(
     data <- methods::new(
       "delayedDataObject",
       data = NULL,
-      data_id = object@data_id,
-      run_id = object@run_id,
+      data_id = object@predict_data_id,
+      run_id = NA_integer_,
       preprocessing_level = "none",
       outcome_type = outcome_info@outcome_type,
       outcome_info = outcome_info,
@@ -314,6 +314,8 @@ setMethod(
     return_results = TRUE,
     ...
   ) {
+    # Prevent notes.
+    n <- data_id <- NULL
     
     # Signal evaluation start for the current task.
     logger_message(
@@ -340,8 +342,7 @@ setMethod(
       learner = object@learner,
       vimp_method = object@vimp_method,
       data_id = object@data_id,
-      run_id = object@run_id,
-      predict_data_id = object@predict_data_id
+      run_id = object@run_id
     )
     
     # Add package version.
@@ -353,24 +354,25 @@ setMethod(
       suppress_auto_detach = TRUE
     )
     
-    # Create a run table
-    fam_ensemble@run_table <- list(
-      "run_table" = lapply(
-        fam_ensemble@model_list,
-        function(fam_model) fam_model@run_table
-      ),
-      "ensemble_data_id" = object@data_id,
-      "ensemble_run_id" = object@run_id
+    # Create a run table. Select only the runs that consistently appear for
+    # all models.
+    run_table <- data.table::rbindlist(lapply(
+      fam_ensemble@model_list,
+      function(fam_model) fam_model@run_table)
     )
     
+    # Count how many times each run appears. Run tables can start bifurcating
+    # for underlying models, e.g. through bootstraps.
+    run_table <- run_table[, list("n" = .N), by = eval(colnames(run_table))]
+    fam_ensemble@run_table <- run_table[n == length(fam_ensemble@model_list)][order(data_id)]
+
     # Complete the ensemble using information provided by the model
     fam_ensemble <- complete_familiar_ensemble(object = fam_ensemble)
     
     # Set evaluation level.
+    detail_level <- settings$eval$detail_level
     if (object@force_ensemble_detail_level) {
       detail_level <- "ensemble"
-    } else {
-      detail_level <- settings$eval$detail_level
     }
     
     # Compute evaluation data.
@@ -440,7 +442,6 @@ setMethod(
   data_id <- run_id <- NULL
   
   # collection tasks -----------------------------------------------------------
-  browser()
   # Always created the top-layer pooled collection.
   collect_task_list <- list(
     methods::new(

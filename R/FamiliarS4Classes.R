@@ -195,8 +195,6 @@ setClass("familiarModel",
 #'   evaluate the ensemble.
 #' @slot run_id Internal identifier for the specific subset of the dataset used
 #'   used to train or evaluate the ensemble.
-#' @slot predict_data_id Internal identifier for the subset of data where the
-#'   models in the ensemble should predict.
 #' @slot run_table Run table for the data used to train the ensemble. Used
 #'   internally.
 #' @slot calibration_info Calibration information, e.g. baseline survival in the
@@ -245,9 +243,6 @@ setClass("familiarEnsemble",
     run_id = "integer",
     # data_id for predictions. This forces the models to predict at the subsets
     # in this layer, and overrides data_id (but only for predictions).
-    predict_data_id = "integer",
-    # Set of run tables for the current ensemble. This is only required for
-    # processing internal data.
     run_table = "ANY",
     # Information required to assess model calibrations (e.g. baseline survival)
     calibration_info = "ANY",
@@ -279,7 +274,6 @@ setClass("familiarEnsemble",
     model_features = NULL,
     novelty_features = NULL,
     data_id = NA_integer_,
-    predict_data_id = NA_integer_,
     run_id = NA_integer_,
     run_table = NULL,
     calibration_info = NULL,

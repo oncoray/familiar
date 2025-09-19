@@ -120,11 +120,7 @@ setMethod(
       model_list = object,
       learner = object[[1L]]@learner,
       vimp_method = vimp_method,
-      run_table = list(
-        "run_table" = run_table, 
-        "ensemble_data_id" = 0L, 
-        "ensemble_run_id" = 0L
-      )
+      run_table = run_table
     )
 
     # Add package version.
