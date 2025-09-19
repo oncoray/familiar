@@ -413,3 +413,7 @@ testthat::test_that("loocv-only experiment is correctly created", {
   # in the internal validation set (1 per fold.)
   testthat::expect_length(unique(performance_data$value), 3L)
 })
+
+
+# TODO: Add check with collections from deeper collections (pool_only = FALSE)
+# TODO: Add check on size of internal validation sets.
