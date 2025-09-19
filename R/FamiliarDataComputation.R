@@ -499,28 +499,6 @@ setMethod(
     ...
 ) {
   
-  ## Compute SHAP values for features ------------------------------------------
-  # TODO: MOVE DOWN AFTER IMPLEMENTATION
-  
-  shap_data <- NULL
-  if ("shap" %in% data_element) {
-    
-    shap_data <- extract_shap(
-      object = object,
-      data = data,
-      cl = cl,
-      ensemble_method = ensemble_method,
-      evaluation_times = evaluation_times,
-      sample_limit = sample_limit,
-      detail_level = detail_level,
-      aggregate_results = aggregate_results,
-      is_pre_processed = is_pre_processed,
-      verbose = verbose,
-      message_indent = message_indent,
-      ...
-    )
-  }
-  
   ## Compute distance between features -----------------------------------------
   feature_similarity <- NULL
   if (any(c("model_vimp", "feature_similarity", "univariate_analysis",
@@ -827,6 +805,26 @@ setMethod(
       is_pre_processed = is_pre_processed,
       message_indent = message_indent,
       verbose = verbose,
+      ...
+    )
+  }
+  
+  ## Compute SHAP values for features ------------------------------------------
+  shap_data <- NULL
+  if ("shap" %in% data_element) {
+    
+    shap_data <- extract_shap(
+      object = object,
+      data = data,
+      cl = cl,
+      ensemble_method = ensemble_method,
+      evaluation_times = evaluation_times,
+      sample_limit = sample_limit,
+      detail_level = detail_level,
+      aggregate_results = aggregate_results,
+      is_pre_processed = is_pre_processed,
+      verbose = verbose,
+      message_indent = message_indent,
       ...
     )
   }

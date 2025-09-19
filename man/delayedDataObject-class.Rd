@@ -41,9 +41,5 @@ loading.}
 
 \item{\code{sample_set_on_load}}{NULL or vector of sample identifiers to be loaded.
 Overrides any \code{sample_seed} that may have been provided.}
-
-\item{\code{defer_to_model_data_and_run_id}}{logical. Determines whether the provided
-data_id and run_id should be used (\code{FALSE}), or data_id and run_id of a
-model (\code{TRUE}).}
 }}
 

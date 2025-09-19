@@ -330,7 +330,6 @@ setMethod(
       indent = message_indent,
       verbose = verbose
     )
-    
     # Form an ensemble using the associated or provided models.
     
     # Check which detail level should be provided based on the number of
@@ -341,7 +340,8 @@ setMethod(
       learner = object@learner,
       vimp_method = object@vimp_method,
       data_id = object@data_id,
-      run_id = object@run_id
+      run_id = object@run_id,
+      predict_data_id = object@predict_data_id
     )
     
     # Add package version.
@@ -597,7 +597,7 @@ setMethod(
             data_id = collect_task_list[[jj]]@data_id,
             run_id = collect_task_list[[jj]]@run_id,
             validation = FALSE,
-            predict_data_id = internal_validation_data_id,
+            predict_data_id = train_data_id,
             force_ensemble_detail_level = force_ensemble_detail_level,
             learner = learner,
             vimp_method = vimp_method,

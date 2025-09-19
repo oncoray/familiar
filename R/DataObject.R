@@ -703,8 +703,16 @@ setMethod(
     keep_novelty = FALSE,
     ...
   ) {
+    # Prevent notes.
+    data_id <- NULL
+    
     # Read required features.
     required_features <- object@required_features
+    
+    if (is.na(data@run_id)) {
+      data@run_id <- object@run_table[data_id == data@data_id, ]$run_id[1L]
+      browser()
+    }
     
     # Get columns in data frame which are not features, but identifiers and
     # outcome instead.
@@ -752,6 +760,10 @@ setMethod(
     # Read required features.
     required_features <- object@required_features
     
+    if (is.na(data@run_id)) {
+      browser()
+    }
+    
     # Get columns in data frame which are not features, but identifiers instead.
     non_feature_columns <- get_non_feature_columns(x = object)
     
@@ -795,9 +807,12 @@ setMethod(
     keep_novelty = FALSE,
     ...
   ) {
-    
     # Read required features.
     required_features <- object@required_features
+    
+    if (is.na(data@run_id)) {
+      browser()
+    }
     
     # Get columns in data frame which are not features, but identifiers and
     # outcome instead.

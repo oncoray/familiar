@@ -41,10 +41,14 @@ models in the ensemble,}
 \item{\code{novelty_features}}{The combined set of features that is used to train all
 novelty detectors in the ensemble.}
 
-\item{\code{data_id}}{Internal identifier for the dataset used to train the ensemble.}
+\item{\code{data_id}}{Internal identifier for the dataset used to train or
+evaluate the ensemble.}
 
 \item{\code{run_id}}{Internal identifier for the specific subset of the dataset used
-used to train the ensemble.}
+used to train or evaluate the ensemble.}
+
+\item{\code{predict_data_id}}{Internal identifier for the subset of data where the
+models in the ensemble should predict.}
 
 \item{\code{run_table}}{Run table for the data used to train the ensemble. Used
 internally.}
