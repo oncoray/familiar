@@ -271,7 +271,9 @@ setMethod(
       ..error_reached_unreachable_code("outcome_info is required.")
     }
     
-    # Set up a delayed 
+    # Set up a dataObject that allows for delayed loading. Importantly, we set
+    # run_id to NA_integer_. This allows for loading the data based on the
+    # context provided by data_id and the ensemble or its underlying models.
     data <- methods::new(
       "delayedDataObject",
       data = NULL,

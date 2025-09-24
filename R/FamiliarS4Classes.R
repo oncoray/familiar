@@ -725,7 +725,8 @@ setClass(
 #' when needed.
 #'
 #' @slot data NULL or data table containing the data. If present (not `NULL`),
-#'   data is considered loaded.
+#'   data is considered loaded. This should not happen -- load_data_object auto-
+#'   matically creates a dataObject from the delayedDataObject.
 #' @slot preprocessing_level character indicating the level of pre-processing
 #'   already conducted. `"none"` by default.
 #' @slot outcome_type character, determines the outcome type.
@@ -736,7 +737,14 @@ setClass(
 #'   loaded.
 #' @slot run_id integer. Defines the run_id of the dataset that should be load.
 #'   Together with data_id, run_id and validation allows for looking up the
-#'   sample set.
+#'   sample set. If run_id is left unset (NA_integer_), this will force the
+#'   run_id to be set using the model, vimp_method or ensemble object. This is
+#'   used during the evaluation process to load data specifically related to
+#'   training, internal validation and external validation. The run-tables
+#'   (which contain information about data partitioning) associated with these
+#'   objects are used to look-up the run_id based on the data_id (that is always
+#'   explicitly set). The perform_task method for familiarTaskEvaluate uses this
+#'   aspect explicitly.
 #' @slot validation logical. This determines which internal data set will be
 #'   loaded. If TRUE, the validation data will be loaded, whereas FALSE loads
 #'   the development data.
