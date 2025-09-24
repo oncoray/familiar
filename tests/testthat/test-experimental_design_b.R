@@ -624,3 +624,25 @@ testthat::test_that("cv-only with nested bootstraps experiment is correctly crea
   testthat::expect_setequal(ext_val_samples_1, ext_val_samples_3)
   testthat::expect_setequal(ext_val_samples_2, ext_val_samples_3)
 })
+
+
+
+# Set evaluate_top_level_only to FALSE evaluate underlying data divisions.
+results <- familiar::summon_familiar(
+  data = data[c(1L:30L, 101L:150L),],
+  experimental_design = "lv(mb) + ev",
+  evaluate_top_level_only = FALSE,
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  validation_batch_id = "test",
+  vimp_method = "mim",
+  learner = "glm_logistic",
+  estimation_type = "point",
+  shap_max_iterations = 10L,
+  iteration_seed = 9L,
+  parallel = FALSE,
+  verbose = FALSE
+)
