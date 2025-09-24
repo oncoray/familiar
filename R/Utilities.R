@@ -755,6 +755,8 @@ get_object_file_name <- function(
     project_id,
     data_id = NULL,
     run_id = NULL,
+    ensemble_data_id = NULL,
+    ensemble_run_id = NULL,
     learner = NULL,
     vimp_method = NULL,
     name = NULL,
@@ -786,13 +788,14 @@ get_object_file_name <- function(
 
     if (
       is.null(learner) || is.null(vimp_method) ||
-      is.null(data_id) || is.null(run_id) || is.null(name)
+      is.null(data_id) || is.null(run_id) || is.null(name) ||
+      is.null(ensemble_data_id) || is.null(ensemble_run_id)
     ) {
       ..error_reached_unreachable_code("missing arguments")
     }
 
     output_str <- c(
-      project_id, learner, vimp_method, data_id, run_id, name, "data"
+      project_id, learner, vimp_method, data_id, run_id, ensemble_data_id, ensemble_run_id, name, "data"
     )
   
   } else if (object_type == "familiarCollection") {

@@ -49,57 +49,6 @@ setMethod(
 )
 
 
-# 
-# # get_object_name (familiarData) -----------------------------------------------
-# setMethod(
-#   "get_object_name",
-#   signature(object = "familiarData"),
-#   function(object, abbreviated = FALSE) {
-#     
-#     # Extract data and run id
-#     ensemble_data_id <- tail(object@pooling_table, n = 1L)$ensemble_data_id
-#     ensemble_run_id <- tail(object@pooling_table, n = 1L)$ensemble_run_id
-#     pool_data_id <- tail(object@pooling_table, n = 1L)$pool_data_id
-#     pool_run_id  <- tail(object@pooling_table, n = 1L)$pool_run_id
-#     
-#     data_pooling <- ifelse(
-#       tail(object@pooling_table, n = 1L)$data_perturb_level == 
-#         tail(object@pooling_table, n = 1L)$pool_perturb_level,
-#       "ensemble",
-#       "pool"
-#     )
-#     
-#     if (abbreviated) {
-#       # Create an abbreviated name
-#       object_name <- paste(
-#         data_pooling,
-#         ensemble_data_id,
-#         ensemble_run_id,
-#         ifelse(object@is_validation, "validation", "development"),
-#         "data",
-#         sep = "."
-#       )
-#       
-#     } else {
-#       # Create the full name of the object
-#       object_name <- get_object_file_name(
-#         learner = object@learner,
-#         vimp_method = object@vimp_method,
-#         project_id = object@project_id,
-#         data_id = ensemble_data_id,
-#         run_id = ensemble_run_id,
-#         pool_data_id = pool_data_id,
-#         pool_run_id = pool_run_id,
-#         object_type = "familiarData",
-#         is_ensemble = data_pooling == "ensemble",
-#         is_validation = object@is_validation,
-#         with_extension = FALSE
-#       )
-#     }
-#     
-#     return(object_name)
-#   }
-# )
 
 
 

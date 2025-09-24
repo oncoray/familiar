@@ -176,6 +176,8 @@ setClass(
   contains = "familiarTask",
   slots = list(
     "validation" = "logical",
+    "ensemble_data_id" = "integer",
+    "ensemble_run_id" = "integer",
     "predict_data_id" = "integer",
     "force_ensemble_detail_level" = "logical",
     "vimp_method" = "character",
@@ -184,7 +186,11 @@ setClass(
     "model_files" = "character"
   ),
   prototype = methods::prototype(
-    validation = NA, 
+    validation = NA,
+    # Ensemble data id and run ids are *only* used for generating unique file
+    # names.
+    ensemble_data_id = NA_integer_,
+    ensemble_run_id = NA_integer_,
     # Whereas data_id describes where the overall data comes from, the
     # ensemble_data_id describes where ensembles are formed.
     predict_data_id = NA_integer_,
@@ -216,6 +222,8 @@ setMethod(
       object_type = "familiarData",
       data_id = object@data_id,
       run_id = object@run_id,
+      ensemble_data_id = object@ensemble_data_id,
+      ensemble_run_id = object@ensemble_run_id,
       learner = object@learner,
       vimp_method = object@vimp_method,
       name = object@data_set_name,
@@ -237,7 +245,9 @@ setMethod(
     return(paste0(
       object@task_name, "_",
       object@data_id, "_", 
-      object@run_id, "_", 
+      object@run_id, "_",
+      object@ensemble_data_id, "_",
+      object@ensemble_run_id, "_",
       object@vimp_method, "_", 
       object@learner, "_",
       object@data_set_name
@@ -477,6 +487,7 @@ setMethod(
     for (run_id in collection_run_ids) {
       collect_task_list[[ii]] <- methods::new(
         "familiarTaskCollect",
+        task_id = ii + 1L,
         data_id = internal_validation_data_id,
         run_id = run_id,
         project_id = experiment_data@project_id
@@ -520,16 +531,57 @@ setMethod(
   # level for evaluation.
   force_ensemble_detail_level <- n_min_model_instances < 10L
   
+  # Then select the run-tables which contain this data_id as their final
+  # (bottom) level.
+  run_tables <- .collect_run_tables(iteration_list = experiment_data@iteration_list)
+  run_tables <- run_tables[sapply(
+    run_tables,
+    function(x, data_id) {
+      return (tail(x, n = 1L)$data_id == data_id)
+    },
+    data_id = train_data_id
+  )]
+  
   # Use collection tasks to set up the evaluation tasks, including for internal
   # validation.
   evaluate_task_list <- list()
   ii <- 1L
   
   for (jj in seq_along(collect_task_list)) {
+    
+    # Select run tables where the ensemble data and run identifiers appear.
+    selected_run_tables <- run_tables[
+      sapply(
+        X = run_tables,
+        FUN = function(x, task_data_id, task_run_id) {
+          return(!is_empty(x[data_id == task_data_id & run_id == task_run_id]))
+        },
+        task_data_id = collect_task_list[[jj]]@data_id,
+        task_run_id = collect_task_list[[jj]]@run_id
+      )
+    ]
+    
     # Initialise file names.
     data_file_names <- NULL
     for (learner in learners) {
       for (vimp_method in vimp_methods) {
+        
+        # Set model files.
+        model_files <- unname(sapply(
+          selected_run_tables,
+          function(x, ...) {
+            get_object_file_name(
+              object_type = "familiarModel",
+              data_id = tail(x, n = 1L)$data_id,
+              run_id = tail(x, n = 1L)$run_id,
+              ...
+            )
+          },
+          learner = learner,
+          vimp_method = vimp_method,
+          project_id = experiment_data@project_id,
+          dir_path = file_paths$mb_dir
+        ))
         
         ## external validation -------------------------------------------------
         
@@ -540,10 +592,13 @@ setMethod(
             data_id = external_validation_data_id,
             run_id = 1L,
             validation = TRUE,
-            predict_data_id = external_validation_data_id,
+            ensemble_data_id = collect_task_list[[jj]]@data_id,  # Only used for naming.
+            ensemble_run_id = collect_task_list[[jj]]@run_id,  # Only used for naming.
+            predict_data_id = external_validation_data_id,  # Determines which data are dynamically loaded.
             force_ensemble_detail_level = force_ensemble_detail_level,
             learner = learner,
             vimp_method = vimp_method,
+            model_files = model_files,
             data_set_name = "external_validation",
             project_id = experiment_data@project_id
           )
@@ -570,10 +625,13 @@ setMethod(
             data_id = collect_task_list[[jj]]@data_id,
             run_id = collect_task_list[[jj]]@run_id,
             validation = TRUE,
+            ensemble_data_id = collect_task_list[[jj]]@data_id,
+            ensemble_run_id = collect_task_list[[jj]]@run_id,
             predict_data_id = internal_validation_data_id,
             force_ensemble_detail_level = force_ensemble_detail_level,
             learner = learner,
             vimp_method = vimp_method,
+            model_files = model_files,
             data_set_name = "internal_validation",
             project_id = experiment_data@project_id
           )
@@ -600,10 +658,13 @@ setMethod(
             data_id = collect_task_list[[jj]]@data_id,
             run_id = collect_task_list[[jj]]@run_id,
             validation = FALSE,
+            ensemble_data_id = collect_task_list[[jj]]@data_id,
+            ensemble_run_id = collect_task_list[[jj]]@run_id,
             predict_data_id = train_data_id,
             force_ensemble_detail_level = force_ensemble_detail_level,
             learner = learner,
             vimp_method = vimp_method,
+            model_files = model_files,
             data_set_name = "development",
             project_id = experiment_data@project_id
           )
@@ -633,57 +694,6 @@ setMethod(
       file_paths = file_paths
     )
   }
-  
-  # ensembles ------------------------------------------------------------------
-  
-  # Obtain run tables that directly refer to data on which models were trained.
-  # First select the data_id related to training.
-  train_data_id <- experiment_data@experiment_setup[train == TRUE, ]$main_data_id[1L]
-  if (is_empty(train_data_id)) return(NULL)
-  
-  # Then select the run-tables which contain this data_id as their final
-  # (bottom) level.
-  run_tables <- .collect_run_tables(iteration_list = experiment_data@iteration_list)
-  run_tables <- run_tables[sapply(
-    run_tables,
-    function(x, data_id) {
-      return (tail(x, n = 1L)$data_id == data_id)
-    },
-    data_id = train_data_id
-  )]
-
-  # Iterate over evaluation tasks and add corresponding models based on ensemble
-  # data id and run id.
-  for (ii in seq_along(evaluate_task_list)) {
-    # Select run tables where the ensemble data and run identifiers appear.
-    selected_run_tables <- run_tables[
-      sapply(
-        run_tables,
-        function(x, task_data_id, task_run_id) {
-          return(!is_empty(x[data_id == task_data_id & run_id == task_run_id]))
-        },
-        task_data_id = evaluate_task_list[[ii]]@data_id,
-        task_run_id = evaluate_task_list[[ii]]@run_id
-      )
-    ]
-    
-    # Create corresponding model object names.
-    evaluate_task_list[[ii]]@model_files <- unname(sapply(
-      selected_run_tables,
-      function(x, ...) {
-        get_object_file_name(
-          object_type = "familiarModel",
-          data_id = tail(x, n = 1L)$data_id,
-          run_id = tail(x, n = 1L)$run_id,
-          ...
-        )
-      },
-      learner = evaluate_task_list[[ii]]@learner,
-      vimp_method = evaluate_task_list[[ii]]@vimp_method,
-      project_id = evaluate_task_list[[ii]]@project_id,
-      dir_path = file_paths$mb_dir
-    ))
-  }
 
   # train and variable importance tasks ----------------------------------------
   task_list <- .generate_trainer_tasks(
@@ -694,7 +704,7 @@ setMethod(
     skip_existing = skip_existing,
     ...
   )
-  
+
   return(c(
     task_list,
     evaluate_task_list,

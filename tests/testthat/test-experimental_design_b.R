@@ -221,6 +221,17 @@ full_bootstrap_performance_data <- familiar::export_model_performance(
   aggregate_results = FALSE
 )[[1L]]@data
 
+# Get predicted probabilities for red. The bootstraps might not visit all
+# training data. More over the probabilities should generally be different
+# because different models are used to predict each sample.
+prediction_data <- merge(
+  x = results$familiarData[[1L]]@prediction_data[[1L]]@data[, mget(c("sample_id", "red"))],
+  y =  results$familiarData[[2L]]@prediction_data[[1L]]@data[, mget(c("sample_id", "red"))],
+  by = "sample_id",
+  suffixes = c("_dev", "_int"),
+  all = FALSE
+)
+
 testthat::test_that("cv-only with nested bootstraps experiment is correctly created", {
   testthat::expect_length(results$familiarModel, 6L)
   testthat::expect_length(results$familiarData, 2L)
@@ -229,7 +240,19 @@ testthat::test_that("cv-only with nested bootstraps experiment is correctly crea
   
   # Expect that the values are not the same.
   testthat::expect_length(unique(full_bootstrap_performance_data$value), 12L)
+  
+  # Expect that fewer than 150 samples appear in the training dataset. If this
+  # fails, check that the iteration seed correctly generates the same sample
+  # set consistently.
+  testthat::expect_lt(
+    nrow(results$familiarData[[1L]]@prediction_data[[1L]]@data),
+    nrow(data)
+  )
+  
+  # Expect that predicted probabilities are not all the same.
+  testthat::expect_false(all(prediction_data$red_dev == prediction_data$red_int))
 })
+
 
 
 # With external validation -----------------------------------------------------
@@ -415,5 +438,111 @@ testthat::test_that("loocv-only experiment is correctly created", {
 })
 
 
+
+# Internal cross-validation with nested (full) bootstraps
+results <- familiar::summon_familiar(
+  data = data,
+  experimental_design = "cv(bs(mb, 2), 3) + ev",
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  validation_batch_id = "test",
+  vimp_method = "mim",
+  learner = "glm_logistic",
+  estimation_type = "point",
+  shap_max_iterations = 10L,
+  iteration_seed = 9L,
+  parallel = FALSE,
+  verbose = FALSE
+)
+
+full_bootstrap_performance_data <- familiar::export_model_performance(
+  results$familiarCollection,
+  aggregate_results = FALSE
+)[[1L]]@data
+
+# Get predicted probabilities for red. The bootstraps might not visit all
+# training data. More over the probabilities should generally be different
+# because different models are used to predict each sample.
+prediction_data <- merge(
+  x = results$familiarData[[1L]]@prediction_data[[1L]]@data[, mget(c("sample_id", "red"))],
+  y =  results$familiarData[[3L]]@prediction_data[[1L]]@data[, mget(c("sample_id", "red"))],
+  by = "sample_id",
+  suffixes = c("_dev", "_int"),
+  all = FALSE
+)
+
+testthat::test_that("cv-only with nested bootstraps experiment is correctly created", {
+  testthat::expect_length(results$familiarModel, 6L)
+  testthat::expect_length(results$familiarData, 3L)
+  testthat::expect_setequal(
+    sapply(results$familiarData, function(x) (x@name)),
+    c("development", "internal_validation", "external_validation")
+  )
+  
+  # Expect that the values are not the same.
+  testthat::expect_gt(length(unique(full_bootstrap_performance_data$value)), 6L)
+  
+  # Expect that fewer than 150 samples appear in the training dataset. If this
+  # fails, check that the iteration seed correctly generates the same sample
+  # set consistently.
+  testthat::expect_lt(
+    nrow(results$familiarData[[1L]]@prediction_data[[1L]]@data),
+    nrow(data[batch_id == "basic"])
+  )
+  
+  # Expect that predicted probabilities are not all the same.
+  testthat::expect_false(all(prediction_data$red_dev == prediction_data$red_int))
+  
+  # Expect that there is no overlap between development and external validation.
+  testthat::expect_equal(
+    nrow(merge(
+      x = results$familiarData[[1L]]@prediction_data[[1L]]@data[, mget(c("sample_id", "red"))],
+      y =  results$familiarData[[2L]]@prediction_data[[1L]]@data[, mget(c("sample_id", "red"))],
+      by = "sample_id",
+      suffixes = c("_dev", "_ext"),
+      all = FALSE
+    )),
+    0L
+  )
+  
+  # Expect that there is no overlap between internal and external development.
+  testthat::expect_equal(
+    nrow(merge(
+      x = results$familiarData[[3L]]@prediction_data[[1L]]@data[, mget(c("sample_id", "red"))],
+      y =  results$familiarData[[2L]]@prediction_data[[1L]]@data[, mget(c("sample_id", "red"))],
+      by = "sample_id",
+      suffixes = c("_int", "_ext"),
+      all = FALSE
+    )),
+    0L
+  )
+})
+
+
+# With unpooled collections ----------------------------------------------------
+
+# Set evaluate_top_level_only to FALSE evaluate underlying data divisions.
+results <- familiar::summon_familiar(
+  data = data,
+  experimental_design = "cv(bs(mb, 2), 3) + ev",
+  evaluate_top_level_only = FALSE,
+  outcome_type = "binomial",
+  outcome_column = "outcome",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  validation_batch_id = "test",
+  vimp_method = "mim",
+  learner = "glm_logistic",
+  estimation_type = "point",
+  shap_max_iterations = 10L,
+  iteration_seed = 9L,
+  parallel = FALSE,
+  verbose = FALSE
+)
+
+
 # TODO: Add check with collections from deeper collections (pool_only = FALSE)
-# TODO: Add check on size of internal validation sets.
