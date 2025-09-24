@@ -545,4 +545,82 @@ results <- familiar::summon_familiar(
 )
 
 
-# TODO: Add check with collections from deeper collections (pool_only = FALSE)
+testthat::test_that("cv-only with nested bootstraps experiment is correctly created", {
+  testthat::expect_length(results$familiarModel, 6L)
+  testthat::expect_length(results$familiarData, 12L)
+  testthat::expect_length(results$familiarCollection, 4L)
+  testthat::expect_setequal(
+    sapply(results$familiarData, function(x) (x@name)),
+    c("development", "internal_validation", "external_validation")
+  )
+  
+  pooled_collection <- results$familiarCollection[
+    sapply(results$familiarCollection, function(x) (endsWith(x@name, "pooled_collection")))
+  ][[1L]]
+  prediction_data <- familiar::export_prediction_data(pooled_collection)
+  prediction_data <- prediction_data$classification[[1L]]@data
+  ext_val_samples <- prediction_data[data_set == "ext. validation"]$sample_id
+  int_val_samples <- prediction_data[data_set == "int. validation"]$sample_id
+  dev_samples <- prediction_data[data_set == "development"]$sample_id
+  
+  testthat::expect_length(intersect(ext_val_samples, dev_samples), 0L)
+  testthat::expect_length(intersect(ext_val_samples, int_val_samples), 0L)
+  testthat::expect_length(ext_val_samples, nrow(data[batch_id == "test"]))
+  testthat::expect_length(int_val_samples, nrow(data[batch_id == "basic"]))
+  testthat::expect_lt(length(dev_samples), nrow(data[batch_id == "basic"]))
+  
+  cv_1_collection <- results$familiarCollection[
+    sapply(results$familiarCollection, function(x) (endsWith(x@name, "2_1_collection")))
+  ][[1L]]
+  prediction_data <- familiar::export_prediction_data(cv_1_collection)
+  prediction_data <- prediction_data$classification[[1L]]@data
+  ext_val_samples_1 <- prediction_data[data_set == "ext. validation"]$sample_id
+  int_val_samples_1 <- prediction_data[data_set == "int. validation"]$sample_id
+  dev_samples_1 <- prediction_data[data_set == "development"]$sample_id
+  
+  testthat::expect_length(intersect(ext_val_samples_1, dev_samples_1), 0L)
+  testthat::expect_length(intersect(ext_val_samples_1, int_val_samples_1), 0L)
+  testthat::expect_length(intersect(int_val_samples_1, dev_samples_1), 0L)
+  testthat::expect_length(ext_val_samples_1, nrow(data[batch_id == "test"]))
+  testthat::expect_lt(length(int_val_samples_1) + length(dev_samples_1), nrow(data[batch_id == "basic"]))
+  
+  cv_2_collection <- results$familiarCollection[
+    sapply(results$familiarCollection, function(x) (endsWith(x@name, "2_2_collection")))
+  ][[1L]]
+  prediction_data <- familiar::export_prediction_data(cv_2_collection)
+  prediction_data <- prediction_data$classification[[1L]]@data
+  ext_val_samples_2 <- prediction_data[data_set == "ext. validation"]$sample_id
+  int_val_samples_2 <- prediction_data[data_set == "int. validation"]$sample_id
+  dev_samples_2 <- prediction_data[data_set == "development"]$sample_id
+  
+  testthat::expect_length(intersect(ext_val_samples_2, dev_samples_2), 0L)
+  testthat::expect_length(intersect(ext_val_samples_2, int_val_samples_2), 0L)
+  testthat::expect_length(intersect(int_val_samples_2, dev_samples_2), 0L)
+  testthat::expect_length(ext_val_samples_2, nrow(data[batch_id == "test"]))
+  testthat::expect_lt(length(int_val_samples_2) + length(dev_samples_2), nrow(data[batch_id == "basic"]))
+  
+  cv_3_collection <- results$familiarCollection[
+    sapply(results$familiarCollection, function(x) (endsWith(x@name, "2_3_collection")))
+  ][[1L]]
+  prediction_data <- familiar::export_prediction_data(cv_3_collection)
+  prediction_data <- prediction_data$classification[[1L]]@data
+  ext_val_samples_3 <- prediction_data[data_set == "ext. validation"]$sample_id
+  int_val_samples_3 <- prediction_data[data_set == "int. validation"]$sample_id
+  dev_samples_3 <- prediction_data[data_set == "development"]$sample_id
+  
+  testthat::expect_length(intersect(ext_val_samples_3, dev_samples_3), 0L)
+  testthat::expect_length(intersect(ext_val_samples_3, int_val_samples_3), 0L)
+  testthat::expect_length(intersect(int_val_samples_3, dev_samples_3), 0L)
+  testthat::expect_length(ext_val_samples_3, nrow(data[batch_id == "test"]))
+  testthat::expect_lt(length(int_val_samples_3) + length(dev_samples_3), nrow(data[batch_id == "basic"]))
+  
+  # Internal validation folds between experiments do not overlap.
+  testthat::expect_length(intersect(int_val_samples_1, int_val_samples_2), 0L)
+  testthat::expect_length(intersect(int_val_samples_1, int_val_samples_3), 0L)
+  testthat::expect_length(intersect(int_val_samples_2, int_val_samples_3), 0L)
+  
+  # External validation folds between experiments are the same.
+  testthat::expect_setequal(ext_val_samples_1, ext_val_samples_2)
+  testthat::expect_setequal(ext_val_samples_1, ext_val_samples_3)
+  testthat::expect_setequal(ext_val_samples_2, ext_val_samples_3)
+})
