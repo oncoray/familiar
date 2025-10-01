@@ -45,7 +45,7 @@ Suggests:
     e1071 (>= 1.7.5),
     fastcluster,
     fastglm,
-    ggplot2 (>= 3.5.0),
+    ggplot2 (>= 4.0.0),
     glmnet,
     gtable,
     harmonicmeanp,
@@ -172,6 +172,7 @@ Collate:
     'PlotColours.R'
     'PlotConfusionMatrix.R'
     'PlotDecisionCurves.R'
+    'PlotFamiliarPlot.R'
     'PlotFeatureRanking.R'
     'PlotFeatureSimilarity.R'
     'PlotGTable.R'

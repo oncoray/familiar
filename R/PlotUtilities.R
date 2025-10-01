@@ -102,9 +102,12 @@ theme_familiar <- function(
   ggtheme$strip.text <- ggplot2::element_text(
     size = ggplot2::rel(0.8),
     colour = "grey10",
-    margin = grid::unit(
-      c(base_size / 4.0, base_size / 4.0, base_size / 4.0, base_size / 4.0),
-      "pt"
+    margin = ggplot2::margin(
+      t = base_size / 4.0, 
+      r = base_size / 4.0, 
+      b = base_size / 4.0,
+      l = base_size / 4.0,
+      unit = "pt"
     )
   )
 
@@ -1219,12 +1222,39 @@ theme_familiar <- function(
 
   # Import default ggtheme in case none is provided.
   ggtheme <- .check_ggtheme(ggtheme)
-
-  # Get spacing for the specific axis, if present.
-  spacing <- ggtheme[[paste0(theme_element, ".", axis)]]
-
-  # Get spacing for the main element
-  if (is.null(spacing)) spacing <- ggtheme[[theme_element]]
+browser()
+  # Basic spacing settings
+  spacing <- ggtheme$spacing
+  spacing_rel <- 1.0
+  
+  # Attempt to base the text size on the general axis.text attribute.
+  if (!is.null(ggtheme[[theme_element]])) {
+    if (inherits(ggtheme[[theme_element]], "rel")) {
+      # Find the relative text size of axis text.
+      spacing_rel <- as.numeric(ggtheme[[theme_element]])
+      
+    } else {
+      # Set absolute text size.
+      spacing <- ggtheme[[theme_element]]
+      spacing_rel <- 1.0
+    }
+  }
+  
+  # Attempt to refine the text size using the axis.text.y attribute in
+  # particular.
+  if (!is.null(ggtheme[[paste0(theme_element, ".", axis)]])) {
+    if (inherits(ggtheme[[paste0(theme_element, ".", axis)]], "rel")) {
+      # Set relative text size of axis text
+      spacing_rel <- as.numeric(ggtheme[[paste0(theme_element, ".", axis)]])
+      
+    } else {
+      # Set absolute text size.
+      spacing <- ggtheme[[paste0(theme_element, ".", axis)]]
+      spacing_rel <- 1.0
+    }
+  }
+  
+  spacing <- spacing * spacing_rel
 
   # If no spacing is provided, produce 0.0 length spacing.
   if (!grid::is.unit(spacing)) spacing <- grid::unit(0.0, "pt")
@@ -1801,7 +1831,8 @@ theme_familiar <- function(
     drop_empty = TRUE
   )
   element_list$axis_text_t <- .gtable_extract(
-    g = g, element = "axis-t-main",
+    g = g, 
+    element = "axis-t-main",
     partial_match = TRUE,
     drop_empty = TRUE
   )

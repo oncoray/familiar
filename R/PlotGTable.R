@@ -1,3 +1,32 @@
+.all_gtable_guide_names <- function() {
+  return(c(
+    "guide-box-right", "guide-box-left",
+    "guide-box-top", "guide-box-bottom", "guide-box-inside"
+  ))
+}
+
+.all_gtable_title_names <- function() {
+  return(c("title", "subtitle", "caption"))
+}
+
+.all_gtable_strip_x_names <- function() {
+  return(c("strip-t", "strip-b"))
+}
+
+.all_gtable_strip_y_names <- function() {
+  return(c("strip-l", "strip-r"))
+}
+
+.all_gtable_label_x_names <- function() {
+  return(c("xlab-b", "xlab-t"))
+}
+
+.all_gtable_label_y_names <- function() {
+  return(c("ylab-l", "ylab-r"))
+}
+
+
+
 .gtable_element_in_layout <- function(g, element, partial_match = FALSE) {
   if (partial_match) {
     return(any(grepl(pattern = element, x = g$layout$name)))
@@ -231,26 +260,220 @@
 
 
 
-.gtable_insert <- function(
-    g, 
-    g_new, 
-    where = "top", 
-    ref_element = "panel", 
-    spacer = NULL, 
-    partial_match = FALSE
+.gtable_remove <- function(
+    g,
+    removed_element = NULL,
+    trim = FALSE
 ) {
-  g <- .gtable_insert_along(
-    g = g,
-    g_new = g_new,
-    where = where,
-    ref_element = ref_element,
-    spacer = spacer,
-    partial_match_ref = partial_match,
-    partial_match_along = partial_match
+  elements_kept <- g$layout$name[!(g$layout$name %in% removed_element)]
+  g <- gtable::gtable_filter(
+    x = g,
+    pattern = paste(elements_kept, sep = "", collapse = "|"),
+    trim = trim
   )
   
   return(g)
 }
+
+
+
+.gtable_insert <- function(
+    g,
+    g_new,
+    where,
+    spacer = NULL
+) {
+  # Intended for inserting elements that stretch multiple along_elements. It can
+  # also be used for inserting elements directly (without along_elements) and/or
+  # replacing existing elements (attempt_replace=TRUE)
+  if (length(g_new) == 0L) {
+    return(g)
+  }
+  browser()
+  if (where[1L] == "replace") {
+    g <- ..gtable_insert_replace(
+      g = g,
+      g_new = g_new,
+      ref_element = where[2L]
+    )
+    
+  } else if (where[1L] == "intersect") {
+    g <- ..gtable_insert_intersect(
+      g = g,
+      g_new = g_new,
+      where_1 = where[2L],
+      ref_element_1 = where[3L],
+      where_2 = where[4L],
+      ref_element_2 = where[5L]
+    )
+    
+  } else if (where[1L] == "left") {
+    g <- ..gtable_insert_left(
+      g = g,
+      ref_element = where[2L],
+      spacer = spacer
+    )
+    
+  } else if (where[1L] == "right") {
+    g <- ..gtable_insert_right(
+      g = g,
+      ref_element = where[2L],
+      spacer = spacer
+    )
+    
+  } else if (where[1L] == "above") {
+    g <- ..gtable_insert_above(
+      g = g,
+      ref_element = where[2L],
+      spacer = spacer
+    )
+    
+  } else if (where[1L] == "below") {
+    g <- ..gtable_insert_below(
+      g = g,
+      ref_element = where[2L],
+      spacer = spacer
+    )
+    
+  } else {
+    ..error_reached_unreachable_code(
+      "The first element of where should be one of replace, intersect, left, right, above or below."
+    )
+  }
+
+  # Update widths and heights.
+  g <- .gtable_update_layout(g = g)
+  browser()
+  return(g)
+}
+
+
+
+..gtable_insert_replace <- function(g, g_new, ref_element) {
+  
+  # Find position where new element is to be inserted.
+  position <- .gtable_get_position(
+    g = g, 
+    element = ref_element
+  )
+  
+  # Remove original element.
+  g <- .gtable_remove(g = g, removed_element = ref_element)
+  
+  # Insert new element.
+  g <- gtable::gtable_add_grob(
+    g,
+    grobs = g_new,
+    t = position[["t"]],
+    l = position[["l"]],
+    b = position[["b"]],
+    r = position[["r"]],
+    name = g_new$layout$name[1L],
+    clip = g_new$layout$clip[1L]
+  )
+  
+  return(g)
+}
+
+
+
+..gtable_insert_intersect <- function(g, ref_element, spacer = NULL) {
+
+}
+
+
+..gtable_insert_below <- function(
+    g,
+    g_new, 
+    ref_element, 
+    spacer = NULL
+) {
+  
+  # Create an offset.
+  spacer_ref_offset <- elem_ref_offset <- integer(4L)
+  names(spacer_ref_offset) <- c("t", "l", "b", "r")
+  names(elem_ref_offset) <- c("t", "l", "b", "r")
+  
+  # Find position of reference element.
+  ref_position <- .gtable_get_position(
+    g = g, 
+    element = ref_element
+  )
+  
+  # Force the "top" of the reference position to the bottom, because we don't
+  # need to copy the number of rows of the reference object.
+  ref_position[["t"]] <- ref_position[["b"]]
+  
+  # Add space between the reference element and the element to be inserted.
+  if (!is.null(spacer)) {
+    g <- gtable::gtable_add_rows(
+      g,
+      heights = spacer,
+      pos = ref_position[["b"]]
+    )
+    
+    # Update offsets for spacer and new grob.
+    spacer_ref_offset[["t"]] <- spacer_ref_offset[["b"]] <- 1L
+    elem_ref_offset[["t"]] <- elem_ref_offset[["b"]] <- 1L
+    
+    # Add spacer.
+    g <- .gtable_insert_spacer(
+      g = g,
+      position = ref_position + spacer_ref_offset,
+      height = spacer
+    )
+  }
+  
+  # Add row below b or below spacer.
+  g <- gtable::gtable_add_rows(
+    g,
+    heights = g_new$heights,
+    pos = ref_position[["b"]] + elem_ref_offset[["b"]]
+  )
+  
+  elem_ref_offset[["t"]] <- elem_ref_offset[["t"]] + 1L
+  elem_ref_offset[["b"]] <- elem_ref_offset[["b"]] + length(g_new$heights)
+  
+  # Set new position
+  new_position <- ref_position + elem_ref_offset
+
+  # Add element to g.
+  g <- gtable::gtable_add_grob(
+    g,
+    grobs = g_new,
+    t = new_position[["t"]],
+    l = new_position[["l"]],
+    b = new_position[["b"]],
+    r = new_position[["r"]],
+    name = g_new$layout$name[1L],
+    clip = g_new$layout$clip[1L]
+  )
+  
+  return(g)
+}
+
+
+
+# .gtable_insert <- function(
+#     g, 
+#     g_new, 
+#     where = "top", 
+#     ref_element = "panel", 
+#     spacer = NULL, 
+#     partial_match = FALSE
+# ) {
+#   g <- .gtable_insert_along(
+#     g = g,
+#     g_new = g_new,
+#     where = where,
+#     ref_element = ref_element,
+#     spacer = spacer,
+#     partial_match_ref = partial_match,
+#     partial_match_along = partial_match
+#   )
+#   
+#   return(g)
+# }
 
 
 
@@ -269,7 +492,6 @@
   # Intended for inserting elements that stretch multiple along_elements. It can
   # also be used for inserting elements directly (without along_elements) and/or
   # replacing existing elements (attempt_replace=TRUE)
-
   if (length(g_new) == 0L) {
     return(g)
   }

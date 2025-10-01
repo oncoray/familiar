@@ -1745,3 +1745,39 @@ setClass(
     project_id = NULL
   )
 )
+
+
+# familiarPlot object ----------------------------------------------------------
+setClass(
+  "familiarPlot",
+  slots = list(
+    "gtable" = "ANY",
+    "global_elements" = "ANY",
+    "row_id" = "integer",
+    "col_id" = "integer",
+    "remove_strip_x" = "logical",
+    "remove_strip_y" = "logical",
+    "remove_axis_text_x" = "logical",
+    "remove_axis_text_y" = "logical",
+    "remove_axis_label_x" = "logical",
+    "remove_axis_label_y" = "logical",
+    "remove_axis_line_x" = "logical",
+    "remove_axis_line_y" = "logical",
+    "remove_panel" = "logical"
+  ),
+  prototype = methods::prototype(
+    gtable = NULL,
+    global_elements = NULL,
+    row_id = NA_integer_,
+    col_id = NA_integer_,
+    remove_strip_x = FALSE,
+    remove_strip_y = FALSE,
+    remove_axis_text_x = FALSE,
+    remove_axis_text_y = FALSE,
+    remove_axis_label_x = FALSE,
+    remove_axis_label_y = FALSE,
+    remove_axis_line_x = FALSE,
+    remove_axis_line_y = FALSE,
+    remove_panel = FALSE
+  )
+)

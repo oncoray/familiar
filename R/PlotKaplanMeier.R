@@ -717,12 +717,6 @@ setMethod(
       show_logrank = show_logrank
     )
 
-    # Extract plot elements from the Kaplan-Meier plot.
-    extracted_elements <- .extract_plot_grobs(p = p_kaplan_meier)
-
-    # Remove extracted elements from the Kaplan-Meier plot.
-    p_kaplan_meier <- .remove_plot_grobs(p = p_kaplan_meier)
-
     # Rename plot elements.
     g_kaplan_meier <- .rename_plot_grobs(
       g = .convert_to_grob(p_kaplan_meier),
@@ -740,32 +734,39 @@ setMethod(
         x_range = x_range,
         x_breaks = x_breaks
       )
-
-      # Extract survival gtable, which consists of the panel and the left axis.
-      g_survival_table <- .gtable_extract(
+      browser()
+      # Convert to gtable
+      g_survival_table <- .rename_plot_grobs(
         g = .convert_to_grob(p_survival_table),
-        element = c("panel", "axis-l"),
-        partial_match = TRUE
+        extension = "surv"
       )
-
-      # Insert survival table into the kaplan-meier table. Use partial matching
-      # to match elements from g_survival_table with those in g_kaplan_meier.
+        
+      # Insert panel-surv below xlab-b-main.
       g_kaplan_meier <- .gtable_insert(
         g = g_kaplan_meier,
-        g_new = g_survival_table,
-        where = "bottom",
-        ref_element = "xlab-b-main",
-        partial_match = TRUE
+        g_new = .gtable_extract(g_survival_table, element = "panel-surv"),
+        where = c("below", "xlab-b-main"),
+        spacer = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y")
+      )
+      
+      # Insert axis-l-surv at the intersection of panel-surv and axis-l-main
+      g_kaplan_meier <- .gtable_insert(
+        g = g_kaplan_meier,
+        g_new = .gtable_extract(g_survival_table, element = "axis-l-surv"),
+        where = c("intersect", "below", "axis-l-main", "left", "panel_surv")
       )
     }
 
-    # Add combined grob to list
-    figure_list <- c(figure_list, list(g_kaplan_meier))
-
-    # Add extract elements to the extracted_element_list
-    extracted_element_list <- c(extracted_element_list, list(extracted_elements))
+    # Convert to familiar plot.
+    g <- as_familiar_plot(
+      g = g_kaplan_meier,
+      layout = current_split
+    )
+    
+    # Attach to figure list.
+    figure_list[[paste0(current_split$row_id, ".", current_split$col_id)]] <- g
   }
-
+browser()
   # Update the layout table. Note that the axis text and labels share the same
   # behaviour.
   plot_layout_table <- .update_plot_layout_table(
