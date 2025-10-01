@@ -1222,7 +1222,7 @@ theme_familiar <- function(
 
   # Import default ggtheme in case none is provided.
   ggtheme <- .check_ggtheme(ggtheme)
-browser()
+  
   # Basic spacing settings
   spacing <- ggtheme$spacing
   spacing_rel <- 1.0
@@ -1280,7 +1280,7 @@ browser()
   return(..get_plot_element_spacing(
     ggtheme = ggtheme,
     axis = axis,
-    theme_element = "legend.box.spacing"
+    theme_element = "legend.spacing"
   ))
 }
 
