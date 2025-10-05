@@ -755,21 +755,20 @@ setMethod(
         g_new = .gtable_extract(g_survival_table, element = "axis-l-surv"),
         where = c("intersect", "below", "axis-l-main", "left", "panel-surv")
       )
-      browser()
     }
 
-    # Convert to familiar plot.
-    g <- as_familiar_plot(
+    # Attach to figure list.
+    figure_list[[paste0(current_split$row_id, ".", current_split$col_id)]] <- as_familiar_plot(
       g = g_kaplan_meier,
       layout = current_split
     )
-    
-    # Attach to figure list.
-    figure_list[[paste0(current_split$row_id, ".", current_split$col_id)]] <- g
   }
-browser()
-  # Update the layout table. Note that the axis text and labels share the same
-  # behaviour.
+  browser()
+  # Update the figure list for composing the final image. This means that
+  # instructions are updated: which figure elements will be dropped upon
+  # composition, etc.
+  figure_list <- .update_figure_list()
+  
   plot_layout_table <- .update_plot_layout_table(
     plot_layout_table = plot_layout_table,
     grobs = figure_list,
