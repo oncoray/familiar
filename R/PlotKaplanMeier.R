@@ -734,7 +734,7 @@ setMethod(
         x_range = x_range,
         x_breaks = x_breaks
       )
-      browser()
+      
       # Convert to gtable
       g_survival_table <- .rename_plot_grobs(
         g = .convert_to_grob(p_survival_table),
@@ -753,8 +753,9 @@ setMethod(
       g_kaplan_meier <- .gtable_insert(
         g = g_kaplan_meier,
         g_new = .gtable_extract(g_survival_table, element = "axis-l-surv"),
-        where = c("intersect", "below", "axis-l-main", "left", "panel_surv")
+        where = c("intersect", "below", "axis-l-main", "left", "panel-surv")
       )
+      browser()
     }
 
     # Convert to familiar plot.

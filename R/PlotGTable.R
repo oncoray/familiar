@@ -289,7 +289,7 @@
   if (length(g_new) == 0L) {
     return(g)
   }
-  browser()
+  
   if (where[1L] == "replace") {
     g <- ..gtable_insert_replace(
       g = g,
@@ -310,6 +310,7 @@
   } else if (where[1L] == "left") {
     g <- ..gtable_insert_left(
       g = g,
+      g_new = g_new,
       ref_element = where[2L],
       spacer = spacer
     )
@@ -317,6 +318,7 @@
   } else if (where[1L] == "right") {
     g <- ..gtable_insert_right(
       g = g,
+      g_new = g_new,
       ref_element = where[2L],
       spacer = spacer
     )
@@ -324,6 +326,7 @@
   } else if (where[1L] == "above") {
     g <- ..gtable_insert_above(
       g = g,
+      g_new = g_new,
       ref_element = where[2L],
       spacer = spacer
     )
@@ -331,6 +334,7 @@
   } else if (where[1L] == "below") {
     g <- ..gtable_insert_below(
       g = g,
+      g_new = g_new,
       ref_element = where[2L],
       spacer = spacer
     )
@@ -343,7 +347,7 @@
 
   # Update widths and heights.
   g <- .gtable_update_layout(g = g)
-  browser()
+  
   return(g)
 }
 
@@ -377,8 +381,67 @@
 
 
 
-..gtable_insert_intersect <- function(g, ref_element, spacer = NULL) {
-
+..gtable_insert_intersect <- function(
+    g,
+    g_new,
+    where_1,
+    ref_element_1,
+    where_2,
+    ref_element_2
+) {
+  
+  # Check that where is correctly specified.
+  if (
+    all(c(where_1, where_2) %in% c("above", "below")) ||
+    all(c(where_1, where_2) %in% c("left", "right"))
+  ) {
+    ..error_reached_unreachable_code("where needs to be orthogonal positions")
+  }
+  
+  elem_position <- integer(4L)
+  names(elem_position) <- c("t", "l", "b", "r")
+  
+  # Get reference positions for each reference element.
+  ref_position_1 <- .gtable_get_position(
+    g = g, 
+    element = ref_element_1
+  )
+  
+  ref_position_2 <- .gtable_get_position(
+    g = g, 
+    element = ref_element_2
+  )
+  
+  if (where_1 %in% c("above", "below")) {
+    # Inherit l and r from the first reference element and t and b from the
+    # second.
+    elem_position[["l"]] <- ref_position_1[["l"]]
+    elem_position[["r"]] <- ref_position_1[["r"]]
+    elem_position[["t"]] <- ref_position_2[["t"]]
+    elem_position[["b"]] <- ref_position_2[["b"]]
+    
+  } else {
+    # Inherit t and b from the first reference element and l and r from the
+    # second.
+    elem_position[["t"]] <- ref_position_1[["t"]]
+    elem_position[["b"]] <- ref_position_1[["b"]]
+    elem_position[["l"]] <- ref_position_2[["l"]]
+    elem_position[["r"]] <- ref_position_2[["r"]]
+  }
+  
+  # Add element to g.
+  g <- gtable::gtable_add_grob(
+    g,
+    grobs = g_new,
+    t = elem_position[["t"]],
+    l = elem_position[["l"]],
+    b = elem_position[["b"]],
+    r = elem_position[["r"]],
+    name = g_new$layout$name[1L],
+    clip = g_new$layout$clip[1L]
+  )
+  
+  return(g)
 }
 
 
@@ -388,7 +451,6 @@
     ref_element, 
     spacer = NULL
 ) {
-  
   # Create an offset.
   spacer_ref_offset <- elem_ref_offset <- integer(4L)
   names(spacer_ref_offset) <- c("t", "l", "b", "r")
