@@ -25,7 +25,13 @@
   return(c("ylab-l", "ylab-r"))
 }
 
+.all_gtable_axis_x_names <- function() {
+  return(c("axis-b", "axis-t"))
+}
 
+.all_gtable_axis_y_names <- function() {
+  return(c("axis-l", "axis-r"))
+}
 
 .gtable_element_in_layout <- function(g, element, partial_match = FALSE) {
   if (partial_match) {

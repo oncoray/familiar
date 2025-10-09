@@ -1054,7 +1054,6 @@ theme_familiar <- function(
 }
 
 
-
 .update_plot_layout_table <- function(
     plot_layout_table,
     grobs,
@@ -1066,7 +1065,7 @@ theme_familiar <- function(
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   col_id <- row_id <- is_present <- fraction_present <- NULL
-
+  
   # Update the layout table by adding a figure id and determining if the grob
   # is present.
   plot_layout_table[, ":="(
@@ -1091,7 +1090,7 @@ theme_familiar <- function(
     if (length(empty_columns) > 0L) {
       plot_layout_table <- plot_layout_table[!col_id %in% empty_columns]
     }
-
+    
     empty_rows <- plot_layout_table[
       ,
       list("fraction_present" = sum(is_present) / .N),
@@ -1103,10 +1102,198 @@ theme_familiar <- function(
       plot_layout_table <- plot_layout_table[!row_id %in% empty_rows]
     }
   }
-
+  
   # Check that any part of the plot is remaining
   if (is_empty(plot_layout_table)) return(plot_layout_table)
+  
+  if (!is.null(facet_wrap_cols)) {
+    # Number of columns is provided using facet_wrap_cols.
+    len_table <- nrow(plot_layout_table)
+    n_cols <- facet_wrap_cols
+    n_rows <- ceiling(len_table / n_cols)
+    
+    # Generate the column and row positions.
+    col_ids <- rep(seq_len(n_cols), times = n_rows)[seq_len(len_table)]
+    row_ids <- rep(seq_len(n_rows), each = n_cols)[seq_len(len_table)]
+    
+    # Set default elements
+    plot_layout_table[, ":="(
+      "col_id" = col_ids,
+      "row_id" = row_ids,
+      "has_strip_x" = TRUE,
+      "has_strip_y" = FALSE,
+      "has_axis_text_x" = x_text_shared %in% c("individual", "FALSE"),
+      "has_axis_text_y" = y_text_shared %in% c("individual", "FALSE"),
+      "has_axis_label_x" = x_label_shared == "individual",
+      "has_axis_label_y" = y_label_shared == "individual"
+    )]
+    
+    for (current_col_id in seq_len(n_cols)) {
+      # Determine the bottom row.
+      max_row_id <- max(plot_layout_table[col_id == current_col_id]$row_id)
+      
+      # Set x labels and text. Note that even when "overall" is set, axis text
+      # should stick to the panels.
+      if (x_text_shared %in% c("column", "overall", "TRUE")) {
+        plot_layout_table[
+          col_id == current_col_id & row_id == max_row_id,
+          "has_axis_text_x" := TRUE
+        ]
+      }
+      if (x_label_shared == "column") {
+        plot_layout_table[
+          col_id == current_col_id & row_id == max_row_id,
+          "has_axis_label_x" := TRUE
+        ]
+      }
+    }
+    
+    # Set y labels and text. Note that even when "overall" is set, axis text
+    # should stick to the panels.
+    if (y_text_shared %in% c("row", "overall", "TRUE")) {
+      plot_layout_table[col_id == 1L, "has_axis_text_y" := TRUE]
+    }
+    if (y_label_shared == "row") {
+      plot_layout_table[col_id == 1L, "has_axis_label_y" := TRUE]
+    }
+    
+  } else {
+    # Update the column and row ids.
+    plot_layout_table[, "col_id" := .GRP, by = "col_id"]
+    plot_layout_table[, "row_id" := .GRP, by = "row_id"]
+    
+    # Set default elements
+    plot_layout_table[, ":="(
+      "has_strip_x" = FALSE,
+      "has_strip_y" = FALSE,
+      "has_axis_text_x" = x_text_shared %in% c("individual", "FALSE"),
+      "has_axis_text_y" = y_text_shared %in% c("individual", "FALSE"),
+      "has_axis_label_x" = x_label_shared == "individual",
+      "has_axis_label_y" = y_label_shared == "individual"
+    )]
+    
+    # Determine the number of rows and columns
+    n_cols <- max(plot_layout_table$col_id)
+    n_rows <- max(plot_layout_table$row_id)
+    
+    # Add strips
+    if (n_rows > 1L) plot_layout_table[col_id == n_cols, "has_strip_y" := TRUE]
+    if (n_cols > 1L) plot_layout_table[row_id == 1L, "has_strip_x" := TRUE]
+    
+    # Add axis text. Note that even when "overall" is set, axis text should
+    # stick to the panels.
+    if (x_text_shared %in% c("column", "overall", "TRUE")) {
+      plot_layout_table[row_id == n_rows, "has_axis_text_x" := TRUE]
+    }
+    if (y_text_shared %in% c("row", "overall", "TRUE")) {
+      plot_layout_table[col_id == 1L, "has_axis_text_y" := TRUE]
+    }
+    
+    # Add axis labels
+    if (x_label_shared == "column") {
+      plot_layout_table[row_id == n_rows, "has_axis_label_x" := TRUE]
+    }
+    if (y_label_shared == "row") {
+      plot_layout_table[col_id == 1L, "has_axis_label_y" := TRUE]
+    }
+  }
+  
+  return(plot_layout_table)
+}
 
+
+
+.update_figure_list <- function(
+    figure_list,
+    plot_layout_table,
+    x_text_shared = "overall",
+    x_label_shared = "overall",
+    y_text_shared = "overall",
+    y_label_shared = "overall",
+    facet_wrap_cols = NULL
+) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  col_id <- row_id <- is_present <- n_present <- NULL
+  
+  browser()
+  
+  # Add figure names to plot_layout_table.
+  plot_layout_table[, figure_name := paste0(row_id, ".", col_id)]
+  plot_layout_table[, is_present := figure_name %in% names(figure_list)]
+  
+  # Drop columns with only missing information.
+  empty_cols <- plot_layout_table[
+    ,
+    list("n_present" = sum(is_present)),
+    by = "col_id"
+  ]
+  empty_cols <- empty_cols[n_present == 0L]$col_id
+  if (length(empty_cols) > 0L) {
+    plot_layout_table <- plot_layout_table[!col_id %in% empty_cols]
+  }
+  
+  # Drop rows with only missing information.
+  empty_rows <- plot_layout_table[
+    ,
+    list("n_present" = sum(is_present)),
+    by = "row_id"
+  ]
+  empty_rows <- empty_rows[n_present == 0L]$row_id
+  if (length(empty_rows) > 0L) {
+    plot_layout_table <- plot_layout_table[!row_id %in% empty_rows]
+  }
+
+  # Check that any part of the plot is remaining
+  if (is_empty(plot_layout_table)) return(NULL)
+
+  # Identify and add missing figures.
+  missing_figures <- plot_layout_table[is_present == FALSE]$figure_name
+  for (missing_figure in missing_figures) {
+    # Get col_id and row_id to identify template figures.
+    current_row_id <- plot_layout_table[figure_name == missing_figure]$row_id
+    current_col_id <- plot_layout_table[figure_name == missing_figure]$col_id
+    
+    # Identify figures to use as templates.
+    template_figure_row_name <- head(plot_layout_table[row_id == current_row_id & is_present == TRUE]$figure_name, n = 1L)
+    template_figure_col_name <- head(plot_layout_table[col_id == current_col_id & is_present == TRUE]$figure_name, n = 1L)
+    
+    # Add template.
+    figure_list[[missing_figure]] <- .create_placeholder_figure(
+      template_figure_row = figure_list[[template_figure_row_name]],
+      template_figure_col = figure_list[[template_figure_col_name]],
+      row_id = current_row_id,
+      col_id = current_col_id
+    )
+  }
+  
+  # Check that no figures are missing now.
+  plot_layout_table[, is_present := figure_name %in% names(figure_list)]
+  if (!all(plot_layout_table$is_present)) {
+    ..error_reached_unreachable_code("All panels of the figure should be present, but one or more are missing.")
+  }
+  
+  # Determine top and bottom rows, and left and right columns.
+  top_row_id <- min(plot_layout_table$row_id)
+  bottom_row_id <- max(plot_layout_table$row_id)
+  left_col_id <- min(plot_layout_table$col_id)
+  right_col_id <- max(plot_layout_table$col_id)
+  
+  for (figure_name in names(figure_list)) {
+    figure_list[[figure_name]] <- .configure_element_removal(
+      figure_list[[figure_name]],
+      top_row_id = top_row_id,
+      bottow_row_id = bottom_row_id,
+      left_col_id = left_col_id,
+      right_col_id = right_col_id
+    )
+  }
+  
+  # Set global elements.
+  
+  
+  
+  
+  
   if (!is.null(facet_wrap_cols)) {
     # Number of columns is provided using facet_wrap_cols.
     len_table <- nrow(plot_layout_table)

@@ -74,3 +74,63 @@ as_familiar_plot <- function(
   
   return(element_list)
 }
+
+
+
+.create_placeholder_figure <- function(
+    template_figure_row,
+    template_figure_col,
+    row_id,
+    col_id
+) {
+  # Creates placeholder for missing figures in faceted panel, e.g. because no
+  # data were present.
+  if (
+    !is(template_figure_row, "familiarPlot") ||
+    !is(template_figure_col, "familiarPlot")
+  ) {
+    ..error_reached_unreachable_code("both templates should be familiarPlot objects.")
+  }
+  browser()
+  # Use the row item as the initial template.
+  figure <- template_figure_row
+  
+  # Ensure that panels are removed.
+  figure@remove_panel <- TRUE
+  
+  # Drop global plot elements -- we will extract these again later.
+  figure@global_elements <- NULL
+  
+  # We need to update elements from the column template, e.g. axis-t, xlab-t,
+  # and strip-t-1.
+  col_element_names <- c(
+    .all_gtable_strip_x_names(),
+    .all_gtable_label_x_names(),
+    .all_gtable_axis_x_names()
+  )
+  
+  # Find names of all existing elements.
+  updatable_elements <- figure@gtable$layout$name
+  updatable_elements <- updatable_elements[sapply(
+    updatable_elements, 
+    startswith_any, 
+    prefix = col_element_names
+  )]
+  
+  for (update_element in updatable_elements) {
+    figure@gtable <- .gtable_insert(
+      g = figure@gtable,
+      g_new = .gtable_extract(template_figure_col, element = update_element),
+      where = c("replace", update_element)
+    )
+  }
+  
+  # Update row_id and col_id.
+  figure@row_id <- row_id
+  figure@col_id <- col_id
+  
+  # Add global elements again.
+  figure@global_elements <- .extract_global_plot_elements(figure@gtable)
+  
+  return(figure)
+}
