@@ -134,3 +134,64 @@ as_familiar_plot <- function(
   
   return(figure)
 }
+
+
+
+.set_figure_element_removal <- function(
+  object,
+  top_row_id,
+  bottow_row_id,
+  left_col_id,
+  right_col_id,
+  x_text_shared,
+  y_text_shared,
+  x_label_shared,
+  y_label_shared
+) {
+  is_top_row <- object@row_id == top_row_id
+  is_bottom_row <- object@row_id == bottow_row_id
+  is_left_col <- object@col_id == left_col_id
+  is_right_col <- object@col_id == right_col_id
+  
+  # Facet strips
+  if (!is_top_row) {
+    object@remove_strip_x <- TRUE
+  }
+  if (!is_left_col) {
+    object@remove_strip_y <- TRUE
+  }
+  
+  # x-axis text. "individual" and "FALSE" do not lead to removal.
+  if (x_text_shared %in% c("overall", "TRUE")) {
+    object@remove_axis_text_x <- TRUE
+    
+  } else if (x_text_shared == "column" && !is_bottom_row) {
+    object@remove_axis_text_x <- TRUE
+  }
+  
+  # x-axis label. "individual" and "FALSE" do not lead to removal.
+  if (x_label_shared %in% c("overall", "TRUE")) {
+    object@remove_axis_label_x <- TRUE
+    
+  } else if (x_label_shared == "column" && !is_bottom_row) {
+    object@remove_axis_label_x <- TRUE
+  }
+  
+  # y-axis text. "individual" and "FALSE" do not lead to removal.
+  if (y_text_shared %in% c("overall", "TRUE")) {
+    object@remove_axis_text_y <- TRUE
+    
+  } else if (y_text_shared == "row" && !is_left_col) {
+    object@remove_axis_text_y <- TRUE
+  }
+  
+  # x-axis label. "individual" and "FALSE" do not lead to removal.
+  if (y_label_shared %in% c("overall", "TRUE")) {
+    object@remove_axis_label_y <- TRUE
+    
+  } else if (y_label_shared == "row" && !is_left_col) {
+    object@remove_axis_label_y <- TRUE
+  }
+  
+  return(object)
+}

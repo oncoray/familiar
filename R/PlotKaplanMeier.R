@@ -764,17 +764,16 @@ setMethod(
     )
   }
   browser()
-  # Update the figure list for composing the final image. This means that
-  # instructions are updated: which figure elements will be dropped upon
-  # composition, etc.
-  figure_list <- .update_figure_list(
+  # Compose the figure
+  g <- .compose_figure(
     figure_list = figure_list,
     plot_layout_table = plot_layout_table,
     x_text_shared = x_label_shared,
     x_label_shared = x_label_shared,
     y_text_shared = y_label_shared,
     y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols
+    facet_wrap_cols = facet_wrap_cols,
+    ggtheme = ggtheme
   )
   
   plot_layout_table <- .update_plot_layout_table(

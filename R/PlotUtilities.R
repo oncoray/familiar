@@ -1203,14 +1203,15 @@ theme_familiar <- function(
 
 
 
-.update_figure_list <- function(
+.compose_figure <- function(
     figure_list,
     plot_layout_table,
     x_text_shared = "overall",
     x_label_shared = "overall",
     y_text_shared = "overall",
     y_label_shared = "overall",
-    facet_wrap_cols = NULL
+    facet_wrap_cols = NULL,
+    ggtheme = NULL
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   col_id <- row_id <- is_present <- n_present <- NULL
@@ -1279,16 +1280,32 @@ theme_familiar <- function(
   right_col_id <- max(plot_layout_table$col_id)
   
   for (figure_name in names(figure_list)) {
-    figure_list[[figure_name]] <- .configure_element_removal(
-      figure_list[[figure_name]],
+    figure_list[[figure_name]] <- .set_figure_element_removal(
+      object = figure_list[[figure_name]],
       top_row_id = top_row_id,
       bottow_row_id = bottom_row_id,
       left_col_id = left_col_id,
-      right_col_id = right_col_id
+      right_col_id = right_col_id,
+      x_text_shared = x_text_shared,
+      y_text_shared = y_text_shared,
+      x_label_shared = x_label_shared,
+      y_label_shared = y_label_shared
+    )
+    
+    figure_list[[figure_name]] <- .remove_figure_elements(
+      object = figure_list[[figure_name]],
+      replace_by_zero_grob = TRUE
     )
   }
   
-  # Set global elements.
+  # Determine global elements <- these will be inserted into the composed plot.
+  
+  
+  # Form plot rows.
+  
+  # Merge rows
+  
+  # Insert global elements.
   
   
   
