@@ -763,7 +763,7 @@ setMethod(
       layout = current_split
     )
   }
-  browser()
+  
   # Compose the figure
   g <- .compose_figure(
     figure_list = figure_list,
@@ -775,7 +775,7 @@ setMethod(
     facet_wrap_cols = facet_wrap_cols,
     ggtheme = ggtheme
   )
-  
+  browser()
   plot_layout_table <- .update_plot_layout_table(
     plot_layout_table = plot_layout_table,
     grobs = figure_list,

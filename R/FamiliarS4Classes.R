@@ -1761,8 +1761,6 @@ setClass(
     "remove_axis_text_y" = "logical",
     "remove_axis_label_x" = "logical",
     "remove_axis_label_y" = "logical",
-    "remove_axis_line_x" = "logical",
-    "remove_axis_line_y" = "logical",
     "remove_panel" = "logical"
   ),
   prototype = methods::prototype(
@@ -1776,8 +1774,6 @@ setClass(
     remove_axis_text_y = FALSE,
     remove_axis_label_x = FALSE,
     remove_axis_label_y = FALSE,
-    remove_axis_line_x = FALSE,
-    remove_axis_line_y = FALSE,
     remove_panel = FALSE
   )
 )

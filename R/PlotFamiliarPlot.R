@@ -157,7 +157,7 @@ as_familiar_plot <- function(
   if (!is_top_row) {
     object@remove_strip_x <- TRUE
   }
-  if (!is_left_col) {
+  if (!is_right_col) {
     object@remove_strip_y <- TRUE
   }
   
@@ -192,6 +192,76 @@ as_familiar_plot <- function(
   } else if (y_label_shared == "row" && !is_left_col) {
     object@remove_axis_label_y <- TRUE
   }
+  
+  return(object)
+}
+
+
+
+.remove_figure_elements <- function(
+  object,
+  replace_by_zero_grob = FALSE
+) {
+  
+  # Always remove guide and title.
+  base_elements <- c(
+    .all_gtable_guide_names(),
+    .all_gtable_title_names()
+  )
+  
+  # First determine which stuff can be removed, and then match any elements in
+  # the gtable.
+  if (object@remove_strip_x) {
+    base_elements <- c(base_elements, .all_gtable_strip_x_names())
+  }
+  if (object@remove_strip_y) {
+    base_elements <- c(base_elements, .all_gtable_strip_y_names())
+  }
+  if (object@remove_axis_text_x) {
+    base_elements <- c(base_elements, .all_gtable_axis_x_names())
+  }
+  if (object@remove_axis_text_y) {
+    base_elements <- c(base_elements, .all_gtable_axis_y_names())
+  }
+  if (object@remove_axis_label_x) {
+    base_elements <- c(base_elements, .all_gtable_label_x_names())
+  }
+  if (object@remove_axis_label_y) {
+    base_elements <- c(base_elements, .all_gtable_label_y_names())
+  }
+  if (object@remove_panel) {
+    base_elements <- c(base_elements, .all_gtable_panel_names())
+  }
+  
+  removable_elements <- object@gtable$layout$name
+  removable_elements <- removable_elements[sapply(
+    removable_elements, 
+    startswith_any, 
+    prefix = base_elements
+  )]
+  
+  # Iterate to remove or replace with zeroGrob.
+  zeroGrob <- ggplot2::zeroGrob()
+  for (removable_element in removable_elements) {
+    if (replace_by_zero_grob) {
+      object@gtable <- .gtable_insert(
+        g = object@gtable,
+        g_new = list(zeroGrob),
+        where = c("replace", removable_element)
+      )
+      
+    } else {
+      object@gtable <- .gtable_remove(
+        g = object@gtable,
+        removed_element = removable_element
+      )
+    }
+  }
+  # TODO: check that space for zero-grobs is correctly set to 0.
+  # TODO: check that subtitle, strip_x are actually removed.
+  browser()
+  # Update widths and heights.
+  object@gtable <- .gtable_update_layout(g = object@gtable)
   
   return(object)
 }

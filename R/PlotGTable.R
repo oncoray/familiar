@@ -9,6 +9,10 @@
   return(c("title", "subtitle", "caption"))
 }
 
+.all_gtable_panel_names <- function() {
+  return("panel")
+}
+
 .all_gtable_strip_x_names <- function() {
   return(c("strip-t", "strip-b"))
 }
@@ -370,6 +374,14 @@
   # Remove original element.
   g <- .gtable_remove(g = g, removed_element = ref_element)
   
+  # Set clip.
+  clip <- "on"
+  if (is(g_new, "TableGrob")) clip <- g_new$layout$clip[1L]
+  
+  # Set name.
+  name <- ref_element
+  if (is(g_new, "TableGrob")) name <- g_new$layout$name[1L]
+  
   # Insert new element.
   g <- gtable::gtable_add_grob(
     g,
@@ -378,8 +390,8 @@
     l = position[["l"]],
     b = position[["b"]],
     r = position[["r"]],
-    name = g_new$layout$name[1L],
-    clip = g_new$layout$clip[1L]
+    name = name,
+    clip = clip
   )
   
   return(g)

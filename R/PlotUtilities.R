@@ -1216,8 +1216,6 @@ theme_familiar <- function(
   # Suppress NOTES due to non-standard evaluation in data.table
   col_id <- row_id <- is_present <- n_present <- NULL
   
-  browser()
-  
   # Add figure names to plot_layout_table.
   plot_layout_table[, figure_name := paste0(row_id, ".", col_id)]
   plot_layout_table[, is_present := figure_name %in% names(figure_list)]
@@ -1279,7 +1277,9 @@ theme_familiar <- function(
   left_col_id <- min(plot_layout_table$col_id)
   right_col_id <- max(plot_layout_table$col_id)
   
+  # Remove elements from figures.
   for (figure_name in names(figure_list)) {
+    # Configure removal.
     figure_list[[figure_name]] <- .set_figure_element_removal(
       object = figure_list[[figure_name]],
       top_row_id = top_row_id,
@@ -1292,18 +1292,56 @@ theme_familiar <- function(
       y_label_shared = y_label_shared
     )
     
+    # Remove elements by replacing them with a zeroGrob. This maintains the
+    # size of the figure's gtable.
     figure_list[[figure_name]] <- .remove_figure_elements(
       object = figure_list[[figure_name]],
       replace_by_zero_grob = TRUE
     )
   }
-  
-  # Determine global elements <- these will be inserted into the composed plot.
-  
-  
+  browser()
   # Form plot rows.
+  g <- NULL
+  spacer_width <- .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y")
+  unique_rows <- sort(unique(plot_layout_table$row_id))
+  unique_cols <- sort(unique(plot_layout_table$col_id))
+  for (current_row_id in unique_rows) {
+    # Merge columns within each row.
+    g_row <- NULL
+    for (current_col_id in unique_cols) {
+      if (is.null(g_row)) {
+        g_row <- figure_list[[paste0(current_row_id, ".", current_col_id)]]@gtable
+        
+      } else {
+        # Insert column for spacer.
+        g_row <- gtable::gtable_add_cols(
+          g_row,
+          widths = spacer_width,
+          pos = ncol(g_row)
+        )
+        
+        # Add spacer.
+        g_row <- .gtable_insert_spacer(
+          g = g_row,
+          position = c("t" = 1L, "b" = nrow(g_row), "l" = ncol(g_row), "r" = ncol(g_row)),
+          width = spacer_width
+        )
+        
+        # Combine gtable by columns.
+        g_row <- cbind(g_row, figure_list[[paste0(current_row_id, ".", current_col_id)]]@gtable)
+      }
+    }
+    
+    # Merge with existing rows.
+    if (is.null(g)) {
+      g <- g_row
+      
+    } else {
+      
+    }
+  }
   
-  # Merge rows
+  
   
   # Insert global elements.
   
@@ -1944,20 +1982,20 @@ theme_familiar <- function(
 
 
 
-.all_guide_names <- function() {
-  element_names <- c(
-    "guide_r", "guide_l",
-    "guide_t", "guide_b", "guide_in"
-  )
-  gtable_names <- c(
-    "guide-box-right", "guide-box-left",
-    "guide-box-top", "guide-box-bottom", "guide-box-inside"
-  )
-  return(list(
-    "e" = element_names,
-    "g" = gtable_names
-  ))
-}
+# .all_guide_names <- function() {
+#   element_names <- c(
+#     "guide_r", "guide_l",
+#     "guide_t", "guide_b", "guide_in"
+#   )
+#   gtable_names <- c(
+#     "guide-box-right", "guide-box-left",
+#     "guide-box-top", "guide-box-bottom", "guide-box-inside"
+#   )
+#   return(list(
+#     "e" = element_names,
+#     "g" = gtable_names
+#   ))
+# }
 
 
 
