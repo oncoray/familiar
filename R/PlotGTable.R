@@ -946,8 +946,17 @@
     
     # Filter items that have no dimension.
     grob_zero <- as.numeric(x) == 0.0
+    if (length(x) == 1L && all(grob_zero)) return(grid::unit(0.0, "points"))
+    
     x <- x[!grob_zero]
     if (length(x) == 0L) return(grid::unit(0.0, "points"))
+    
+    # null overrides everything else.
+    grob_null <- grid::unitType(x) == "null"
+    if (any(grob_null)) {
+      x <- x[grob_null]
+      return(grid::unit(max(as.numeric(x)), "null"))
+    }
     
     # npc is only relevant if there are no other grobs with more specific unit
     # types.
@@ -973,7 +982,14 @@
     if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[1L]]])) {
       grob_size <- g$grobs[[grob_id]][[aspect_names[1L]]]
       grob_size <- ..filter_aspect_sizes(grob_size)
-      if (length(grob_size) > 1L) grob_size <- sum(grob_size)
+      
+      grob_null <- grid::unitType(grob_size) == "null"
+      if (any(grob_null)) {
+        grob_size <- grob_size[grob_null]
+        grob_size <- grid::unit(max(as.numeric(grob_null)), "null")
+      }
+      
+      if (length(grob_size) > 1L) grob_size <- max(grob_size)
       
     } else if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[2L]]])) {
       grob_size <- g$grobs[[grob_id]][[aspect_names[2L]]]
@@ -987,7 +1003,6 @@
   
   
   ..get_updated_aspect <- function(g, aspect = "width") {
-    
     if (aspect == "width") {
       new_sizes <- g$widths
       aspect_length <- ncol(g)
