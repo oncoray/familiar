@@ -763,7 +763,7 @@ setMethod(
       layout = current_split
     )
   }
-  
+  browser()
   # Compose the figure
   g <- .compose_figure(
     figure_list = figure_list,

@@ -275,12 +275,14 @@
     removed_element = NULL,
     trim = FALSE
 ) {
-  elements_kept <- g$layout$name[!(g$layout$name %in% removed_element)]
-  g <- gtable::gtable_filter(
-    x = g,
-    pattern = paste(elements_kept, sep = "", collapse = "|"),
-    trim = trim
-  )
+  matched_elements <- !(g$layout$name %in% removed_element)
+  
+  # gtable::gtable_filter uses partial matching, which leads to issues with,
+  # e.g., "title" and "subtitle" elements.
+  g$layout <- g$layout[matched_elements, , drop = FALSE]
+  g$grobs <- g$grobs[matched_elements]
+  
+  if (trim) g <- gtable::gtable_trim(g)
   
   return(g)
 }
