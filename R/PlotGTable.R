@@ -1016,8 +1016,12 @@
     }
     
     for (ii in seq_len(aspect_length)) {
-      # Do not update "null" elements.
-      if (any(unlist(grid::unitType(new_sizes[ii], recurse = TRUE)) == "null")) next
+      
+      use_provided <- FALSE
+      # Check if the already provided sizes contain "null" elements. Then use
+      # these by default, but only after checking if there are still elements
+      # that are still present.
+      if (any(unlist(grid::unitType(new_sizes[ii], recurse = TRUE)) == "null")) use_provided <- TRUE
       
       # Select candidates.
       if (aspect == "width") {
@@ -1031,7 +1035,6 @@
         new_sizes[ii] <- grid::unit(0.0, "points")
         next
       } 
-      
       # Identify the aspect size of the grobs.
       grob_sizes <- lapply(candidates, ..get_aspect, g = g, aspect = aspect)
       grob_sizes <- grob_sizes[sapply(grob_sizes, grid::is.unit)]
@@ -1046,7 +1049,20 @@
       grob_sizes <- do.call(grid::unit.c, grob_sizes)
       grob_sizes <- ..filter_aspect_sizes(grob_sizes)
       
+      # Check if there any non-zero sizes.
+      if (all(as.numeric(grob_sizes) == 0.0)) {
+        new_sizes[ii] <- grid::unit(0.0, "points")
+        next
+      }
+      
       if (length(grob_sizes) > 1L) grob_sizes <- max(grob_sizes)
+      
+      # Check that there are any elements with non-zero size, and use the
+      # provided size (with elements that have unit type null, if any) instead.
+      if (any(as.numeric(grob_sizes) > 0.0) && use_provided) next
+      
+      # Update size based on elements that are present, as long as the
+      # previously provided size did not contain "null" size types.
       new_sizes[ii] <- grob_sizes
     }
     

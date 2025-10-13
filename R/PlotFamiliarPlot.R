@@ -239,7 +239,7 @@ as_familiar_plot <- function(
     startswith_any, 
     prefix = base_elements
   )]
-  
+  browser()
   # Iterate to remove or replace with zeroGrob.
   zeroGrob <- ggplot2::zeroGrob()
   for (removable_element in removable_elements) {
@@ -257,8 +257,6 @@ as_familiar_plot <- function(
       )
     }
   }
-  # TODO: check that space for zero-grobs is correctly set to 0.
-  # TODO: check that subtitle, strip_x are actually removed.
   browser()
   # Update widths and heights.
   object@gtable <- .gtable_update_layout(g = object@gtable)

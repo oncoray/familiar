@@ -1302,7 +1302,8 @@ theme_familiar <- function(
   browser()
   # Form plot rows.
   g <- NULL
-  spacer_width <- .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y")
+  spacer_width_x <- .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x")
+  spacer_width_y <- .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y")
   unique_rows <- sort(unique(plot_layout_table$row_id))
   unique_cols <- sort(unique(plot_layout_table$col_id))
   for (current_row_id in unique_rows) {
@@ -1310,13 +1311,14 @@ theme_familiar <- function(
     g_row <- NULL
     for (current_col_id in unique_cols) {
       if (is.null(g_row)) {
+        # Use 
         g_row <- figure_list[[paste0(current_row_id, ".", current_col_id)]]@gtable
         
       } else {
         # Insert column for spacer.
         g_row <- gtable::gtable_add_cols(
           g_row,
-          widths = spacer_width,
+          widths = spacer_width_x,
           pos = ncol(g_row)
         )
         
@@ -1324,7 +1326,7 @@ theme_familiar <- function(
         g_row <- .gtable_insert_spacer(
           g = g_row,
           position = c("t" = 1L, "b" = nrow(g_row), "l" = ncol(g_row), "r" = ncol(g_row)),
-          width = spacer_width
+          width = spacer_width_x
         )
         
         # Combine gtable by columns.
@@ -1337,10 +1339,25 @@ theme_familiar <- function(
       g <- g_row
       
     } else {
+      # Insert row for spacer.
+      g_row <- gtable::gtable_add_rows(
+        g_row,
+        heights = spacer_width_y,
+        pos = nrow(g_row)
+      )
       
+      # Add spacer element in the new row.
+      g_row <- .gtable_insert_spacer(
+        g = g_row,
+        position = c("t" = nrow(g_row), "b" = nrow(g_row), "l" = 1L, "r" = ncol(g_row)),
+        height = spacer_width_y
+      )
+      
+      # Combine gtable by rows.
+      g <- rbind(g, g_row)
     }
   }
-  
+  browser()
   
   
   # Insert global elements.
