@@ -1,41 +1,180 @@
-.all_gtable_guide_names <- function() {
-  return(c(
-    "guide-box-right", "guide-box-left",
-    "guide-box-top", "guide-box-bottom", "guide-box-inside"
-  ))
+.all_gtable_guide_names <- function(type = "all") {
+  if (type == "all") {
+    return(c(
+      "guide-box-right", "guide-box-left",
+      "guide-box-top", "guide-box-bottom", "guide-box-inside"
+    ))
+    
+  } else if (type == "right") {
+    return("guide-box-right")
+    
+  } else if (type == "left") {
+    return("guide-box-left")
+    
+  } else if (type == "top") {
+    return("guide-box-top")
+    
+  } else if (type == "bottom") {
+    return("guide-box-bottom")
+    
+  } else if (type == "inside") {
+    return("guide-box-inside")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown type: ", type))
+  }
 }
 
-.all_gtable_title_names <- function() {
-  return(c("title", "subtitle", "caption"))
+
+
+.all_gtable_title_names <- function(type = "all") {
+  if (type == "all") {
+    return(c("title", "subtitle", "caption"))
+    
+  } else if (type == "title") {
+    return(c("title", "subtitle"))
+    
+  } else if (type == "caption") {
+    return("caption")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown type: ", type))
+  }
 }
+
+
 
 .all_gtable_panel_names <- function() {
   return("panel")
 }
 
+
+
 .all_gtable_strip_x_names <- function() {
   return(c("strip-t", "strip-b"))
 }
+
+
 
 .all_gtable_strip_y_names <- function() {
   return(c("strip-l", "strip-r"))
 }
 
-.all_gtable_label_x_names <- function() {
-  return(c("xlab-b", "xlab-t"))
+
+
+.all_gtable_label_names <- function(type = "all") {
+  if (type == "all") {
+    return(c(.all_gtable_label_x_names(), .all_gtable_label_y_names()))
+    
+  } else if (type == "right") {
+    return(.all_gtable_label_y_names("right"))
+    
+  } else if (type == "left") {
+    return(.all_gtable_label_y_names("left"))
+    
+  } else if (type == "top") {
+    return(.all_gtable_label_x_names("top"))
+    
+  } else if (type == "bottom") {
+    return(.all_gtable_label_x_names("bottom"))
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown type: ", type))
+  }
 }
 
-.all_gtable_label_y_names <- function() {
-  return(c("ylab-l", "ylab-r"))
+
+
+.all_gtable_label_x_names <- function(type = "all") {
+  if (type == "all") {
+    return(c("xlab-b", "xlab-t"))
+    
+  } else if (type == "top") {
+    return("xlab-t")
+    
+  } else if (type == "bottom") {
+    return("xlab-b")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown type: ", type))
+  }
 }
 
-.all_gtable_axis_x_names <- function() {
-  return(c("axis-b", "axis-t"))
+
+
+.all_gtable_label_y_names <- function(type = "all") {
+  if (type == "all") {
+    return(c("ylab-l", "ylab-r"))
+    
+  } else if (type == "left") {
+    return("ylab-l")
+    
+  } else if (type == "right") {
+    return("ylab-r")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown type: ", type))
+  }
 }
 
-.all_gtable_axis_y_names <- function() {
-  return(c("axis-l", "axis-r"))
+
+
+.all_gtable_axis_names <- function(type = "all") {
+  if (type == "all") {
+    return(c(.all_gtable_axis_x_names(), .all_gtable_axis_y_names()))
+    
+  } else if (type == "right") {
+    return(.all_gtable_axis_y_names("right"))
+    
+  } else if (type == "left") {
+    return(.all_gtable_axis_y_names("left"))
+    
+  } else if (type == "top") {
+    return(.all_gtable_axis_x_names("top"))
+    
+  } else if (type == "bottom") {
+    return(.all_gtable_axis_x_names("bottom"))
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown type: ", type))
+  }
 }
+
+
+
+.all_gtable_axis_x_names <- function(type = "all") {
+  if (type == "all") {
+    return(c("axis-b", "axis-t"))
+    
+  } else if (type == "top") {
+    return("axis-t")
+    
+  } else if (type == "bottom") {
+    return("axis-b")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown type: ", type))
+  }
+}
+
+
+
+.all_gtable_axis_y_names <- function(type = "all") {
+  if (type == "all") {
+    return(c("axis-l", "axis-r"))
+    
+  } else if (type == "left") {
+    return("axis-l")
+    
+  } else if (type == "right") {
+    return("axis-r")
+    
+  } else {
+    ..error_reached_unreachable_code(paste0("unknown type: ", type))
+  }
+}
+
+
 
 .gtable_element_in_layout <- function(g, element, partial_match = FALSE) {
   if (partial_match) {
