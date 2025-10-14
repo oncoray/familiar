@@ -941,67 +941,6 @@
 .gtable_update_layout <- function(g) {
   
   
-  ..filter_aspect_sizes <- function(x) {
-    if (length(x) == 0L) return(NULL)
-    
-    # Filter items that have no dimension.
-    grob_zero <- as.numeric(x) == 0.0
-    if (length(x) == 1L && all(grob_zero)) return(grid::unit(0.0, "points"))
-    
-    x <- x[!grob_zero]
-    if (length(x) == 0L) return(grid::unit(0.0, "points"))
-    
-    # null overrides everything else.
-    grob_null <- grid::unitType(x) == "null"
-    if (any(grob_null)) {
-      x <- x[grob_null]
-      return(grid::unit(max(as.numeric(x)), "null"))
-    }
-    
-    # npc is only relevant if there are no other grobs with more specific unit
-    # types.
-    grob_npc <- grid::unitType(x) == "npc"
-    if (any(grob_npc) && !all(grob_npc)) x <- x[!grob_npc]
-    
-    return(x)
-  }
-  
-  
-  ..get_aspect <- function(grob_id, g, aspect = "width") {
-    
-    if (aspect == "width") {
-      aspect_names <- c("widths", "width")
-      
-    } else if (aspect == "height") {
-      aspect_names <- c("heights", "height")
-      
-    } else {
-      ..error_reached_unreachable_code("aspect was not height or width")
-    }
-    
-    if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[1L]]])) {
-      grob_size <- g$grobs[[grob_id]][[aspect_names[1L]]]
-      grob_size <- ..filter_aspect_sizes(grob_size)
-      
-      grob_null <- grid::unitType(grob_size) == "null"
-      if (any(grob_null)) {
-        grob_size <- grob_size[grob_null]
-        grob_size <- grid::unit(max(as.numeric(grob_null)), "null")
-      }
-      
-      if (length(grob_size) > 1L) grob_size <- max(grob_size)
-      
-    } else if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[2L]]])) {
-      grob_size <- g$grobs[[grob_id]][[aspect_names[2L]]]
-      
-    } else {
-      grob_size <- NULL
-    }
-    
-    return(grob_size)
-  }
-  
-  
   ..get_updated_aspect <- function(g, aspect = "width") {
     if (aspect == "width") {
       new_sizes <- g$widths
@@ -1036,7 +975,7 @@
         next
       } 
       # Identify the aspect size of the grobs.
-      grob_sizes <- lapply(candidates, ..get_aspect, g = g, aspect = aspect)
+      grob_sizes <- lapply(candidates, .gtable_get_aspect_size, g = g, aspect = aspect)
       grob_sizes <- grob_sizes[sapply(grob_sizes, grid::is.unit)]
       
       # Skip if there are no valid aspect sizes.
@@ -1047,7 +986,7 @@
       
       # Set grob sizes.
       grob_sizes <- do.call(grid::unit.c, grob_sizes)
-      grob_sizes <- ..filter_aspect_sizes(grob_sizes)
+      grob_sizes <- ..gtable_filter_aspect_sizes(grob_sizes)
       
       # Check if there any non-zero sizes.
       if (all(as.numeric(grob_sizes) == 0.0)) {
@@ -1077,4 +1016,67 @@
   g$widths <- new_widths
   
   return(g)
+}
+
+
+
+.gtable_get_aspect_size <- function(grob_id, g, aspect = "width") {
+  
+  if (aspect == "width") {
+    aspect_names <- c("widths", "width")
+    
+  } else if (aspect == "height") {
+    aspect_names <- c("heights", "height")
+    
+  } else {
+    ..error_reached_unreachable_code("aspect was not height or width")
+  }
+  
+  if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[1L]]])) {
+    grob_size <- g$grobs[[grob_id]][[aspect_names[1L]]]
+    grob_size <- ..gtable_filter_aspect_sizes(grob_size)
+    
+    grob_null <- grid::unitType(grob_size) == "null"
+    if (any(grob_null)) {
+      grob_size <- grob_size[grob_null]
+      grob_size <- grid::unit(max(as.numeric(grob_null)), "null")
+    }
+    
+    if (length(grob_size) > 1L) grob_size <- max(grob_size)
+    
+  } else if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[2L]]])) {
+    grob_size <- g$grobs[[grob_id]][[aspect_names[2L]]]
+    
+  } else {
+    grob_size <- NULL
+  }
+  
+  return(grob_size)
+}
+
+
+
+..gtable_filter_aspect_sizes <- function(x) {
+  if (length(x) == 0L) return(NULL)
+  
+  # Filter items that have no dimension.
+  grob_zero <- as.numeric(x) == 0.0
+  if (length(x) == 1L && all(grob_zero)) return(grid::unit(0.0, "points"))
+  
+  x <- x[!grob_zero]
+  if (length(x) == 0L) return(grid::unit(0.0, "points"))
+  
+  # null overrides everything else.
+  grob_null <- grid::unitType(x) == "null"
+  if (any(grob_null)) {
+    x <- x[grob_null]
+    return(grid::unit(max(as.numeric(x)), "null"))
+  }
+  
+  # npc is only relevant if there are no other grobs with more specific unit
+  # types.
+  grob_npc <- grid::unitType(x) == "npc"
+  if (any(grob_npc) && !all(grob_npc)) x <- x[!grob_npc]
+  
+  return(x)
 }
