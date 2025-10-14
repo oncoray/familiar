@@ -365,24 +365,14 @@
 
 
 
-..gtable_insert_replace <- function(g, g_new, ref_element) {
-  
-  # Find position where new element is to be inserted.
-  position <- .gtable_get_position(
-    g = g, 
-    element = ref_element
-  )
-  
-  # Remove original element.
-  g <- .gtable_remove(g = g, removed_element = ref_element)
-  
+..gtable_insert_at <- function(g, g_new, ref_element, position) {
   # Set clip.
   clip <- "on"
-  if (is(g_new, "TableGrob")) clip <- g_new$layout$clip[1L]
+  if (is(g_new, "TableGrob") || is(g_new, "gtable")) clip <- g_new$layout$clip[1L]
   
   # Set name.
   name <- ref_element
-  if (is(g_new, "TableGrob")) name <- g_new$layout$name[1L]
+  if (is(g_new, "TableGrob") || is(g_new, "gtable")) name <- g_new$layout$name[1L]
   
   # Insert new element.
   g <- gtable::gtable_add_grob(
@@ -394,6 +384,29 @@
     r = position[["r"]],
     name = name,
     clip = clip
+  )
+  
+  return(g)
+}
+
+
+
+..gtable_insert_replace <- function(g, g_new, ref_element) {
+  # Find position where new element is to be inserted.
+  position <- .gtable_get_position(
+    g = g, 
+    element = ref_element
+  )
+  
+  # Remove original element.
+  g <- .gtable_remove(g = g, removed_element = ref_element)
+  
+  # Insert at position.
+  g <- ..gtable_insert_at(
+    g = g,
+    g_new = g_new,
+    ref_element = ref_element,
+    position = position
   )
   
   return(g)
