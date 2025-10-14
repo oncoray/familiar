@@ -1299,7 +1299,7 @@ theme_familiar <- function(
       replace_by_zero_grob = TRUE
     )
   }
-  browser()
+  
   # Form plot rows.
   g <- NULL
   spacer_width_x <- .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x")
@@ -1357,10 +1357,24 @@ theme_familiar <- function(
       g <- rbind(g, g_row)
     }
   }
-  browser()
-  
   
   # Insert global elements.
+  global_elements <- c(
+    .all_gtable_title_names(),
+    .all_gtable_guide_names()
+  )
+  if (x_text_shared %in% c("overall", "TRUE")) {
+    global_elements <- c(global_elements, .all_gtable_axis_x_names())
+  }
+  if (x_label_shared %in% c("overall", "TRUE")) {
+    global_elements <- c(global_elements, .all_gtable_label_x_names())
+  }
+  if (y_text_shared %in% c("overall", "TRUE")) {
+    global_elements <- c(global_elements, .all_gtable_axis_y_names())
+  }
+  if (y_label_shared %in% c("overall", "TRUE")) {
+    global_elements <- c(global_elements, .all_gtable_label_x_names())
+  }
   
   
   
