@@ -1215,6 +1215,7 @@ theme_familiar <- function(
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   col_id <- row_id <- is_present <- n_present <- NULL
+  type <- NULL
   
   # Add figure names to plot_layout_table.
   plot_layout_table[, figure_name := paste0(row_id, ".", col_id)]
@@ -1359,120 +1360,196 @@ theme_familiar <- function(
   }
   
   # Insert global elements.
-  global_elements <- c(
+  global_element_names <- c(
     .all_gtable_title_names(),
     .all_gtable_guide_names()
   )
   if (x_text_shared %in% c("overall", "TRUE")) {
-    global_elements <- c(global_elements, .all_gtable_axis_x_names())
+    global_element_names <- c(global_element_names, .all_gtable_axis_x_names())
   }
   if (x_label_shared %in% c("overall", "TRUE")) {
-    global_elements <- c(global_elements, .all_gtable_label_x_names())
+    global_element_names <- c(global_element_names, .all_gtable_label_x_names())
   }
   if (y_text_shared %in% c("overall", "TRUE")) {
-    global_elements <- c(global_elements, .all_gtable_axis_y_names())
+    global_element_names <- c(global_element_names, .all_gtable_axis_y_names())
   }
   if (y_label_shared %in% c("overall", "TRUE")) {
-    global_elements <- c(global_elements, .all_gtable_label_x_names())
+    global_element_names <- c(global_element_names, .all_gtable_label_x_names())
   }
   
+  # Isolate global elements that need to be updated.
+  global_elements <- figure_list[[1L]]@global_elements
+  global_element_name_list <- lapply(
+    names(global_elements),
+    function(x, y) {
+      if (!startswith_any(x, y)) return(NULL)
+      return(list(
+        "name" = x,
+        "type" =  y[sapply(y, function(y, x) {startsWith(x, y)}, x = x)]
+      ))
+    },
+    y = global_element_names
+  )
+  global_element_name_list <- data.table::rbindlist(global_element_name_list)
   
+  # For title-like objects, insert in place, at the top.
+  if (any(global_element_name_list$type %in% .all_gtable_title_names("title"))) {
+    x <- global_element_name_list[type %in% .all_gtable_title_names("title")]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      position["t"] <- position["b"] <- min(element_positions$t)
+      position["l"] <- min(element_positions$l)
+      position["r"] <- max(element_positions$r)
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", x$name[ii], position)
+      )
+    }
+  }
   
-  
-  
-  if (!is.null(facet_wrap_cols)) {
-    # Number of columns is provided using facet_wrap_cols.
-    len_table <- nrow(plot_layout_table)
-    n_cols <- facet_wrap_cols
-    n_rows <- ceiling(len_table / n_cols)
-
-    # Generate the column and row positions.
-    col_ids <- rep(seq_len(n_cols), times = n_rows)[seq_len(len_table)]
-    row_ids <- rep(seq_len(n_rows), each = n_cols)[seq_len(len_table)]
-
-    # Set default elements
-    plot_layout_table[, ":="(
-      "col_id" = col_ids,
-      "row_id" = row_ids,
-      "has_strip_x" = TRUE,
-      "has_strip_y" = FALSE,
-      "has_axis_text_x" = x_text_shared %in% c("individual", "FALSE"),
-      "has_axis_text_y" = y_text_shared %in% c("individual", "FALSE"),
-      "has_axis_label_x" = x_label_shared == "individual",
-      "has_axis_label_y" = y_label_shared == "individual"
-    )]
-
-    for (current_col_id in seq_len(n_cols)) {
-      # Determine the bottom row.
-      max_row_id <- max(plot_layout_table[col_id == current_col_id]$row_id)
-
-      # Set x labels and text. Note that even when "overall" is set, axis text
-      # should stick to the panels.
-      if (x_text_shared %in% c("column", "overall", "TRUE")) {
-        plot_layout_table[
-          col_id == current_col_id & row_id == max_row_id,
-          "has_axis_text_x" := TRUE
-        ]
-      }
-      if (x_label_shared == "column") {
-        plot_layout_table[
-          col_id == current_col_id & row_id == max_row_id,
-          "has_axis_label_x" := TRUE
-        ]
-      }
-    }
-
-    # Set y labels and text. Note that even when "overall" is set, axis text
-    # should stick to the panels.
-    if (y_text_shared %in% c("row", "overall", "TRUE")) {
-      plot_layout_table[col_id == 1L, "has_axis_text_y" := TRUE]
-    }
-    if (y_label_shared == "row") {
-      plot_layout_table[col_id == 1L, "has_axis_label_y" := TRUE]
-    }
-    
-  } else {
-    # Update the column and row ids.
-    plot_layout_table[, "col_id" := .GRP, by = "col_id"]
-    plot_layout_table[, "row_id" := .GRP, by = "row_id"]
-
-    # Set default elements
-    plot_layout_table[, ":="(
-      "has_strip_x" = FALSE,
-      "has_strip_y" = FALSE,
-      "has_axis_text_x" = x_text_shared %in% c("individual", "FALSE"),
-      "has_axis_text_y" = y_text_shared %in% c("individual", "FALSE"),
-      "has_axis_label_x" = x_label_shared == "individual",
-      "has_axis_label_y" = y_label_shared == "individual"
-    )]
-    
-    # Determine the number of rows and columns
-    n_cols <- max(plot_layout_table$col_id)
-    n_rows <- max(plot_layout_table$row_id)
-
-    # Add strips
-    if (n_rows > 1L) plot_layout_table[col_id == n_cols, "has_strip_y" := TRUE]
-    if (n_cols > 1L) plot_layout_table[row_id == 1L, "has_strip_x" := TRUE]
-
-    # Add axis text. Note that even when "overall" is set, axis text should
-    # stick to the panels.
-    if (x_text_shared %in% c("column", "overall", "TRUE")) {
-      plot_layout_table[row_id == n_rows, "has_axis_text_x" := TRUE]
-    }
-    if (y_text_shared %in% c("row", "overall", "TRUE")) {
-      plot_layout_table[col_id == 1L, "has_axis_text_y" := TRUE]
-    }
-
-    # Add axis labels
-    if (x_label_shared == "column") {
-      plot_layout_table[row_id == n_rows, "has_axis_label_x" := TRUE]
-    }
-    if (y_label_shared == "row") {
-      plot_layout_table[col_id == 1L, "has_axis_label_y" := TRUE]
+  # For caption-like objects, insert in place, at the bottom.
+  if (any(global_element_name_list$type %in% .all_gtable_title_names("caption"))) {
+    x <- global_element_name_list[type %in% .all_gtable_title_names("caption")]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      position["t"] <- position["b"] <- max(element_positions$b)
+      position["l"] <- min(element_positions$l)
+      position["r"] <- max(element_positions$r)
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", x$name[ii], position)
+      )
     }
   }
 
-  return(plot_layout_table)
+  # For guide-like objects, insert at the corresponding position.
+  if (any(global_element_name_list$type %in% .all_gtable_guide_names())) {
+    x <- global_element_name_list[type %in% .all_gtable_guide_names()]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      
+      # Positioning 
+      if (x$type[ii] %in% .all_gtable_guide_names("top")) {
+        position["t"] <- position["b"] <- min(element_positions$t)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_guide_names("bottom")) {
+        position["t"] <- position["b"] <- max(element_positions$b)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_guide_names("left")) {
+        position["l"] <- position["r"] <- min(element_positions$l)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else if (x$type[ii] %in% .all_gtable_guide_names("right")) {
+        position["l"] <- position["r"] <- max(element_positions$r)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else {
+        ..error_reached_unreachable_code(paste0("unknown type: ", x$type[1L]))
+      }
+      
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", x$name[ii], position)
+      )
+    }
+  }
+  
+  # Labels
+  if (any(global_element_name_list$type %in% .all_gtable_label_names())) {
+    x <- global_element_name_list[type %in% .all_gtable_label_names()]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      
+      # Positioning 
+      if (x$type[ii] %in% .all_gtable_label_names("top")) {
+        position["t"] <- position["b"] <- min(element_positions$t)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_label_names("bottom")) {
+        position["t"] <- position["b"] <- max(element_positions$b)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_label_names("left")) {
+        position["l"] <- position["r"] <- min(element_positions$l)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else if (x$type[ii] %in% .all_gtable_label_names("right")) {
+        position["l"] <- position["r"] <- max(element_positions$r)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else {
+        ..error_reached_unreachable_code(paste0("unknown type: ", x$type[1L]))
+      }
+      
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", x$name[ii], position)
+      )
+    }
+  }
+  
+  # Axis elements
+  if (any(global_element_name_list$type %in% .all_gtable_axis_names())) {
+    x <- global_element_name_list[type %in% .all_gtable_axis_names()]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      
+      # Positioning 
+      if (x$type[ii] %in% .all_gtable_axis_names("top")) {
+        position["t"] <- position["b"] <- min(element_positions$t)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_axis_names("bottom")) {
+        position["t"] <- position["b"] <- max(element_positions$b)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_axis_names("left")) {
+        position["l"] <- position["r"] <- min(element_positions$l)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else if (x$type[ii] %in% .all_gtable_axis_names("right")) {
+        position["l"] <- position["r"] <- max(element_positions$r)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else {
+        ..error_reached_unreachable_code(paste0("unknown type: ", x$type[1L]))
+      }
+      
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", x$name[ii], position)
+      )
+    }
+  }
+  
+  # Update heights and widths.
+  g <- .gtable_update_layout(g = g)
+  browser()
+  return(g)
 }
 
 
