@@ -1918,82 +1918,49 @@ theme_familiar <- function(
 
 
 
-.rename_plot_grobs <- function(g = g, extension = "main") {
+.rename_plot_grobs <- function(g, extension = "main", use_generic = TRUE) {
   if (is.null(g)) return(g)
 
-  # Main panel
-  g <- .gtable_rename_element(
-    g = g,
-    old = "panel",
-    new = paste0("panel-", extension),
-    partial_match = TRUE, 
-    allow_missing = TRUE
-  )
-
-  # Left axis text and label
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "axis-l",
-    new = paste0("axis-l-", extension), 
-    partial_match = TRUE, 
-    allow_missing = TRUE
-  )
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "ylab-l",
-    new = paste0("ylab-l-", extension), 
-    partial_match = TRUE, 
-    allow_missing = TRUE
-  )
-
-  # Bottom axis text and label
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "axis-b", 
-    new = paste0("axis-b-", extension), 
-    partial_match = TRUE,
-    allow_missing = TRUE
-  )
-  g <- .gtable_rename_element(
-    g = g,
-    old = "xlab-b", 
-    new = paste0("xlab-b-", extension),
-    partial_match = TRUE, 
-    allow_missing = TRUE
-  )
-
-  # Right axis text and label
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "axis-r", 
-    new = paste0("axis-r-", extension), 
-    partial_match = TRUE, 
-    allow_missing = TRUE
-  )
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "ylab-r", 
-    new = paste0("ylab-r-", extension), 
-    partial_match = TRUE, 
-    allow_missing = TRUE
+  element_names <- c(
+    .all_gtable_panel_names(),
+    .all_gtable_label_x_names(),
+    .all_gtable_label_y_names(),
+    .all_gtable_axis_x_names(),
+    .all_gtable_axis_y_names()
   )
   
-  # Top axis text and label
-  g <- .gtable_rename_element(
-    g = g,
-    old = "axis-t",
-    new = paste0("axis-t-", extension),
-    partial_match = TRUE,
-    allow_missing = TRUE
+  # Filter only elements that are present, and generate list of matching
+  # local and global elements.
+  renamable_elements <- g$layout$name
+  element_list <- lapply(
+    renamable_elements,
+    function(x, y) {
+      if (!startswith_any(x, prefix = y)) return(NULL)
+      
+      y <- y[sapply(y, function(y, x) {startsWith(x, y)}, x = x)]
+      return(list("local" = x, "global" = y))
+    },
+    y = element_names
   )
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "xlab-t",
-    new = paste0("xlab-t-", extension),
-    partial_match = TRUE, 
-    allow_missing = TRUE
-  )
+  element_list <- data.table::rbindlist(element_list)
+  
+  # If generic names are not used, replace global (generic) names by the local
+  # names.
+  if (!use_generic) {
+    element_list$global <- element_list$local
+  }
 
+  # Rename elements and add extension.
+  for (ii in seq_len(nrow(element_list))) {
+    g <- .gtable_rename_element(
+      g = g,
+      old = element_list$local[ii],
+      new = paste0(element_list$global[ii], "-", extension),
+      partial_match = FALSE,
+      allow_missing = FALSE
+    )
+  }
+  
   return(g)
 }
 
