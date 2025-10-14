@@ -764,7 +764,7 @@ setMethod(
     )
   }
   
-  # Compose the figure
+  # Compose the final figure. Magic.
   g <- .compose_figure(
     figure_list = figure_list,
     plot_layout_table = plot_layout_table,
@@ -776,23 +776,6 @@ setMethod(
     ggtheme = ggtheme
   )
   browser()
-  plot_layout_table <- .update_plot_layout_table(
-    plot_layout_table = plot_layout_table,
-    grobs = figure_list,
-    x_text_shared = x_label_shared,
-    x_label_shared = x_label_shared,
-    y_text_shared = y_label_shared,
-    y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols
-  )
-
-  # Combine features.
-  g <- .arrange_plot_grobs(
-    grobs = figure_list,
-    plot_layout_table = plot_layout_table,
-    element_grobs = extracted_element_list,
-    ggtheme = ggtheme
-  )
 
   return(g)
 }
