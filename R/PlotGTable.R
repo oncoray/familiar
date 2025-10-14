@@ -302,7 +302,22 @@
     return(g)
   }
   
-  if (where[1L] == "replace") {
+  if (where[1L] == "at") {
+    position <- c(
+      "t" = as.integer(where[3L]),
+      "l" = as.integer(where[4L]),
+      "b" = as.integer(where[5L]),
+      "r" = as.integer(where[6L])
+    )
+    
+    g <- ..gtable_insert_at(
+      g = g,
+      g_new = g_new,
+      ref_element = where[2L],
+      position = position
+    )
+    
+  } else if (where[1L] == "replace") {
     g <- ..gtable_insert_replace(
       g = g,
       g_new = g_new,
