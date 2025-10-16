@@ -1217,6 +1217,8 @@ theme_familiar <- function(
   col_id <- row_id <- is_present <- n_present <- NULL
   type <- NULL
   
+  # Global layout --------------------------------------------------------------
+  
   # Add figure names to plot_layout_table.
   plot_layout_table[, figure_name := paste0(row_id, ".", col_id)]
   plot_layout_table[, is_present := figure_name %in% names(figure_list)]
@@ -1245,7 +1247,9 @@ theme_familiar <- function(
 
   # Check that any part of the plot is remaining
   if (is_empty(plot_layout_table)) return(NULL)
-
+  
+  # Create missing figure panels -----------------------------------------------
+  
   # Identify and add missing figures.
   missing_figures <- plot_layout_table[is_present == FALSE]$figure_name
   for (missing_figure in missing_figures) {
@@ -1271,6 +1275,8 @@ theme_familiar <- function(
   if (!all(plot_layout_table$is_present)) {
     ..error_reached_unreachable_code("All panels of the figure should be present, but one or more are missing.")
   }
+  
+  # Shared elements between figure panels --------------------------------------
   
   # Determine top and bottom rows, and left and right columns.
   top_row_id <- min(plot_layout_table$row_id)
@@ -1300,6 +1306,8 @@ theme_familiar <- function(
       replace_by_zero_grob = TRUE
     )
   }
+  
+  # Compose figure panels ------------------------------------------------------
   
   # Form plot rows.
   g <- NULL
@@ -1358,6 +1366,8 @@ theme_familiar <- function(
       g <- rbind(g, g_row)
     }
   }
+  
+  # Insert global elements -----------------------------------------------------
   
   # Insert global elements.
   global_element_names <- c(
@@ -1439,20 +1449,64 @@ theme_familiar <- function(
         position["l"] <- min(element_positions$l)
         position["r"] <- max(element_positions$r)
         
+        spacer_position <- position
+        spacer_position[["t"]] <- spacer_position[["b"]] <- position[["b"]] + 1L
+        g <- .gtable_insert_spacer(
+          g = g,
+          position = spacer_position,
+          height = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y"),
+          make_space = TRUE
+        )
+
       } else if (x$type[ii] %in% .all_gtable_guide_names("bottom")) {
         position["t"] <- position["b"] <- max(element_positions$b)
         position["l"] <- min(element_positions$l)
         position["r"] <- max(element_positions$r)
+        
+        spacer_position <- position
+        spacer_position[["t"]] <- spacer_position[["b"]] <- position[["t"]]
+        g <- .gtable_insert_spacer(
+          g = g,
+          position = spacer_position,
+          height = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y"),
+          make_space = TRUE
+        )
+        
+        # Inserting the spacer moves the guide object down.
+        position[["t"]] <- position[["t"]] + 1L
+        position[["b"]] <- position[["b"]] + 1L
         
       } else if (x$type[ii] %in% .all_gtable_guide_names("left")) {
         position["l"] <- position["r"] <- min(element_positions$l)
         position["t"] <- min(element_positions$t)
         position["b"] <- max(element_positions$b)
         
+        spacer_position <- position
+        spacer_position[["l"]] <- spacer_position[["r"]] <- position[["r"]] + 1L
+        g <- .gtable_insert_spacer(
+          g = g,
+          position = spacer_position,
+          width = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x"),
+          make_space = TRUE
+        )
+        
       } else if (x$type[ii] %in% .all_gtable_guide_names("right")) {
         position["l"] <- position["r"] <- max(element_positions$r)
         position["t"] <- min(element_positions$t)
         position["b"] <- max(element_positions$b)
+        
+        spacer_position <- position
+        spacer_position[["l"]] <- spacer_position[["r"]] <- position[["l"]]
+        g <- .gtable_insert_spacer(
+          g = g,
+          position = spacer_position,
+          width = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x"),
+          make_space = TRUE
+        )
+        
+        # Inserting the spacer moves the guide object right.
+        position[["l"]] <- position[["l"]] + 1L
+        position[["r"]] <- position[["r"]] + 1L
         
       } else {
         ..error_reached_unreachable_code(paste0("unknown type: ", x$type[1L]))
@@ -1546,9 +1600,17 @@ theme_familiar <- function(
     }
   }
   
+  # Clean-up -------------------------------------------------------------------
+  
+  # Drop all zeroGrob elements to prevent occlusion by empty objects.
+  matched_elements <- !sapply(g$grobs, is, "zeroGrob")
+  g$layout <- g$layout[matched_elements, , drop = FALSE]
+  g$grobs <- g$grobs[matched_elements]
+  g <- gtable::gtable_trim(g)
+  
   # Update heights and widths.
   g <- .gtable_update_layout(g = g)
-  browser()
+
   return(g)
 }
 

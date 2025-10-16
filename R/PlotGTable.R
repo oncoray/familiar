@@ -380,6 +380,7 @@
     position,
     width = NULL,
     height = NULL,
+    make_space = FALSE,
     name = NULL
 ) {
   # Generate name.
@@ -393,6 +394,26 @@
   if (!is.null(width)) spacer$widths <- width
   spacer$heights <- grid::unit(0.0, "cm")
   if (!is.null(height)) spacer$heights <- height
+  
+  # If make_space is TRUE, insert a column or row at the given position, and then
+  # place the spacer in the new column or row. Otherwise the spacer is inserted
+  # in place.
+  if (make_space) {
+    if (!is.null(width)) {
+      g <- gtable::gtable_add_cols(
+        x = g,
+        widths = width,
+        pos = position[["l"]]
+      )
+    }
+    if (!is.null(height)) {
+      g <- gtable::gtable_add_rows(
+        x = g,
+        heights = height,
+        pos = position[["t"]]
+      )
+    }
+  }
   
   g <- gtable::gtable_add_grob(
     g,
