@@ -276,7 +276,8 @@ as_familiar_plot <- function(
     prefix = base_elements
   )]
   
-  # Iterate to remove or replace with zeroGrob.
+  # Iterate to remove or replace with zeroGrob. Any zeroGrobs that remain will
+  # be removed when composing the figure (.compose_figure).
   zeroGrob <- ggplot2::zeroGrob()
   for (removable_element in removable_elements) {
     if (replace_by_zero_grob) {

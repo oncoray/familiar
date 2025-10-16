@@ -2922,12 +2922,12 @@ theme_familiar <- function(
       ))
       g <- NULL
     }
-
+    
     grobs <- c(grobs, list(g))
   }
 
   if (unlist_grobs) grobs <- grobs[[1L]]
-
+  
   return(grobs)
 }
 

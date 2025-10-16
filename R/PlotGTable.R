@@ -1127,7 +1127,17 @@
 
 
 .gtable_update_layout <- function(g) {
-  
+  # gtable uses its heights and widths attributes to structure and plot an 
+  # image. Because we sometimes work with composite plots in familiar, we
+  # need to update the gtable object. In particular, we need to set heights and
+  # widths attributes correctly.
+  #
+  # To do so, we read the heights and widths of individual objects in a column
+  # or row, depending on the aspect. These sizes are then converted to absolute
+  # measures (points), with the exception of objects that have non-zero npc or
+  # null as size. In that case, null elements take precedence over absolute
+  # values. For example, the figure panel has 1null height and 1null width,
+  # making it resizable.
   
   ..get_updated_aspect <- function(g, aspect = "width") {
     if (aspect == "width") {
@@ -1143,13 +1153,6 @@
     }
     
     for (ii in seq_len(aspect_length)) {
-      
-      use_provided <- FALSE
-      # Check if the already provided sizes contain "null" elements. Then use
-      # these by default, but only after checking if there are still elements
-      # that are still present.
-      if (any(unlist(grid::unitType(new_sizes[ii], recurse = TRUE)) == "null")) use_provided <- TRUE
-      
       # Select candidates.
       if (aspect == "width") {
         candidates <- which(g$layout$l == ii & g$layout$r == ii)
@@ -1184,10 +1187,6 @@
       
       if (length(grob_sizes) > 1L) grob_sizes <- max(grob_sizes)
       
-      # Check that there are any elements with non-zero size, and use the
-      # provided size (with elements that have unit type null, if any) instead.
-      if (any(as.numeric(grob_sizes) > 0.0) && use_provided) next
-      
       # Update size based on elements that are present, as long as the
       # previously provided size did not contain "null" size types.
       new_sizes[ii] <- grob_sizes
@@ -1220,23 +1219,19 @@
     ..error_reached_unreachable_code("aspect was not height or width")
   }
   
-  if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[1L]]])) {
-    grob_size <- g$grobs[[grob_id]][[aspect_names[1L]]]
-    grob_size <- ..gtable_filter_aspect_sizes(grob_size)
-    
-    grob_null <- grid::unitType(grob_size) == "null"
-    if (any(grob_null)) {
-      grob_size <- grob_size[grob_null]
-      grob_size <- grid::unit(max(as.numeric(grob_null)), "null")
+  grob_size <- NULL
+  
+  # Attempt to get the size of the grob in absolute units, but maintain size
+  # if this is null or npc.
+  for (aspect_name in aspect_names) {
+    current_size <- g$grobs[[grob_id]][[aspect_name]]
+    if (!is.null(current_size)) {
+      if (all(grid::unitType(current_size) %in% c("null", "npc"))) {
+        grob_size <- current_size
+      } else {
+        grob_size <- sum(grid::convertUnit(current_size, "points"))
+      }
     }
-    
-    if (length(grob_size) > 1L) grob_size <- max(grob_size)
-    
-  } else if (grid::is.unit(g$grobs[[grob_id]][[aspect_names[2L]]])) {
-    grob_size <- g$grobs[[grob_id]][[aspect_names[2L]]]
-    
-  } else {
-    grob_size <- NULL
   }
   
   return(grob_size)
