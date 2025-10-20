@@ -294,12 +294,31 @@
 
 
 
+.gtable_extract_grob <- function(
+    g,
+    element
+) {
+  grob_id <- which(g$layout$name == element)
+  
+  if (length(grob_id) == 0L) {
+    ..error_reached_unreachable_code("element could not be found in gtable")
+    
+  } else if (length(grob_id) > 1L) {
+    ..error_reached_unreachable_code("more than one element was found in gtable")
+  }
+  
+  return(g$grobs[[grob_id]])
+}
+
+
+
 .gtable_extract <- function(
     g,
     element,
     partial_match = FALSE, 
     drop_empty = FALSE
 ) {
+  stop("don't use this function: use .gtable_extract_grob instead")
   # Extract partially matching elements
   if (partial_match) {
     extracted_table <- gtable::gtable_filter(
@@ -326,6 +345,7 @@
 
   return(extracted_table)
 }
+
 
 
 
@@ -453,6 +473,7 @@
     g,
     g_new,
     where,
+    grob_name = NULL,
     spacer = NULL
 ) {
   # Intended for inserting elements that stretch multiple along_elements. It can
@@ -464,16 +485,16 @@
   
   if (where[1L] == "at") {
     position <- c(
-      "t" = as.integer(where[3L]),
-      "l" = as.integer(where[4L]),
-      "b" = as.integer(where[5L]),
-      "r" = as.integer(where[6L])
+      "t" = as.integer(where[2L]),
+      "l" = as.integer(where[3L]),
+      "b" = as.integer(where[4L]),
+      "r" = as.integer(where[5L])
     )
     
     g <- ..gtable_insert_at(
       g = g,
       g_new = g_new,
-      ref_element = where[2L],
+      grob_name = grob_name,
       position = position
     )
     
@@ -491,7 +512,8 @@
       where_1 = where[2L],
       ref_element_1 = where[3L],
       where_2 = where[4L],
-      ref_element_2 = where[5L]
+      ref_element_2 = where[5L],
+      grob_name = grob_name
     )
     
   } else if (where[1L] == "left") {
@@ -499,6 +521,7 @@
       g = g,
       g_new = g_new,
       ref_element = where[2L],
+      grob_name = grob_name,
       spacer = spacer
     )
     
@@ -507,6 +530,7 @@
       g = g,
       g_new = g_new,
       ref_element = where[2L],
+      grob_name = grob_name,
       spacer = spacer
     )
     
@@ -515,6 +539,7 @@
       g = g,
       g_new = g_new,
       ref_element = where[2L],
+      grob_name = grob_name,
       spacer = spacer
     )
     
@@ -523,6 +548,7 @@
       g = g,
       g_new = g_new,
       ref_element = where[2L],
+      grob_name = grob_name,
       spacer = spacer
     )
     
@@ -540,14 +566,14 @@
 
 
 
-..gtable_insert_at <- function(g, g_new, ref_element, position) {
+..gtable_insert_at <- function(g, g_new, grob_name = NULL, position) {
   # Set clip.
   clip <- "on"
   if (is(g_new, "TableGrob") || is(g_new, "gtable")) clip <- g_new$layout$clip[1L]
   
   # Set name.
-  name <- ref_element
-  if (is(g_new, "TableGrob") || is(g_new, "gtable")) name <- g_new$layout$name[1L]
+  name <- grob_name
+  if (is.null(name) && (is(g_new, "TableGrob") || is(g_new, "gtable"))) name <- g_new$layout$name[1L]
   
   # Insert new element.
   g <- gtable::gtable_add_grob(
@@ -580,7 +606,7 @@
   g <- ..gtable_insert_at(
     g = g,
     g_new = g_new,
-    ref_element = ref_element,
+    grob_name = ref_element,
     position = position
   )
   
@@ -595,7 +621,8 @@
     where_1,
     ref_element_1,
     where_2,
-    ref_element_2
+    ref_element_2,
+    grob_name = NULL
 ) {
   
   # Check that where is correctly specified.
@@ -638,15 +665,11 @@
   }
   
   # Add element to g.
-  g <- gtable::gtable_add_grob(
-    g,
-    grobs = g_new,
-    t = elem_position[["t"]],
-    l = elem_position[["l"]],
-    b = elem_position[["b"]],
-    r = elem_position[["r"]],
-    name = g_new$layout$name[1L],
-    clip = g_new$layout$clip[1L]
+  g <- ..gtable_insert_at(
+    g = g,
+    g_new = g_new,
+    grob_name = grob_name,
+    position = elem_position
   )
   
   return(g)
@@ -656,7 +679,8 @@
 ..gtable_insert_below <- function(
     g,
     g_new, 
-    ref_element, 
+    ref_element,
+    grob_name = NULL,
     spacer = NULL
 ) {
   # Create an offset.
@@ -708,15 +732,11 @@
   new_position <- ref_position + elem_ref_offset
 
   # Add element to g.
-  g <- gtable::gtable_add_grob(
-    g,
-    grobs = g_new,
-    t = new_position[["t"]],
-    l = new_position[["l"]],
-    b = new_position[["b"]],
-    r = new_position[["r"]],
-    name = g_new$layout$name[1L],
-    clip = g_new$layout$clip[1L]
+  g <- ..gtable_insert_at(
+    g = g,
+    g_new = g_new,
+    grob_name = grob_name,
+    position = new_position
   )
   
   return(g)

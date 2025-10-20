@@ -512,14 +512,6 @@ setMethod(
       # Declare subtitle components.
       additional_subtitle <- NULL
 
-      # Add evaluation time as subtitle component if it is not used
-      # otherwise.
-      # if (!"evaluation_time" %in% c(split_by, color_by, linetype_by, facet_by)) {
-      #   additional_subtitle <- c(
-      #     additional_subtitle,
-      #     .add_time_to_plot_subtitle(x_split@time))
-      # }
-
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
           split_by = split_by,
@@ -673,6 +665,9 @@ setMethod(
       x_split <- x
     }
     
+    # Skip if the split doesn't contain any information.
+    if (is_empty(x_split@data) || all(is.na(x_split@data$outcome_time))) next
+    
     # Compute strata for the current split.
     strata <- .compute_risk_stratification_curves(
       x = x_split,
@@ -744,15 +739,17 @@ setMethod(
       # Insert panel-surv below xlab-b-main.
       g_kaplan_meier <- .gtable_insert(
         g = g_kaplan_meier,
-        g_new = .gtable_extract(g_survival_table, element = "panel-surv"),
+        g_new = .gtable_extract_grob(g_survival_table, element = "panel-surv"),
         where = c("below", "xlab-b-main"),
+        grob_name = "panel-surv",
         spacer = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y")
       )
       
       # Insert axis-l-surv at the intersection of panel-surv and axis-l-main
       g_kaplan_meier <- .gtable_insert(
         g = g_kaplan_meier,
-        g_new = .gtable_extract(g_survival_table, element = "axis-l-surv"),
+        g_new = .gtable_extract_grob(g_survival_table, element = "axis-l-surv"),
+        grob_name = "axis-l-surv",
         where = c("intersect", "below", "axis-l-main", "left", "panel-surv")
       )
     }
@@ -775,7 +772,6 @@ setMethod(
     facet_wrap_cols = facet_wrap_cols,
     ggtheme = ggtheme
   )
-  browser()
 
   return(g)
 }

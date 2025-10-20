@@ -1414,7 +1414,8 @@ theme_familiar <- function(
       g <- .gtable_insert(
         g = g,
         g_new = global_elements[[x$name[ii]]],
-        where = c("at", x$name[ii], position)
+        where = c("at", position),
+        grob_name = x$name[ii]
       )
     }
   }
@@ -1431,7 +1432,8 @@ theme_familiar <- function(
       g <- .gtable_insert(
         g = g,
         g_new = global_elements[[x$name[ii]]],
-        where = c("at", x$name[ii], position)
+        where = c("at", position),
+        grob_name = x$name[ii]
       )
     }
   }
@@ -1515,7 +1517,8 @@ theme_familiar <- function(
       g <- .gtable_insert(
         g = g,
         g_new = global_elements[[x$name[ii]]],
-        where = c("at", x$name[ii], position)
+        where = c("at", position),
+        grob_name = x$name[ii]
       )
     }
   }
@@ -1555,7 +1558,8 @@ theme_familiar <- function(
       g <- .gtable_insert(
         g = g,
         g_new = global_elements[[x$name[ii]]],
-        where = c("at", x$name[ii], position)
+        where = c("at", position),
+        grob_name = x$name[ii]
       )
     }
   }
@@ -1595,7 +1599,8 @@ theme_familiar <- function(
       g <- .gtable_insert(
         g = g,
         g_new = global_elements[[x$name[ii]]],
-        where = c("at", x$name[ii], position)
+        where = c("at", position),
+        grob_name = x$name[ii]
       )
     }
   }

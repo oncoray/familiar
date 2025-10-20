@@ -97,16 +97,19 @@ as_familiar_plot <- function(
   # Add elements that are present in the table and are related to the global
   # elements.
   for (present_element in present_elements) {
-    element_list[[present_element]] <- .gtable_extract(
+    element_list[[present_element]] <- .gtable_extract_grob(
       g = g,
-      element = present_element,
-      partial_match = FALSE,
-      drop_empty = TRUE
+      element = present_element
     )
   }
   
-  # Remove empty plot elements.
-  element_list <- element_list[!sapply(element_list, is.null)]
+  # # Filter zeroGrob and nullGrob classes, which represent empty elements.
+  element_list <- element_list[!
+    sapply(
+      lapply(element_list, class),
+      function(ii) any(ii %in% c("zeroGrob", "nullGrob"))
+    )
+  ] 
   
   return(element_list)
 }
@@ -127,7 +130,7 @@ as_familiar_plot <- function(
   ) {
     ..error_reached_unreachable_code("both templates should be familiarPlot objects.")
   }
-  browser()
+  
   # Use the row item as the initial template.
   figure <- template_figure_row
   
@@ -156,7 +159,7 @@ as_familiar_plot <- function(
   for (update_element in updatable_elements) {
     figure@gtable <- .gtable_insert(
       g = figure@gtable,
-      g_new = .gtable_extract(template_figure_col, element = update_element),
+      g_new = .gtable_extract_grob(template_figure_col@gtable, element = update_element),
       where = c("replace", update_element)
     )
   }
