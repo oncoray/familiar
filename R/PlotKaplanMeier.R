@@ -717,6 +717,7 @@ setMethod(
       g = .convert_to_grob(p_kaplan_meier),
       extension = "main"
     )
+    if (!gtable::is.gtable(g_kaplan_meier)) next
 
     if (show_survival_table && gtable::is.gtable(g_kaplan_meier)) {
       # Survival tables

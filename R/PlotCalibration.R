@@ -756,6 +756,10 @@ setMethod(
 
   # Iterate over facets
   for (ii in names(data_facet_list)) {
+    
+    browser()
+    if (is_empty(data_facet_list[[ii]])) next
+    
     # Create calibration plot.
     p_calibration <- .create_calibration_plot(
       x = data_facet_list[[ii]],
@@ -784,23 +788,16 @@ setMethod(
       grouping_column = grouping_column,
       is_point = is_point
     )
-
-    # Extract plot elements from the main calibration plot.
-    extracted_elements <- .extract_plot_grobs(p = p_calibration)
-
-    # Remove extracted elements from the plot.
-    p_calibration <- .remove_plot_grobs(p = p_calibration)
-
+    
     # Rename plot elements.
     g_calibration <- .rename_plot_grobs(
       g = .convert_to_grob(p_calibration),
       extension = "main"
     )
+    if (!gtable::is.gtable(g_calibration)) next
 
     if (
-      show_density && 
-      gtable::is.gtable(g_calibration) &&
-      !is_empty(density_facet_list[[ii]])
+      show_density && !is_empty(density_facet_list[[ii]])
     ) {
       # Procedure for normal density plots.
       p_margin <- .create_calibration_density_subplot(
@@ -813,55 +810,40 @@ setMethod(
       )
 
       # Extract the panel element from the density plot.
-      g_margin <- .gtable_extract(
+      # Convert to gtable
+      g_margin <- .rename_plot_grobs(
         g = .convert_to_grob(p_margin),
-        element = c("panel"),
-        partial_match = TRUE
+        extension = "density"
       )
-
-      # Insert in the calibration plot at the top margin.
+      
       g_calibration <- .gtable_insert(
         g = g_calibration,
-        g_new = g_margin,
-        where = "top",
-        ref_element = "panel-main",
-        partial_match = TRUE,
+        g_new = .gtable_extract_grob(g_margin, element = "panel-density"),
+        where = c("above", "xlab-t-main"),
+        grob_name = "panel-density",
         spacer = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y")
       )
     }
-
-    # Add combined grob to list
-    figure_list <- c(
-      figure_list,
-      list(g_calibration)
-    )
-
-    # Add extract elements to the grob_element_list
-    extracted_element_list <- c(
-      extracted_element_list,
-      list(extracted_elements)
+    
+    # Attach to figure list.
+    figure_list[[paste0(current_split$row_id, ".", current_split$col_id)]] <- as_familiar_plot(
+      g = g_calibration,
+      layout = current_split
     )
   }
 
-  # Update the layout table.
-  plot_layout_table <- .update_plot_layout_table(
+  # Compose the final figure. Magic.
+  g <- .compose_figure(
+    figure_list = figure_list,
     plot_layout_table = plot_layout_table,
-    grobs = figure_list,
     x_text_shared = x_label_shared,
     x_label_shared = x_label_shared,
     y_text_shared = y_label_shared,
     y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols
-  )
-
-  # Combine features.
-  g <- .arrange_plot_grobs(
-    grobs = figure_list,
-    plot_layout_table = plot_layout_table,
-    element_grobs = extracted_element_list,
+    facet_wrap_cols = facet_wrap_cols,
     ggtheme = ggtheme
   )
-
+  
   return(g)
 }
 
