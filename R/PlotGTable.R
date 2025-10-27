@@ -744,6 +744,68 @@
 
 
 
+..gtable_insert_above <- function(
+    g,
+    g_new, 
+    ref_element,
+    grob_name = NULL,
+    spacer = NULL
+) {
+  # Create an offset.
+  spacer_ref_offset <- elem_ref_offset <- integer(4L)
+  names(spacer_ref_offset) <- c("t", "l", "b", "r")
+  names(elem_ref_offset) <- c("t", "l", "b", "r")
+  
+  # Find position of reference element.
+  ref_position <- .gtable_get_position(
+    g = g, 
+    element = ref_element
+  )
+  
+  # Force the "top" of the reference position to the bottom, because we don't
+  # need to copy the number of rows of the reference object.
+  ref_position[["t"]] <- ref_position[["b"]]
+  
+  # Add space between the element that should be inserted and the reference
+  # element.
+  if (!is.null(spacer)) {
+    g <- gtable::gtable_add_rows(
+      g,
+      heights = spacer,
+      pos = ref_position[["t"]] - 1L
+    )
+  
+    # Add spacer.
+    g <- .gtable_insert_spacer(
+      g = g,
+      position = ref_position,
+      height = spacer
+    )
+  }
+  
+  g <- gtable::gtable_add_rows(
+    g,
+    heights = g_new$heights,
+    pos = ref_position[["t"]] - 1L
+  )
+  
+  # Set new position
+  new_position <- ref_position
+  new_position[["b"]] <- new_position[["b"]] + length(g_new$heights) - 1L
+  
+  # Add element to g.
+  g <- ..gtable_insert_at(
+    g = g,
+    g_new = g_new,
+    grob_name = grob_name,
+    position = new_position
+  )
+  
+  return(g)
+}
+
+
+
 # .gtable_insert <- function(
 #     g, 
 #     g_new, 
