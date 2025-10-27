@@ -643,16 +643,16 @@ setMethod(
   )
 
   # Define the split in data required for faceting.
-  data_split <- split(
+  layout_split <- split(
     plot_layout_table,
     by = c("col_id", "row_id"),
     sorted = TRUE
   )
-
+  
   # Create plots to join
   figure_list <- list()
   extracted_element_list <- list()
-  for (current_split in data_split) {
+  for (current_split in layout_split) {
     # Generate the split in case there is a faceting variable.
     if (!is.null(facet_by)) {
       x_split <- methods::new(
