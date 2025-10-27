@@ -731,6 +731,13 @@ setMethod(
     facet_by = facet_by,
     facet_wrap_cols = facet_wrap_cols
   )
+  
+  # Used for ordering of composite figures.
+  layout_split <- split(
+    plot_layout_table,
+    by = c("col_id", "row_id"),
+    sorted = TRUE
+  )
 
   # Split data into facets. This is done by row.
   data_facet_list <- .split_data_by_plot_facet(
@@ -755,9 +762,8 @@ setMethod(
   extracted_element_list <- list()
 
   # Iterate over facets
-  for (ii in names(data_facet_list)) {
+  for (ii in names(layout_split)) {
     
-    browser()
     if (is_empty(data_facet_list[[ii]])) next
     
     # Create calibration plot.
@@ -819,16 +825,16 @@ setMethod(
       g_calibration <- .gtable_insert(
         g = g_calibration,
         g_new = .gtable_extract_grob(g_margin, element = "panel-density"),
-        where = c("above", "xlab-t-main"),
+        where = c("above", "panel-main"),
         grob_name = "panel-density",
         spacer = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y")
       )
     }
     
     # Attach to figure list.
-    figure_list[[paste0(current_split$row_id, ".", current_split$col_id)]] <- as_familiar_plot(
+    figure_list[[paste0(layout_split[[ii]]$row_id, ".", layout_split[[ii]]$col_id)]] <- as_familiar_plot(
       g = g_calibration,
-      layout = current_split
+      layout = layout_split[[ii]]
     )
   }
 
