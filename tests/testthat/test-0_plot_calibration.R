@@ -5,14 +5,6 @@ testthat::skip_on_ci()
 
 debug_flag <- FALSE
 
-# TEMPORARY
-familiar:::test_plot_ordering(
-  plot_function = familiar:::plot_calibration_data,
-  data_element = "calibration_data",
-  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
-  debug = TRUE
-)
-
 familiar:::test_plots(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
