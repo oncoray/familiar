@@ -712,14 +712,14 @@ setMethod(
       show_logrank = show_logrank
     )
 
-    # Rename plot elements.
+    # Rename plot elements and convert to gtalb.
     g_kaplan_meier <- .rename_plot_grobs(
       g = .convert_to_grob(p_kaplan_meier),
       extension = "main"
     )
     if (!gtable::is.gtable(g_kaplan_meier)) next
 
-    if (show_survival_table && gtable::is.gtable(g_kaplan_meier)) {
+    if (show_survival_table) {
       # Survival tables
       p_survival_table <- .create_survival_table_subplot(
         x = strata,
