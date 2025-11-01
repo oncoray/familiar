@@ -712,7 +712,7 @@ setMethod(
       show_logrank = show_logrank
     )
 
-    # Rename plot elements and convert to gtalb.
+    # Rename plot elements and convert to gtable.
     g_kaplan_meier <- .rename_plot_grobs(
       g = .convert_to_grob(p_kaplan_meier),
       extension = "main"

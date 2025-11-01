@@ -531,7 +531,7 @@ setMethod(
   )
   
   # Define the split in data required for faceting.
-  data_split <- split(
+  layout_split <- split(
     plot_layout_table,
     by = c("col_id", "row_id"),
     sorted = TRUE
@@ -540,7 +540,7 @@ setMethod(
   # Create plots to join
   figure_list <- list()
   extracted_element_list <- list()
-  for (current_split in data_split) {
+  for (current_split in layout_split) {
     # Generate the split in case there is a faceting variable.
     if (!is.null(facet_by)) {
       x_split <- methods::new(
@@ -589,17 +589,12 @@ setMethod(
       similarity_metric = x_split@similarity_metric
     )
 
-    # Extract plot elements from the heatmap.
-    extracted_elements <- .extract_plot_grobs(p = p_heatmap)
-
-    # Remove extracted elements from the heatmap.
-    p_heatmap <- .remove_plot_grobs(p = p_heatmap)
-
-    # Rename plot elements.
+    # Convert to gtable and append "main" to grob names.
     g_heatmap <- .rename_plot_grobs(
       g = .convert_to_grob(p_heatmap),
       extension = "main"
     )
+    if (!gtable::is.gtable(g_heatmap)) next
 
     # Add dendrogram
     if (!is.null(show_dendrogram) && inherits(dendrogram, "hclust")) {
@@ -621,53 +616,72 @@ setMethod(
           plot_height = dendrogram_height,
           rotate_x_tick_labels = rotate_x_tick_labels
         )
-
-        # Determine the axis element
-        axis_element <- ifelse(position %in% c("top", "bottom"), "axis-l", "axis-b")
-
-        # Extract dendrogram gtable, which consists of the panel and the height
-        # axis.
-        g_dendro <- .gtable_extract(
+        
+        dendro_extension <- paste0("dendro-", position)
+        panel_element_name <- paste0("panel-", dendro_extension)
+        axis_element_name <- ifelse(position %in% c("top", "bottom"), "axis-l", "axis-b")
+        axis_element_name <- paste0(axis_element_name, "-", dendro_extension)
+        
+        # Convert to gtable
+        g_dendro <- .rename_plot_grobs(
           g = .convert_to_grob(p_dendro),
-          element = c("panel", axis_element),
-          partial_match = TRUE
+          extension = "dendro"
         )
-
-        # Insert the dendrogram at the position correct position around the
-        # heatmap.
+        
+        where_panel <- switch(
+          position,
+          "top" = c("above", "panel-main"),
+          "bottom" = c("below", "panel-main"),
+          "left" = c("left", "panel-main"),
+          "right" = c("right", "panel-main")
+        )
+        
+        # Insert panel-main next to panel-dendro.
         g_heatmap <- .gtable_insert(
           g = g_heatmap,
-          g_new = g_dendro,
-          where = position,
-          ref_element = "panel-main",
-          partial_match = TRUE
+          g_new = .gtable_extract_grob(g_dendro, element = panel_element_name),
+          where = where_panel,
+          grob_name = panel_element_name,
+          spacer = .get_plot_panel_spacing(
+            ggtheme = ggtheme, 
+            axis = ifelse(position %in% c("top", "bottom"), "y", "x")
+          )
+        )
+        
+        where_axis_element <- switch(
+          position,
+          "top" = c("intersect", "above", "axis-l-main", "left", panel_element_name),
+          "bottom" = c("intersect", "below", "axis-l-main", "left", panel_element_name),
+          "left" = c("intersect", "below", panel_element_name, "left", "axis-b-main"),
+          "right" = c("intersect", "below", panel_element_name, "right", "axis-b-main")
+        )
+        
+        # Insert the axis element at the intersect of dendro-panel and the
+        # corresponding axis element of the main plot.
+        g_dendro <- .gtable_insert(
+          g = g_dendro,
+          g_new = .gtable_extract_grob(g_dendro, element = axis_element_name),
+          where = where_axis_element,
+          grob_name = axis_element_name
         )
       }
     }
-
-    # Add combined grob to list
-    figure_list <- c(figure_list, list(g_heatmap))
-
-    # Add extract elements to the extracted_element_list
-    extracted_element_list <- c(extracted_element_list, list(extracted_elements))
+    
+    # Attach to figure list.
+    figure_list[[paste0(current_split$row_id, ".", current_split$col_id)]] <- as_familiar_plot(
+      g = g_dendro,
+      layout = current_split
+    )
   }
-
-  # Update the layout table.
-  plot_layout_table <- .update_plot_layout_table(
+  # Compose the final figure.
+  g <- .compose_figure(
+    figure_list = figure_list,
     plot_layout_table = plot_layout_table,
-    grobs = figure_list,
-    x_text_shared = FALSE,
+    x_text_shared = x_label_shared,
     x_label_shared = x_label_shared,
-    y_text_shared = FALSE,
+    y_text_shared = y_label_shared,
     y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols
-  )
-  
-  # Combine features.
-  g <- .arrange_plot_grobs(
-    grobs = figure_list,
-    plot_layout_table = plot_layout_table,
-    element_grobs = extracted_element_list,
+    facet_wrap_cols = facet_wrap_cols,
     ggtheme = ggtheme
   )
 
