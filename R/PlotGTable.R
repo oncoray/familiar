@@ -257,43 +257,6 @@
 
 
 
-.gtable_get_extent <- function(g, element, partial_match = FALSE) {
-  # Find position.
-  if (partial_match) {
-    # Based on partial matching.
-    position <- g$layout[
-      grepl(pattern = element, x = g$layout$name),
-      c("t", "l", "b", "r")
-    ]
-  } else {
-    # Based on exact matching.
-    position <- g$layout[
-      g$layout$name == element,
-      c("t", "l", "b", "r")
-    ]
-  }
-
-  if (nrow(position) == 0L) {
-    ..error_reached_unreachable_code(
-      ".gtable_get_extent: element not found in layout table."
-    )
-  }
-
-  # Find extent by deriving the bounding box of the elements.
-  extent <- list()
-  extent$t <- min(position$t)
-  extent$b <- max(position$b)
-  extent$l <- min(position$l)
-  extent$r <- max(position$r)
-
-  # Return as array.
-  extent <- simplify2array(extent)
-
-  return(extent)
-}
-
-
-
 .gtable_extract_grob <- function(
     g,
     element
@@ -308,89 +271,6 @@
   }
   
   return(g$grobs[[grob_id]])
-}
-
-
-
-.gtable_extract <- function(
-    g,
-    element,
-    partial_match = FALSE, 
-    drop_empty = FALSE
-) {
-  stop("don't use this function: use .gtable_extract_grob instead")
-  # Extract partially matching elements
-  if (partial_match) {
-    extracted_table <- gtable::gtable_filter(
-      x = g, 
-      pattern = paste0(element, collapse = "|")
-    )
-    
-  } else {
-    # Extract exactly matching elements
-    extracted_table <- .gtable_filter_exact(
-      g = g, 
-      element = element
-    )
-  }
-
-  # Drop empty elements
-  if (drop_empty) {
-    extracted_table <- .gtable_drop_empty(g = extracted_table)
-  }
-
-  if (length(extracted_table) == 0L) {
-    extracted_table <- NULL
-  }
-
-  return(extracted_table)
-}
-
-
-
-
-.gtable_drop_empty <- function(g, trim = TRUE) {
-  # Find grob classes
-  grob_classes <- lapply(g$grobs, class)
-
-  # Find zeroGrob and nullGrob classes, which represent empty elements.
-  matches <- sapply(
-    grob_classes, 
-    function(ii) any(ii %in% c("zeroGrob", "nullGrob"))
-  )
-
-  # Filter layout and grobs of the gtable g by keeping non-empty elements.
-  g$layout <- g$layout[!matches, , drop = FALSE]
-  g$grobs <- g$grobs[!matches]
-
-  if (trim) g <- gtable::gtable_trim(g)
-
-  return(g)
-}
-
-
-
-.gtable_filter_exact <- function(
-    g,
-    element, 
-    trim = TRUE, 
-    invert = FALSE
-) {
-  # Similar to gtable::gtable_filter, but with exact matching.
-
-  # Find exact matches
-  matches <- g$layout$name %in% element
-
-  # If invert is TRUE, select only non-matching entries.
-  if (invert) matches <- !matches
-
-  # Filter layout and grobs of the gtable g.
-  g$layout <- g$layout[matches, , drop = FALSE]
-  g$grobs <- g$grobs[matches]
-
-  if (trim) g <- gtable::gtable_trim(g)
-
-  return(g)
 }
 
 
@@ -806,368 +686,136 @@
 
 
 
-# .gtable_insert <- function(
-#     g, 
-#     g_new, 
-#     where = "top", 
-#     ref_element = "panel", 
-#     spacer = NULL, 
-#     partial_match = FALSE
-# ) {
-#   g <- .gtable_insert_along(
-#     g = g,
-#     g_new = g_new,
-#     where = where,
-#     ref_element = ref_element,
-#     spacer = spacer,
-#     partial_match_ref = partial_match,
-#     partial_match_along = partial_match
-#   )
-#   
-#   return(g)
-# }
-
-
-
-.gtable_insert_along <- function(
+..gtable_insert_left <- function(
     g,
-    g_new,
-    where = "top",
-    ref_element = "panel",
-    along_element = ref_element,
-    spacer = NULL,
-    attempt_replace = FALSE,
-    partial_match_ref = FALSE,
-    partial_match_along = FALSE,
-    update_dimensions = TRUE
+    g_new, 
+    ref_element,
+    grob_name = NULL,
+    spacer = NULL
 ) {
-  # Intended for inserting elements that stretch multiple along_elements. It can
-  # also be used for inserting elements directly (without along_elements) and/or
-  # replacing existing elements (attempt_replace=TRUE)
-  if (length(g_new) == 0L) {
-    return(g)
-  }
-  
   # Create an offset.
-  ref_shift <- integer(4L)
-  names(ref_shift) <- c("t", "l", "b", "r")
   spacer_ref_offset <- elem_ref_offset <- integer(4L)
   names(spacer_ref_offset) <- c("t", "l", "b", "r")
   names(elem_ref_offset) <- c("t", "l", "b", "r")
   
-  # Find position to insert this element
+  # Find position of reference element.
   ref_position <- .gtable_get_position(
     g = g, 
-    element = ref_element, 
-    where = where, 
-    partial_match = partial_match_ref
+    element = ref_element
   )
-
-  if (attempt_replace) {
-    # Find if there is a grob with the same name at the intended position.
-    g_index <- .gtable_which_aligned(g,
-      element = g_new$layout$name,
-      ref_element = ref_element,
-      where = where,
-      partial_match_ref = partial_match_ref
-    )
-
-    if (!is.null(g_index)) {
-      # Replace the grob.
-      g$grobs[[g_index]] <- g_new
-
-      # Update heights and widths to get the accurate figures.
-      g <- .gtable_update_layout(g)
-
-      return(g)
-    }
-  }
-
-  # Make room to insert the stuff.
-  if (where == "top") {
-    # Add row below t-1 (i.e. at t, and move existing rows down).
-    g <- gtable::gtable_add_rows(
-      g,
-      heights = g_new$heights,
-      pos = ref_position[["t"]] - 1L
-    )
-
-    # This shifts the rest of the elements (including the reference element)
-    # down by a number of rows, which means that we need an offset.
-    ref_shift[["t"]] <- ref_shift[["b"]] <- length(g_new$heights)
-    
-    # Add space between the inserted element and the reference element.
-    if (!is.null(spacer)) {
-      g <- gtable::gtable_add_rows(
-        g,
-        heights = spacer,
-        pos = ref_position[["t"]] + ref_shift[["t"]] - 1L
-      )
-      
-      spacer_ref_offset[["t"]] <- spacer_ref_offset[["b"]] <- -1L
-      ref_shift[["t"]] <- ref_shift[["t"]] + 1L
-      ref_shift[["b"]] <- ref_shift[["b"]] + 1L
-    }
-    
-    elem_ref_offset[["t"]] <- -ref_shift[["t"]]
-    elem_ref_offset[["b"]] <- -ref_shift[["b"]] + length(g_new$heights) - 1L
-    
-  } else if (where == "bottom") {
-    # This does not shift the reference element down.
-    ref_shift[["t"]] <- ref_shift[["b"]] <- 0L
-    
-    # Add space between the reference element and the element to be inserted.
-    if (!is.null(spacer)) {
-      g <- gtable::gtable_add_rows(
-        g,
-        heights = spacer,
-        pos = ref_position[["b"]]
-      )
-      
-      spacer_ref_offset[["t"]] <- spacer_ref_offset[["b"]] <- 1L
-      elem_ref_offset[["t"]] <- elem_ref_offset[["b"]] <- 1L
-    }
-    
-    # Add row below b (i.e. at b+1, and move existing rows down).
-    g <- gtable::gtable_add_rows(
-      g,
-      heights = g_new$heights,
-      pos = ref_position[["b"]] + elem_ref_offset[["b"]]
-    )
-    
-    elem_ref_offset[["t"]] <- elem_ref_offset[["t"]] + 1L
-    elem_ref_offset[["b"]] <- elem_ref_offset[["b"]] + length(g_new$heights)
-
-  } else if (where == "left") {
-    # Add column at l-1 (i.e. at l, and move existing columns to right)
+  
+  # Force the "left" of the reference position to the right, because we don't
+  # need to copy the number of columns of the reference object.
+  ref_position[["l"]] <- ref_position[["r"]]
+  
+  # Add space between the element that should be inserted and the reference
+  # element.
+  if (!is.null(spacer)) {
     g <- gtable::gtable_add_cols(
       g,
-      widths = g_new$widths,
+      widths = spacer,
       pos = ref_position[["l"]] - 1L
     )
-
-    # This shifts the rest of the elements (including the reference element) to
-    # the right by a number of rows, which means that we need an offset.
-    ref_shift[["l"]] <- ref_shift[["r"]] <- length(g_new$widths)
     
-    # Add space between the inserted element and the reference element.
-    if (!is.null(spacer)) {
-      g <- gtable::gtable_add_cols(
-        g,
-        widths = spacer,
-        pos = ref_position[["l"]] + ref_shift[["l"]] - 1L
-      )
-      
-      spacer_ref_offset[["l"]] <- spacer_ref_offset[["r"]] <- -1L
-      ref_shift[["l"]] <- ref_shift[["l"]] + 1L
-      ref_shift[["r"]] <- ref_shift[["r"]] + 1L
-    }
-    
-    elem_ref_offset[["l"]] <- -ref_shift[["l"]]
-    elem_ref_offset[["r"]] <- -ref_shift[["r"]] + length(g_new$widths) - 1L
-    
-  } else if (where == "right") {
-    # This does not shift the reference element to the right.
-    ref_shift[["l"]] <- ref_shift[["r"]] <- 0L
-    
-    # Add space between the reference element and the element to be inserted.
-    if (!is.null(spacer)) {
-      g <- gtable::gtable_add_cols(
-        g,
-        widths = spacer,
-        pos = ref_position[["r"]]
-      )
-      
-      spacer_ref_offset[["l"]] <- spacer_ref_offset[["r"]] <- 1L
-      elem_ref_offset[["l"]] <- elem_ref_offset[["r"]] <- 1L
-    }
-    
-    # Add column at r (i.e. at r+1, and move existing columns to the right).
-    g <- gtable::gtable_add_cols(
-      g,
-      widths = g_new$widths,
-      pos = ref_position[["r"]] + elem_ref_offset[["r"]]
+    # Add spacer.
+    g <- .gtable_insert_spacer(
+      g = g,
+      position = ref_position,
+      width = spacer
     )
-    
-    elem_ref_offset[["l"]] <- elem_ref_offset[["l"]] + 1L
-    elem_ref_offset[["r"]] <- elem_ref_offset[["r"]] + length(g_new$widths)
-    
-  } else {
-    ..error_reached_unreachable_code(paste0(
-      "Unknown where argument: ", where
-    ))
   }
-
-  # Re-establish position of reference element.
-  ref_position <- .gtable_get_position(
-    g = g, 
-    element = ref_element, 
-    where = where, 
-    partial_match = partial_match_ref
-  )
-
-  # Find element name
-  element_name <- g_new$layout$name[1L]
-
-  # Find the extent of the along_elements
-  extent <- .gtable_get_extent(
-    g = g, 
-    element = along_element, 
-    partial_match = partial_match_along
+  
+  # Make room for the grob that we want to insert.
+  g <- gtable::gtable_add_cols(
+    g,
+    widths = g_new$widths,
+    pos = ref_position[["l"]] - 1L
   )
   
   # Set new position
-  new_position <- ref_position + elem_ref_offset
-
-  if (where %in% c("top", "bottom")) {
-    new_position[["l"]] <- extent[["l"]]
-    new_position[["r"]] <- extent[["r"]]
-  } else {
-    new_position[["t"]] <- extent[["t"]]
-    new_position[["b"]] <- extent[["b"]]
-  }
-
+  new_position <- ref_position
+  new_position[["r"]] <- new_position[["r"]] + length(g_new$widths) - 1L
+  
   # Add element to g.
-  g <- gtable::gtable_add_grob(
-    g,
-    grobs = g_new,
-    t = new_position[["t"]],
-    l = new_position[["l"]],
-    b = new_position[["b"]],
-    r = new_position[["r"]],
-    name = element_name,
-    clip = g_new$layout$clip[1L]
+  g <- ..gtable_insert_at(
+    g = g,
+    g_new = g_new,
+    grob_name = grob_name,
+    position = new_position
   )
-  
-  # Add spacer.
-  if (!is.null(spacer)) {
-    spacer_position <- ref_position + spacer_ref_offset
-
-    if (where %in% c("top", "bottom")) {
-      spacer_position[["l"]] <- extent[["l"]]
-      spacer_position[["r"]] <- extent[["r"]]
-      g <- .gtable_insert_spacer(
-        g = g,
-        position = spacer_position,
-        height = spacer
-      )
-      
-    } else {
-      spacer_position[["t"]] <- extent[["t"]]
-      spacer_position[["b"]] <- extent[["b"]]
-      
-      g <- .gtable_insert_spacer(
-        g = g,
-        position = spacer_position,
-        width = spacer
-      )
-    }
-    
-  }
-  
-  # Update widths and heights.
-  g <- .gtable_update_layout(g = g)
   
   return(g)
 }
 
 
 
-.gtable_which_aligned <- function(
+..gtable_insert_right <- function(
     g,
-    element,
+    g_new, 
     ref_element,
-    where,
-    partial_match_ref = FALSE,
-    only_nearby = TRUE
+    grob_name = NULL,
+    spacer = NULL
 ) {
-  # Identify the element that is located as close as possible to the reference
-  # element, and is aligned with it.
-
-  # Find position of the reference element.
+  # Create an offset.
+  spacer_ref_offset <- elem_ref_offset <- integer(4L)
+  names(spacer_ref_offset) <- c("t", "l", "b", "r")
+  names(elem_ref_offset) <- c("t", "l", "b", "r")
+  
+  # Find position of reference element.
   ref_position <- .gtable_get_position(
-    g = g,
-    element = ref_element,
-    where = where,
-    partial_match = partial_match_ref
+    g = g, 
+    element = ref_element
   )
-
-  # As a list
-  ref_position <- as.list(ref_position)
-
-  # Identify candidates
-  if (where == "top") {
-    # Any candidates should span the left-right extent of the reference element,
-    # and be entirely above it.
-    candidates <- which(
-      g$layout$name == element &
-      g$layout$l == ref_position$l &
-      g$layout$r == ref_position$r &
-      g$layout$t < ref_position$t &
-      g$layout$b < ref_position$t
+  
+  # Force the "left" of the reference position to the right, because we don't
+  # need to copy the number of rows of the reference object.
+  ref_position[["l"]] <- ref_position[["r"]]
+  
+  # Add space between the reference element and the element to be inserted.
+  if (!is.null(spacer)) {
+    g <- gtable::gtable_add_cols(
+      g,
+      widths = spacer,
+      pos = ref_position[["r"]]
     )
     
-  } else if (where == "bottom") {
-    # Any candidates should span the left-right extent of the reference element,
-    # and be entirely below it.
-    candidates <- which(
-      g$layout$name == element &
-      g$layout$l == ref_position$l &
-      g$layout$r == ref_position$r &
-      g$layout$t > ref_position$b &
-      g$layout$b > ref_position$b
-    )
+    # Update offsets for spacer and new grob.
+    spacer_ref_offset[["l"]] <- spacer_ref_offset[["r"]] <- 1L
+    elem_ref_offset[["l"]] <- elem_ref_offset[["r"]] <- 1L
     
-  } else if (where == "left") {
-    # Any candidates should span the top-bottom extent of the reference element,
-    # and be entirely to the left it.
-    candidates <- which(
-      g$layout$name == element &
-      g$layout$l < ref_position$l &
-      g$layout$r < ref_position$l &
-      g$layout$t == ref_position$t &
-      g$layout$b == ref_position$b
+    # Add spacer.
+    g <- .gtable_insert_spacer(
+      g = g,
+      position = ref_position + spacer_ref_offset,
+      width = spacer
     )
-    
-  } else if (where == "right") {
-    # Any candidates should span the top-bottom extent of the reference element,
-    # and be entirely to the right it.
-    candidates <- which(
-      g$layout$name == element &
-      g$layout$l > ref_position$r &
-      g$layout$r > ref_position$r &
-      g$layout$t == ref_position$t &
-      g$layout$b == ref_position$b
-    )
-    
-  } else {
-    ..error_reached_unreachable_code("Unknown where argument.")
   }
-
-  if (length(candidates) == 0L) {
-    return(NULL)
-  }
-
-  if (length(candidates) > 1L && only_nearby) {
-    # Identify the candidate that is located nearest to the reference element.
-    layout_table <- g$layout[candidates, ]
-
-    if (where == "top") {
-      distance <- ref_position$t - layout_table$t
-    } else if (where == "bottom") {
-      distance <- layout_table$b - ref_position$b
-    } else if (where == "left") {
-      distance <- ref_position$l - layout_table$l
-    } else if (where == "right") {
-      distance <- layout_table$r - ref_position$r
-    }
-
-    # Select the candidate with minimal distance.
-    candidates <- candidates[which.min(distance)[1L]]
-  }
-
-  return(candidates)
+  
+  # Add row below b or below spacer.
+  g <- gtable::gtable_add_cols(
+    g,
+    widths = g_new$widths,
+    pos = ref_position[["r"]] + elem_ref_offset[["r"]]
+  )
+  
+  elem_ref_offset[["l"]] <- elem_ref_offset[["l"]] + 1L
+  elem_ref_offset[["r"]] <- elem_ref_offset[["r"]] + length(g_new$widths)
+  
+  # Set new position
+  new_position <- ref_position + elem_ref_offset
+  
+  # Add element to g.
+  g <- ..gtable_insert_at(
+    g = g,
+    g_new = g_new,
+    grob_name = grob_name,
+    position = new_position
+  )
+  
+  return(g)
 }
+
+
 
 
 
@@ -1203,6 +851,48 @@
 
   g$layout$name[updated_element] <- new
 
+  return(g)
+}
+
+
+
+.gtable_update_panel_aspects <- function(g) {
+    # Make panels inherit heights and widths, if they don't have any. This is done
+  # to ensure that panels retain heights and widths, even if supporting elements
+  # such as the axis text and label elements are stripped on figure composition.
+  element_names <- g$layout$name
+  panel_elements <- element_names[sapply(
+    element_names, 
+    startswith_any, 
+    prefix = .all_gtable_panel_names()
+  )]
+  
+  for (panel_element in panel_elements) {
+    for (aspect in c("height", "width")) {
+      grob_id <- which(element_names == panel_element)
+      panel_size <- .gtable_get_aspect_size(
+        grob_id = grob_id,
+        g = g,
+        aspect = aspect
+      )
+      
+      # Only inherit aspect size if the panel element does not have its own
+      # size set.
+      if (is.null(panel_size)) {
+        if (aspect == "height") {
+          position <-g$layout[grob_id, "t", drop = TRUE]
+          panel_size <- g$heights[position]
+          g$grobs[[grob_id]]$height <- panel_size
+          
+        } else {
+          position <- g$layout[grob_id, "l", drop = TRUE]
+          panel_size <- g$widths[position]
+          g$grobs[[grob_id]]$width <- panel_size
+        }
+      }
+    }
+  }
+  
   return(g)
 }
 

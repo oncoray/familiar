@@ -603,7 +603,7 @@ setMethod(
         h = dendrogram,
         similarity_metric = x_split@similarity_metric
       )
-
+      
       for (position in show_dendrogram) {
         # Plot dendrogram
         p_dendro <- .create_feature_similarity_dendrogram_plot(
@@ -625,7 +625,7 @@ setMethod(
         # Convert to gtable
         g_dendro <- .rename_plot_grobs(
           g = .convert_to_grob(p_dendro),
-          extension = "dendro"
+          extension = dendro_extension
         )
         
         where_panel <- switch(
@@ -658,8 +658,8 @@ setMethod(
         
         # Insert the axis element at the intersect of dendro-panel and the
         # corresponding axis element of the main plot.
-        g_dendro <- .gtable_insert(
-          g = g_dendro,
+        g_heatmap <- .gtable_insert(
+          g = g_heatmap,
           g_new = .gtable_extract_grob(g_dendro, element = axis_element_name),
           where = where_axis_element,
           grob_name = axis_element_name
@@ -669,7 +669,7 @@ setMethod(
     
     # Attach to figure list.
     figure_list[[paste0(current_split$row_id, ".", current_split$col_id)]] <- as_familiar_plot(
-      g = g_dendro,
+      g = g_heatmap,
       layout = current_split
     )
   }

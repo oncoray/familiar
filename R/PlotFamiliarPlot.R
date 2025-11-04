@@ -28,38 +28,7 @@ as_familiar_plot <- function(
   # Make panels inherit heights and widths, if they don't have any. This is done
   # to ensure that panels retain heights and widths, even if supporting elements
   # such as the axis text and label elements are stripped on figure composition.
-  element_names <- fam_plot@gtable$layout$name
-  panel_elements <- element_names[sapply(
-    element_names, 
-    startswith_any, 
-    prefix = .all_gtable_panel_names()
-  )]
-  
-  for (panel_element in panel_elements) {
-    for (aspect in c("height", "width")) {
-      grob_id <- which(element_names == panel_element)
-      panel_size <- .gtable_get_aspect_size(
-        grob_id = grob_id,
-        g = fam_plot@gtable,
-        aspect = aspect
-      )
-      
-      # Only inherit aspect size if the panel element does not have its own
-      # size set.
-      if (is.null(panel_size)) {
-        if (aspect == "height") {
-          position <- fam_plot@gtable$layout[grob_id, "t", drop = TRUE]
-          panel_size <- fam_plot@gtable$heights[position]
-          fam_plot@gtable$grobs[[grob_id]]$height <- panel_size
-          
-        } else {
-          position <- fam_plot@gtable$layout[grob_id, "l", drop = TRUE]
-          panel_size <- fam_plot@gtable$widths[position]
-          fam_plot@gtable$grobs[[grob_id]]$width <- panel_size
-        }
-      }
-    }
-  }
+  fam_plot@gtable <- .gtable_update_panel_aspects(fam_plot@gtable)
   
   return(fam_plot)
 }
