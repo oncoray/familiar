@@ -1055,6 +1055,119 @@ theme_familiar <- function(
 
 
 
+.combine_plot_elements <- function(
+  g_main,
+  g_new,
+  element_name,
+  stack_direction = "y"
+) {
+  for (current_element_name in element_name) {
+    # Determine matching elements in both g_main and g_new.
+    element_names_main <- g_main$layout$name
+    present_elements_main <- element_names_main[sapply(
+      element_names_main, 
+      startswith_any, 
+      prefix = current_element_name
+    )]
+    
+    element_names_new <- g_new$layout$name
+    present_elements_new <- element_names_new[sapply(
+      element_names_new,
+      startswith_any,
+      prefix = current_element_name
+    )]
+    
+    if (length(present_elements_main) != 1L || length(present_elements_new) != 1L) next
+    
+    grob_index_main <- which(g_main$layout$name == present_elements_main)
+    grob_index_new <- which(g_new$layout$name == present_elements_new)
+    
+    # Determine if there is anything to add from g_new.
+    if (any(sapply(c("zeroGrob", "nullGrob"), function(ii, x) (is(x, ii)), x = g_new$grobs[[grob_index_new]]))) next
+    
+    grob_main <- g_main$grobs[[grob_index_main]]
+    grob_new <- g_new$grobs[[grob_index_new]]
+    
+    # If there is an empty grob in g_main, simply copy the element from g_new
+    # into g_main.
+    if (any(sapply(c("zeroGrob", "nullGrob"), function(ii, x) (is(x, ii)), x = g_main$grobs[[grob_index_main]]))) {
+      g_main$grobs[[grob_index_main]] <- grob_new
+      
+    } else {
+      g <- list(grob_main, grob_new)
+      
+      # Find widths and heights
+      widths <- lapply(g, gtable::gtable_width)
+      widths <- do.call(grid::unit.c, widths)
+      
+      heights <- lapply(g, gtable::gtable_height)
+      heights <- do.call(grid::unit.c, heights)
+      
+      if (stack_direction == "y") {
+        # Concatenate the widths.
+        widths <- max(widths)
+        
+        # Update widths of underlying guide elements.
+        for (ii in seq_along(g)) {
+          g[[ii]]$widths <- widths
+        }
+        
+        # Provide the matrix to order the guides.
+        order_matrix <- matrix(
+          data = seq_along(g),
+          nrow = length(g), 
+          ncol = 1L
+        )
+        
+        # Create a grob matrix
+        g_matrix <- matrix(
+          data = g, 
+          ncol = 1L
+        )
+        
+      } else {
+        # Concatenate the heights.
+        heights <- max(heights)
+        
+        # Update heights of underlying guide elements.
+        for (ii in seq_along(g)) {
+          g[[ii]]$heights <- heights
+        }
+        
+        # Provide the matrix to order the guides.
+        order_matrix <- matrix(
+          data = seq_along(g), 
+          nrow = 1L, 
+          ncol = length(g)
+        )
+        
+        # Create a grob matrix
+        g_matrix <- matrix(
+          data = g, 
+          nrow = 1L
+        )
+      }
+      
+      # Create a gtable that combines all guide-boxes.
+      g <- gtable::gtable_matrix(
+        name = present_elements_main,
+        grobs = g_matrix,
+        widths = widths,
+        heights = heights,
+        z = order_matrix,
+        respect = TRUE,
+        clip = "inherit"
+      )
+      
+      
+    }
+  }
+  
+  return(g_main)
+}
+
+
+
 .compose_figure <- function(
     figure_list,
     plot_layout_table,

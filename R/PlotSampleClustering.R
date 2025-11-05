@@ -1205,7 +1205,7 @@ setMethod(
   )
 
   # Define the split in data required for faceting.
-  data_split <- split(
+  layout_split <- split(
     plot_layout_table,
     by = c("col_id", "row_id"),
     sorted = TRUE
@@ -1215,7 +1215,7 @@ setMethod(
   figure_list <- list()
   extracted_element_list <- list()
 
-  for (current_split in data_split) {
+  for (current_split in layout_split) {
     # Get current split on the identifier table.
     if (is.null(facet_by)) {
       x_split <- x
@@ -1298,17 +1298,12 @@ setMethod(
       show_sample_dendrogram = show_sample_dendrogram
     )
     
-    # Extract plot elements from the heatmap.
-    extracted_elements <- .extract_plot_grobs(p = p_heatmap)
-
-    # Remove extracted elements from the heatmap.
-    p_heatmap <- .remove_plot_grobs(p = p_heatmap)
-
-    # Rename plot elements.
+    # Convert to gtable and append "main" to grob names.
     g_heatmap <- .rename_plot_grobs(
       g = .convert_to_grob(p_heatmap),
       extension = "main"
     )
+    if (!gtable::is.gtable(g_heatmap)) next
 
     # Add sample dendogram
     if (!is.null(sample_similarity_split)) {
@@ -1345,25 +1340,52 @@ setMethod(
           rotate_x_tick_labels = rotate_x_tick_labels
         )
 
-        # Determine the axis element
-        axis_element <- ifelse(show_sample_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
-
-        # Extract dendrogram gtable, which consists of the panel and the height
-        # axis.
-        g_sample_dendro <- .gtable_extract(
+        dendro_extension <- paste0("dendro-", show_sample_dendrogram)
+        panel_element_name <- paste0("panel-", dendro_extension)
+        axis_element_name <- ifelse(show_sample_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
+        axis_element_name <- paste0(axis_element_name, "-", dendro_extension)
+        
+        # Convert to gtable
+        g_dendro <- .rename_plot_grobs(
           g = .convert_to_grob(p_dendro),
-          element = c("panel", axis_element),
-          partial_match = TRUE
+          extension = dendro_extension
         )
-
-        # Insert the dendrogram at the position correct position around the
-        # heatmap.
+        
+        where_panel <- switch(
+          show_sample_dendrogram,
+          "top" = c("above", "panel-main"),
+          "bottom" = c("below", "panel-main"),
+          "left" = c("left", "panel-main"),
+          "right" = c("right", "panel-main")
+        )
+        
+        # Insert panel-main next to panel-dendro.
         g_heatmap <- .gtable_insert(
           g = g_heatmap,
-          g_new = g_sample_dendro,
-          where = show_sample_dendrogram,
-          ref_element = "panel-main",
-          partial_match = TRUE
+          g_new = .gtable_extract_grob(g_dendro, element = panel_element_name),
+          where = where_panel,
+          grob_name = panel_element_name,
+          spacer = .get_plot_panel_spacing(
+            ggtheme = ggtheme, 
+            axis = ifelse(show_sample_dendrogram %in% c("top", "bottom"), "y", "x")
+          )
+        )
+        
+        where_axis_element <- switch(
+          show_sample_dendrogram,
+          "top" = c("intersect", "above", "axis-l-main", "left", panel_element_name),
+          "bottom" = c("intersect", "below", "axis-l-main", "left", panel_element_name),
+          "left" = c("intersect", "below", panel_element_name, "left", "axis-b-main"),
+          "right" = c("intersect", "below", panel_element_name, "right", "axis-b-main")
+        )
+        
+        # Insert the axis element at the intersect of dendro-panel and the
+        # corresponding axis element of the main plot.
+        g_heatmap <- .gtable_insert(
+          g = g_heatmap,
+          g_new = .gtable_extract_grob(g_dendro, element = axis_element_name),
+          where = where_axis_element,
+          grob_name = axis_element_name
         )
       }
     }
@@ -1403,25 +1425,52 @@ setMethod(
           rotate_x_tick_labels = rotate_x_tick_labels
         )
 
-        # Determine the axis element
-        axis_element <- ifelse(show_feature_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
-
-        # Extract dendodram gtable, which consists of the panel and the height
-        # axis.
-        g_feature_dendro <- .gtable_extract(
+        dendro_extension <- paste0("dendro-", show_feature_dendrogram)
+        panel_element_name <- paste0("panel-", dendro_extension)
+        axis_element_name <- ifelse(show_feature_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
+        axis_element_name <- paste0(axis_element_name, "-", dendro_extension)
+        
+        # Convert to gtable
+        g_dendro <- .rename_plot_grobs(
           g = .convert_to_grob(p_dendro),
-          element = c("panel", axis_element),
-          partial_match = TRUE
+          extension = dendro_extension
         )
-
-        # Insert the dendrogram at the position correct position around the
-        # heatmap.
+        
+        where_panel <- switch(
+          show_feature_dendrogram,
+          "top" = c("above", "panel-main"),
+          "bottom" = c("below", "panel-main"),
+          "left" = c("left", "panel-main"),
+          "right" = c("right", "panel-main")
+        )
+        
+        # Insert panel-main next to panel-dendro.
         g_heatmap <- .gtable_insert(
           g = g_heatmap,
-          g_new = g_feature_dendro,
-          where = show_feature_dendrogram,
-          ref_element = "panel-main",
-          partial_match = TRUE
+          g_new = .gtable_extract_grob(g_dendro, element = panel_element_name),
+          where = where_panel,
+          grob_name = panel_element_name,
+          spacer = .get_plot_panel_spacing(
+            ggtheme = ggtheme, 
+            axis = ifelse(show_feature_dendrogram %in% c("top", "bottom"), "y", "x")
+          )
+        )
+        
+        where_axis_element <- switch(
+          show_feature_dendrogram,
+          "top" = c("intersect", "above", "axis-l-main", "left", panel_element_name),
+          "bottom" = c("intersect", "below", "axis-l-main", "left", panel_element_name),
+          "left" = c("intersect", "below", panel_element_name, "left", "axis-b-main"),
+          "right" = c("intersect", "below", panel_element_name, "right", "axis-b-main")
+        )
+        
+        # Insert the axis element at the intersect of dendro-panel and the
+        # corresponding axis element of the main plot.
+        g_heatmap <- .gtable_insert(
+          g = g_heatmap,
+          g_new = .gtable_extract_grob(g_dendro, element = axis_element_name),
+          where = where_axis_element,
+          grob_name = axis_element_name
         )
       }
     }
@@ -1441,9 +1490,54 @@ setMethod(
         rotate_x_tick_labels = rotate_x_tick_labels
       )
 
-      # Convert to grob
-      g_outcome <- .convert_to_grob(p_outcome)
-
+      # Convert to gtable
+      g_outcome <- .rename_plot_grobs(
+        g = .convert_to_grob(p_outcome),
+        extension = "outcome"
+      )
+      axis_element_name <- ifelse(show_outcome %in% c("top", "bottom"), "axis-l-outcome", "axis-b-outcome")
+      
+      where_panel <- switch(
+        show_outcome,
+        "top" = c("above", "panel-main"),
+        "bottom" = c("below", "panel-main"),
+        "left" = c("left", "panel-main"),
+        "right" = c("right", "panel-main")
+      )
+      
+      # Insert panel-main next to panel-outcome.
+      g_heatmap <- .gtable_insert(
+        g = g_heatmap,
+        g_new = .gtable_extract_grob(g_outcome, element = "panel-outcome"),
+        where = where_panel,
+        grob_name = "panel-outcome"
+      )
+      
+      where_axis_element <- switch(
+        show_sample_dendrogram,
+        "top" = c("intersect", "above", "axis-l-main", "left", panel_element_name),
+        "bottom" = c("intersect", "below", "axis-l-main", "left", panel_element_name),
+        "left" = c("intersect", "below", panel_element_name, "left", "axis-b-main"),
+        "right" = c("intersect", "below", panel_element_name, "right", "axis-b-main")
+      )
+      
+      # Insert the axis element at the intersect of panel-outcome and the
+      # corresponding axis element of the main plot.
+      g_heatmap <- .gtable_insert(
+        g = g_heatmap,
+        g_new = .gtable_extract_grob(g_outcome, element = axis_element_name),
+        where = where_axis_element,
+        grob_name = axis_element_name
+      )
+      
+      # Combine guides,
+      g_heatmap <- .combine_plot_elements(
+        g_main = g_heatmap,
+        g_new = g_outcome,
+        element_name = .all_gtable_guide_names()
+      )
+      
+      
       # Extract guide from grob
       g_outcome_guide <- .gtable_extract(
         g = g_outcome,
@@ -1451,6 +1545,8 @@ setMethod(
         partial_match = TRUE,
         drop_empty = TRUE
       )
+      
+      
 
       if (outcome_type %in% c("survival", "competing_risk")) {
         # Determine the axis element
