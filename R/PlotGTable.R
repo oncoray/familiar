@@ -981,6 +981,18 @@
 
 .gtable_get_aspect_size <- function(grob_id, g, aspect = "width") {
   
+  grob_size <- .gtable_get_grob_aspect_size(
+    grob = g$grobs[[grob_id]],
+    aspect = aspect
+  )
+  
+  return(grob_size)
+}
+
+
+
+.gtable_get_grob_aspect_size <- function(grob, aspect = "width") {
+  
   if (aspect == "width") {
     aspect_names <- c("widths", "width")
     
@@ -996,12 +1008,15 @@
   # Attempt to get the size of the grob in absolute units, but maintain size
   # if this is null or npc.
   for (aspect_name in aspect_names) {
-    current_size <- g$grobs[[grob_id]][[aspect_name]]
+    current_size <- grob[[aspect_name]]
     if (!is.null(current_size)) {
       if (all(grid::unitType(current_size) %in% c("null", "npc"))) {
         grob_size <- current_size
+        break
+        
       } else {
         grob_size <- sum(grid::convertUnit(current_size, "points"))
+        break
       }
     }
   }

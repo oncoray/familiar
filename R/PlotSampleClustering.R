@@ -1536,87 +1536,28 @@ setMethod(
         g_new = g_outcome,
         element_name = .all_gtable_guide_names()
       )
-      
-      
-      # Extract guide from grob
-      g_outcome_guide <- .gtable_extract(
-        g = g_outcome,
-        element = "guide",
-        partial_match = TRUE,
-        drop_empty = TRUE
-      )
-      
-      
-
-      if (outcome_type %in% c("survival", "competing_risk")) {
-        # Determine the axis element
-        axis_element <- ifelse(show_outcome %in% c("top", "bottom"), "axis-l", "axis-b")
-
-        # Define extracted outcome elements.
-        extracted_outcome_elements <- c("panel", axis_element)
-        
-      } else {
-        extracted_outcome_elements <- c("panel")
-      }
-
-      # Extract the main plot elements from the outcome columns/rows
-      g_outcome <- .gtable_extract(
-        g = g_outcome,
-        element = extracted_outcome_elements,
-        partial_match = TRUE
-      )
-
-      # Insert the outcome at the position correct position around the heatmap.
-      g_heatmap <- .gtable_insert(
-        g = g_heatmap,
-        g_new = g_outcome,
-        where = show_outcome,
-        ref_element = "panel-main",
-        partial_match = TRUE
-      )
-      
-    } else {
-      g_outcome_guide <- NULL
+      browser()
     }
 
-    # Combine main guide with the outcome guide. Most of the grobs from
-    # extracted_elements will be empty.
-    for (element_name in .all_guide_names()$e) {
-      if (!is.null(extracted_elements[[element_name]])) {
-        extracted_elements[[element_name]] <- .combine_guide_grobs(
-          g = list(extracted_elements[[element_name]], g_outcome_guide),
-          ggtheme = ggtheme,
-          no_empty = FALSE
-        )
-      }
-    }
-    
-    # Add combined grob to list
-    figure_list <- c(figure_list, list(g_heatmap))
-
-    # Add extract elements to the grob_element_list
-    extracted_element_list <- c(extracted_element_list, list(extracted_elements))
+    # Attach to figure list.
+    figure_list[[paste0(current_split$row_id, ".", current_split$col_id)]] <- as_familiar_plot(
+      g = g_heatmap,
+      layout = current_split
+    )
   }
-
-  # Update the layout table.
-  plot_layout_table <- .update_plot_layout_table(
+  
+  # Compose the final figure. Magic.
+  g <- .compose_figure(
+    figure_list = figure_list,
     plot_layout_table = plot_layout_table,
-    grobs = figure_list,
     x_text_shared = FALSE,
     x_label_shared = x_label_shared,
     y_text_shared = FALSE,
     y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols
-  )
-  
-  # Combine features.
-  g <- .arrange_plot_grobs(
-    grobs = figure_list,
-    plot_layout_table = plot_layout_table,
-    element_grobs = extracted_element_list,
+    facet_wrap_cols = facet_wrap_cols,
     ggtheme = ggtheme
   )
-
+browser()
   return(g)
 }
 

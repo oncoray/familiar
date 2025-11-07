@@ -1059,8 +1059,10 @@ theme_familiar <- function(
   g_main,
   g_new,
   element_name,
-  stack_direction = "y"
+  spacer = NULL,
+  stack_direction = "vertical"
 ) {
+  
   for (current_element_name in element_name) {
     # Determine matching elements in both g_main and g_new.
     element_names_main <- g_main$layout$name
@@ -1097,71 +1099,73 @@ theme_familiar <- function(
       g <- list(grob_main, grob_new)
       
       # Find widths and heights
-      widths <- lapply(g, gtable::gtable_width)
+      widths <- lapply(g, .gtable_get_grob_aspect_size, aspect = "width")
       widths <- do.call(grid::unit.c, widths)
       
-      heights <- lapply(g, gtable::gtable_height)
+      heights <- lapply(g, .gtable_get_grob_aspect_size, aspect = "height")
       heights <- do.call(grid::unit.c, heights)
       
-      if (stack_direction == "y") {
+      if (stack_direction == "vertical") {
         # Concatenate the widths.
         widths <- max(widths)
-        
-        # Update widths of underlying guide elements.
-        for (ii in seq_along(g)) {
-          g[[ii]]$widths <- widths
-        }
-        
-        # Provide the matrix to order the guides.
-        order_matrix <- matrix(
-          data = seq_along(g),
-          nrow = length(g), 
-          ncol = 1L
-        )
-        
-        # Create a grob matrix
-        g_matrix <- matrix(
-          data = g, 
-          ncol = 1L
-        )
-        
+
       } else {
         # Concatenate the heights.
         heights <- max(heights)
+      }
+      
+      # Set up basic gtable.
+      g_combine <- gtable::gtable(
+        widths = widths,
+        heights = heights,
+        name = present_elements_main
+      )
+      
+      # Insert grob from main.
+      g_combine <- gtable::gtable_add_grob(
+        g_combine,
+        grobs = g[[1L]],
+        t = 1L,
+        l = 1L
+      )
+      
+      # Insert grob from new.
+      g_combine <- gtable::gtable_add_grob(
+        g_combine,
+        grobs = g[[2L]],
+        t = ifelse(stack_direction == "vertical", 2L, 1L),
+        l = ifelse(stack_direction == "vertical", 1L, 2L)
+      )
+      
+      # Insert spacer.
+      if (!is.null(spacer) && stack_direction == "vertical") {
+        spacer_position <- c(2L, 2L, 1L, 1L)
+        names(spacer_position) <- c("t", "b", "l", "r")
         
-        # Update heights of underlying guide elements.
-        for (ii in seq_along(g)) {
-          g[[ii]]$heights <- heights
-        }
-        
-        # Provide the matrix to order the guides.
-        order_matrix <- matrix(
-          data = seq_along(g), 
-          nrow = 1L, 
-          ncol = length(g)
+        g_combine <- .gtable_insert_spacer(
+          g,
+          position = spacer_position,
+          height = spacer,
+          make_space = TRUE
         )
         
-        # Create a grob matrix
-        g_matrix <- matrix(
-          data = g, 
-          nrow = 1L
+      } else if (!is.null(spacer) && stack_direction == "horizontal") {
+        spacer_position <- c(1L, 1L, 2L, 2L)
+        names(spacer_position) <- c("t", "b", "l", "r")
+        
+        g_combine <- .gtable_insert_spacer(
+          g,
+          position = spacer_position,
+          width = spacer,
+          make_space = TRUE
         )
       }
       
-      # Create a gtable that combines all guide-boxes.
-      g <- gtable::gtable_matrix(
-        name = present_elements_main,
-        grobs = g_matrix,
-        widths = widths,
-        heights = heights,
-        z = order_matrix,
-        respect = TRUE,
-        clip = "inherit"
-      )
-      
-      
+      g_main$grobs[[grob_index_main]] <- g_combine
     }
   }
+  
+  g_main <- .gtable_update_layout(g = g_main)
   
   return(g_main)
 }
