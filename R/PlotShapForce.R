@@ -550,13 +550,19 @@ setMethod(
     plot_layout_table = plot_layout_table
   )
   
+  # Used for ordering of composite figures.
+  layout_split <- split(
+    plot_layout_table,
+    by = c("col_id", "row_id"),
+    sorted = TRUE
+  )
   
   # Placeholders for plots.
   figure_list <- list()
   extracted_element_list <- list()
   
   # Iterate over facets
-  for (ii in names(data_facet_list)) {
+  for (ii in names(layout_split)) {
     # Create calibration plot.
     p_shap_force <- .create_shap_force_plot(
       x = data_facet_list[[ii]],
@@ -576,47 +582,29 @@ setMethod(
       sample_order = sample_order
     )
     
-    # Extract plot elements from the main calibration plot.
-    extracted_elements <- .extract_plot_grobs(p = p_shap_force)
-    
-    # Remove extracted elements from the plot.
-    p_shap_force <- .remove_plot_grobs(p = p_shap_force)
-    
     # Rename plot elements.
     g_shap_force <- .rename_plot_grobs(
       g = .convert_to_grob(p_shap_force),
       extension = "main"
     )
+    if (!gtable::is.gtable(g_shap_force)) next
     
-    # Add combined grob to list
-    figure_list <- c(
-      figure_list,
-      list(g_shap_force)
-    )
-    
-    # Add extract elements to the grob_element_list
-    extracted_element_list <- c(
-      extracted_element_list,
-      list(extracted_elements)
+    # Attach to figure list.
+    figure_list[[paste0(layout_split[[ii]]$row_id, ".", layout_split[[ii]]$col_id)]] <- as_familiar_plot(
+      g = g_shap_force,
+      layout = layout_split[[ii]]
     )
   }
   
-  # Update the layout table.
-  plot_layout_table <- .update_plot_layout_table(
+  # Compose the final figure. Magic.
+  g <- .compose_figure(
+    figure_list = figure_list,
     plot_layout_table = plot_layout_table,
-    grobs = figure_list,
     x_text_shared = x_label_shared,
     x_label_shared = x_label_shared,
     y_text_shared = y_label_shared,
     y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols
-  )
-  
-  # Combine features.
-  g <- .arrange_plot_grobs(
-    grobs = figure_list,
-    plot_layout_table = plot_layout_table,
-    element_grobs = extracted_element_list,
+    facet_wrap_cols = facet_wrap_cols,
     ggtheme = ggtheme
   )
   
