@@ -613,7 +613,8 @@ setMethod(
     data,
     threshold_probabilities,
     bootstrap,
-    bootstrap_seed) {
+    bootstrap_seed
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   outcome <- probability <- is_positive <- NULL
@@ -710,7 +711,8 @@ setMethod(
     data,
     threshold_probabilities,
     bootstrap,
-    bootstrap_seed) {
+    bootstrap_seed
+) {
   
   # Bootstrap the data.
   if (bootstrap) {
@@ -823,7 +825,8 @@ setMethod(
     data,
     x,
     evaluation_time,
-    intervention = FALSE) {
+    intervention = FALSE
+) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
   predicted_outcome <- outcome_event <- outcome_time <- NULL

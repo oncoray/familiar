@@ -1534,9 +1534,9 @@ setMethod(
       g_heatmap <- .combine_plot_elements(
         g_main = g_heatmap,
         g_new = g_outcome,
-        element_name = .all_gtable_guide_names()
+        element_name = .all_gtable_guide_names(),
+        spacer = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")
       )
-      browser()
     }
 
     # Attach to figure list.
@@ -1557,7 +1557,7 @@ setMethod(
     facet_wrap_cols = facet_wrap_cols,
     ggtheme = ggtheme
   )
-browser()
+
   return(g)
 }
 

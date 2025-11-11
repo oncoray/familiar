@@ -1100,9 +1100,17 @@ theme_familiar <- function(
       
       # Find widths and heights
       widths <- lapply(g, .gtable_get_grob_aspect_size, aspect = "width")
+      if (!is.null(spacer) && stack_direction == "horizontal") {
+        widths <- append(widths, 0L, after = 1L)
+        widths[[2L]] <- spacer
+      }
       widths <- do.call(grid::unit.c, widths)
       
       heights <- lapply(g, .gtable_get_grob_aspect_size, aspect = "height")
+      if (!is.null(spacer) && stack_direction == "vertical") {
+       heights <- append(heights, 0L, after = 1L)
+       heights[[2L]] <- spacer
+      }
       heights <- do.call(grid::unit.c, heights)
       
       if (stack_direction == "vertical") {
@@ -1133,8 +1141,8 @@ theme_familiar <- function(
       g_combine <- gtable::gtable_add_grob(
         g_combine,
         grobs = g[[2L]],
-        t = ifelse(stack_direction == "vertical", 2L, 1L),
-        l = ifelse(stack_direction == "vertical", 1L, 2L)
+        t = length(heights),
+        l = length(widths)
       )
       
       # Insert spacer.
@@ -1143,10 +1151,9 @@ theme_familiar <- function(
         names(spacer_position) <- c("t", "b", "l", "r")
         
         g_combine <- .gtable_insert_spacer(
-          g,
+          g_combine,
           position = spacer_position,
-          height = spacer,
-          make_space = TRUE
+          height = spacer
         )
         
       } else if (!is.null(spacer) && stack_direction == "horizontal") {
@@ -1154,10 +1161,9 @@ theme_familiar <- function(
         names(spacer_position) <- c("t", "b", "l", "r")
         
         g_combine <- .gtable_insert_spacer(
-          g,
+          g_combine,
           position = spacer_position,
-          width = spacer,
-          make_space = TRUE
+          width = spacer
         )
       }
       
