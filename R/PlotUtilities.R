@@ -1102,6 +1102,8 @@ theme_familiar <- function(
       widths <- lapply(g, .gtable_get_grob_aspect_size, aspect = "width")
       if (!is.null(spacer) && stack_direction == "horizontal") {
         widths <- append(widths, 0L, after = 1L)
+        # Direct insertion of spacer with append results in spacer losing its
+        # simpleUnit class.
         widths[[2L]] <- spacer
       }
       widths <- do.call(grid::unit.c, widths)
@@ -1109,6 +1111,8 @@ theme_familiar <- function(
       heights <- lapply(g, .gtable_get_grob_aspect_size, aspect = "height")
       if (!is.null(spacer) && stack_direction == "vertical") {
        heights <- append(heights, 0L, after = 1L)
+       # Direct insertion of spacer with append results in spacer losing its
+       # simpleUnit class.
        heights[[2L]] <- spacer
       }
       heights <- do.call(grid::unit.c, heights)
