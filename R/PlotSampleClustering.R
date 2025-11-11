@@ -1514,11 +1514,11 @@ setMethod(
       )
       
       where_axis_element <- switch(
-        show_sample_dendrogram,
-        "top" = c("intersect", "above", "axis-l-main", "left", panel_element_name),
-        "bottom" = c("intersect", "below", "axis-l-main", "left", panel_element_name),
-        "left" = c("intersect", "below", panel_element_name, "left", "axis-b-main"),
-        "right" = c("intersect", "below", panel_element_name, "right", "axis-b-main")
+        show_outcome,
+        "top" = c("intersect", "above", "axis-l-main", "left", "panel-outcome"),
+        "bottom" = c("intersect", "below", "axis-l-main", "left", "panel-outcome"),
+        "left" = c("intersect", "below", "panel-outcome", "left", "axis-b-main"),
+        "right" = c("intersect", "below", "panel-outcome", "right", "axis-b-main")
       )
       
       # Insert the axis element at the intersect of panel-outcome and the
