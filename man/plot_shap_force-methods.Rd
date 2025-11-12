@@ -382,11 +382,11 @@ obtained from the data stored in a familiarCollection object.
 This function plots model performance based on empirical bootstraps,
 using various plot representations.
 
-Available splitting variables are: \code{vimp_method}, \code{learner},
+Available splitting variables are: \code{vimp_method}, \code{learner}, \code{data_set},
 \code{evaluation_time} (survival outcome only) and \code{positive_class} (categorical
 outcomes). The default for is to facet by \code{evaluation_time} or
-\code{positive_class}, and split by \code{vimp_method} and \code{learner}. \code{color_by} is
-not used.
+\code{positive_class}, and split by \code{vimp_method}, \code{learner} and \code{data_set}.
+\code{color_by} is not used.
 
 Labelling methods such as \code{set_vimp_method_names} or \code{set_learner_names}
 can be applied to the \code{familiarCollection} object to update labels, and

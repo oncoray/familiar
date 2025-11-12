@@ -750,8 +750,7 @@ setMethod(
       ),
       shap_data = collect(
         x = object,
-        data_slot = "shap_data",
-        identifiers = c("vimp_method", "learner")
+        data_slot = "shap_data"
       ),
       project_id = object[[1L]]@project_id
     )

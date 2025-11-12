@@ -41,11 +41,11 @@ NULL
 #' @details This function plots model performance based on empirical bootstraps,
 #'   using various plot representations.
 #'
-#'   Available splitting variables are: `vimp_method`, `learner`,
+#'   Available splitting variables are: `vimp_method`, `learner`, `data_set`,
 #'   `evaluation_time` (survival outcome only) and `positive_class` (categorical
 #'   outcomes). The default for is to facet by `evaluation_time` or
-#'   `positive_class`, and split by `vimp_method` and `learner`. `color_by` is
-#'   not used.
+#'   `positive_class`, and split by `vimp_method`, `learner` and `data_set`.
+#'   `color_by` is not used.
 #'
 #'   Labelling methods such as `set_vimp_method_names` or `set_learner_names`
 #'   can be applied to the `familiarCollection` object to update labels, and
@@ -277,11 +277,11 @@ setMethod(
       is.null(facet_by)
     ) {
       # Split by vimp_method, learner.
-      split_by <- c("vimp_method", "learner")
+      split_by <- c("vimp_method", "learner", "data_set")
       facet_by <- additional_variable
     }
     
-    all_variables <- c("vimp_method", "learner", additional_variable)
+    all_variables <- c("vimp_method", "learner", "data_set", additional_variable)
     
     # Check splitting variables and generate sanitised output
     split_var_list <- .check_plot_splitting_variables(
