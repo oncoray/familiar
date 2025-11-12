@@ -340,11 +340,11 @@ obtained from the data stored in a familiarCollection object.
 This function creates SHAP waterfall plots, which show the
 individual marginal contributions of feature values to the predicted value.
 
-Available splitting variables are: \code{vimp_method}, \code{learner},
+Available splitting variables are: \code{vimp_method}, \code{learner}, \code{data_set},
 \code{evaluation_time} (survival outcome only) and \code{positive_class} (categorical
 outcomes), \code{sample_id}. The default for is to facet by \code{evaluation_time} or
 \code{positive_class}, and split by \code{vimp_method},
-\code{learner} and \code{sample_id}. \code{color_by} is not used.
+\code{learner}, \code{data_set}, and \code{sample_id}. \code{color_by} is not used.
 
 Labelling methods such as \code{set_vimp_method_names} or \code{set_learner_names}
 can be applied to the \code{familiarCollection} object to update labels, and

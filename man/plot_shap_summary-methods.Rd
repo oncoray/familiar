@@ -393,13 +393,13 @@ obtained from the data stored in a familiarCollection object.
 This function creates SHAP summary plots, which provide an overview
 of marginal contributions of feature values to the predicted values.
 
-Available splitting variables are: \code{vimp_method}, \code{learner},
+Available splitting variables are: \code{vimp_method}, \code{learner}, \code{data_set},
 \code{evaluation_time} (survival outcome only) and \code{positive_class} (categorical
 outcomes). The default for \code{value_representation = "raw"} is to facet by
 \code{evaluation_time} or \code{positive_class}, and split by \code{vimp_method} and
 \code{learner}. \code{color_by} is not used. The default for other
 \code{value_representation} is to \code{color_by} \code{evaluation_time} or
-\code{positive_class}, and split by \code{vimp_method} and \code{learner}.
+\code{positive_class}, and split by \code{vimp_method}, \code{learner} and \code{data_set}.
 
 Labelling methods such as \code{set_vimp_method_names} or \code{set_learner_names}
 can be applied to the \code{familiarCollection} object to update labels, and

@@ -34,11 +34,11 @@ NULL
 #' @details This function creates SHAP waterfall plots, which show the
 #'   individual marginal contributions of feature values to the predicted value.
 #'
-#'   Available splitting variables are: `vimp_method`, `learner`,
+#'   Available splitting variables are: `vimp_method`, `learner`, `data_set`,
 #'   `evaluation_time` (survival outcome only) and `positive_class` (categorical
 #'   outcomes), `sample_id`. The default for is to facet by `evaluation_time` or 
 #'   `positive_class`, and split by `vimp_method`,
-#'   `learner` and `sample_id`. `color_by` is not used.
+#'   `learner`, `data_set`, and `sample_id`. `color_by` is not used.
 #'
 #'   Labelling methods such as `set_vimp_method_names` or `set_learner_names`
 #'   can be applied to the `familiarCollection` object to update labels, and
@@ -254,11 +254,11 @@ setMethod(
       is.null(facet_by)
     ) {
       # Split by vimp_method, learner and sample id.
-      split_by <- c("vimp_method", "learner", "sample_id")
+      split_by <- c("vimp_method", "learner", "data_set", "sample_id")
       facet_by <- additional_variable
     }
     
-    all_variables <- c("vimp_method", "learner", "sample_id", additional_variable)
+    all_variables <- c("vimp_method", "learner", "data_set", "sample_id", additional_variable)
     
     # Check splitting variables and generate sanitised output
     split_var_list <- .check_plot_splitting_variables(
