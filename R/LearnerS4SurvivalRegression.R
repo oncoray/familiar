@@ -344,7 +344,7 @@ setMethod(
           failure_table <- merge(
             x = failure_table, 
             y = conversion_table, 
-            on = "quantile_variable"
+            by = "quantile_variable"
           )
 
           # Drop the time_variable column
