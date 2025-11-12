@@ -59,7 +59,7 @@ test_create_good_data <- function(
   } else if (outcome_type == "survival") {
     # Simulate event times using exponential function and lambda = 0.5
     outcome_time <- - log(fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)) / 
-      (0.5 * exp(outcome_raw - mean(outcome_raw)))
+      (0.5 * exp(3.0 * (outcome_raw - mean(outcome_raw))))
     
     # Simulate censoring times using exponential function and lambda = 0.1
     censor_time <- - log(fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)) / 0.1
