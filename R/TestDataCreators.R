@@ -57,17 +57,15 @@ test_create_good_data <- function(
     outcome_value <- outcome_raw
     
   } else if (outcome_type == "survival") {
-    # Outcome follows an exponential distribution.
-    outcome_time <- exp(outcome_raw)
+    # Simulate event times using exponential function and lambda = 0.5
+    outcome_time <- - log(fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)) / 
+      (0.5 * exp(outcome_raw - mean(outcome_raw)))
+    
+    # Simulate censoring times using exponential function and lambda = 0.1
+    censor_time <- - log(fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)) / 0.1
     outcome_event <- rep_len(1L, length.out = n_series_instances)
-
-    # Censor randomly.
-    outcome_event[fam_sample(
-      seq_len(n_series_instances),
-      size = ceiling(0.4 * n_series_instances),
-      replace = FALSE,
-      rstream_object = r
-    )] <- 0L
+    outcome_event[censor_time < outcome_time] <- 0L
+    outcome_time[outcome_event == 0L] <- censor_time[outcome_event == 0L]
     
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
