@@ -351,7 +351,7 @@ as_prediction_table <- function(
       .check_number_in_valid_range,
       var_name = "time",
       range = c(0.0, Inf),
-      closed = c(FALSE, TRUE)
+      closed = c(TRUE, FALSE)
     )
     
     object <- add_data_element_identifier(
