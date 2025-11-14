@@ -262,6 +262,7 @@ setMethod(
     param$sign_size <- list()
     param$sample_weighting <- list()
     param$sample_weighting_beta <- list()
+    param$split_rule <- list()
 
     # The following hyperparameters are only used for feature selection.
     param$fs_forest_type <- list()
@@ -291,6 +292,30 @@ setMethod(
       outcome_type = object@outcome_type
     )
 
+    # splitting rule -----------------------------------------------------------
+    
+    # Availability of splitting rules is dependent on the type of outcome.
+    if (object@outcome_type %in% c("binomial", "multinomial")) {
+      split_rule_range <- c("gini", "extratrees", "hellinger")
+      split_rule_default <- "gini"
+    } else if (object@outcome_type %in% c("continuous")) {
+      split_rule_range <- c("variance", "extratrees", "maxstat", "beta")
+      split_rule_default <- "maxstat"
+    } else if (object@outcome_type == "survival") {
+      split_rule_range <- c("logrank", "extratrees", "C", "maxstat")
+      split_rule_default <- "maxstat"
+    } else {
+      ..error_no_known_outcome_type(object@outcome_type)
+    }
+    
+    # Set the split_rule parameter.
+    param$split_rule <- .set_hyperparameter(
+      default = split_rule_default,
+      type = "factor",
+      range = split_rule_range,
+      randomise = FALSE
+    )
+    
     # feature selection forest type --------------------------------------------
     # Enables the construction of holdout forests. A conventional forest is
     # grown by default.
@@ -411,7 +436,8 @@ setMethod(
       "data" = data@data,
       "probability" = fit_probability,
       "num.threads" = 1L,
-      "verbose" = FALSE
+      "verbose" = FALSE,
+      "splitrule" = as.character(param$split_rule)
     )
 
     if (!is(object, "familiarRangerDefault")) {
@@ -423,8 +449,7 @@ setMethod(
           "mtry" = max(c(1.0, ceiling(param$m_try * length(feature_columns)))),
           "min.node.size" = param$node_size,
           "max.depth" = param$tree_depth,
-          "alpha" = param$alpha,
-          "splitrule" = as.character(param$split_rule)
+          "alpha" = param$alpha
         )
       )
     }
@@ -631,7 +656,7 @@ setMethod(
           
         } else if (type == "survival_probability") {
           # Survival probability.
-
+          
           # Get the survival probability at the given time point.
           prediction_table <- .random_forest_survival_predictions(
             object = object,

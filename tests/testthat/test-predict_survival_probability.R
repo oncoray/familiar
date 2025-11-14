@@ -181,6 +181,6 @@ testthat::test_that(
     # since feature = 0 means a relative risk of approximately 0. However,
     # the RF model does not rely on the observed survival curve, and thus
     # will deviate from the Kaplan-Meier curve somewhat.
-    testthat::expect_true(all(abs(km_fit_prob - rf_predictions) < 0.10))
+    testthat::expect_true(all(abs(km_fit_prob - rf_predictions) < 0.15))
   }
 )
