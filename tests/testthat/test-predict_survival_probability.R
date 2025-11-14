@@ -1,7 +1,7 @@
 # Don't perform any further tests on CRAN due to time of running the complete
 # test.
 testthat::skip_on_cran()
-if (!rlang::is_installed("survival")) testthat::skip()
+testthat::skip_on_ci()
 
 results_fun <- function(t, x, model) {
   predictions <- familiar::predict(
