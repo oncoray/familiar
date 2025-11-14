@@ -86,7 +86,7 @@ cox_model <- familiar:::test_train(
   learner = "cox"
 )
 
-# Random forest model
+# Random forest model (ranger)
 rf_model <- familiar:::test_train(
   data = data,
   cluster_method = "none",
@@ -166,7 +166,7 @@ testthat::test_that(
 )
 
 
-# RF model
+# RF model (ranger)
 rf_predictions <- sapply(
   time_points,
   results_fun,
@@ -175,7 +175,7 @@ rf_predictions <- sapply(
 )
 
 testthat::test_that(
-  "Random forest-based predictions are plausible.",
+  "Random forest (ranger)-based predictions are plausible.",
   {
     # For the current data, predictions should be very close to the KM-curve, 
     # since feature = 0 means a relative risk of approximately 0. However,
