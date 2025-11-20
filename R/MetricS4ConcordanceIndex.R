@@ -184,69 +184,15 @@ setMethod(
     weight_function = NULL,
     ...
 ) {
-  # Based on Pencina et al. 2004; doi:10.1002/sim.1802
-
-  # Suppress NOTES due to non-standard evaluation in data.table
-  id.x <- id.y <- event.x <- event.y <- time.x <- time.y <- pred.x <- pred.y <- NULL
-
-  # Generate a combinatorial data set
-  dt <- data.table::data.table(
-    "id_join" = 1L,
-    "id" = seq_along(x), 
-    "pred" = x, 
-    "time" = time, 
-    "event" = event
-  )
+  # Compute using concordance in the survival package.
+  ci <- survival::concordance(
+    Surv(time, event) ~ x,
+    data = list("x" = x, "time" = time, "event" = event)
+  )$concordance
   
-  dt <- merge(
-    x = dt,
-    y = dt,
-    by = "id_join",
-    allow.cartesian = TRUE
-  )
-  
-  dt <- dt[id.x < id.y, ]
-  dt[, ":="(
-    "id_join" = NULL,
-    "id.x" = NULL,
-    "id.y" = NULL
-  )]
-
-  # Get only useful pairs (event-event with non-tied times; event-non-event with
-  # non-event surviving past event)
-  dt <- dt[
-    (event.x == 1L & event.y == 1L & time.x != time.y) |
-    (event.x == 1L & time.x < time.y) |
-    (event.y == 1L & time.y < time.x)
-    , 
-  ]
-
-  if (is.function(weight_function)) {
-    dt[, "weight" := weight_function(
-      time.x = time.x,
-      time.y = time.y,
-      event.x = event.x,
-      event.y = event.y,
-      ...
-    )]
-    
-  } else {
-    dt[, "weight" := 1.0]
-  }
-
-  # Calculate concordance index using Noethers method.
-  n_concord <- sum(dt[(pred.x > pred.y & time.x > time.y) |
-                        (pred.x < pred.y & time.x < time.y)]$weight)
-  n_discord <- sum(dt[(pred.x > pred.y & time.x < time.y) |
-                        (pred.x < pred.y & time.x > time.y)]$weight)
-  n_ties <- sum(dt[pred.x == pred.y]$weight)
-
-  # Calculate concordance index
-  ci <- (n_concord + 0.5 * n_ties) / (n_concord + n_discord + n_ties)
-
   # Check if the concordance index is valid
   if (!is.finite(ci)) ci <- NA_real_
-
+  
   return(ci)
 }
 
