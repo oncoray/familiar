@@ -92,9 +92,9 @@
 - Palettes from the `paletteer` package can now be used to customise plots.
 
 - The default palette was updated to use more vivid colours, particularly for
-divergent and sequential palettes. The central part of the divergent palette,
-and the starting grey for sequential palettes, are now darker for better
-contrast with a white background.
+  divergent and sequential palettes. The central part of the divergent palette,
+  and the starting grey for sequential palettes, are now darker for better
+  contrast with a white background.
 
 - Plausibility of datasets is now checked more thoroughly to detect common 
   issues:
@@ -116,8 +116,11 @@ contrast with a white background.
   lead to too few samples to allow for assessment. This affected 
   Leave-One-Out-Cross-Validation (LOOCV) schemes in particular.
 
-- Added support for `ggplot2` version 3.5. Due to changes in how legends are 
-  handled, the minimum `ggplot2` version is now `3.5.0`.
+- Added support for `ggplot2` version 4.0. Due to changes in how legends are 
+  handled, the minimum `ggplot2` version is now `4.0.0`.
+
+- Concordance index metrics for survival endpoints are now computed using 
+  `survival::concordance` for improved performance.
 
 ## Fixes
 
