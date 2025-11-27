@@ -300,7 +300,7 @@ accelerated (BCa) method is not implemented yet.}
 \item{shap_tolerance}{(\emph{optional}) Relative tolerance for convergence of SHAP
 values. The tolerance is scaled with the range in SHAP values.
 
-The default value is \code{0.005}.}
+The default value is \code{0.01}.}
 
 \item{shap_max_iterations}{(\emph{optional}) Maximum iterations for convergence of
 SHAP values.

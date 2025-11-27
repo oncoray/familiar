@@ -188,7 +188,7 @@
       <evaluation_elements></evaluation_elements>
       <!-- Evaluation steps that should be skipped (optional, default: none) -->
       <skip_evaluation_elements></skip_evaluation_elements>
-      <!-- Tolerance for convergence of SHAP values (optional, default: 0.005) -->
+      <!-- Tolerance for convergence of SHAP values (optional, default: 0.01) -->
       <shap_tolerance></shap_tolerance>
       <!-- Maximum of iterations for convergence of SHAP values (optional, default: 1000) -->
       <shap_max_iterations></shap_max_iterations>
