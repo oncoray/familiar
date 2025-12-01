@@ -121,6 +121,8 @@
 
 - Concordance index metrics for survival endpoints are now computed using 
   `survival::concordance` for improved performance.
+  
+- `show` for familiar models now shows an (aggregated) variable importance table.
 
 ## Fixes
 

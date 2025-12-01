@@ -270,6 +270,16 @@ setMethod(
       "\nVariable importance was determined using the ",
       object@vimp_method, " variable importance method.\n"
     ))
+    vimp_data <- aggregate_vimp_table(
+      object@vimp_table,
+      aggregation_method = object@vimp_aggregation_method,
+      rank_threshold = object@vimp_rank_threshold
+    )
+    if (!is.null(vimp_data)) {
+      cat(show(get_vimp_table(vimp_data)[order(rank)]))
+      cat("\n")
+    }
+    rm(vimp_data)
     
     # Details concerning model features:
     cat("\nThe following features were used in the model:\n")
