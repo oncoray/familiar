@@ -18,6 +18,12 @@ setClass(
   prototype = methods::prototype(multivariate = TRUE)
 )
 
+setClass(
+  "familiarMultivariateInfoVimpTestSingle",
+  contains = "familiarMultivariateMutualInfoVimp"
+)
+
+
 # initialize -------------------------------------------------------------------
 setMethod(
   "initialize",
@@ -41,6 +47,10 @@ setMethod(
 
 .get_available_multivariate_mutual_information_vimp_method <- function(show_general = TRUE) {
   return(c("mifs", "mrmr"))
+}
+
+.get_available_multivariate_mutual_information_test_vimp_method <- function(show_general = TRUE) {
+  return(c("familiarMultivariateInfoVimpTestSingle"))
 }
 
 
@@ -332,6 +342,47 @@ setMethod(
       ),
       score_aggregation = "max",
       invert = FALSE
+    )
+    
+    return(vimp_object)
+  }
+)
+
+
+
+# ..vimp (multivariate test) ---------------------------------------------------
+setMethod(
+  "..vimp", 
+  signature(object = "familiarMultivariateInfoVimpTestSingle"),
+  function(object, data, ...) {
+    # Suppress NOTES due to non-standard evaluation in data.table
+    score <- NULL
+    
+    # Return the single most important feature.
+    if (is_empty(data)) return(callNextMethod())
+    
+    # Identify feature columns.
+    feature_columns <- get_feature_columns(data)
+    
+    # Calculate mutual information
+    mutual_information <- .compute_mutual_information(
+      data = data, 
+      features = feature_columns
+    )
+    
+    # Set vimp_table, and select only the best feature.
+    vimp_table <- data.table::data.table(
+      "score" = mutual_information,
+      "name" = feature_columns
+    )
+    vimp_table <- vimp_table[score == max(score)]
+    
+    # Create variable importance object.
+    vimp_object <- methods::new(
+      "vimpTable",
+      vimp_table = vimp_table,
+      score_aggregation = "max",
+      invert = TRUE
     )
     
     return(vimp_object)

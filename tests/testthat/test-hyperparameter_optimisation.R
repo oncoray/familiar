@@ -67,6 +67,7 @@ familiar:::test_hyperparameter_optimisation(
     cluster_method = "none",
     cluster_similarity_metric = "mcfadden_r2",
     cluster_similarity_threshold = 0.90,
+    use_vimp = "use_hpo_vimp",
     ...
 ) {
   # Reconstitute settings from the data.
@@ -98,7 +99,8 @@ familiar:::test_hyperparameter_optimisation(
   task <- methods::new(
     "familiarTaskLearnerHyperparameters",
     vimp_method = vimp_method,
-    learner = learner
+    learner = learner,
+    use_vimp = use_vimp
   )
   
   # Optimise hyperparameters.
@@ -419,3 +421,17 @@ testthat::test_that("One to four features are assessed for clustered features.",
   testthat::expect_true(any(new_object@hyperparameter_data$parameter_table$sign_size == 1))
   testthat::expect_true(any(new_object@hyperparameter_data$parameter_table$sign_size == 4))
 })
+
+
+# Test that data with only one relevant feature are correctly handled ----------
+
+# Create data.
+data <- familiar:::test_create_single_relevant_feature_data(outcome_type = "continuous")
+
+new_object <- ..generate_hyperparameters(
+  data = data,
+  vimp_method = "familiarMultivariateInfoVimpTestSingle",
+  learner = "glm_gaussian",
+  use_vimp = "return_hpo_vimp",
+  verbose = verbose
+)

@@ -20,6 +20,9 @@ setMethod(
     } else if (method %in% .get_available_multivariate_mutual_information_vimp_method()) {
       # Multivariate information methods.
       object <- methods::new("familiarMultivariateMutualInfoVimp", object)
+    } else if (method %in% .get_available_multivariate_mutual_information_test_vimp_method()) {
+      # Multivariate test method returning single features.
+      object <- methods::new("familiarMultivariateInfoVimpTestSingle", object)
     } else if (method %in% .get_available_correlation_vimp_methods()) {
       # Correlation-based methods.
       object <- methods::new("familiarCorrelationVimp", object)

@@ -2,7 +2,8 @@ test_create_good_data <- function(
     outcome_type,
     to_data_object = TRUE,
     seed = 1844L,
-    rstream_object = NULL
+    rstream_object = NULL,
+    one_relevant_feature = FALSE
 ) {
   
   # Create random stream object so that the same numbers are produced every
@@ -24,7 +25,14 @@ test_create_good_data <- function(
   feature_4 <- fam_runif(n = n_series_instances, min = 0.0, max = 1.0, rstream_object = r)
   
   # Determine the raw outcome.
-  outcome_raw <- feature_1 + 0.1 * feature_2a + 0.3 * feature_3a + 0.1 * feature_4
+  if (one_relevant_feature) {
+    # Only one feature is relevant.
+    outcome_raw <- feature_1
+  } else {
+    # More than one feature is relevant (default).
+    outcome_raw <- feature_1 + 0.1 * feature_2a + 0.3 * feature_3a + 0.1 * feature_4
+  }
+  
   
   if (outcome_type == "binomial") {
     # Because outcome_raw is strongly correlated with feature 1, this may lead to
@@ -283,6 +291,21 @@ test_create_good_data_random_missing <- function(
 
   return(data)
 }
+
+
+
+test_create_single_relevant_feature_data <- function(outcome_type) {
+  # Multiple features, but only one relevant.
+  
+  # Create dataset.
+  data <- test_create_good_data(
+    outcome_type = outcome_type,
+    one_relevant_feature = TRUE
+  )
+  
+  return(data)
+}
+
 
 
 test_create_empty_data <- function(outcome_type) {
