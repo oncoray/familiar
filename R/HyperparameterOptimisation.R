@@ -693,7 +693,10 @@ setMethod(
         verbose = verbose
       )
       
-      return(object)
+      # Only exit if variable importance is not required.
+      if (!is_empty(object@vimp_table)) {
+        return(object)
+      }
     }
     
     ## Create bootstrap samples ------------------------------------------------
@@ -749,6 +752,15 @@ setMethod(
       verbose = verbose,
       message_indent = message_indent
     )
+    
+    # Attach variable importance tables.
+    object@vimp_table <- vimp_table_list
+    
+    # Break if there is nothing to optimise, This continues the earlier check,
+    # but after setting the variable importance table.
+    if (!.any_randomised_hyperparameters(parameter_list = parameter_list)) {
+      return(object)
+    }
     
     ## Set signature size ------------------------------------------------------
     
@@ -1404,9 +1416,6 @@ setMethod(
       "n_samples" = get_n_samples(data),
       "n_features" = get_n_features(data)
     )
-    
-    # Attach variable importance tables.
-    object@vimp_table <- vimp_table_list
     
     return(object)
   }
