@@ -435,3 +435,19 @@ new_object <- ..generate_hyperparameters(
   use_vimp = "return_hpo_vimp",
   verbose = verbose
 )
+
+testthat::test_that("Variable importance information is returned.", {
+  testthat::expect_false(familiar:::is_empty(new_object@vimp_table))
+})
+
+new_object <- ..generate_hyperparameters(
+  data = data,
+  vimp_method = "familiarMultivariateInfoVimpTestSingle",
+  learner = "glm_gaussian",
+  use_vimp = "use_hpo_vimp",
+  verbose = verbose
+)
+
+testthat::test_that("Variable importance information is not returned.", {
+  testthat::expect_true(familiar:::is_empty(new_object@vimp_table))
+})
