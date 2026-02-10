@@ -8,16 +8,10 @@ setClass(
   contains = "familiarModel",
   slots = list(
     "encoding_reference_table" = "ANY",
-    "outcome_table" = "ANY",
-    "outcome_shift" = "numeric",
-    "outcome_scale" = "numeric",
     "feature_order" = "character"
   ),
   prototype = list(
     "encoding_reference_table" = NULL,
-    "outcome_table" = NULL,
-    "outcome_shift" = 0.0,
-    "outcome_scale" = 1.0,
     "feature_order" = character()
   )
 )
@@ -449,61 +443,15 @@ setMethod(
     # Find outcome columns in data table.
     outcome_columns <- get_outcome_columns(x = object)
 
-    # Build a xgb data matrix
-    if (object@outcome_type %in% c("binomial", "multinomial")) {
-      # Convert categorical outcomes to numerical labels expected by
-      # xgboost.
-      class_levels <- get_outcome_class_levels(x = object)
-      class_num_labels <- as.numeric(seq_along(class_levels) - 1L)
-      class_conversion_table <- data.table::data.table(
-        "class_level" = factor(class_levels, levels = class_levels),
-        "num_label" = class_num_labels
-      )
-
-      # Convert categorical outcomes by adding numerical labels to the outcome
-      # data.
-      outcome_data <- data.table::copy(
-        encoded_data$encoded_data@data[, mget(outcome_columns)]
-      )
-      
-      for (ii in seq_along(class_levels)) {
-        outcome_data[
-          outcome == class_conversion_table$class_level[ii],
-          "outcome_label" := class_conversion_table$num_label[ii]
-        ]
-      }
-
-      # Save conversion table to model_list
-      object@outcome_table <- class_conversion_table
-
-      # Set outcome_labels
-      outcome_labels <- outcome_data$outcome_label
-      
-    } else if (object@outcome_type %in% c("continuous")) {
-      # Set outcome_labels
-      outcome_labels <- encoded_data$encoded_data@data[[outcome_columns[1L]]]
-
-      # # Determine normalisation parameters so that outcome can be # normalised
-      # to [0, 1] range (for logistic regression).
-      if (as.character(object@hyperparameters$learn_objective) == "continuous_logistic") {
-        object@outcome_shift <- min(outcome_labels)
-        object@outcome_scale <- max(outcome_labels) - min(outcome_labels)
-
-        # Normalise outcome labels.
-        outcome_labels <- (outcome_labels - object@outcome_shift) / object@outcome_scale
-      }
+    # Set y (response variable)
+    if (object@outcome_type %in% c("binomial", "multinomial", "continuous")) {
+      y <- encoded_data$encoded_data@data[[outcome_columns]]
       
     } else if (object@outcome_type == "survival") {
-      # According to the xgboost documentation, right censored survival time
-      # should be represented by negative values.
-      outcome_labels <- encoded_data$encoded_data@data[[outcome_columns[1L]]]
-
-      # Identify right-censored entries
-      right_censored <- encoded_data$encoded_data@data[[outcome_columns[2L]]] == 0L
-
-      # Parse right-censored entries in outcome_labels to the correct
-      # representation.
-      outcome_labels[right_censored] <- outcome_labels[right_censored] * -1.0
+      y <- survival::Surv(
+        encoded_data$encoded_data@data[[outcome_columns[1L]]],
+        encoded_data$encoded_data@data[[outcome_columns[2L]]]
+      )
     }
 
     # Set weights.
@@ -516,15 +464,8 @@ setMethod(
       normalisation = "average_one"
     )
 
-    # Create a data_matrix object
-    data_matrix <- xgboost::xgb.DMatrix(
-      data = as.matrix(encoded_data$encoded_data@data[, mget(feature_columns)]),
-      label = outcome_labels
-    )
-
-    # Set the number of classes for the multi:softmax objective
-    n_classes <- 1L
-    if (object@outcome_type == "multinomial") n_classes <- length(class_levels)
+    # Create data object
+    x <- encoded_data$encoded_data@data[, mget(feature_columns)]
 
     # Identify the booster to use.
     if (is(object, "familiarXGBoostLM")) {
@@ -542,19 +483,17 @@ setMethod(
 
     # Select shared arguments.
     learner_arguments <- list(
-      "params" = list(
-        "booster" = booster,
-        "nthread" = 1L,
-        "eta" = 10.0^object@hyperparameters$learning_rate,
-        "lambda" = 10.0^object@hyperparameters$lambda - 10.0^-6.0,
-        "alpha" = 10.0^object@hyperparameters$alpha - 10.0^-6.0,
-        "objective" = ..get_distribution_family(object),
-        "num_class" = n_classes
-      ),
-      "data" = data_matrix,
+      "booster" = booster,
+      "nthreads" = 1L,
+      "learning_rate" = 10.0^object@hyperparameters$learning_rate,
+      "reg_lambda" = 10.0^object@hyperparameters$lambda - 10.0^-6.0,
+      "reg_alpha" = 10.0^object@hyperparameters$alpha - 10.0^-6.0,
+      "objective" = ..get_distribution_family(object),
+      "x" = x,
+      "y" = y,
       "weight" = weights,
       "nrounds" = round(10.0^object@hyperparameters$n_boost),
-      "verbose" = 0L
+      "verbosity" = 0L
     )
 
     if (is(object, "familiarXGBoostTree") || is(object, "familiarXGBoostDart")) {
@@ -564,7 +503,7 @@ setMethod(
           "max_depth" = object@hyperparameters$tree_depth,
           "subsample" = object@hyperparameters$sample_size,
           "min_child_weight" = 10.0^object@hyperparameters$min_child_weight - 1.0,
-          "gamma" = 10.0^object@hyperparameters$gamma - 10.0^-6.0
+          "min_split_loss" = 10.0^object@hyperparameters$gamma - 10.0^-6.0
         )
       )
     }
@@ -678,39 +617,14 @@ setMethod(
     if (type == "default") {
       # default ----------------------------------------------------------------
 
-      # Make predictions. If the booster object is DART type, predict() will
-      # perform dropouts, i.e. only some of the trees will be evaluated. This
-      # will produce incorrect results if data is not the training data. To
-      # obtain correct results on test sets, set ntree_limit to a nonzero value,
-      # e.g. preds = bst.predict(dtest, ntree_limit=num_round) [from the
-      # documentation].
-      #
-      # Also note that for cox regression, the predictions are recalibrated
-      # based on the linear predictor / marginal prediction.
-      if (utils::packageVersion("xgboost") < "1.4.0") {
-        model_predictions <- predict(
-          object = object@model,
-          newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-          outputmargin = object@outcome_type == "survival",
-          ntreelimit = round(10.0^object@hyperparameters$n_boost),
-          reshape = TRUE
-        )
-        
-      } else {
-        # From version 1.4 onward, ntreelimit was deprecated, and
-        # replaced by iterationrange.
-        model_predictions <- predict(
-          object = object@model,
-          newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
-          outputmargin = object@outcome_type == "survival",
-          iterationrange = c(1L, round(10.0^object@hyperparameters$n_boost)),
-          reshape = TRUE
-        )
-      }
-
+      model_predictions <- predict(
+        object = object@model,
+        newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)])
+      )
+      
       if (object@outcome_type == "binomial") {
         # binomial outcomes ----------------------------------------------------
-
+        
         # Obtain class levels.
         class_levels <- get_outcome_class_levels(x = object)
 
@@ -729,7 +643,7 @@ setMethod(
         
       } else if (object@outcome_type == "multinomial") {
         # multinomial outcomes -------------------------------------------------
-
+        
         # Obtain class levels.
         class_levels <- get_outcome_class_levels(x = object)
 
@@ -755,7 +669,7 @@ setMethod(
         # Numerical outcomes ---------------------------------------------------
 
         # Map predictions back to original scale.
-        model_predictions <- model_predictions * object@outcome_scale + object@outcome_shift
+        model_predictions <- model_predictions
 
         # Store as prediction table.
         prediction_table <- as_prediction_table(
@@ -767,7 +681,7 @@ setMethod(
         
       } else if (object@outcome_type %in% c("survival")) {
         # Survival outcomes ----------------------------------------------------
-
+        
         # Store as prediction table. Note that the raw prediction output needs
         # to be recalibrated.
         prediction_table <- as_prediction_table(
@@ -805,7 +719,7 @@ setMethod(
       # Note that xgboost:::predict.xgb.Booster does not have a type argument.
       return(predict(
         object = object@model,
-        newdata = as.matrix(encoded_data$encoded_data@data[, mget(object@feature_order)]),
+        newdata = encoded_data$encoded_data@data[, mget(object@feature_order)],
         ...
       ))
       
