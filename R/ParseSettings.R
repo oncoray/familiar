@@ -3602,7 +3602,7 @@
 #' @param shap_tolerance (*optional*) Relative tolerance for convergence of SHAP
 #'   values. The tolerance is scaled with the range in SHAP values.
 #'   
-#'   The default value is `0.01`.
+#'   The default value is `0.05`.
 #'   
 #' @param shap_max_iterations (*optional*) Maximum iterations for convergence of
 #'   SHAP values.
@@ -4280,7 +4280,7 @@
     var_name = "shap_tolerance",
     type = "numeric",
     optional = TRUE,
-    default = 0.01
+    default = 0.05
   )
   
   .check_number_in_valid_range(
