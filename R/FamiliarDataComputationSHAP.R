@@ -73,9 +73,11 @@ setClass(
 #'  values of a feature within that dataset is too low, additional values are
 #'  drawn from the feature distribution (stored with the model).
 #'@param shap_tolerance Relative tolerance for convergence of SHAP values. The
-#'  tolerance is scaled with the range in SHAP values. Default: 0.005.
+#'  tolerance is scaled with the range in SHAP values. Default: 0.05.
 #'@param shap_max_iterations Maximum iterations for convergence of SHAP values.
 #'  Default: 1000
+#'@param shap_phi_0 Reference predicted value(s). Determined from data by
+#'  default.
 #'
 #'@inheritParams .extract_data
 #'
@@ -92,6 +94,7 @@ setGeneric(
     n_sample_points = 20L,
     shap_tolerance = waiver(),
     shap_max_iterations = waiver(),
+    shap_phi_0 = waiver(),
     ensemble_method = waiver(),
     evaluation_times = waiver(),
     sample_limit = waiver(),
@@ -120,6 +123,7 @@ setMethod(
     n_sample_points = 20L,
     shap_tolerance = waiver(),
     shap_max_iterations = waiver(),
+    shap_phi_0 = NULL,
     ensemble_method = waiver(),
     evaluation_times = waiver(),
     sample_limit = waiver(),
@@ -203,6 +207,44 @@ setMethod(
       closed = c(TRUE, TRUE)
     )
     
+    # Check shap_phi_0.
+    if (is.waive(shap_phi_0)) shap_phi_0 <- object@settings$shap_phi_0
+    
+    if (!is.null(shap_phi_0)) {
+      if (object@outcome_type == "survival") {
+        .check_argument_length(
+          x = shap_phi_0,
+          var_name = "shap_phi_0",
+          min = length(evaluation_times),
+          max = length(evaluation_times)
+        )
+        
+        .check_is_numeric(
+          x = shap_phi_0,
+          var_name = "shap_phi_0"
+        )
+        
+      } else if (object@outcome_type == "multinomial") {
+        .check_argument_length(
+          x = shap_phi_0,
+          var_name = "shap_phi_0",
+          min = length(get_outcome_class_levels(object)),
+          max = length(get_outcome_class_levels(object))
+        )
+        
+        .check_is_numeric(
+          x = shap_phi_0,
+          var_name = "shap_phi_0"
+        )
+        
+      } else {
+        .check_is_numeric(
+          x = shap_phi_0,
+          var_name = "shap_phi_0"
+        )
+      }
+    }
+    
     # Obtain ensemble method from stored settings, if required.
     if (is.waive(ensemble_method)) ensemble_method <- object@settings$ensemble_method
     
@@ -277,6 +319,7 @@ setMethod(
       n_sample_points = n_sample_points,
       tolerance = shap_tolerance,
       n_max_iter = shap_max_iterations,
+      phi_0 = shap_phi_0,
       proto_data_element = proto_data_element,
       is_pre_processed = is_pre_processed,
       ensemble_method = ensemble_method,
@@ -316,6 +359,7 @@ setMethod(
     cl,
     tolerance = 0.005,
     n_max_iter = 1000L,
+    phi_0 = NULL,
     mapping_method = "fixed",
     sampling_method = "importance",
     message_indent = 0L,
@@ -404,7 +448,7 @@ setMethod(
   if (is_empty(predicted_values_input)) return(NULL)
   
   # Compute phi_0.
-  phi_0 <- colMeans(predicted_values_input)
+  if (is.null(phi_0)) phi_0 <- colMeans(predicted_values_input)
   
   if (length(feature_set) == 1L) {
     # Single feature (shapley) -------------------------------------------------

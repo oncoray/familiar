@@ -3609,6 +3609,12 @@
 #' 
 #'   The default value is `1000` iterations.
 #'
+#' @param shap_phi_0 (*optional*) Value(s) to use for computing marginal
+#'   contributions. By default, the average predicted value in the population is
+#'   used. For `multinomial` and `survival` outcomes, this parameter requires a
+#'   value for each class and evaluation time (`evaluation_times`),
+#'   respectively.
+#'
 #' @param feature_cluster_method (*optional*) Method used to perform clustering
 #'  of features. The same methods as for the `cluster_method` configuration
 #'  parameter are available: `none`, `hclust`, `agnes`, `diana` and `pam`.
@@ -3839,6 +3845,7 @@
     bootstrap_ci_method = waiver(),
     shap_tolerance = waiver(),
     shap_max_iterations = waiver(),
+    shap_phi_0 = waiver(),
     feature_cluster_method = waiver(),
     feature_cluster_cut_method = waiver(),
     feature_linkage_method = waiver(),
@@ -4117,7 +4124,8 @@
     x_config = config$estimation_type,
     x_var = estimation_type,
     var_name = "estimation_type",
-    type = "list", optional = TRUE,
+    type = "list",
+    optional = TRUE,
     default = list()
   )
 
@@ -4305,6 +4313,16 @@
     var_name = "shap_max_iterations",
     range = c(1L, Inf),
     closed = c(TRUE, TRUE)
+  )
+  
+  # SHAP reference value -------------------------------------------------------
+  settings$shap_phi_0 <- .parse_arg(
+    x_config = config$shap_phi_0,
+    x_var = shap_phi_0,
+    var_name = "shap_phi_0",
+    type = "numeric_list",
+    optional = TRUE,
+    default = NULL
   )
   
   # feature_cluster_method -----------------------------------------------------

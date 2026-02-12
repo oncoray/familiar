@@ -72,6 +72,25 @@
 
 
 
+.check_is_numeric <- function(
+    x,
+    var_name,
+    call = rlang::caller_env()
+) {
+  if (!is.numeric(x)) {
+    ..error_type_not_valid(
+      x = x,
+      var_name = var_name,
+      valid_type = "numeric",
+      call = call
+    )
+  }
+  
+  return(x)
+}
+
+
+
 .check_number_in_valid_range <- function(
     x,
     var_name,
