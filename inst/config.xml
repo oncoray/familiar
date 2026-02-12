@@ -192,6 +192,8 @@
       <shap_tolerance></shap_tolerance>
       <!-- Maximum of iterations for convergence of SHAP values (optional, default: 1000) -->
       <shap_max_iterations></shap_max_iterations>
+      <!-- Reference value for computing marginal contributions from (optional, default: dynamically computed from population) -->
+      <shap_phi_0></shap_phi_0>
       <!-- Method for clustering features (optional, default: same as cluster_method) -->
       <feature_cluster_method></feature_cluster_method>
       <!-- Linkage method for clustering features (optional, default: same as cluster_linkage_method) -->
