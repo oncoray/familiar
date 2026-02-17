@@ -1241,6 +1241,11 @@ The default value is \code{0.05}.}
 SHAP values.
 
 The default value is \code{1000} iterations.}
+    \item{\code{shap_phi_0}}{(\emph{optional}) Value(s) to use for computing marginal
+contributions. By default, the average predicted value in the population is
+used. For \code{multinomial} and \code{survival} outcomes, this parameter requires a
+value for each class and evaluation time (\code{evaluation_times}),
+respectively.}
     \item{\code{feature_cluster_method}}{(\emph{optional}) Method used to perform clustering
 of features. The same methods as for the \code{cluster_method} configuration
 parameter are available: \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.

@@ -12,6 +12,7 @@ extract_shap(
   n_sample_points = 20L,
   shap_tolerance = waiver(),
   shap_max_iterations = waiver(),
+  shap_phi_0 = waiver(),
   ensemble_method = waiver(),
   evaluation_times = waiver(),
   sample_limit = waiver(),
@@ -43,10 +44,13 @@ values of a feature within that dataset is too low, additional values are
 drawn from the feature distribution (stored with the model).}
 
 \item{shap_tolerance}{Relative tolerance for convergence of SHAP values. The
-tolerance is scaled with the range in SHAP values. Default: 0.005.}
+tolerance is scaled with the range in SHAP values. Default: 0.05.}
 
 \item{shap_max_iterations}{Maximum iterations for convergence of SHAP values.
 Default: 1000}
+
+\item{shap_phi_0}{Reference predicted value(s). Determined from data by
+default.}
 
 \item{ensemble_method}{Method for ensembling predictions from models for the
 same sample. Available methods are:

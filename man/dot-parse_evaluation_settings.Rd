@@ -31,6 +31,7 @@
   bootstrap_ci_method = waiver(),
   shap_tolerance = waiver(),
   shap_max_iterations = waiver(),
+  shap_phi_0 = waiver(),
   feature_cluster_method = waiver(),
   feature_cluster_cut_method = waiver(),
   feature_linkage_method = waiver(),
@@ -306,6 +307,12 @@ The default value is \code{0.05}.}
 SHAP values.
 
 The default value is \code{1000} iterations.}
+
+\item{shap_phi_0}{(\emph{optional}) Value(s) to use for computing marginal
+contributions. By default, the average predicted value in the population is
+used. For \code{multinomial} and \code{survival} outcomes, this parameter requires a
+value for each class and evaluation time (\code{evaluation_times}),
+respectively.}
 
 \item{feature_cluster_method}{(\emph{optional}) Method used to perform clustering
 of features. The same methods as for the \code{cluster_method} configuration
