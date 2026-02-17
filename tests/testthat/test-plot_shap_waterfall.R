@@ -33,3 +33,41 @@ familiar:::test_plots(
   test_config = "single instance",
   debug = debug_flag
 )
+
+# Test plotting for specific samples.
+for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
+  data <- familiar:::test_create_good_data(outcome_type = outcome_type)
+  
+  model <- familiar::train_familiar(
+    data = data,
+    learner = switch(
+      outcome_type,
+      "binomial" = "glm_logistic",
+      "multinomial" = "glm",
+      "continuous" = "glm_gaussian",
+      "survival" = "cox"
+    ),
+    vimp_method = "mim",
+    parallel = FALSE,
+    verbose = FALSE
+  )
+  
+  plot <- familiar::plot_shap_waterfall(
+    object = model,
+    data = data@data[1L, ],
+    shap_phi_0 = switch(
+      outcome_type,
+      "binomial" = 0.5,
+      "multinomial" = c(0.4, 0.3, 0.3),
+      "continuous" = 0.25,
+      "survival" = c(0.2, 0.1)
+    ),
+    evaluation_times = switch(
+      outcome_type,
+      "survival" = c(2.0, 3.0),
+      NULL
+    ),
+    verbose = FALSE,
+    draw = debug_flag
+  )
+}
