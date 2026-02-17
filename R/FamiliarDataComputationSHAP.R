@@ -18,7 +18,7 @@ setClass(
     detail_level = "ensemble",
     estimation_type = "point",
     value_column = "shap_value",
-    grouping_column = c("feature_name", "feature_value_mapping", "sample_id"),
+    grouping_column = c("feature_name", "feature_value_mapping", "sample_id", "phi_0"),
     sample_identifiers = NULL,
     data_mapping = NULL,
     predicted_values = NULL,
@@ -590,8 +590,28 @@ setMethod(
   # "feature_name" and "feature_value_mapping". For multinomial and survival
   # outcomes, "shap_outcome" is an additional grouping column.
   if (object@outcome_type %in% c("multinomial", "survival")) {
+    # Add phi_0
+    if (object@outcome_type == "survival") {
+      phi_0_data <- data.table::data.table(
+        "shap_outcome" = as.character(evaluation_times),
+        "phi_0" = phi_0
+      )
+        
+    } else if (object@outcome_type == "multinomial") {
+      phi_0_data <- data.table::data.table(
+        "shap_outcome" = get_outcome_class_levels(object),
+        "phi_0" = phi_0
+      )
+    }
+    
+    shap_values <- merge(
+      x = shap_values,
+      y = phi_0_data,
+      by = "shap_outcome"
+    )
+    
     proto_data_element@data <- data.table::copy(
-      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_outcome", "shap_value", "sample_id"))]
+      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_outcome", "shap_value", "phi_0", "sample_id"))]
     )
     
     # Add shap_outcome as additional grouping level.
@@ -607,8 +627,11 @@ setMethod(
     }
     
   } else {
+    # Add phi_0.
+    shap_values[, "phi_0" := phi_0]
+    
     proto_data_element@data <- data.table::copy(
-      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_value", "sample_id"))]
+      shap_values[, mget(c("feature_name", "feature_value_mapping", "shap_value", "phi_0", "sample_id"))]
     )
   }
   

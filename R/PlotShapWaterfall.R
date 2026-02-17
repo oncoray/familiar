@@ -460,9 +460,9 @@ setMethod(
   # Derive information for the average prediction and extract the instance
   # prediction.
   if (!is.null(facet_by)) {
-    f_average_data <- x[, list("prediction" = max(prediction) - sum(shap_value)), by = facet_by]
+    f_average_data <- x[, list("prediction" = max(phi_0)), by = facet_by]
   } else {
-    f_average_data <- x[, list("prediction" = max(prediction) - sum(shap_value))]
+    f_average_data <- x[, list("prediction" = max(phi_0))]
   }
   
   f_instance_data <- unique(x[, mget(c("prediction", facet_by))])
