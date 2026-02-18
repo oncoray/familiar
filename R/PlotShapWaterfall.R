@@ -430,7 +430,7 @@ setMethod(
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   shap_value <- vimp <- feature_value <- feature_name <- NULL
-  feature_label <- prediction <- y <- label_text <- NULL
+  feature_label <- prediction <- y <- label_text <- phi_0 <- NULL
   
   # Sort features by importance (mean absolute SHAP).
   feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = c(facet_by, "feature_name")]
