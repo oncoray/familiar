@@ -66,7 +66,7 @@ setMethod(
 
     if (
       outcome_type == "continuous" &&
-      learner %in% c("", "logistic", "gaussian", "gamma", "poisson")
+      learner %in% c("", "gaussian", "gamma", "poisson")
     ) {
       return(TRUE)
       
@@ -165,7 +165,7 @@ setMethod(
     if (fam == "") {
       # No specific objective is provided.
       if (outcome_type == "continuous") {
-        learn_objective_default <- c("gaussian", "continuous_logistic", "gamma")
+        learn_objective_default <- c("gaussian", "gamma")
         
       } else if (outcome_type == "binomial") {
         learn_objective_default <- "binomial_logistic"
@@ -185,9 +185,6 @@ setMethod(
         
       } else if (outcome_type == "multinomial") {
         learn_objective_default <- "multinomial_logistic"
-        
-      } else if (outcome_type == "continuous") {
-        learn_objective_default <- "continuous_logistic"
       }
       
     } else {
@@ -857,8 +854,6 @@ setMethod(
     # Load objective for extreme gradient boosting.
     if (objective == "gaussian") {
       boost_objective <- "reg:squarederror"
-    } else if (objective == "continuous_logistic") {
-      boost_objective <- "reg:logistic"
     } else if (objective == "multinomial_logistic") {
       boost_objective <- "multi:softprob"
     } else if (objective == "binomial_logistic") {
