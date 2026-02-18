@@ -76,6 +76,7 @@ setMethod(
     create_naive = FALSE,
     cl = NULL,
     trim_model = FALSE,
+    verbose = FALSE,
     ...
   ) {
     # The bypass data allows for bypassing important aspects of the
@@ -165,7 +166,8 @@ setMethod(
     feature_info <- .perform_task(
       object = feature_info_task,
       data = data_bypass,
-      settings = settings
+      settings = settings,
+      verbose = verbose
     )
     
     
@@ -197,7 +199,8 @@ setMethod(
       hyperparameters = param_list,
       novelty_detector = ifelse(create_novelty_detector, "isolation_forest", "none"),
       detector_parameters = NULL,
-      trim_model = trim_model
+      trim_model = trim_model,
+      verbose = verbose
     )
     
     return(object)
