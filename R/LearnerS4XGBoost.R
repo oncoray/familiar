@@ -497,8 +497,8 @@ setMethod(
     )
 
     if (is(object, "familiarXGBoostTree") || is(object, "familiarXGBoostDart")) {
-      learner_arguments$params <- c(
-        learner_arguments$params,
+      learner_arguments <- c(
+        learner_arguments,
         list(
           "max_depth" = object@hyperparameters$tree_depth,
           "subsample" = object@hyperparameters$sample_size,
@@ -509,8 +509,8 @@ setMethod(
     }
 
     if (is(object, "familiarXGBoostDart")) {
-      learner_arguments$params <- c(
-        learner_arguments$params,
+      learner_arguments <- c(
+        learner_arguments,
         list(
           "sample_type" = as.character(object@hyperparameters$sample_type),
           "rate_drop" = object@hyperparameters$rate_drop
