@@ -916,12 +916,9 @@ setMethod(
   function(object, ...) {
     # Set is_trimmed to TRUE.
     object@is_trimmed <- TRUE
-
+    
     # Prevent trimming of raw, serialised model information.
     if (inherits(object@model, "raw")) return(object)
-
-    # Update model by removing the call.
-    object@model$call <- call("trimmed")
 
     # Add show.
     object <- .capture_show(object)
