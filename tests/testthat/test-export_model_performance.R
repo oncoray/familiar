@@ -2,7 +2,7 @@
 testthat::skip_on_cran()
 testthat::skip_on_ci()
 
-debug_flag <- TRUE
+debug_flag <- FALSE
 
 # Default
 familiar:::test_export(

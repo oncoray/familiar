@@ -2,6 +2,8 @@
 testthat::skip_on_cran()
 testthat::skip_on_ci()
 
+debug_flag <- FALSE
+
 for (outcome_type in c("continuous", "multinomial", "survival")) {
   # Get data.
   data <- familiar:::test_create_good_data(outcome_type = outcome_type)
@@ -26,7 +28,8 @@ for (outcome_type in c("continuous", "multinomial", "survival")) {
     learner = learner,
     estimation_type = "point",
     skip_evaluation_elements = skip_data_elements,
-    parallel = FALSE
+    parallel = FALSE,
+    verbose = debug_flag
   )
 
   # Test both familiarCollection and familiarModel objects.
