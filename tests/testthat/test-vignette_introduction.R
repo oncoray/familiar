@@ -70,7 +70,8 @@ testthat::test_that(
           outcome_type = "multinomial",
           outcome_column = "Species",
           experimental_design = "bs(fs+mb,5)",
-          parallel = FALSE
+          parallel = FALSE,
+          verbose = debug_flag
         )
       )
     )
@@ -86,7 +87,8 @@ testthat::test_that(
           outcome_column = "Species",
           vimp_method = "mrmr",
           learner = "glm",
-          parallel = FALSE
+          parallel = FALSE,
+          verbose = debug_flag
         )
       )
     )
