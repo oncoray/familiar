@@ -779,7 +779,8 @@ setMethod(
     if (is.null(color_by)) {
       # Create boxplot.
       p <- p + ggplot2::geom_violin(
-        draw_quantiles = c(0.025, 0.5, 0.975),
+        quantiles = c(0.025, 0.5, 0.975),
+        quantile.linetype = ggtheme$line$linetype,
         scale = "width",
         position = ggplot2::position_dodge(width = 1.0)
       )
@@ -790,7 +791,8 @@ setMethod(
         mapping = ggplot2::aes(
           fill = !!sym("color_breaks")
         ),
-        draw_quantiles = c(0.025, 0.5, 0.975),
+        quantiles = c(0.025, 0.5, 0.975),
+        quantile.linetype = ggtheme$line$linetype,
         scale = "width",
         position = ggplot2::position_dodge(width = 1.0)
       )

@@ -1127,7 +1127,8 @@ setMethod(
           x = !!sym(x_axis_by),
           y = !!sym("value")
         ),
-        draw_quantiles = c(0.025, 0.5, 0.975),
+        quantiles = c(0.025, 0.5, 0.975),
+        quantile.linetype = ggtheme$line$linetype,
         scale = "width",
         position = ggplot2::position_dodge(width = 1.0)
       )
@@ -1144,7 +1145,8 @@ setMethod(
           y = !!sym("value"),
           fill = !!sym("color_breaks")
         ),
-        draw_quantiles = c(0.025, 0.5, 0.975),
+        quantiles = c(0.025, 0.5, 0.975),
+        quantile.linetype = ggtheme$line$linetype,
         scale = "width",
         position = ggplot2::position_dodge(width = 1.0)
       )
