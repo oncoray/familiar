@@ -236,7 +236,7 @@ extract_experimental_setup <- function(
 ) {
   
   # Suppress NOTES due to non-standard evaluation in data.table
-  exp_level_id <- sect_start <- perturb_method <- NULL
+  exp_level_id <- sect_start <- perturb_method <- train <- main_data_id <- NULL
   
   # Iterator
   main_data_id_iter <- 1L
@@ -486,13 +486,36 @@ extract_experimental_setup <- function(
     }
   }
   
-  # Remove unnessary rows and columns
+  # Remove unnecessary rows and columns
   section_table <- section_table[perturb_method != "none", ]
   section_table[, ":="(
     "exp_level_id" = NULL,
     "sect_end" = NULL,
     "sect_start" = NULL
   )]
+  
+  # Internal validation can only be at the same level as train, or above.
+  if (any(section_table$internal_validation)) {
+    internal_validation_data_id <- 0L
+    data_id <- section_table[train == TRUE]$main_data_id[1L]
+    while (data_id > 1L) {
+      if (section_table[main_data_id == data_id]$internal_validation[1L] == TRUE) {
+        # Update internal_validation_data_id if internal validation could occur
+        # at the current level. This gets overridden by lower (i.e.
+        # higher-level) data ids.
+        internal_validation_data_id <- data_id
+      }
+      
+      # Go to the next level.
+      data_id <- section_table[main_data_id == data_id]$ref_data_id[1L]
+    }
+    
+    # Set all internal_validation to FALSE.
+    section_table[, "internal_validation" := FALSE]
+    if (internal_validation_data_id > 0L) {
+      section_table[main_data_id == internal_validation_data_id, "internal_validation" := TRUE]
+    }
+  }
   
   return(section_table)
 }

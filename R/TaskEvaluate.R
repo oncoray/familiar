@@ -466,7 +466,7 @@ setMethod(
   
   # Find the data_id related to ensembling of models.
   train_data_id <- experiment_data@experiment_setup[train == TRUE, ]$main_data_id[1L]
-  internal_validation_data_id <- experiment_data@experiment_setup[train == TRUE & internal_validation == TRUE, ]$main_data_id[1L]
+  internal_validation_data_id <- experiment_data@experiment_setup[internal_validation == TRUE, ]$main_data_id[1L]
   external_validation_data_id <- experiment_data@experiment_setup[external_validation == TRUE, ]$main_data_id[1L]
   
   # If there is no train data id, we have an issue.
