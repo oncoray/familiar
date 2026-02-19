@@ -1915,7 +1915,12 @@ theme_familiar <- function(
 .draw_plot <- function(plot_or_grob) {
   suppress_warnings(
     ..draw_plot(plot_or_grob),
-    regexp = c("containing missing values", "containing non-finite values")
+    regexp = c(
+      "containing missing values",
+      "containing non-finite values",
+      "no non-missing arguments to min",
+      "no non-missing arguments to max"
+    )
   )
 }
 
