@@ -609,6 +609,11 @@ setMethod(
     .check_input_plot_args(x_range = x_range)
   }
   
+  # Check that the range is not closed.
+  if (all(x_range == 0.0)) {
+    x_range[2L] <- 0.1
+  }
+  
   # x_breaks
   if (is.null(x_breaks)) {
     .check_input_plot_args(
