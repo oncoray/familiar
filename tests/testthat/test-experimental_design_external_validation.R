@@ -39,7 +39,14 @@ testthat::test_that("development + evaluation experiment is correctly created", 
   )[[1L]]@data
   
   # Expect that the values are not the same.
-  testthat::expect_length(unique(performance_data$value), 2L)
+  dev_values <- performance_data[data_set == "development"]$value
+  int_values <- performance_data[data_set == "int. validation"]$value
+  ext_values <- performance_data[data_set == "ext. validation"]$value
+  testthat::expect_length(dev_values, 1L)
+  testthat::expect_length(int_values, 0L)
+  testthat::expect_length(ext_values, 1L)
+  testthat::expect_false(setequal(dev_values, int_values))
+  testthat::expect_false(setequal(dev_values, ext_values))
 })
 
 
@@ -73,7 +80,14 @@ testthat::test_that("incomplete bootstrap-only + evaluation experiment is correc
   )[[1L]]@data
   
   # Expect that the values are not the same.
-  testthat::expect_length(unique(performance_data$value), 6L)
+  dev_values <- performance_data[data_set == "development"]$value
+  int_values <- performance_data[data_set == "int. validation"]$value
+  ext_values <- performance_data[data_set == "ext. validation"]$value
+  testthat::expect_length(dev_values, 3L)
+  testthat::expect_length(int_values, 0L)
+  testthat::expect_length(ext_values, 3L)
+  testthat::expect_false(setequal(dev_values, int_values))
+  testthat::expect_false(setequal(dev_values, ext_values))
 })
 
 
@@ -109,7 +123,14 @@ testthat::test_that("cv + evaluation experiment is correctly created", {
   )[[1L]]@data
   
   # Expect that the values are not the same.
-  testthat::expect_length(unique(performance_data$value), 9L)
+  dev_values <- performance_data[data_set == "development"]$value
+  int_values <- performance_data[data_set == "int. validation"]$value
+  ext_values <- performance_data[data_set == "ext. validation"]$value
+  testthat::expect_length(dev_values, 3L)
+  testthat::expect_length(int_values, 3L)
+  testthat::expect_length(ext_values, 3L)
+  testthat::expect_false(setequal(dev_values, int_values))
+  testthat::expect_false(setequal(dev_values, ext_values))
 })
 
 
@@ -145,7 +166,14 @@ testthat::test_that("bootstrap + evaluation experiment is correctly created", {
   )[[1L]]@data
   
   # Expect that the values are not the same.
-  testthat::expect_length(unique(performance_data$value), 9L)
+  dev_values <- performance_data[data_set == "development"]$value
+  int_values <- performance_data[data_set == "int. validation"]$value
+  ext_values <- performance_data[data_set == "ext. validation"]$value
+  testthat::expect_length(dev_values, 3L)
+  testthat::expect_length(int_values, 3L)
+  testthat::expect_length(ext_values, 3L)
+  testthat::expect_false(setequal(dev_values, int_values))
+  testthat::expect_false(setequal(dev_values, ext_values))
 })
 
 
@@ -183,7 +211,14 @@ testthat::test_that("loocv-only experiment is correctly created", {
   # Expect that the values are not the same. Note that the detail-level is
   # automatically changed to ensemble because of the limited number of values
   # in the internal validation set (1 per fold.)
-  testthat::expect_length(unique(performance_data$value), 3L)
+  dev_values <- performance_data[data_set == "development"]$value
+  int_values <- performance_data[data_set == "int. validation"]$value
+  ext_values <- performance_data[data_set == "ext. validation"]$value
+  testthat::expect_length(dev_values, 1L)
+  testthat::expect_length(int_values, 1L)
+  testthat::expect_length(ext_values, 1L)
+  testthat::expect_false(setequal(dev_values, int_values))
+  testthat::expect_false(setequal(dev_values, ext_values))
 })
 
 
@@ -207,11 +242,6 @@ results <- familiar::summon_familiar(
   verbose = debug_flag
 )
 
-full_bootstrap_performance_data <- familiar::export_model_performance(
-  results$familiarCollection,
-  aggregate_results = FALSE
-)[[1L]]@data
-
 # Get predicted probabilities for red. The bootstraps might not visit all
 # training data. More over the probabilities should generally be different
 # because different models are used to predict each sample.
@@ -231,8 +261,20 @@ testthat::test_that("cv-only with nested bootstraps experiment is correctly crea
     c("development", "internal_validation", "external_validation")
   )
   
+  performance_data <- familiar::export_model_performance(
+    results$familiarCollection,
+    aggregate_results = FALSE
+  )[[1L]]@data
+  
   # Expect that the values are not the same.
-  testthat::expect_gt(length(unique(full_bootstrap_performance_data$value)), 6L)
+  dev_values <- performance_data[data_set == "development"]$value
+  int_values <- performance_data[data_set == "int. validation"]$value
+  ext_values <- performance_data[data_set == "ext. validation"]$value
+  testthat::expect_length(dev_values, 6L)
+  testthat::expect_length(int_values, 6L)
+  testthat::expect_length(ext_values, 6L)
+  testthat::expect_false(setequal(dev_values, int_values))
+  testthat::expect_false(setequal(dev_values, ext_values))
   
   # Expect that fewer than 150 samples appear in the training dataset. If this
   # fails, check that the iteration seed correctly generates the same sample

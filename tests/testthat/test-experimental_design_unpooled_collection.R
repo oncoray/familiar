@@ -108,6 +108,40 @@ testthat::test_that("cv-only with nested bootstraps experiment is correctly crea
   testthat::expect_setequal(ext_val_samples_1, ext_val_samples_2)
   testthat::expect_setequal(ext_val_samples_1, ext_val_samples_3)
   testthat::expect_setequal(ext_val_samples_2, ext_val_samples_3)
+  
+  # Pooled performance data.
+  performance_data <- familiar::export_model_performance(
+    results$familiarCollection[[4L]],
+    aggregate_results = FALSE
+  )[[1L]]@data
+  
+  # Expect that the values are not the same.
+  dev_values <- performance_data[data_set == "development"]$value
+  int_values <- performance_data[data_set == "int. validation"]$value
+  ext_values <- performance_data[data_set == "ext. validation"]$value
+  testthat::expect_length(dev_values, 6L)
+  testthat::expect_length(int_values, 6L)
+  testthat::expect_length(ext_values, 6L)
+  testthat::expect_false(setequal(dev_values, int_values))
+  testthat::expect_false(setequal(dev_values, ext_values))
+  
+  for (ii in seq_len(3L)) {
+    # Get performance for individual folds.
+    performance_data <- familiar::export_model_performance(
+      results$familiarCollection[[ii]],
+      aggregate_results = FALSE
+    )[[1L]]@data
+    
+    # Expect that the values are not the same. There are two models per fold.
+    dev_values <- performance_data[data_set == "development"]$value
+    int_values <- performance_data[data_set == "int. validation"]$value
+    ext_values <- performance_data[data_set == "ext. validation"]$value
+    testthat::expect_length(dev_values, 2L)
+    testthat::expect_length(int_values, 2L)
+    testthat::expect_length(ext_values, 2L)
+    testthat::expect_false(setequal(dev_values, int_values))
+    testthat::expect_false(setequal(dev_values, ext_values))
+  }
 })
 
 
@@ -131,3 +165,54 @@ results <- familiar::summon_familiar(
   parallel = FALSE,
   verbose = FALSE
 )
+
+
+testthat::test_that("loocv with external validation experiment is correctly created", {
+  testthat::expect_length(results$familiarModel, 30L)
+  testthat::expect_length(results$familiarData, 93L)
+  testthat::expect_length(results$familiarCollection, 31L)
+  testthat::expect_setequal(
+    sapply(results$familiarData, function(x) (x@name)),
+    c("development", "internal_validation", "external_validation")
+  )
+  
+  # This is the pooled data.
+  performance_data <- familiar::export_model_performance(
+    results$familiarCollection[[31L]],
+    aggregate_results = FALSE
+  )[[1L]]@data
+  
+  # Expect that the values are not the same. Note that the detail-level is
+  # automatically changed to ensemble because of the limited number of values
+  # in the cross-validation.
+  dev_values <- performance_data[data_set == "development"]$value
+  int_values <- performance_data[data_set == "int. validation"]$value
+  ext_values <- performance_data[data_set == "ext. validation"]$value
+  testthat::expect_length(dev_values, 1L)
+  testthat::expect_length(int_values, 1L)
+  testthat::expect_length(dev_values, 1L)
+  testthat::expect_false(setequal(dev_values, int_values))
+  testthat::expect_false(setequal(dev_values, ext_values))
+  
+  # For individual folds of the leave-one-out cross-validation set. Note that
+  # performance data for internal validation data should be missing -- you
+  # cannot compute performance for internal validation (1 sample).
+  for (ii in seq_len(30L)) {
+    performance_data <- familiar::export_model_performance(
+      results$familiarCollection[[ii]],
+      aggregate_results = FALSE
+    )[[1L]]@data
+    
+    # Expect that the values are not the same. Note that the detail-level is
+    # automatically changed to ensemble because of the limited number of values
+    # in the cross-validation.
+    dev_values <- performance_data[data_set == "development"]$value
+    int_values <- performance_data[data_set == "int. validation"]$value
+    ext_values <- performance_data[data_set == "ext. validation"]$value
+    testthat::expect_length(dev_values, 1L)
+    testthat::expect_length(int_values, 0L)
+    testthat::expect_length(dev_values, 1L)
+    testthat::expect_false(setequal(dev_values, int_values))
+    testthat::expect_false(setequal(dev_values, ext_values))
+  }
+})
