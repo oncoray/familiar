@@ -389,7 +389,7 @@ methods are available:
 \item \code{none}: This disables transformation of features.
 \item \code{yeo_johnson}: Transformation using the location and scale invariant
 version of the Yeo-Johnson transformation (Yeo and Johnson, 2000;
-Zwanenburg and Löck, 2023).
+Zwanenburg and Löck, 2026).
 \item \code{yeo_johnson_robust} (default): A robust version of \code{yeo_johnson}.
 This method is less sensitive to outliers.
 \item \code{yeo_johnson_conventional}: As \code{yeo_johnson}, but without optimisation of
@@ -397,7 +397,7 @@ location and scale parameters. This method is equivalent to the original
 transformation proposed by Yeo and Johnson (2001).
 \item \code{box_cox}: Transformation using the location and scale invariant version
 of the Box-Cox transformation (Box and Cox, 1964; Zwanenburg and Löck,
-2023).
+2026).
 \item \code{box_cox_robust}: A robust version of \code{yeo_johnson}. This method is less
 sensitive to outliers.
 \item \code{box_cox_conventional}: As \code{box_cox}, but without optimisation of
@@ -417,12 +417,12 @@ optimisation criteria, of which the following are available:
 \itemize{
 \item \code{mle} (default): Optimisation using maximum likelihood estimation.
 \item \code{cramer_von_mises}: Optimisation using the Cramér-von Mises
-criterion. Zwanenburg and Löck (2023) found that this criterion was
+criterion. Zwanenburg and Löck (2026) found that this criterion was
 relatively robust against outliers.
 }}
     \item{\code{transformation_gof_test_p_value}}{(\emph{optional}) Not all transformations
 will lead to features that are roughly normally distributed. Zwanenburg and
-Löck (2023) established a empirical goodness-of-fit test for central
+Löck (2026) established a empirical goodness-of-fit test for central
 normality. This parameter sets the significance for rejecting the
 null-hypothesis that a feature distribution is centrally normal. When the
 null-hypothesis is rejected, no transformation is performed. The default

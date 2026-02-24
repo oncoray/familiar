@@ -324,6 +324,10 @@
 #'   1. Raymaekers, J., Rousseeuw,  P. J. Transforming variables to central
 #'   normality. Mach Learn. (2021).
 #'
+#'   1. Zwanenburg, A., & Löck, S. (2026). Location and scale-invariant power
+#'   transformations for transforming data to normality. Machine Learning, 
+#'   115(3), 34.
+#'  
 #'   1. Park, M. Y., Hastie, T. & Tibshirani, R. Averaged gene expressions for
 #'   regression. Biostatistics 8, 212–227 (2007).
 #'
@@ -1352,7 +1356,7 @@
 #'
 #'   * `yeo_johnson`: Transformation using the location and scale invariant
 #'   version of the Yeo-Johnson transformation (Yeo and Johnson, 2000;
-#'   Zwanenburg and Löck, 2023).
+#'   Zwanenburg and Löck, 2026).
 #'
 #'   * `yeo_johnson_robust` (default): A robust version of `yeo_johnson`.
 #'   This method is less sensitive to outliers.
@@ -1363,7 +1367,7 @@
 #'
 #'   * `box_cox`: Transformation using the location and scale invariant version
 #'   of the Box-Cox transformation (Box and Cox, 1964; Zwanenburg and Löck,
-#'   2023).
+#'   2026).
 #'
 #'   * `box_cox_robust`: A robust version of `yeo_johnson`. This method is less
 #'   sensitive to outliers.
@@ -1386,12 +1390,12 @@
 #'   * `mle` (default): Optimisation using maximum likelihood estimation.
 #'
 #'   * `cramer_von_mises`: Optimisation using the Cramér-von Mises
-#'   criterion. Zwanenburg and Löck (2023) found that this criterion was
+#'   criterion. Zwanenburg and Löck (2026) found that this criterion was
 #'   relatively robust against outliers.
 #'
 #' @param transformation_gof_test_p_value (*optional*) Not all transformations
 #'   will lead to features that are roughly normally distributed. Zwanenburg and
-#'   Löck (2023) established a empirical goodness-of-fit test for central
+#'   Löck (2026) established a empirical goodness-of-fit test for central
 #'   normality. This parameter sets the significance for rejecting the
 #'   null-hypothesis that a feature distribution is centrally normal. When the
 #'   null-hypothesis is rejected, no transformation is performed. The default
@@ -1696,6 +1700,10 @@
 #'
 #'   1. Raymaekers, J., Rousseeuw,  P. J. Transforming variables to central
 #'   normality. Mach Learn. (2021).
+#'
+#'   1. Zwanenburg, A., & Löck, S. (2026). Location and scale-invariant power
+#'   transformations for transforming data to normality. Machine Learning, 
+#'   115(3), 34.
 #'
 #'   1. Park, M. Y., Hastie, T. & Tibshirani, R. Averaged gene expressions for
 #'   regression. Biostatistics 8, 212–227 (2007).
@@ -3488,7 +3496,7 @@
 #'  `list("sample_similarity"=100, "permutation_vimp"=1000)`.
 #'
 #'  This parameter can be set for the following data elements:
-#'  `sample_similarity` and `ice_data`.
+#'  `sample_similarity`, `shap`, and `ice_data`.
 #'
 #' @param detail_level (*optional*) Sets the level at which results are computed
 #'  and aggregated.
@@ -4022,7 +4030,7 @@
       range = c(20L, Inf)
     )
 
-    # Add provided detail level to each possible element.
+    # Add provided sample limit to each possible element.
     settings$sample_limit <- lapply(
       .get_available_data_elements(check_has_sample_limit = TRUE),
       function(x, sample_limit) (sample_limit),

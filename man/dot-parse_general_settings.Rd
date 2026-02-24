@@ -143,7 +143,7 @@ methods are available:
 \item \code{none}: This disables transformation of features.
 \item \code{yeo_johnson}: Transformation using the location and scale invariant
 version of the Yeo-Johnson transformation (Yeo and Johnson, 2000;
-Zwanenburg and Löck, 2023).
+Zwanenburg and Löck, 2026).
 \item \code{yeo_johnson_robust} (default): A robust version of \code{yeo_johnson}.
 This method is less sensitive to outliers.
 \item \code{yeo_johnson_conventional}: As \code{yeo_johnson}, but without optimisation of
@@ -151,7 +151,7 @@ location and scale parameters. This method is equivalent to the original
 transformation proposed by Yeo and Johnson (2001).
 \item \code{box_cox}: Transformation using the location and scale invariant version
 of the Box-Cox transformation (Box and Cox, 1964; Zwanenburg and Löck,
-2023).
+2026).
 \item \code{box_cox_robust}: A robust version of \code{yeo_johnson}. This method is less
 sensitive to outliers.
 \item \code{box_cox_conventional}: As \code{box_cox}, but without optimisation of
@@ -171,12 +171,12 @@ optimisation criteria, of which the following are available:
 \itemize{
 \item \code{mle} (default): Optimisation using maximum likelihood estimation.
 \item \code{cramer_von_mises}: Optimisation using the Cramér-von Mises
-criterion. Zwanenburg and Löck (2023) found that this criterion was
+criterion. Zwanenburg and Löck (2026) found that this criterion was
 relatively robust against outliers.
 }}
     \item{\code{transformation_gof_test_p_value}}{(\emph{optional}) Not all transformations
 will lead to features that are roughly normally distributed. Zwanenburg and
-Löck (2023) established a empirical goodness-of-fit test for central
+Löck (2026) established a empirical goodness-of-fit test for central
 normality. This parameter sets the significance for rejecting the
 null-hypothesis that a feature distribution is centrally normal. When the
 null-hypothesis is rejected, no transformation is performed. The default
@@ -846,7 +846,7 @@ value in a named list with data elements, e.g.
 \code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
 
 This parameter can be set for the following data elements:
-\code{sample_similarity} and \code{ice_data}.}
+\code{sample_similarity}, \code{shap}, and \code{ice_data}.}
     \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{
@@ -1156,6 +1156,9 @@ improve normality or symmetry. Biometrika 87, 954–959 (2000).
 Soc. Series B Stat. Methodol. 26, 211–252 (1964).
 \item Raymaekers, J., Rousseeuw,  P. J. Transforming variables to central
 normality. Mach Learn. (2021).
+\item Zwanenburg, A., & Löck, S. (2026). Location and scale-invariant power
+transformations for transforming data to normality. Machine Learning,
+115(3), 34.
 \item Park, M. Y., Hastie, T. & Tibshirani, R. Averaged gene expressions for
 regression. Biostatistics 8, 212–227 (2007).
 \item Tolosi, L. & Lengauer, T. Classification with correlated features:

@@ -60,7 +60,7 @@ value in a named list with data elements, e.g.
 \code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
 
 This parameter can be set for the following data elements:
-\code{sample_similarity} and \code{ice_data}.}
+\code{sample_similarity}, \code{shap}, and \code{ice_data}.}
 
 \item{sample_cluster_method}{The method used to perform clustering based on
 distance between samples. These are the same methods as for the
