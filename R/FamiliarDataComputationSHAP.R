@@ -261,7 +261,7 @@ setMethod(
       x = sample_limit,
       object = object,
       default = 200L,
-      data_element = "shap_data"
+      data_element = "shap"
     )
     
     # Check the level detail.
@@ -269,7 +269,7 @@ setMethod(
       x = detail_level,
       object = object,
       default = "ensemble",
-      data_element = "shap_data"
+      data_element = "shap"
     )
     
     # Check whether results should be aggregated.
@@ -277,7 +277,7 @@ setMethod(
       x = aggregate_results,
       object = object,
       default = FALSE,
-      data_element = "shap_data"
+      data_element = "shap"
     )
     
     # Test if models are properly loaded
