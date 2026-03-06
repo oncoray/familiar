@@ -34,7 +34,7 @@ setClass(
 #'
 #'@description Computes and extracts univariate analysis for the features used
 #'  in a `familiarEnsemble` object. This assessment includes the computation of
-#'  p and q-values, as well as robustness (in case of repeated measurements).
+#'  p-values, as well as robustness (in case of repeated measurements).
 #'
 #'@inheritParams .extract_data
 #'
@@ -257,7 +257,7 @@ setMethod(
 #'  All parameters aside from `object` and `dir_path` are only used if `object`
 #'  is not a `familiarCollection` object, or a path to one.
 #'
-#'  Univariate analysis includes the computation of p and q-values, as well as
+#'  Univariate analysis includes the computation of p-values, as well as
 #'  robustness (in case of repeated measurements). p-values are derived from
 #'  Wald's test.
 #'

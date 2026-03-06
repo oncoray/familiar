@@ -40,7 +40,7 @@ will allow export as a structured list of data.tables.}
 \item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is
 shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
 \code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
-p-values and q-values. q-values may not be available.}
+p-values}
 
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
@@ -127,7 +127,7 @@ Paths to the previous files can also be provided.
 All parameters aside from \code{object} and \code{dir_path} are only used if \code{object}
 is not a \code{familiarCollection} object, or a path to one.
 
-Univariate analysis includes the computation of p and q-values, as well as
+Univariate analysis includes the computation of p-values, as well as
 robustness (in case of repeated measurements). p-values are derived from
 Wald's test.
 }

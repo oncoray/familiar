@@ -17,7 +17,7 @@ NULL
 #' @param p_adjustment_method (*optional*) Indicates type of p-value that is
 #'   shown. One of `holm`, `hochberg`, `hommel`, `bonferroni`, `BH`, `BY`,
 #'   `fdr`, `none`, `p_value` or `q_value` for adjusted p-values, uncorrected
-#'   p-values and q-values. q-values may not be available.
+#'   p-values
 #' @param show_cluster (*optional*) Show which features were clustered together.
 #' @param ggtheme (*optional*) `ggplot` theme to use for plotting.
 #' @param discrete_palette (*optional*) Palette for colouring the plot elements
@@ -62,7 +62,7 @@ NULL
 #'
 #' @details This function generates a horizontal barplot with the length of the
 #'   bars corresponding to the 10-logarithm of the (multiple-testing corrected)
-#'   p-value or q-value.
+#'   p-value.
 #'
 #'   Features are assessed univariately using one-sample location t-tests after
 #'   fitting a suitable regression model. The fitted model coefficient and the
@@ -847,8 +847,7 @@ setMethod(
     "BY" = "adjusted_p_value",
     "fdr" = "adjusted_p_value",
     "none" = "p_value",
-    "p_value" = "p_value",
-    "q_value" = "q_value"
+    "p_value" = "p_value"
   )
 
   label_name <- switch(
@@ -861,8 +860,7 @@ setMethod(
     "BY" = "Benjamini-Yekutieli corrected p-value",
     "fdr" = "FDR-corrected p-value",
     "none" = "p-value",
-    "p_value" = "p-value",
-    "q_value" = "q-value"
+    "p_value" = "p-value"
   )
 
   # Check if the column is present.

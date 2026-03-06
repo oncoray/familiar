@@ -78,7 +78,7 @@
       <filter_method></filter_method>
       <!-- Minimum threshold-value for univariate test (optional, default: 0.20) -->
       <univariate_test_threshold></univariate_test_threshold>
-      <!-- Metric to use as threshold value (optional, default: p_value; otherwise q_value)-->
+      <!-- Metric to use as threshold value (optional, default: p_value)-->
       <univariate_test_threshold_metric></univariate_test_threshold_metric>
       <!-- Maximum feature set after univariate testing (optional, default: up to minimum p-value) -->
       <univariate_test_max_feature_set_size></univariate_test_max_feature_set_size>

@@ -296,7 +296,7 @@ Several method are available:
 filter, for example, genes that are not differentially expressed.
 \item \code{univariate_test}: Features undergo a univariate regression using an
 outcome-appropriate regression model. The p-value of the model coefficient
-is collected. Features with coefficient p or q-value above the
+is collected. Features with coefficient p-value above the
 \code{univariate_test_threshold} are subsequently filtered.
 \item \code{robustness}: Features that are not sufficiently robust according to the
 intraclass correlation coefficient are filtered. Use of this method
@@ -308,7 +308,7 @@ More than one method can be used simultaneously. Features with singular
 values are always filtered, as these do not contain information.}
     \item{\code{univariate_test_threshold}}{(\emph{optional}) Numeric value between \code{1.0} and
 \code{0.0} that determines which features are irrelevant and will be filtered by
-the \code{univariate_test}. The p or q-values are compared to this threshold.
+the \code{univariate_test}. p-values are compared to this threshold.
 All features with values above the threshold are filtered. The default
 value is \code{0.20}.}
     \item{\code{univariate_test_threshold_metric}}{(\emph{optional}) Metric used with the to

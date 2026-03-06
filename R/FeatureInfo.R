@@ -641,7 +641,7 @@ find_unimportant_features <- function(
   # Determine feature columns
   feature_columns <- get_feature_columns(x = data)
 
-  # Set q-value to 1 if none is provided
+  # Set p-value to 1 if none is provided
   if (is.null(settings$prep$univar_threshold)) {
     # If NULL, allow potential selection of all features, pending
     # univar_feat_set_size.

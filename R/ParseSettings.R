@@ -1281,7 +1281,7 @@
 #'
 #'   * `univariate_test`: Features undergo a univariate regression using an
 #'   outcome-appropriate regression model. The p-value of the model coefficient
-#'   is collected. Features with coefficient p or q-value above the
+#'   is collected. Features with coefficient p-value above the
 #'   `univariate_test_threshold` are subsequently filtered.
 #'
 #'   * `robustness`: Features that are not sufficiently robust according to the
@@ -1293,7 +1293,7 @@
 #'   values are always filtered, as these do not contain information.
 #' @param univariate_test_threshold (*optional*) Numeric value between `1.0` and
 #'   `0.0` that determines which features are irrelevant and will be filtered by
-#'   the `univariate_test`. The p or q-values are compared to this threshold.
+#'   the `univariate_test`. p-values are compared to this threshold.
 #'   All features with values above the threshold are filtered. The default
 #'   value is `0.20`.
 #' @param univariate_test_threshold_metric (*optional*) Metric used with the to

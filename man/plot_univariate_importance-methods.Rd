@@ -162,7 +162,7 @@ NULL no figures are saved, but are returned instead.}
 \item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is
 shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
 \code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
-p-values and q-values. q-values may not be available.}
+p-values}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -307,7 +307,7 @@ familiarCollection object.
 \details{
 This function generates a horizontal barplot with the length of the
 bars corresponding to the 10-logarithm of the (multiple-testing corrected)
-p-value or q-value.
+p-value.
 
 Features are assessed univariately using one-sample location t-tests after
 fitting a suitable regression model. The fitted model coefficient and the

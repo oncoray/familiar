@@ -100,6 +100,6 @@ univariate analysis of important features.
 \description{
 Computes and extracts univariate analysis for the features used
 in a \code{familiarEnsemble} object. This assessment includes the computation of
-p and q-values, as well as robustness (in case of repeated measurements).
+p-values, as well as robustness (in case of repeated measurements).
 }
 \keyword{internal}
