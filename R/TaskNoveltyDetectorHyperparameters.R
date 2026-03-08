@@ -242,6 +242,7 @@ setMethod(
       message_indent = message_indent + 1L,
       save_in_place = FALSE,
       is_vimp = FALSE,
+      cl = cl,
       ...
     )
     
