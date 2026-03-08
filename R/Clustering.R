@@ -282,6 +282,7 @@ add_cluster_info <- function(
       cluster_method_object = cluster_method_object,
       feature_info_list = feature_info_list,
       data = data,
+      chopchop = TRUE,
       progress_bar = FALSE
     )
     
