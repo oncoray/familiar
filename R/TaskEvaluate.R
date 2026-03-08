@@ -802,7 +802,7 @@ setMethod(
   }
   
   fam_mapply_lb(
-    cl = cl,
+    cl = cl_outer,
     assign = "all",
     FUN = .perform_task,
     progress_bar = !is.null(cl_outer),
@@ -813,11 +813,12 @@ setMethod(
       "settings" = settings,
       "message_indent" = message_indent + 1L,
       "verbose" = verbose && is.null(cl_outer),
+      "cl" = cl_inner,
       ...
     )
   )
 
-  # Message that variable importances have been computed.
+  # Message that models were evaluated.
   logger_message(
     paste0(
       "Evaluation: Models were evaluated.\n"
