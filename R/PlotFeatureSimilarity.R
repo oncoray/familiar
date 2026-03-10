@@ -751,13 +751,21 @@ setMethod(
   if (invert_palette) gradient_colours <- rev(gradient_colours)
 
   if (length(gradient_palette_range) > 0L) {
+    transform <- "identity"
+    limits <- range(gradient_palette_range)
+    if (similarity_metric == "mutual_information") {
+      transform <- "log"
+      limits[1L] <- 1E-3
+    }
+    
     # Add gradient palette. If the legend is not shown, legend_label equals
     # NULL.
     p <- p + ggplot2::scale_fill_gradientn(
       name = legend_label,
       colors = gradient_colours,
-      limits = range(gradient_palette_range),
-      oob = scales::squish
+      limits = limits,
+      oob = scales::squish,
+      transform = transform
     )
   }
 

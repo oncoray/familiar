@@ -6,7 +6,6 @@ testthat::skip_on_ci()
 debug_flag <- FALSE
 
 # Generic test
-# Feature similarity can be computed for failing survival predictions.
 familiar:::test_plots(
   plot_function = familiar:::plot_feature_similarity,
   not_available_single_feature = TRUE,
@@ -42,4 +41,25 @@ familiar:::test_plot_ordering(
   outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list("show_dendrogram" = c("left", "bottom")),
   debug = debug_flag
+)
+
+
+# Test normal tests.
+familiar:::test_plots(
+  plot_function = familiar:::plot_feature_similarity,
+  feature_similarity_metric = "spearman",
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  data_element = "feature_similarity",
+  debug = debug_flag,
+  test_config = "normal"
+)
+
+
+familiar:::test_plots(
+  plot_function = familiar:::plot_feature_similarity,
+  feature_similarity_metric = "mutual_information",
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  data_element = "feature_similarity",
+  debug = debug_flag,
+  test_config = "normal"
 )
