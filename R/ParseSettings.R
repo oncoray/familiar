@@ -2260,7 +2260,7 @@
       if (settings$cluster_similarity_metric %in% c("mcfadden_r2")) {
         settings$cluster_similarity_threshold <- 0.30
       } else if (settings$cluster_similarity_metric %in% c("mutual_information")) {
-        settings$cluster_similarity_threshold <- 0.30
+        settings$cluster_similarity_threshold <- 0.23
       } else if (settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")) {
         settings$cluster_similarity_threshold <- 0.75
       } else {
@@ -2274,7 +2274,7 @@
       if (settings$cluster_similarity_metric %in% c("mcfadden_r2")) {
         settings$cluster_similarity_threshold <- 0.25
       } else if (settings$cluster_similarity_metric %in% c("mutual_information")) {
-        settings$cluster_similarity_threshold <- 0.25
+        settings$cluster_similarity_threshold <- 0.10
       } else if (settings$cluster_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")) {
         settings$cluster_similarity_threshold <- 0.40
       } else {

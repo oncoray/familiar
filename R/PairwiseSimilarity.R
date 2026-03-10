@@ -707,6 +707,8 @@ setMethod(
     y_categorical, 
     ...
   ) {
+    # mutual information can be mapped to spearman:
+    # log(mi) = -5.244 + 4.183 * sp
     
     # Remove missing elements.
     valid_elements <- is.finite(x) & is.finite(y)
