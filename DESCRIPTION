@@ -113,6 +113,7 @@ Collate:
     'FamiliarDataComputationSHAP.R'
     'FamiliarDataComputationSampleSimilarity.R'
     'FamiliarDataComputationUnivariateAnalysis.R'
+    'FamiliarDataComputationUtilities.R'
     'FamiliarDataComputationVimp.R'
     'FamiliarDataElement.R'
     'FamiliarEnsemble.R'
