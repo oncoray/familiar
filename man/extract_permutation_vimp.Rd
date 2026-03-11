@@ -22,6 +22,7 @@ extract_permutation_vimp(
   aggregate_results = waiver(),
   confidence_level = waiver(),
   bootstrap_ci_method = waiver(),
+  n_important_features = 2L,
   is_pre_processed = FALSE,
   message_indent = 0L,
   verbose = FALSE,

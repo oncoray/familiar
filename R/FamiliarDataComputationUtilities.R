@@ -281,9 +281,9 @@
   
   # Get number remaining available features
   n_allowed_features <- n_important_features - length(signature_features)
-  browser()
+  
   # Check that features may be added, and the rank table is not empty.
-  if (n_allowed_features > 0L && !is_empty(object@vimp_table)) {
+  if (n_allowed_features > 0L && !is_empty(vimp_table)) {
     # Get available features.
     features <- features_after_clustering(
       features = object@model_features,
@@ -310,8 +310,8 @@
     # Get aggregate variable importances
     vimp_table <- aggregate_vimp_table(
       vimp_table,
-      aggregation_method = object@vimp_aggregation_method,
-      rank_threshold = object@vimp_rank_threshold
+      aggregation_method = vimp_aggregation_method,
+      rank_threshold = vimp_rank_threshold
     )
     
     if (is_empty(vimp_table)) return(signature_features)

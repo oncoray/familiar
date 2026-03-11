@@ -51,6 +51,7 @@ setGeneric(
     aggregate_results = waiver(),
     confidence_level = waiver(),
     bootstrap_ci_method = waiver(),
+    n_important_features = 2L,
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
@@ -84,12 +85,12 @@ setMethod(
     aggregate_results = waiver(),
     confidence_level = waiver(),
     bootstrap_ci_method = waiver(),
+    n_important_features = 2L,
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
     ...
   ) {
-    
     # Message extraction start
     logger_message(
       paste0("Computing permutation variable importance for models in the dataset."),
@@ -254,6 +255,13 @@ setMethod(
     # Test if models are properly loaded
     if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
     
+    # Set features to be shuffled for permutation.
+    shuffle_features <- .select_important_features(
+      object = object,
+      data = data,
+      n_important_features = n_important_features
+    )
+    browser()
     # Generate a prototype data element.
     proto_data_element <- new(
       "familiarDataElementPermutationVimp",
