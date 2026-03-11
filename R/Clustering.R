@@ -435,24 +435,29 @@ setMethod(
   cluster_table <- lapply(
     feature_info_list,
     function(x, show_weights) {
-      # If cluster parameters are not set, skip.
-      if (is.null(x@cluster_parameters)) return(NULL)
       
-      if (show_weights) {
-        return(list(
-          "cluster_name" = x@cluster_parameters@cluster_name,
-          "feature_name" = x@cluster_parameters@cluster_features,
-          "feature_required" = x@cluster_parameters@cluster_features %in% x@cluster_parameters@required_features,
-          "weight" = x@cluster_parameters@weight
-        ))
+      if (is.null(x@cluster_parameters)) {
+        # If cluster parameters are not set (e.g. for familiarEnsemble objects),
+        # treat features as singular.
+        cluster_data <- list(
+          "cluster_name" = x@name,
+          "feature_name" = x@name,
+          "feature_required" = TRUE
+        )
+        
+        if (show_weights) cluster_data <- c(cluster_data, list("weight" = 1.0))
         
       } else {
-        return(list(
+        cluster_data <- list(
           "cluster_name" = x@cluster_parameters@cluster_name,
           "feature_name" = x@cluster_parameters@cluster_features,
           "feature_required" = x@cluster_parameters@cluster_features %in% x@cluster_parameters@required_features
-        ))
+        )
+        
+        if (show_weights) cluster_data <- c(cluster_data, list("weight" = x@cluster_parameters@weight))
       }
+      
+      return(cluster_data)
     },
     show_weights = show_weights
   )
