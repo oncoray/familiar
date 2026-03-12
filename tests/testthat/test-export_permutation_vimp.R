@@ -16,6 +16,7 @@ model <- familiar::train_familiar(
 results <- familiar:::test_export_specific(
   export_function = familiar:::export_permutation_vimp,
   data_element = "permutation_vimp",
+  outcome_type_available = "continuous",
   create_novelty_detector = FALSE,
   debug = debug_flag
 )

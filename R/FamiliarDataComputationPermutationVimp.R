@@ -256,12 +256,12 @@ setMethod(
     if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
     
     # Set features to be shuffled for permutation.
-    shuffle_features <- .select_important_features(
+    important_features <- .select_important_features(
       object = object,
       data = data,
       n_important_features = n_important_features
     )
-    browser()
+    
     # Generate a prototype data element.
     proto_data_element <- new(
       "familiarDataElementPermutationVimp",
@@ -284,6 +284,7 @@ setMethod(
       ensemble_method = ensemble_method,
       metric = metric,
       evaluation_times = evaluation_times,
+      important_features = important_features,
       aggregate_results = aggregate_results,
       similarity_table = feature_similarity,
       cluster_method = feature_cluster_method,
@@ -320,7 +321,8 @@ setMethod(
     evaluation_times = NULL,
     aggregate_results,
     cl,
-    ...) {
+    ...
+) {
   # Ensure that the object is loaded
   object <- load_familiar_object(object)
   
@@ -360,6 +362,7 @@ setMethod(
     is_pre_processed,
     cl,
     ensemble_method,
+    important_features,
     similarity_table,
     cluster_method,
     cluster_linkage,
@@ -436,6 +439,7 @@ setMethod(
   
   # Derive feature information
   feature_cluster_info <- .select_feature_clusters(
+    important_features = important_features,
     available_features = get_feature_columns(data),
     similarity_table = similarity_table,
     cluster_method = cluster_method,
@@ -473,7 +477,8 @@ setMethod(
         "object" = object,
         "data" = data,
         "prediction_data" = prediction_data,
-        "ensemble_method" = ensemble_method
+        "ensemble_method" = ensemble_method,
+        "important_features" = important_features
       ),
       list(...)
     ),
@@ -497,6 +502,7 @@ setMethod(
     bootstrap,
     bootstrap_seed,
     shuffled_features,
+    important_features,
     similarity_threshold,
     n_shuffles,
     object,
@@ -579,10 +585,13 @@ setMethod(
   # Determine the number of metrics.
   n_metrics <- nrow(scores)
   
+  # Retain only important features for further mention.
+  important_features <- intersect(important_features, shuffled_features)
+  
   # Add features.
-  scores <- scores[rep(seq_len(n_metrics), each = length(shuffled_features))]
+  scores <- scores[rep(seq_len(n_metrics), each = length(important_features))]
   scores[, ":="(
-    "feature" = rep(shuffled_features, times = n_metrics),
+    "feature" = rep(important_features, times = n_metrics),
     "permuted" = NULL,
     "unpermuted" = NULL
   )]
@@ -666,6 +675,7 @@ setMethod(
 
 
 .select_feature_clusters <- function(
+    important_features,
     available_features,
     similarity_table,
     cluster_method,
@@ -677,6 +687,7 @@ setMethod(
   
   # Suppress NOTES due to non-standard evaluation in data.table
   name <- cluster_id <- similarity_threshold <- NULL
+  has_important_feature <- NULL
   
   if (is_empty(similarity_table)) {
     # Set the placeholder similarity threshold
@@ -827,6 +838,17 @@ setMethod(
     ),
     by = c("name", "cluster_size")
   ]
+
+  # Determine which clusters have at least one unique feature.
+  cluster_table[, "has_important_feature" := name %in% important_features]
+  cluster_table[, "has_important_feature" := any(has_important_feature), by = c(
+    "similarity_threshold",
+    "n_thresholds_same_cluster",
+    "cluster_id",
+    "cluster_size"
+  )]
+  
+  cluster_table <- cluster_table[has_important_feature == TRUE][, "has_important_feature" := NULL]
   
   # Split the cluster table into clusters.
   cluster_list <- split(
