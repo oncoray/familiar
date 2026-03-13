@@ -3489,7 +3489,7 @@
 #'  If unset, the metric in the `optimisation_metric` variable is used.
 #'
 #' @param sample_limit (*optional*) Set the upper limit of the number of samples
-#'  that are used during evaluation steps. Cannot be less than 20.
+#'  that are used during evaluation steps. Cannot be fewer than 20.
 #'
 #'  This setting can be specified per data element by providing a parameter
 #'  value in a named list with data elements, e.g.
@@ -3497,7 +3497,17 @@
 #'
 #'  This parameter can be set for the following data elements:
 #'  `sample_similarity`, `shap`, and `ice_data`.
+#'  
+#' @param n_important_features (*optional*) Set the number of features that are
+#'  evaluated in evaluation steps. Cannot be 0 or fewer.
+#'  
+#'  This setting can be specified per data element by providing a parameter
+#'  value in a named list with data elements, e.g.
+#'  `list("ice_data"=10, "permutation_vimp"=5)`.
 #'
+#'  This parameter can be set for the following data elements:
+#'  `ice_data` and `permutation_vimp`.
+#'  
 #' @param detail_level (*optional*) Sets the level at which results are computed
 #'  and aggregated.
 #'
@@ -3846,6 +3856,7 @@
     ensemble_method = waiver(),
     evaluation_metric = waiver(),
     sample_limit = waiver(),
+    n_important_features = waiver(),
     detail_level = waiver(),
     estimation_type = waiver(),
     aggregate_results = waiver(),
@@ -4064,6 +4075,64 @@
       x = settings$sample_limit
     )
   }
+  
+  # n_important_features -------------------------------------------------------
+  # Number of important features
+  settings$n_important_features <- .parse_arg(
+    x_config = config$n_important_features,
+    x_var = n_important_features,
+    var_name = "n_important_features",
+    type = "list",
+    optional = TRUE,
+    default = list()
+  )
+  
+  if (length(settings$n_important_features) == 0L) {
+    # Default - use method-specific settings.
+    settings$n_important_features <- NULL
+    
+  } else if (length(settings$n_important_features) == 1L && is.null(names(settings$n_important_features))) {
+    # Check that the parameter has values between 1 and Inf.
+    .check_number_in_valid_range(
+      x = settings$n_important_features[[1L]],
+      var_name = "n_important_features",
+      range = c(1L, Inf)
+    )
+    
+    # Add provided sample limit to each possible element.
+    settings$n_important_features <- lapply(
+      .get_available_data_elements(check_has_n_important_features = TRUE),
+      function(x, n_important_features) (n_important_features),
+      n_important_features = settings$n_important_features[[1L]]
+    )
+    
+    # Add name of respective data elements.
+    names(settings$n_important_features) <- .get_available_data_elements(
+      check_has_n_important_features = TRUE
+    )
+    
+  } else {
+    # Check that the list elements are correctly specified.
+    sapply(
+      names(settings$n_important_features),
+      .check_parameter_value_is_valid,
+      var_name = "n_important_features (data element name)",
+      values = .get_available_data_elements(check_has_sample_limit = TRUE)
+    )
+    
+    # Check that the list contents are correctly specified.
+    sapply(
+      names(settings$n_important_features),
+      function(element_name, x) {
+        .check_number_in_valid_range(
+          x = x[[element_name]],
+          var_name = paste0("n_important_features (", element_name, ")"),
+          range = c(1L, Inf)
+        )
+      },
+      x = settings$sample_limit
+    )
+  }
 
   # detail_level ---------------------------------------------------------------
   # Level at which evaluations are computed.
@@ -4125,7 +4194,7 @@
       x = settings$detail_level
     )
   }
-
+  
   # estimation_type ------------------------------------------------------------
   # Type of estimation performed.
   settings$estimation_type <- .parse_arg(

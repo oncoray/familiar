@@ -24,6 +24,7 @@
   ensemble_method = waiver(),
   evaluation_metric = waiver(),
   sample_limit = waiver(),
+  n_important_features = waiver(),
   detail_level = waiver(),
   estimation_type = waiver(),
   aggregate_results = waiver(),
@@ -183,7 +184,7 @@ depends on the value of \code{confidence_level} (Davison and Hinkley, 1997).
 If unset, the metric in the \code{optimisation_metric} variable is used.}
 
 \item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
-that are used during evaluation steps. Cannot be less than 20.
+that are used during evaluation steps. Cannot be fewer than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.
@@ -191,6 +192,16 @@ value in a named list with data elements, e.g.
 
 This parameter can be set for the following data elements:
 \code{sample_similarity}, \code{shap}, and \code{ice_data}.}
+
+\item{n_important_features}{(\emph{optional}) Set the number of features that are
+evaluated in evaluation steps. Cannot be 0 or fewer.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("ice_data"=10, "permutation_vimp"=5)}.
+
+This parameter can be set for the following data elements:
+\code{ice_data} and \code{permutation_vimp}.}
 
 \item{detail_level}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.

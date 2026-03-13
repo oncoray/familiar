@@ -51,7 +51,7 @@ setGeneric(
     aggregate_results = waiver(),
     confidence_level = waiver(),
     bootstrap_ci_method = waiver(),
-    n_important_features = 2L,
+    n_important_features = waiver(),
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
@@ -85,7 +85,7 @@ setMethod(
     aggregate_results = waiver(),
     confidence_level = waiver(),
     bootstrap_ci_method = waiver(),
-    n_important_features = 2L,
+    n_important_features = waiver(),
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
@@ -254,6 +254,14 @@ setMethod(
     
     # Test if models are properly loaded
     if (!is_model_loaded(object = object)) ..error_ensemble_models_not_loaded()
+    
+    # Check the number of important features.
+    n_important_features <- .parse_n_important_features(
+      x = n_important_features,
+      object = object,
+      default = 20,
+      data_element = "permutation_vimp"
+    )
     
     # Set features to be shuffled for permutation.
     important_features <- .select_important_features(

@@ -3,6 +3,7 @@
     check_has_estimation_type = FALSE,
     check_has_detail_level = FALSE, 
     check_has_sample_limit = FALSE,
+    check_has_n_important_features = FALSE,
     check_from_prediction_table = FALSE
 ) {
   
@@ -28,13 +29,16 @@
     can_set_estimation_type, "calibration_info", "confusion_matrix",
     "risk_stratification_data", "risk_stratification_info", "shap"
   )
-  
+   
   # Data elements that allow for setting an estimation type but not detail
   # level.
   can_set_estimation_type <- c(can_set_estimation_type, "feature_similarity")
   
   # Data elements that allow for setting a sample limit.
   can_set_sample_limit <- c("sample_similarity", "ice_data", "shap")
+  
+  # Data elements that allow for setting the number of important features.
+  can_set_n_important_features <- c("permutation_vimp", "ice_data")
   
   # Data elements that can be computed from prediction table objects.
   can_use_prediction_table <- c("prediction_data")
@@ -171,8 +175,8 @@
     x,
     object,
     default,
-    data_element) {
-  
+    data_element
+) {
   if (is.waive(x)) x <- object@settings$sample_limit
   
   if (is.null(x)) return(default)
@@ -188,6 +192,34 @@
     x = x,
     var_name = "sample_limit",
     range = c(20L, Inf)
+  )
+  
+  return(x)
+}
+
+
+
+.parse_n_important_features <- function(
+    x,
+    object,
+    default,
+    data_element
+) {
+  if (is.waive(x)) x <- object@settings$n_important_features
+  
+  if (is.null(x)) return(default)
+  
+  # detail level is stored in a list, by data_element.
+  if (is.list(x)) x <- x[[data_element]]
+  
+  if (is.null(x)) return(default)
+  
+  if (x == "default") return(default)
+  
+  .check_number_in_valid_range(
+    x = x,
+    var_name = "n_important_features",
+    range = c(1L, Inf)
   )
   
   return(x)

@@ -363,7 +363,7 @@ computation and extraction of various data elements.}
     \item{\code{message_indent}}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
     \item{\code{sample_limit}}{(\emph{optional}) Set the upper limit of the number of samples
-that are used during evaluation steps. Cannot be less than 20.
+that are used during evaluation steps. Cannot be fewer than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.

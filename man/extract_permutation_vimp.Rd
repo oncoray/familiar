@@ -22,7 +22,7 @@ extract_permutation_vimp(
   aggregate_results = waiver(),
   confidence_level = waiver(),
   bootstrap_ci_method = waiver(),
-  n_important_features = 2L,
+  n_important_features = waiver(),
   is_pre_processed = FALSE,
   message_indent = 0L,
   verbose = FALSE,
@@ -212,6 +212,16 @@ method.
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
+
+\item{n_important_features}{(\emph{optional}) Set the number of features that are
+evaluated in evaluation steps. Cannot be 0 or fewer.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("ice_data"=10, "permutation_vimp"=5)}.
+
+This parameter can be set for the following data elements:
+\code{ice_data} and \code{permutation_vimp}.}
 
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the

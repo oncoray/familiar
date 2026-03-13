@@ -216,6 +216,8 @@
       <evaluation_metric></evaluation_metric>
       <!-- Set maximum number of samples used for evaluation (optional, default: all samples) -->
       <sample_limit></sample_limit>
+      <!-- Set the number of important features that should be evaluated (optional, default: 20) -->
+      <n_important_features></n_important_features>
       <!-- Level at which evaluation steps are computed (optional, default: hybrid) -->
       <detail_level></detail_level>
       <!-- Type of estimate being computed (optional, default: bootstrap_confidence_interval) -->

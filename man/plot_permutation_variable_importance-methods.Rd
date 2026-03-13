@@ -272,6 +272,15 @@ creation of the underlying \code{familiarModel} objects.}
 computation and extraction of various data elements.}
     \item{\code{message_indent}}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
+    \item{\code{n_important_features}}{(\emph{optional}) Set the number of features that are
+evaluated in evaluation steps. Cannot be 0 or fewer.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("ice_data"=10, "permutation_vimp"=5)}.
+
+This parameter can be set for the following data elements:
+\code{ice_data} and \code{permutation_vimp}.}
     \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{
