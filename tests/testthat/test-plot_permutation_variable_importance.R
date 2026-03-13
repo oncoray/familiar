@@ -89,3 +89,15 @@ familiar:::test_plot_ordering(
   outcome_type_available = c("multinomial"),
   debug = debug_flag
 )
+
+# With limiting the number of features
+familiar:::test_plots(
+  plot_function = familiar:::plot_permutation_variable_importance,
+  data_element = "permutation_vimp",
+  test_config = "normal",
+  n_important_features = 2L,
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  estimation_type = "point",
+  debug = debug_flag
+)
+
