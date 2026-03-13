@@ -110,6 +110,10 @@
   normalisation is performed, and warns if the outcome in any batch is 
   significantly different from others.
 
+- The `n_important_features` parameter was introduced to limit the number of 
+  features that are assessed during, e.g., permutation variable importance.
+  By default, this is limited to the 20 most important features.
+
 - The `ensemble` method is now used as `detail_level` for evaluating models if 
   the number of samples assessed for model is 10 or lower. This avoids an issue 
   where the `hybrid` method used as a default in several evaluation steps would
