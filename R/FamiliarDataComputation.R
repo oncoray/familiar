@@ -605,6 +605,7 @@ setMethod(
       ensemble_method = ensemble_method,
       evaluation_times = evaluation_times,
       sample_limit = sample_limit,
+      n_important_features = n_important_features,
       detail_level = detail_level,
       estimation_type = estimation_type,
       aggregate_results = aggregate_results,

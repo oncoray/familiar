@@ -56,6 +56,7 @@ setGeneric(
     ensemble_method = waiver(),
     evaluation_times = waiver(),
     sample_limit = waiver(),
+    n_important_features = waiver(),
     detail_level = waiver(),
     estimation_type = waiver(),
     aggregate_results = waiver(),
@@ -87,6 +88,7 @@ setMethod(
     ensemble_method = waiver(),
     evaluation_times = waiver(),
     sample_limit = waiver(),
+    n_important_features = waiver(),
     detail_level = waiver(),
     estimation_type = waiver(),
     aggregate_results = waiver(),
@@ -212,6 +214,25 @@ setMethod(
     # Test if any model in the ensemble was successfully trained.
     if (!model_is_trained(object = object)) return(NULL)
     
+    important_features <- NULL
+    if (is.null(features)) {
+      # Check the number of important features.
+      n_important_features <- .parse_n_important_features(
+        x = n_important_features,
+        object = object,
+        default = 20,
+        data_element = "ice_data"
+      )
+      
+      # Set features to be assessed using ICE, which are the most important
+      # features.
+      important_features <- .select_important_features(
+        object = object,
+        data = data,
+        n_important_features = n_important_features
+      )
+    }
+    
     # Generate a prototype data element.
     proto_data_element <- new(
       "familiarDataElementIndividualConditionalExpectation",
@@ -232,6 +253,7 @@ setMethod(
       feature_x_range = feature_x_range,
       feature_y_range = feature_y_range,
       sample_limit = sample_limit,
+      important_features = important_features,
       n_sample_points = n_sample_points,
       proto_data_element = proto_data_element,
       is_pre_processed = is_pre_processed,
@@ -268,6 +290,7 @@ setMethod(
     evaluation_times = NULL,
     features = NULL,
     sample_limit,
+    important_features = NULL,
     aggregate_results,
     n_models,
     is_pre_processed = FALSE,
@@ -370,10 +393,10 @@ setMethod(
     }
     
   } else {
-    # Add features as identifier.
+    # Add important features as identifier.
     data_elements <- add_data_element_identifier(
       x = data_elements,
-      feature_x = object@model_features
+      feature_x = important_features
     )
   }
   

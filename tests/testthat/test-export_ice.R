@@ -94,3 +94,23 @@ testthat::test_that("Ranges and features can specified.", {
   testthat::expect_setequal(unique(results$survival[[1]]@data$feature_x_value), c("good", "better"))
   testthat::expect_setequal(unique(results$survival[[1]]@data$feature_y_value), c("round", "square"))
 })
+
+
+# Test that test_export_specific works when specifying n_important_features.
+results <- familiar:::test_export_specific(
+  export_function = familiar:::export_ice_data,
+  outcome_type_available = "continuous",
+  data_element = "ice_data",
+  n_important_features = 2L,
+  sample_limit = 20L,
+  create_novelty_detector = FALSE,
+  debug = debug_flag
+)
+
+testthat::test_that("The number of important features can be set.", {
+  testthat::expect_length(results$continuous, 2L)
+  testthat::expect_setequal(
+    sapply(results$continuous, function(x) (x@identifiers$feature_x)), 
+    c("feature_1", "feature_2b")
+  )
+})

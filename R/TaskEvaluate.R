@@ -396,6 +396,7 @@ setMethod(
       time_max = settings$eval$time_max,
       evaluation_times = settings$eval$eval_times,
       sample_limit = settings$eval$sample_limit,
+      n_important_features = settings$eval$n_important_features,
       detail_level = detail_level,
       estimation_type = settings$eval$estimation_type,
       aggregate_results = settings$eval$aggregate_results,
