@@ -118,6 +118,7 @@ setGeneric(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -164,6 +165,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -217,6 +219,7 @@ setMethod(
         "plot_title" = plot_title,
         "plot_sub_title" = plot_sub_title,
         "caption" = caption,
+        "limit_n_features" = limit_n_features,
         "x_range" = x_range,
         "x_n_breaks" = x_n_breaks,
         "x_breaks" = x_breaks,
@@ -260,6 +263,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -469,7 +473,8 @@ setMethod(
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
       caption = caption,
-      facet_wrap_cols = facet_wrap_cols
+      facet_wrap_cols = facet_wrap_cols,
+      limit_n_features = limit_n_features
     )
 
     # Create plots -------------------------------------------------------------
@@ -535,6 +540,7 @@ setMethod(
         plot_title = plot_title,
         plot_sub_title = plot_sub_title,
         caption = caption,
+        limit_n_features = limit_n_features,
         x_range = x_range,
         x_breaks = x_breaks,
         significance_level_shown = significance_level_shown
@@ -618,6 +624,7 @@ setMethod(
     plot_title,
     plot_sub_title,
     caption,
+    limit_n_features,
     x_range,
     x_breaks,
     significance_level_shown
@@ -642,7 +649,7 @@ setMethod(
 
   # Extract data
   x <- guide_list$data
-
+  browser()
   # Check if cluster information should be shown.
   if (show_cluster) {
     x <- .add_plot_cluster_name(

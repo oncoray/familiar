@@ -18,6 +18,9 @@
 #' @param conf_int_style (*optional*) Confidence interval style. See details for
 #'   allowed styles.
 #' @param conf_int_default Sets the default options for the confidence interval.
+#' @param limit_n_features (*optional*) The number of features that should be
+#'   included in the plot. Only the most important features are shown. By 
+#'   default, the number of features is not limited.
 #' @param facet_wrap_cols (*optional*) Number of columns to generate when facet
 #'   wrapping. If NULL, a facet grid is produced instead.
 #' @param x_label (*optional*) Label to provide to the x-axis. If NULL, no label
@@ -79,6 +82,7 @@
     conf_int_alpha = waiver(),
     conf_int_style = waiver(),
     conf_int_default = c("step", "ribbon", "none"),
+    limit_n_features = waiver(),
     facet_wrap_cols = waiver(),
     x_label = waiver(),
     y_label = waiver(),
@@ -202,7 +206,16 @@
       closed = c(TRUE, FALSE)
     )
   }
-
+  
+  # Limits to number of shown features.
+  if (!is.waive(limit_n_features) && !is.null(limit_n_features)) {
+    .check_number_in_valid_range(
+      x = limit_n_features,
+      var_name = "limit_n_features",
+      range = c(1L, Inf)
+    )
+  }
+  
   # Facet wrap cols
   if (!is.waive(facet_wrap_cols) && !is.null(facet_wrap_cols)) {
     .check_number_in_valid_range(
