@@ -58,3 +58,13 @@ familiar:::test_plot_ordering(
     "color_by" = "learner"),
   debug = debug_flag
 )
+
+
+# With a limit to the number of features shown.
+familiar:::test_plots(
+  plot_function = familiar::plot_univariate_importance,
+  data_element = "univariate_analysis",
+  test_config = "normal",
+  plot_args = list("limit_n_features" = 2L),
+  debug = debug_flag
+)

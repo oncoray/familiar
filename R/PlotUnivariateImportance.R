@@ -548,7 +548,7 @@ setMethod(
 
       # Check empty output
       if (is.null(p)) next
-
+      
       # Draw plot
       if (draw) .draw_plot(plot_or_grob = p)
 
@@ -630,7 +630,7 @@ setMethod(
     significance_level_shown
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  log_value <- NULL
+  log_value <- feature <- NULL
   
   # Create local copy
   x <- data.table::copy(x)
@@ -649,7 +649,22 @@ setMethod(
 
   # Extract data
   x <- guide_list$data
-  browser()
+  
+  # Determine the features that need to be plotted.
+  if (is.numeric(limit_n_features)) {
+    # Find the features with the highest log-p-values, and select these.
+    x_agg <- x[, list("log_value" = max(log_value)), by = c("feature")]
+    
+    # Explicitly select features based on threshold value instead of simply 
+    # selecting the best features: features may have the same value because they
+    # belong to the same cluster.
+    threshold_value <- min(tail(unique(sort(x_agg$log_value)), n = limit_n_features))
+    selected_features <- x_agg[log_value >= threshold_value]$feature
+    
+    # Make slice.
+    x <- x[feature %in% selected_features, ]
+  }
+  
   # Check if cluster information should be shown.
   if (show_cluster) {
     x <- .add_plot_cluster_name(

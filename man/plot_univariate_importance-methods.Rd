@@ -29,6 +29,7 @@ plot_univariate_importance(
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
+  limit_n_features = waiver(),
   x_range = NULL,
   x_n_breaks = 5L,
   x_breaks = NULL,
@@ -64,6 +65,7 @@ plot_univariate_importance(
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
+  limit_n_features = waiver(),
   x_range = NULL,
   x_n_breaks = 5L,
   x_breaks = NULL,
@@ -99,6 +101,7 @@ plot_univariate_importance(
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
+  limit_n_features = waiver(),
   x_range = NULL,
   x_n_breaks = 5L,
   x_breaks = NULL,
@@ -226,6 +229,10 @@ NULL, no subtitle is shown.}
 
 \item{caption}{(\emph{optional}) Label to provide as figure caption. If NULL, no
 caption is shown.}
+
+\item{limit_n_features}{(\emph{optional}) The number of features that should be
+included in the plot. Only the most important features are shown. By
+default, the number of features is not limited.}
 
 \item{x_range}{(\emph{optional}) Value range for the x-axis.}
 
