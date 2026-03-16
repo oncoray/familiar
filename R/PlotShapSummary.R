@@ -111,6 +111,7 @@ setGeneric(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -153,6 +154,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -197,6 +199,7 @@ setMethod(
         "plot_title" = plot_title,
         "plot_sub_title" = plot_sub_title,
         "caption" = caption,
+        "limit_n_features" = limit_n_features,
         "x_range" = x_range,
         "x_n_breaks" = x_n_breaks,
         "x_breaks" = x_breaks,
@@ -238,6 +241,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -407,7 +411,8 @@ setMethod(
       y_label = y_label,
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
-      caption = caption
+      caption = caption,
+      limit_n_features = limit_n_features
     )
     
     # Create plots -------------------------------------------------------------
@@ -477,6 +482,7 @@ setMethod(
         plot_title = plot_title,
         plot_sub_title = plot_sub_title,
         caption = caption,
+        limit_n_features = limit_n_features,
         x_range = x_range,
         x_n_breaks = x_n_breaks,
         x_breaks = x_breaks,
@@ -553,6 +559,7 @@ setMethod(
     plot_title,
     plot_sub_title,
     caption,
+    limit_n_features,
     x_range,
     x_n_breaks,
     x_breaks,
@@ -590,7 +597,21 @@ setMethod(
   
   # Sort features by importance (mean absolute SHAP).
   feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = value_group_columns]
-  feature_importance <- feature_importance[, list("vimp" = max(vimp)), by = "feature_name"][order(vimp)]
+  feature_importance <- feature_importance[, list("vimp" = max(vimp)), by = "feature_name"]
+  
+  # Determine the features that need to be plotted.
+  if (is.numeric(limit_n_features)) {
+    # Explicitly select features based on threshold value instead of simply 
+    # selecting the best features: features may have the same value because they
+    # belong to the same cluster.
+    threshold_value <- min(tail(unique(sort(feature_importance$vimp)), n = limit_n_features))
+    selected_features <- feature_importance[vimp >= threshold_value]$feature_name
+    
+    # Make slice.
+    x <- x[feature_name %in% selected_features, ]
+    feature_importance <- feature_importance[feature_name %in% selected_features, ][order(vimp)]
+  }
+  
   x$feature_name <- factor(
     x = x$feature_name,
     levels = feature_importance$feature_name
