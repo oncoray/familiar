@@ -34,6 +34,16 @@ familiar:::test_plots(
   debug = debug_flag
 )
 
+# Test with single instance
+familiar:::test_plots(
+  plot_function = familiar::plot_shap_waterfall,
+  data_element = "shap",
+  shap_max_iterations = 10L,
+  test_config = "single instance",
+  plot_args = list("limit_n_features" = 2L),
+  debug = debug_flag
+)
+
 # Test plotting for specific samples.
 for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
   data <- familiar:::test_create_good_data(outcome_type = outcome_type)

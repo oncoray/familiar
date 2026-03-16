@@ -68,6 +68,7 @@ setGeneric(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -106,6 +107,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -146,6 +148,7 @@ setMethod(
         "plot_title" = plot_title,
         "plot_sub_title" = plot_sub_title,
         "caption" = caption,
+        "limit_n_features" = limit_n_features,
         "x_range" = x_range,
         "x_n_breaks" = x_n_breaks,
         "x_breaks" = x_breaks,
@@ -183,6 +186,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -288,7 +292,8 @@ setMethod(
       y_label = y_label,
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
-      caption = caption
+      caption = caption,
+      limit_n_features = limit_n_features
     )
     
     # Create plots -------------------------------------------------------------
@@ -354,6 +359,7 @@ setMethod(
         plot_title = plot_title,
         plot_sub_title = plot_sub_title,
         caption = caption,
+        limit_n_features = limit_n_features,
         x_range = x_range,
         x_n_breaks = x_n_breaks,
         x_breaks = x_breaks
@@ -424,6 +430,7 @@ setMethod(
     plot_title,
     plot_sub_title,
     caption,
+    limit_n_features,
     x_range,
     x_n_breaks,
     x_breaks
@@ -435,11 +442,57 @@ setMethod(
   # Sort features by importance (mean absolute SHAP).
   feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = c(facet_by, "feature_name")]
   feature_importance <- feature_importance[, list("vimp" = max(vimp)), by = "feature_name"][order(vimp)]
-  x$feature_name <- factor(
-    x = x$feature_name,
-    levels = feature_importance$feature_name
-  )
-  x[, "y" := as.numeric(feature_name)]
+  
+  # Determine the features that need to be plotted.
+  if (is.numeric(limit_n_features)) {
+    browser()
+    # Explicitly select features based on threshold value instead of simply 
+    # selecting the best features: features may have the same value because they
+    # belong to the same cluster.
+    threshold_value <- min(tail(unique(sort(feature_importance$vimp)), n = limit_n_features))
+    selected_features <- feature_importance[vimp >= threshold_value]$feature_name
+    
+    # Determine contribution of features that were not selected (if any)
+    not_selected_features <- setdiff(feature_importance$feature_name, selected_features)
+    
+    if (!is_empty(not_selected_features)) {
+      x_template <- data.table::copy(x[feature_name == not_selected_features[1L]])
+      x_template[, "feature_name" := "other"]
+      x_template[, "feature_value" := NA_real_]
+      x_template[, "feature_label" := NA_character_]
+      x_template[, "shap_value" := NULL]
+      
+      other_shap_value <- x[
+        feature_name %in% not_selected_features,
+        list(
+          "feature_name" = "other",
+          "shap_value" = sum(shap_value)
+        ),
+        by = facet_by
+      ]
+      
+    } else {
+      # All features were selected: use default procedure.
+      x$feature_name <- factor(
+        x = x$feature_name,
+        levels = feature_importance$feature_name
+      )
+      x[, "y" := as.numeric(feature_name)]
+    }
+    
+    # Make slice.
+    x <- x[feature_name %in% selected_features, ]
+    feature_importance <- feature_importance[feature_name %in% selected_features, ][order(vimp)]
+    
+  } else {
+    # Default procedure without selection.
+    x$feature_name <- factor(
+      x = x$feature_name,
+      levels = feature_importance$feature_name
+    )
+    x[, "y" := as.numeric(feature_name)]
+  }
+  
   
   y_label_table <- unique(x[, mget(c("feature_name", "feature_value", "feature_label", "y"))])
   y_label_table[, "feature_name_value" := ..set_shap_waterfall_feature_name_value(feature_name, feature_value, feature_label)]

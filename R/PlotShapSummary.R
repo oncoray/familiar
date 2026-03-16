@@ -597,7 +597,7 @@ setMethod(
   
   # Sort features by importance (mean absolute SHAP).
   feature_importance <- x[, list("vimp" = mean(abs(shap_value))), by = value_group_columns]
-  feature_importance <- feature_importance[, list("vimp" = max(vimp)), by = "feature_name"]
+  feature_importance <- feature_importance[, list("vimp" = max(vimp)), by = "feature_name"][order(vimp)]
   
   # Determine the features that need to be plotted.
   if (is.numeric(limit_n_features)) {
