@@ -209,6 +209,10 @@
   
   # Limits to number of shown features.
   if (!is.waive(limit_n_features) && !is.null(limit_n_features)) {
+    .check_is_integerish(
+      x = limit_n_features,
+      var_name = "limit_n_features"
+    )
     .check_number_in_valid_range(
       x = limit_n_features,
       var_name = "limit_n_features",

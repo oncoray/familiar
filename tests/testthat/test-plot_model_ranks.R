@@ -63,3 +63,13 @@ familiar:::test_plot_ordering(
     "color_by" = c("vimp_method")),
   debug = debug_flag
 )
+
+
+# With a limit to the number of features shown.
+familiar:::test_plots(
+  plot_function = familiar::plot_model_signature_variable_importance,
+  data_element = "model_vimp",
+  test_config = "normal",
+  plot_args = list("limit_n_features" = 2L),
+  debug = debug_flag
+)

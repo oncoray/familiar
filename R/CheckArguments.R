@@ -91,6 +91,42 @@
 
 
 
+.check_is_integer <- function(
+    x,
+    var_name,
+    call = rlang::caller_env()
+) {
+  if (!is.integer(x)) {
+    ..error_type_not_valid(
+      x = x,
+      var_name = var_name,
+      valid_type = "integer",
+      call = call
+    )
+  }
+}
+
+
+
+.check_is_integerish <- function(
+    x,
+    var_name,
+    call = rlang::caller_env()
+) {
+  # Less strict than .check_is_integer, i.e. the check would return pass for
+  # 2.0, but fail for 2.5 or anything not numeric.
+  if (!rlang::is_integerish(x)) {
+    ..error_type_not_valid(
+      x = x,
+      var_name = var_name,
+      valid_type = "integer or numeric castable to integer (e.g. 3.0)",
+      call = call
+    )
+  }
+}
+
+
+
 .check_number_in_valid_range <- function(
     x,
     var_name,

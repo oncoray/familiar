@@ -93,6 +93,7 @@ setGeneric(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     y_range = NULL,
     y_n_breaks = 5L,
     y_breaks = NULL,
@@ -140,6 +141,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     y_range = NULL,
     y_n_breaks = 5L,
     y_breaks = NULL,
@@ -203,6 +205,7 @@ setMethod(
           "plot_title" = plot_title,
           "plot_sub_title" = plot_sub_title,
           "caption" = caption,
+          "limit_n_features" = limit_n_features,
           "y_range" = y_range,
           "y_n_breaks" = y_n_breaks,
           "y_breaks" = y_breaks,
@@ -251,6 +254,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     y_range = NULL,
     y_n_breaks = 5L,
     y_breaks = NULL,
@@ -289,6 +293,7 @@ setMethod(
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
       caption = caption,
+      limit_n_features = limit_n_features,
       y_range = y_range,
       y_n_breaks = y_n_breaks,
       y_breaks = y_breaks,
@@ -386,6 +391,7 @@ plot_model_signature_variable_importance <- function(...) {
     plot_title,
     plot_sub_title,
     caption,
+    limit_n_features,
     y_range,
     y_n_breaks,
     y_breaks,
@@ -567,7 +573,8 @@ plot_model_signature_variable_importance <- function(...) {
     rotate_x_tick_labels = rotate_x_tick_labels,
     facet_wrap_cols = facet_wrap_cols,
     y_range = y_range,
-    y_breaks = y_breaks
+    y_breaks = y_breaks,
+    limit_n_features = limit_n_features
   )
 
   # Create plots ---------------------------------------------------------------
@@ -661,6 +668,7 @@ plot_model_signature_variable_importance <- function(...) {
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
       caption = caption,
+      limit_n_features = limit_n_features,
       y_range = y_range,
       y_breaks = y_breaks
     )
@@ -736,17 +744,33 @@ plot_model_signature_variable_importance <- function(...) {
     plot_title,
     plot_sub_title,
     caption,
+    limit_n_features,
     y_range,
     y_breaks
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  rank <- NULL
+  rank <- feature <- NULL
 
   # Create a local copy of x prior to making changes based on plot_data
   x <- data.table::copy(x)
+  
+  if (is.numeric(limit_n_features)) {
+    # Find the features with the lowest rank, and select these.
+    x_agg <- x[, list("rank" = min(rank)), by = c("feature")]
+    
+    # Explicitly select features based on threshold value instead of simply 
+    # selecting the best features: features may have the same value because they
+    # belong to the same cluster.
+    threshold_value <- max(head(unique(sort(x_agg$rank)), n = limit_n_features))
+    selected_features <- x_agg[rank <= threshold_value]$feature
+    
+    # Make slice.
+    x <- x[feature %in% selected_features, ]
+  }
+  
+  # We need to remove categories related to features that are no longer
+  # relevant.
   x$feature <- droplevels(x$feature)
-
-  # Order by ascending rank.
   x <- x[order(rank)]
 
   # Update the ordering of features so that the features are ordered by
