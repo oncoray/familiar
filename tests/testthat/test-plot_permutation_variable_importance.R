@@ -90,7 +90,7 @@ familiar:::test_plot_ordering(
   debug = debug_flag
 )
 
-# With limiting the number of features
+# With limiting the number of features during calculation.
 familiar:::test_plots(
   plot_function = familiar:::plot_permutation_variable_importance,
   data_element = "permutation_vimp",
@@ -101,3 +101,12 @@ familiar:::test_plots(
   debug = debug_flag
 )
 
+# With limiting the number of features during plotting.
+familiar:::test_plots(
+  plot_function = familiar::plot_permutation_variable_importance,
+  data_element = "permutation_vimp",
+  test_config = "normal",
+  plot_args = list("limit_n_features" = 2L),
+  estimation_type = "point",
+  debug = debug_flag
+)

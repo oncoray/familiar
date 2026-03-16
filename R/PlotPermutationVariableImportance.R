@@ -103,6 +103,7 @@ setGeneric(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -142,6 +143,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -183,6 +185,7 @@ setMethod(
         "plot_title" = plot_title,
         "plot_sub_title" = plot_sub_title,
         "caption" = caption,
+        "limit_n_features" = limit_n_features,
         "x_range" = x_range,
         "x_n_breaks" = x_n_breaks,
         "x_breaks" = x_breaks,
@@ -221,6 +224,7 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
+    limit_n_features = waiver(),
     x_range = NULL,
     x_n_breaks = 5L,
     x_breaks = NULL,
@@ -605,7 +609,8 @@ setMethod(
       facet_wrap_cols = facet_wrap_cols,
       conf_int_alpha = conf_int_alpha,
       conf_int_style = conf_int_style,
-      conf_int_default = c("point_line", "line", "bar_line", "none")
+      conf_int_default = c("point_line", "line", "bar_line", "none"),
+      limit_n_features = limit_n_features
     )
 
     # Create plots -------------------------------------------------------------
@@ -670,6 +675,7 @@ setMethod(
         plot_title = plot_title,
         plot_sub_title = plot_sub_title,
         caption = caption,
+        limit_n_features = limit_n_features,
         conf_int_alpha = conf_int_alpha,
         conf_int_style = conf_int_style,
         x_range = x_range,
@@ -750,6 +756,7 @@ setMethod(
     plot_title,
     plot_sub_title,
     caption,
+    limit_n_features,
     conf_int_style,
     conf_int_alpha,
     x_range,
@@ -834,7 +841,12 @@ setMethod(
       }
     }
   }
-
+  
+  # Limit the number of features appearing in the plot.
+  if (is.numeric(limit_n_features)) {
+    x <- x[order_id <= limit_n_features]
+  }
+  
   # Order features by order_id
   x$feature <- factor(
     x = x$feature,

@@ -17,6 +17,7 @@
   plot_title,
   plot_sub_title,
   caption,
+  limit_n_features,
   conf_int_style,
   conf_int_alpha,
   x_range,
@@ -68,6 +69,10 @@ NULL, no subtitle is shown.}
 
 \item{caption}{(\emph{optional}) Label to provide as figure caption. If NULL, no
 caption is shown.}
+
+\item{limit_n_features}{(\emph{optional}) The number of features that should be
+included in the plot. Only the most important features are shown. By
+default, the number of features is not limited.}
 
 \item{conf_int_style}{(\emph{optional}) Confidence interval style. See details for
 allowed styles.}
