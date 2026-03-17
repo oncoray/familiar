@@ -34,7 +34,7 @@ familiar:::test_plots(
   debug = debug_flag
 )
 
-# Test with single instance
+# Test with single instance and limit to the number of features.
 familiar:::test_plots(
   plot_function = familiar::plot_shap_waterfall,
   data_element = "shap",

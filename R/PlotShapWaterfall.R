@@ -445,7 +445,7 @@ setMethod(
   
   # Determine the features that need to be plotted.
   if (is.numeric(limit_n_features)) {
-    browser()
+
     # Explicitly select features based on threshold value instead of simply 
     # selecting the best features: features may have the same value because they
     # belong to the same cluster.
@@ -456,6 +456,8 @@ setMethod(
     not_selected_features <- setdiff(feature_importance$feature_name, selected_features)
     
     if (!is_empty(not_selected_features)) {
+      # Use a template to prevent having to manually fill out columns that are
+      # not updated.
       x_template <- data.table::copy(x[feature_name == not_selected_features[1L]])
       x_template[, "feature_name" := "other"]
       x_template[, "feature_value" := NA_real_]
@@ -471,18 +473,29 @@ setMethod(
         by = facet_by
       ]
       
+      x_template <- merge(
+        x = x_template,
+        y = other_shap_value,
+        by = c("feature_name", facet_by)
+      )
+      
+      x <- x[feature_name %in% selected_features, ]
+      x <- data.table::rbindlist(list(x, x_template), use.names = TRUE)
+      
+      feature_importance <- feature_importance[vimp >= threshold_value][order(vimp)]
+
+      x$feature_name <- factor(
+        x = x$feature_name,
+        levels = c("other", as.character(feature_importance$feature_name))
+      )
+      
     } else {
       # All features were selected: use default procedure.
       x$feature_name <- factor(
         x = x$feature_name,
         levels = feature_importance$feature_name
       )
-      x[, "y" := as.numeric(feature_name)]
     }
-    
-    # Make slice.
-    x <- x[feature_name %in% selected_features, ]
-    feature_importance <- feature_importance[feature_name %in% selected_features, ][order(vimp)]
     
   } else {
     # Default procedure without selection.
@@ -490,9 +503,10 @@ setMethod(
       x = x$feature_name,
       levels = feature_importance$feature_name
     )
-    x[, "y" := as.numeric(feature_name)]
   }
   
+  # Add y (for positioning).
+  x[, "y" := as.numeric(feature_name)]
   
   y_label_table <- unique(x[, mget(c("feature_name", "feature_value", "feature_label", "y"))])
   y_label_table[, "feature_name_value" := ..set_shap_waterfall_feature_name_value(feature_name, feature_value, feature_label)]
@@ -737,8 +751,10 @@ setMethod(
 ) {
   actual_label <- feature_label
   actual_label[is.na(feature_label)] <- signif(feature_value[is.na(feature_label)], 3L)
+  actual_label[!is.na(actual_label)] <- paste0(": ", actual_label[!is.na(feature_label)])
+  actual_label[is.na(actual_label)] <- ""
   
-  return(paste0(feature_name, ": ", actual_label))
+  return(paste0(feature_name, actual_label))
 }
 
 
