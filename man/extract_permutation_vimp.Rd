@@ -221,7 +221,7 @@ value in a named list with data elements, e.g.
 \code{list("ice_data"=10, "permutation_vimp"=5)}.
 
 This parameter can be set for the following data elements:
-\code{ice_data} and \code{permutation_vimp}.}
+\code{ice_data}, \code{permutation_vimp}, and \code{shap}.}
 
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the

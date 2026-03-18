@@ -18,6 +18,7 @@ extract_shap(
   sample_limit = waiver(),
   detail_level = waiver(),
   aggregate_results = waiver(),
+  n_important_features = waiver(),
   is_pre_processed = FALSE,
   message_indent = 0L,
   verbose = FALSE,
@@ -142,6 +143,16 @@ As with \code{detail_level} and \code{estimation_type}, a non-default
 by providing a parameter value in a named list with data elements, e.g.
 \code{list("auc_data"=TRUE, , "model_performance"=FALSE)}. This parameter exists
 for the same elements as \code{estimation_type}.}
+
+\item{n_important_features}{(\emph{optional}) Set the number of features that are
+evaluated in evaluation steps. Cannot be 0 or fewer.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("ice_data"=10, "permutation_vimp"=5)}.
+
+This parameter can be set for the following data elements:
+\code{ice_data}, \code{permutation_vimp}, and \code{shap}.}
 
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the

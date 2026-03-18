@@ -855,7 +855,7 @@ value in a named list with data elements, e.g.
 \code{list("ice_data"=10, "permutation_vimp"=5)}.
 
 This parameter can be set for the following data elements:
-\code{ice_data} and \code{permutation_vimp}.}
+\code{ice_data}, \code{permutation_vimp}, and \code{shap}.}
     \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{

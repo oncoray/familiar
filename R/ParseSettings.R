@@ -3506,7 +3506,7 @@
 #'  `list("ice_data"=10, "permutation_vimp"=5)`.
 #'
 #'  This parameter can be set for the following data elements:
-#'  `ice_data` and `permutation_vimp`.
+#'  `ice_data`, `permutation_vimp`, and `shap`.
 #'  
 #' @param detail_level (*optional*) Sets the level at which results are computed
 #'  and aggregated.

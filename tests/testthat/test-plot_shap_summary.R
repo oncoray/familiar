@@ -25,6 +25,17 @@ familiar:::test_plots(
   debug = debug_flag
 )
 
+# With a limit to the number of features for which SHAP values are computed.
+familiar:::test_plots(
+  plot_function = familiar::plot_shap_summary,
+  data_element = "shap",
+  shap_max_iterations = 10L,
+  test_config = "normal",
+  n_important_features = 2L,
+  plot_args = list("limit_n_features" = 2L),
+  debug = debug_flag
+)
+
 # With a limit to the number of features shown.
 familiar:::test_plots(
   plot_function = familiar::plot_shap_summary,

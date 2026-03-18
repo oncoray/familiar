@@ -631,6 +631,7 @@ setMethod(
       sample_limit = sample_limit,
       detail_level = detail_level,
       aggregate_results = aggregate_results,
+      n_important_features = n_important_features,
       is_pre_processed = is_pre_processed,
       verbose = verbose,
       message_indent = message_indent,

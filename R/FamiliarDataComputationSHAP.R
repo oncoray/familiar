@@ -100,6 +100,7 @@ setGeneric(
     sample_limit = waiver(),
     detail_level = waiver(),
     aggregate_results = waiver(),
+    n_important_features = waiver(),
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
@@ -129,6 +130,7 @@ setMethod(
     sample_limit = waiver(),
     detail_level = waiver(),
     aggregate_results = waiver(),
+    n_important_features = waiver(),
     is_pre_processed = FALSE,
     message_indent = 0L,
     verbose = FALSE,
@@ -286,6 +288,21 @@ setMethod(
     # Test if any model in the ensemble was successfully trained.
     if (!model_is_trained(object = object)) return(NULL)
     
+    # Check the number of important features.
+    n_important_features <- .parse_n_important_features(
+      x = n_important_features,
+      object = object,
+      default = 20,
+      data_element = "shap"
+    )
+    
+    # Set features to be assessed using SHAP.
+    important_features <- .select_important_features(
+      object = object,
+      data = data,
+      n_important_features = n_important_features
+    )
+    
     # Get and process the input data. Since we define SHAP values using the
     # features in their original scales, we need to apply only minimal
     # pre-processing.
@@ -321,6 +338,7 @@ setMethod(
       n_max_iter = shap_max_iterations,
       phi_0 = shap_phi_0,
       proto_data_element = proto_data_element,
+      important_features = important_features,
       is_pre_processed = is_pre_processed,
       ensemble_method = ensemble_method,
       evaluation_times = evaluation_times,
@@ -350,6 +368,7 @@ setMethod(
     object,
     data = NULL,
     proto_data_element,
+    important_features,
     evaluation_times = NULL,
     features = NULL,
     n_sample_points,
@@ -405,7 +424,7 @@ setMethod(
   shap_value <- NULL
   
   # Check that the model requires any features.
-  if (is_empty(object@model_features)) return(NULL)
+  if (is_empty(important_features)) return(NULL)
   
   # Get set of feature values.
   feature_set <- .get_shap_feature_set(

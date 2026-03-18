@@ -38,7 +38,7 @@
   can_set_sample_limit <- c("sample_similarity", "ice_data", "shap")
   
   # Data elements that allow for setting the number of important features.
-  can_set_n_important_features <- c("permutation_vimp", "ice_data")
+  can_set_n_important_features <- c("permutation_vimp", "ice_data", "shap")
   
   # Data elements that can be computed from prediction table objects.
   can_use_prediction_table <- c("prediction_data")
