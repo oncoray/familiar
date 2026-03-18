@@ -45,6 +45,18 @@ testthat::test_that(
 )
 
 
+# With setting the number of important features to 2.
+results <- familiar:::test_export_specific(
+  export_function = familiar:::export_permutation_vimp,
+  data_element = "permutation_vimp",
+  outcome_type_available = "continuous",
+  n_important_features = 2L,
+  n_models = 3L,
+  create_novelty_detector = FALSE,
+  debug = debug_flag
+)
+
+
 # With setting the number of important features to 1.
 results <- familiar:::test_export_specific(
   export_function = familiar:::export_permutation_vimp,

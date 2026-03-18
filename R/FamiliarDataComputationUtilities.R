@@ -251,6 +251,11 @@
     vimp_rank_threshold <- object@vimp_rank_threshold
   }
   
+  # Flatten lists, if necessary.
+  if (rlang::is_bare_list(vimp_table)) {
+    vimp_table <- unlist(vimp_table)
+  }
+  
   # Determine which features are pre-assigned to the signature.
   signature_features <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
   
