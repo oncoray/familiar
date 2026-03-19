@@ -32,7 +32,6 @@ familiar:::test_plots(
   shap_max_iterations = 10L,
   test_config = "normal",
   n_important_features = 2L,
-  plot_args = list("limit_n_features" = 2L),
   debug = debug_flag
 )
 

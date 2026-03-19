@@ -422,7 +422,7 @@ setMethod(
   # This allows for faster convergence.
   
   shap_value <- NULL
-  
+  browser()
   # Check that the model requires any features.
   if (is_empty(important_features)) return(NULL)
   
@@ -484,17 +484,17 @@ setMethod(
     
     # Generate coalitions (Z)
     input_coalitions <- .get_shap_coalitions(
-      feature_set = feature_set,
+      important_features = important_features,
       depth = 1L
     )
-    
+    browser()
     # Check that coalitions are not empty: this happens if the data contains a
     # single feature: SHAP values cannot be computed.
     if (is.null(input_coalitions)) return(NULL)
     
     # Compute weights for each coalition in a coalition set.
     kernel_weights <- .compute_shap_kernel_weights(
-      n = ncol(mapping_input),
+      n = ncol(input_coalitions),
       individual_coalition = TRUE
     )
     
@@ -510,6 +510,7 @@ setMethod(
     while (!all_shap_converged && iter_id < n_max_iter) {
       # Determine additional mapping.
       mapping_iter <- .shap_randomise_mapping_from_coalition(
+        important_features = important_features,
         samples = mapping_input,
         coalitions = coalitions,
         feature_set = feature_set,
@@ -533,8 +534,7 @@ setMethod(
       
       # Compute and update A and b matrices.
       shap_matrices <- .compute_shap_matrices(
-        # matrices = shap_matrices,
-        matrices = NULL,
+        important_features = important_features,
         samples = mapping_input,
         sample_predictions = predicted_values_input,
         sample_id = sample_identifiers,
@@ -580,7 +580,7 @@ setMethod(
       iter_id <- iter_id + 1L
     }
   }
-  
+  browser()
   # Compute final SHAP values.
   shap_values <- shap_values[
     ,
@@ -750,7 +750,7 @@ setMethod(
 
 
 .get_shap_coalitions <- function(
-    feature_set,
+    important_features,
     depth = 1L
 ) {
   # Get initial set of coalitions. Antithetic coalitions are created within
@@ -764,7 +764,7 @@ setMethod(
   }
 
   # Set number of features.
-  n_features <- length(feature_set)
+  n_features <- length(important_features)
   
   # Check that depth is at most n_features - 1L.
   if (depth >= n_features) depth <- n_features - 1L
@@ -786,7 +786,7 @@ setMethod(
   
   # To matrix. Data are stored row-wise.
   z <- matrix(unlist(z), ncol = n_features, byrow = TRUE)
-  colnames(z) <- names(feature_set)
+  colnames(z) <- important_features
   
   return(z)
 }
@@ -972,16 +972,17 @@ setMethod(
 
 
 .shap_randomise_mapping_from_coalition <- function(
-  samples,
-  coalitions,
-  feature_set,
-  seed,
-  n_min_mappings = 300L,
-  mapping_method = "fixed"
+    important_features,
+    samples,
+    coalitions,
+    feature_set,
+    seed,
+    n_min_mappings = 300L,
+    mapping_method = "fixed"
 ) {
   # Determine the number of feature values for each value.
   n_feature_values <- lengths(feature_set)
-  
+  browser()
   # Start random stream
   rstream_object <- .start_random_number_stream(seed)
   
@@ -996,13 +997,13 @@ setMethod(
     if (mapping_method == "fixed") {
       # Generate a random number for each feature and each sample and coalition
       # set.
-      n_random <- nrow(samples) * length(coalitions) * length(feature_set)
+      n_random <- nrow(samples) * length(coalitions) * length(important_features)
       
     } else if (mapping_method == "random") {
       # Generate a random number for each feature and each sample and each
       # single coalition. Due to antithetic sampling, the number of coalitions
       # is doubled.
-      n_random <- nrow(samples) * 2L * sum(sapply(coalitions, nrow)) * length(feature_set)
+      n_random <- nrow(samples) * 2L * sum(sapply(coalitions, nrow)) * length(important_features)
       
     } else {
       ..error_reached_unreachable_code(paste0("unknown mapping_method: ", mapping_method))
@@ -1211,7 +1212,7 @@ setMethod(
 
 
 .compute_shap_matrices <- function(
-  matrices = NULL,
+  important_features,
   samples,
   sample_predictions,
   sample_id,
@@ -1223,6 +1224,10 @@ setMethod(
   # Replace NA in samples and mapping.
   samples[is.na(samples)] <- 0L
   mapping[is.na(mapping)] <- 0L
+  browser()
+  # Select only important features.
+  samples <- samples[, important_features, drop = FALSE]
+  mapping <- mapping[, important_features, drop = FALSE]
   
   # Compute A and b matrices for each sample.
   new_matrices <- mapply(
