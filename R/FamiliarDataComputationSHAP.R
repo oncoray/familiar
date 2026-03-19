@@ -422,7 +422,7 @@ setMethod(
   # This allows for faster convergence.
   
   shap_value <- NULL
-  browser()
+
   # Check that the model requires any features.
   if (is_empty(important_features)) return(NULL)
   
@@ -478,7 +478,7 @@ setMethod(
       predicted_values = predicted_values_input,
       phi_0 = phi_0
     )
-    
+    browser()
   } else {
     # Multiple features (kernel) -----------------------------------------------
     
@@ -487,7 +487,7 @@ setMethod(
       important_features = important_features,
       depth = 1L
     )
-    browser()
+    
     # Check that coalitions are not empty: this happens if the data contains a
     # single feature: SHAP values cannot be computed.
     if (is.null(input_coalitions)) return(NULL)
@@ -517,7 +517,7 @@ setMethod(
         seed = iter_id,
         mapping_method = mapping_method
       )
-      
+      browser()
       # Predict from new unique mappings.
       predicted_values_iter <- .predict_from_coalition(
         mapping = mapping_iter,
@@ -982,7 +982,7 @@ setMethod(
 ) {
   # Determine the number of feature values for each value.
   n_feature_values <- lengths(feature_set)
-  browser()
+
   # Start random stream
   rstream_object <- .start_random_number_stream(seed)
   
@@ -1028,7 +1028,7 @@ setMethod(
     mapping <- c(mapping, random_mapping)
     n_mappings <- n_mappings + sum(sapply(random_mapping, nrow))
   }
-  
+  browser()
   # Concatenate by rows.
   mapping <- do.call(rbind, mapping)
 
@@ -1043,7 +1043,6 @@ setMethod(
   n_feature_values,
   mapping_method
 ) {
-  
   # Split random values.
   if (length(coalitions) == 1L) {
     x_random <- list(x_random)
@@ -1056,7 +1055,10 @@ setMethod(
     } else if (mapping_method == "random") {
       # Due to antithetic sampling, the number of coalitions is doubled.
       n_coalitions_in_bag <- 2L * sapply(coalitions, nrow)
-      x_random <- split(x_random, rep(seq_along(coalitions), n_coalitions_in_bag * length(n_feature_values)))
+      x_random <- split(
+        x_random, 
+        rep(seq_along(coalitions), n_coalitions_in_bag * length(n_feature_values))
+      )
     }
   }
   
@@ -1073,7 +1075,7 @@ setMethod(
     USE.NAMES = FALSE,
     SIMPLIFY = FALSE
   )
-  
+  browser()
   return(do.call(rbind, mapping))
 }
 
@@ -1097,9 +1099,13 @@ setMethod(
     
     return(available_feature_values[x_indices])
   }
-  
+  browser()
   # Generate antithetic coalitions from input.
   coalitions <- rbind(coalitions, !coalitions)
+  
+  # Get important features.
+  important_features <- colnames(coalitions)
+  unimportant_features <- setdiff(names(n_feature_values), important_features)
   
   # The mapping method determines how values are drawn.
   #
@@ -1110,10 +1116,10 @@ setMethod(
   
   mapping <- list()
   if (mapping_method == "fixed") {
-    for (ii in seq_along(n_feature_values)) {
+    for (ii in seq_along(important_features)) {
       # Determine eligible features from in-coalition (on) and off-coalition
       # (off) features.
-      feature <- names(n_feature_values)[ii]
+      feature <- important_features[ii]
       on_feature_set <- unname(x[feature])
       off_feature_set <- seq_len(n_feature_values[feature])[-on_feature_set]
       
@@ -1135,6 +1141,12 @@ setMethod(
       # Add features to mapping.
       mapping[[feature]] <- feature_set[lookup_vector]
     }
+    
+    for (ii in seq_along(unimportant_features)) {
+      # Unimportant features are simply repeated without coalition.
+      feature <- unimportant_features[ii]
+      mapping[[feature]] <- rep(unname(x[feature]), nrow(coalitions))
+    }
       
   } else if (mapping_method == "random") {
     # Determine the number of feature values to samples for off-coalition
@@ -1143,10 +1155,10 @@ setMethod(
     n_to_draw <- colSums(!coalitions)
     jj <- 0L
     
-    for (ii in seq_along(n_feature_values)) {
+    for (ii in seq_along(important_features)) {
       # Determine eligible features from in-coalition (on) and off-coalition
       # (off) features.
-      feature <- names(n_feature_values)[ii]
+      feature <- important_features[ii]
       on_feature_set <- unname(x[feature])
       off_feature_set <- seq_len(n_feature_values[feature])[-on_feature_set]
       
@@ -1175,15 +1187,24 @@ setMethod(
       
       # Add features to mapping.
       mapping[[feature]] <- feature_set[lookup_vector]
-    } 
+    }
+    
+    for (ii in seq_along(unimportant_features)) {
+      # Unimportant features are simply repeated without coalition.
+      feature <- unimportant_features[ii]
+      mapping[[feature]] <- rep(unname(x[feature]), nrow(coalitions))
+    }
     
   } else {
     ..error_reached_unreachable_code(paste0("unknown mapping_method: ", mapping_method))
   }
   
-  # Convert to matrix. Mapping consists of columns, and the matrix is sorted
-  # this way.
-  mapping <- matrix(unlist(mapping), ncol = length(n_feature_values))
+  # Convert to matrix. Mapping consists of columns (that are first ordered
+  # correctly before being flattened), and the matrix is then filled by column.
+  mapping <- matrix(
+    unlist(mapping[names(n_feature_values)]),
+    ncol = length(n_feature_values)
+  )
   colnames(mapping) <- names(n_feature_values)
   
   return(mapping)
