@@ -1028,10 +1028,13 @@ setMethod(
     mapping <- c(mapping, random_mapping)
     n_mappings <- n_mappings + sum(sapply(random_mapping, nrow))
   }
-  browser()
+  
   # Concatenate by rows.
   mapping <- do.call(rbind, mapping)
 
+  # Remove duplicates.
+  mapping <- unique(mapping)
+  
   return(mapping)
 }
 
@@ -1075,7 +1078,7 @@ setMethod(
     USE.NAMES = FALSE,
     SIMPLIFY = FALSE
   )
-  browser()
+  
   return(do.call(rbind, mapping))
 }
 
@@ -1099,7 +1102,7 @@ setMethod(
     
     return(available_feature_values[x_indices])
   }
-  browser()
+  
   # Generate antithetic coalitions from input.
   coalitions <- rbind(coalitions, !coalitions)
   
