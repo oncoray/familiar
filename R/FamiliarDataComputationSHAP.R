@@ -533,7 +533,8 @@ setMethod(
       
       # Compute and update A and b matrices.
       shap_matrices <- .compute_shap_matrices(
-        matrices = shap_matrices,
+        # matrices = shap_matrices,
+        matrices = NULL,
         samples = mapping_input,
         sample_predictions = predicted_values_input,
         sample_id = sample_identifiers,
@@ -1219,9 +1220,6 @@ setMethod(
   phi_0,
   kernel_weights
 ) {
-  # We follow the recipe by Covert and Lee (2021), which means that we update
-  # the A and b matrices each iteration.
-  
   # Replace NA in samples and mapping.
   samples[is.na(samples)] <- 0L
   mapping[is.na(mapping)] <- 0L
@@ -1242,27 +1240,29 @@ setMethod(
     USE.NAMES = FALSE
   )
   
-  # Update full matrix.
-  if (is.null(matrices)) {
-    matrices <- new_matrices
-    names(matrices) <- sample_id
-    matrices <- lapply(
-      matrices,
-      function(x) {
-        x$n_iter <- 1L
-        return(x)
-      }
-    )
-    
-  } else {
-    matrices <- mapply(
-      FUN = .update_shap_matrices,
-      old = matrices,
-      new = new_matrices,
-      SIMPLIFY = FALSE,
-      USE.NAMES = FALSE
-    )
-  }
+  # Update full matrix. THIS IS CURRENTLY NOT USED.
+  # We follow the recipe by Covert and Lee (2021), which means that we update
+  # the A and b matrices each iteration.
+  # if (is.null(matrices)) {
+  #   matrices <- new_matrices
+  #   names(matrices) <- sample_id
+  #   matrices <- lapply(
+  #     matrices,
+  #     function(x) {
+  #       x$n_iter <- 1L
+  #       return(x)
+  #     }
+  #   )
+  #   
+  # } else {
+  #   matrices <- mapply(
+  #     FUN = .update_shap_matrices,
+  #     old = matrices,
+  #     new = new_matrices,
+  #     SIMPLIFY = FALSE,
+  #     USE.NAMES = FALSE
+  #   )
+  # }
   
   # Return both the full and temporary matrices.
   return(new_matrices)
