@@ -551,7 +551,7 @@ setMethod(
       if (!is.null(proto_data_element@identifiers$evaluation_time)) {
         message_str <- c(
           message_str,
-          "at time ", proto_data_element@identifiers$evaluation_time, "."
+          " at time ", proto_data_element@identifiers$evaluation_time, "."
         )
         
       } else {
@@ -559,7 +559,7 @@ setMethod(
       }
       
       logger_message(
-        paste0(message_str),
+        paste0(message_str, collapse = ""),
         indent = message_indent,
         verbose = verbose
       )
