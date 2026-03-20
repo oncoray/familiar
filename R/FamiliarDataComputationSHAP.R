@@ -493,65 +493,47 @@ setMethod(
     # single feature: SHAP values cannot be computed.
     if (is.null(input_coalitions)) return(NULL)
     
+    # Provide the initial set of coalitions.
+    coalitions <- list(input_coalitions)
+    
     # Compute weights for each coalition in a coalition set.
     kernel_weights <- .compute_shap_kernel_weights(
       n = ncol(input_coalitions),
       individual_coalition = TRUE
     )
     
-    # Provide the initial set of coalitions.
-    coalitions <- list(input_coalitions)
-    
     # Looping variables.
-    iter_id <- 1L
+    iter_id <- 0L
     all_shap_converged <- FALSE
     shap_values <- NULL
     shap_matrices <- NULL
+    n_parallel <- max(c(length(cl), 1L))
     
     while (!all_shap_converged && iter_id < n_max_iter) {
-      # Determine additional mapping.
-      mapping_iter <- .shap_randomise_mapping_from_coalition(
+      # Determine the iteration identifiers.
+      current_ids <- iter_id + seq_len(n_parallel)
+      
+      # Distribute computation.
+      shap_values_iter <- fam_lapply(
+        cl = cl,
+        X = current_ids,
+        FUN = .compute_shap_iterative,
+        object = object,
+        ensemble_method = ensemble_method,
+        evaluation_times = evaluation_times,
+        mapping_input = mapping_input,
+        sample_identifiers = sample_identifiers,
+        sample_predictions = predicted_values_input,
         important_features = important_features,
-        samples = mapping_input,
+        phi_0 = phi_0,
         coalitions = coalitions,
+        kernel_weights = kernel_weights,
         feature_set = feature_set,
-        seed = iter_id,
         mapping_method = mapping_method
       )
       
-      # Predict from new unique mappings.
-      predicted_values_iter <- .predict_from_coalition(
-        mapping = mapping_iter,
-        feature_set = feature_set,
-        object = object,
-        ensemble_method = ensemble_method,
-        evaluation_time = evaluation_times
-      )
-      
-      if (is.null(predicted_values_iter)) {
-        iter_id <- iter_id + 1L
-        next
-      }
-      
-      # Compute and update A and b matrices.
-      shap_matrices <- .compute_shap_matrices(
-        important_features = important_features,
-        samples = mapping_input,
-        sample_predictions = predicted_values_input,
-        sample_id = sample_identifiers,
-        mapping = mapping_iter,
-        predicted_values = predicted_values_iter,
-        phi_0 = phi_0,
-        kernel_weights = kernel_weights
-      )
-      
-      # Compute SHAP values for this iteration.
-      shap_values <- .compute_shap_value(
-        shap_values = shap_values,
-        shap_matrices = shap_matrices
-      )
-      
-      if (is.null(shap_values)) return(NULL)
+      # Combine with previous shap_values.
+      shap_values <- data.table::rbindlist(c(list(shap_values), shap_values_iter))
       
       # Compute variance of each SHAP value.
       shap_variance <- shap_values[
@@ -565,7 +547,7 @@ setMethod(
         shap_variance = shap_variance,
         tolerance = max(c(
           tolerance * diff(range(shap_values$shap_value)),
-          tolerance * diff(range(c(predicted_values_iter))) / sqrt(length(feature_set))
+          tolerance * diff(range(c(predicted_values_input))) / sqrt(length(feature_set))
         ))
       )
       
@@ -578,7 +560,8 @@ setMethod(
         seed = 19L + iter_id
       )
       
-      iter_id <- iter_id + 1L
+      # Update iteration id.
+      iter_id <- tail(current_ids, n = 1L)
     }
   }
   
@@ -657,6 +640,66 @@ setMethod(
   }
   
   return(proto_data_element)
+}
+
+
+
+.compute_shap_iterative <- function(
+    iter_id,
+    object,
+    ensemble_method,
+    evaluation_times,
+    mapping_input,
+    important_features,
+    sample_identifiers,
+    sample_predictions,
+    phi_0,
+    coalitions,
+    kernel_weights,
+    feature_set,
+    mapping_method
+) {
+  # Determine additional mapping.
+  mapping_iter <- .shap_randomise_mapping_from_coalition(
+    important_features = important_features,
+    samples = mapping_input,
+    coalitions = coalitions,
+    feature_set = feature_set,
+    seed = iter_id,
+    mapping_method = mapping_method
+  )
+  
+  # Predict from new unique mappings.
+  predicted_values_iter <- .predict_from_coalition(
+    mapping = mapping_iter,
+    feature_set = feature_set,
+    object = object,
+    ensemble_method = ensemble_method,
+    evaluation_time = evaluation_times
+  )
+  
+  if (is.null(predicted_values_iter)) return(NULL)
+  
+  # Compute and update A and b matrices.
+  shap_matrices <- .compute_shap_matrices(
+    important_features = important_features,
+    samples = mapping_input,
+    sample_predictions = sample_predictions,
+    sample_id = sample_identifiers,
+    mapping = mapping_iter,
+    predicted_values = predicted_values_iter,
+    phi_0 = phi_0,
+    kernel_weights = kernel_weights
+  )
+  
+  # Compute SHAP values for this iteration.
+  shap_values <- .compute_shap_value(
+    shap_matrices = shap_matrices
+  )
+  
+  if (is.null(shap_values)) return(NULL)
+  
+  return(shap_values)
 }
 
 
@@ -970,7 +1013,6 @@ setMethod(
 
 
 
-
 .shap_randomise_mapping_from_coalition <- function(
     important_features,
     samples,
@@ -1037,6 +1079,7 @@ setMethod(
   
   return(mapping)
 }
+
 
 
 ..shap_randomise_mapping_from_coalition <- function(
@@ -1401,17 +1444,16 @@ setMethod(
 
 
 .compute_shap_value <- function(
-  shap_values,
   shap_matrices
 ) {
   # Compute shap values.
-  new_shap_values <- lapply(
+  shap_values <- lapply(
     shap_matrices,
     ..compute_shap_value
   )
-  new_shap_values <- data.table::rbindlist(new_shap_values)
+  shap_values <- data.table::rbindlist(shap_values)
   
-  return(rbind(shap_values, new_shap_values))
+  return(shap_values)
 }
 
 
