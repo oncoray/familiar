@@ -469,16 +469,17 @@ setMethod(
   # Compute phi_0.
   if (is.null(phi_0)) phi_0 <- colMeans(predicted_values_input)
   
-  if (length(feature_set) == 1L) {
+  if (length(important_features) == 1L) {
     # Single feature (shapley) -------------------------------------------------
     shap_values <- .compute_shap_value_single_feature(
+      important_features = important_features,
       mapping = mapping_input,
       sample_id = sample_identifiers,
       feature_set = feature_set,
       predicted_values = predicted_values_input,
       phi_0 = phi_0
     )
-    browser()
+
   } else {
     # Multiple features (kernel) -----------------------------------------------
     
@@ -517,7 +518,7 @@ setMethod(
         seed = iter_id,
         mapping_method = mapping_method
       )
-      browser()
+      
       # Predict from new unique mappings.
       predicted_values_iter <- .predict_from_coalition(
         mapping = mapping_iter,
@@ -580,7 +581,7 @@ setMethod(
       iter_id <- iter_id + 1L
     }
   }
-  browser()
+  
   # Compute final SHAP values.
   shap_values <- shap_values[
     ,
@@ -805,7 +806,6 @@ setMethod(
     sampled_coalitions <- list(coalitions)
     
   } else if (sampling_method == "importance") {
-  
     # Probabilistic selection of coalitions. This is very much similar to
     # importance sampling in MCMC. The central concept is that SHAP values for
     # some features are more difficult to determine than those of others. The
@@ -1248,7 +1248,7 @@ setMethod(
   # Replace NA in samples and mapping.
   samples[is.na(samples)] <- 0L
   mapping[is.na(mapping)] <- 0L
-  browser()
+  
   # Select only important features.
   samples <- samples[, important_features, drop = FALSE]
   mapping <- mapping[, important_features, drop = FALSE]
@@ -1268,6 +1268,8 @@ setMethod(
     SIMPLIFY = FALSE,
     USE.NAMES = FALSE
   )
+  
+  return(new_matrices)
   
   # Update full matrix. THIS IS CURRENTLY NOT USED.
   # We follow the recipe by Covert and Lee (2021), which means that we update
@@ -1294,7 +1296,6 @@ setMethod(
   # }
   
   # Return both the full and temporary matrices.
-  return(new_matrices)
 }
 
 
@@ -1443,16 +1444,20 @@ setMethod(
 
 
 .compute_shap_value_single_feature <- function(
-  mapping,
-  sample_id,
-  feature_set,
-  predicted_values,
-  phi_0
+    important_features,
+    mapping,
+    sample_id,
+    feature_set,
+    predicted_values,
+    phi_0
 ) {
+  # Get value mapping.
+  mapping <- mapping[, important_features]
+  
   data <- data.table::data.table(
     "sample_id" = sample_id,
-    "feature_name" = colnames(mapping),
-    "feature_value_mapping" = rep(mapping[, 1L], times = ncol(predicted_values)),
+    "feature_name" = important_features,
+    "feature_value_mapping" = rep(mapping, times = ncol(predicted_values)),
     "shap_value" = c(t(t(predicted_values) - phi_0)),
     "shap_outcome" = rep(colnames(predicted_values), each = nrow(predicted_values))
   )
