@@ -449,6 +449,9 @@ setMethod(
 ) {
   # Divide feature(s) into points.
   
+  # Check that feature is present for the model.
+  if (!data_element@identifiers$feature_x %in% names(object@feature_info)) return(NULL)
+  
   # Generate range
   feature_x_range <- .create_feature_range(
     feature_info = object@feature_info,
@@ -470,6 +473,9 @@ setMethod(
   )
   
   if (!is.null(data_element@identifiers$feature_y)) {
+    # Check that feature is present for the model.
+    if (!data_element@identifiers$feature_y %in% names(object@feature_info)) return(NULL)
+    
     feature_y_range <- .create_feature_range(
       feature_info = object@feature_info,
       feature = data_element@identifiers$feature_y,
