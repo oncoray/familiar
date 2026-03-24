@@ -11,7 +11,7 @@ define the experiment}
 \item{config}{A list of settings, e.g. from an xml file.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}
+  Arguments passed on to \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}
   \describe{
     \item{\code{batch_id_column}}{(\strong{recommended}) Name of the column containing batch
 or cohort identifiers. This parameter is required if more than one dataset
@@ -210,6 +210,38 @@ classes are formed by default.}
 specified by the \code{experimental_design} argument. This allows for creating
 the same sample assignments across different experiments -- of course
 provided that the same dataset is used. By default a random seed is used.}
+    \item{\code{parallel}}{(\emph{optional}) Enable parallel processing. Defaults to \code{TRUE}.
+When set to \code{FALSE}, this disables all parallel processing, regardless of
+specific parameters such as \code{parallel_preprocessing}. However, when
+\code{parallel} is \code{TRUE}, parallel processing of different parts of the
+workflow can be disabled by setting respective flags to \code{FALSE}.}
+    \item{\code{parallel_nr_cores}}{(\emph{optional}) Number of cores available for
+parallelisation. Defaults to 2. This setting does nothing if
+parallelisation is disabled.}
+    \item{\code{restart_cluster}}{(\emph{optional}) Restart nodes used for parallel computing
+to free up memory prior to starting a parallel process. Note that it does
+take time to set up the clusters. Therefore setting this argument to \code{TRUE}
+may impact processing speed. This argument is ignored if \code{parallel} is
+\code{FALSE} or the cluster was initialised outside of familiar. Default is
+\code{FALSE}, which causes the clusters to be initialised only once.}
+    \item{\code{cluster_type}}{(\emph{optional}) Selection of the cluster type for parallel
+processing. Available types are the ones supported by the parallel package
+that is part of the base R distribution: \code{psock} (default), \code{fork}, \code{mpi},
+\code{nws}, \code{sock}. In addition, \code{none} is available, which also disables
+parallel processing.}
+    \item{\code{backend_type}}{(\emph{optional}) Selection of the backend for distributing
+copies of the data. This backend ensures that only a single master copy is
+kept in memory. This limits memory usage during parallel processing.
+
+Several backend options are available, notably \code{socket_server}, and \code{none}
+(default). \code{socket_server} is based on the callr package and R sockets,
+comes with \code{familiar} and is available for any OS. \code{none} uses the package
+environment of familiar to store data, and is available for any OS.
+However, \code{none} requires copying of data to any parallel process, and has a
+larger memory footprint.}
+    \item{\code{server_port}}{(\emph{optional}) Integer indicating the port on which the
+socket server or RServe process should communicate. Defaults to port 6311.
+Note that ports 0 to 1024 and 49152 to 65535 cannot be used.}
   }}
 }
 \value{

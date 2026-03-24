@@ -260,6 +260,7 @@
 #'
 #' @param config A list of settings, e.g. from an xml file.
 #' @inheritDotParams .parse_experiment_settings -config
+#' @inheritDotParams .parse_setup_settings -config
 #'
 #' @details Three variants of parameters exist:
 #'
@@ -283,6 +284,15 @@
     .parse_experiment_settings,
     args = c(
       list("config" = config$data),
+      list(...)
+    )
+  )
+  
+  # Computational setup settings
+  settings$run <- do.call_strict(
+    .parse_setup_settings,
+    args = c(
+      list("config" = config$run),
       list(...)
     )
   )
@@ -417,15 +427,18 @@
 #' @md
 #' @keywords internal
 .parse_general_settings <- function(settings, config = NULL, data, ...) {
-  # Computational setup settings
-  settings$run <- do.call_strict(
-    .parse_setup_settings,
-    args = c(
-      list("config" = config$run),
-      list(...)
+  
+  if (is.null(settings$run)) {
+    # Run may already be set by .parse_initial_settings.
+    settings$run <- do.call_strict(
+      .parse_setup_settings,
+      args = c(
+        list("config" = config$run),
+        list(...)
+      )
     )
-  )
-
+  }
+  
   # Remove outcome_type, development_batch_id and parallel from ... This
   # prevents an error caused by multiple matching arguments.
   dots <- list(...)
