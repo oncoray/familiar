@@ -241,6 +241,8 @@
   }
   
   if (is(object, "familiarEnsemble")) {
+    # Make sure that models are loaded:
+    object <- load_models(object, suppress_auto_detach = TRUE)
     vimp_table <- lapply(object@model_list, function(x) (x@vimp_table))
     vimp_aggregation_method <- object@model_list[[1L]]@vimp_aggregation_method
     vimp_rank_threshold <- object@model_list[[1L]]@vimp_rank_threshold
@@ -287,8 +289,17 @@
       "familiarTaskVimp",
       project_id = object@project_id,
       vimp_method = fallback_vimp_method,
+      data_id = object@data_id,
+      run_id = object@run_id,
       file = NA_character_
     )
+    
+    # Fill details required to get the data, in case the data is delayed.
+    # Note that training data is used for obtaining variable importance.
+    if (is(data, "delayedDataObject")) {
+      data@data_id <- object@data_id
+      data@run_id <- object@run_id
+    }
     
     # Create variable importance table.
     vimp_table <- .perform_task(

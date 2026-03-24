@@ -9,4 +9,5 @@ familiar:::integrated_test(
   cluster_method = "none",
   imputation_method = "simple",
   parallel = FALSE,
-  estimation_type = "point")
+  estimation_type = "point"
+)
