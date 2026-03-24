@@ -208,6 +208,8 @@
   parallel::clusterEvalQ(cl = cl, options(rf.cores = 1L))
   parallel::clusterEvalQ(cl = cl, data.table::setDTthreads(1L))
 
+  if ("none" %in% assign) return(cl)
+  
   # Check if anything needs to be loaded
   if (any(c("all", "data") %in% assign)) {
     # Only add master data to the global environment of the clusters when
