@@ -211,6 +211,60 @@ summon_familiar <- function(
     reference_method = settings$data$reference_method
   )
   
+  # Initialise workers ---------------------------------------------------------
+  # Identify if an external cluster is provided, and required.
+  is_external_cluster <- FALSE
+  if (settings$run$parallel) {
+    is_external_cluster <- inherits(cl, "cluster")
+  }
+  
+  # Assign parallel options to global familiar environment.
+  .assign_backend_options_to_global(
+    backend_type = settings$run$backend_type,
+    server_port = settings$run$server_port
+  )
+  .assign_parallel_options_to_global(
+    is_external_cluster = is_external_cluster,
+    restart_cluster = settings$run$restart_cluster,
+    n_cores = settings$run$parallel_nr_cores,
+    cluster_type = settings$run$cluster_type
+  )
+  
+  # Make sure that backend server will close after the process finishes.
+  on.exit(
+    shutdown_backend_server(
+      backend_type = settings$run$backend_type,
+      server_port = settings$run$server_port
+    ),
+    add = TRUE
+  )
+  
+  # Start workers, if required.
+  if (
+    settings$run$parallel &&
+    !settings$run$restart_cluster &&
+    !is_external_cluster
+  ) {
+    # Start local cluster in the overall process. Note that at this point we
+    # cannot assign anything relevant -- this will be handled later.
+    cl <- .restart_cluster(cl = NULL, assign = "none")
+    on.exit(.terminate_cluster(cl), add = TRUE)
+    
+  } else if (
+    settings$run$parallel &&
+    settings$run$restart_cluster &&
+    !is_external_cluster
+  ) {
+    # Start processes locally.
+    cl <- waiver()
+    
+  } else if (!settings$run$parallel) {
+    # No cluster is created when 
+    cl <- NULL
+  }
+  
+  # Data plausibility checks ---------------------------------------------------
+  
   # Check data plausibility.
   .check_data_plausibility(
     data = data,
@@ -296,14 +350,6 @@ summon_familiar <- function(
   
   # Backend and parallellisation -----------------------------------------------
   
-  # Identify if an external cluster is provided, and required.
-  if (settings$run$parallel) {
-    is_external_cluster <- inherits(cl, "cluster")
-    
-  } else {
-    is_external_cluster <- FALSE
-  }
-  
   # Assign objects that should be accessible everywhere to the familiar global
   # environment. Note that .assign_data_to_backend will also start backend
   # server processes.
@@ -311,56 +357,16 @@ summon_familiar <- function(
   .assign_file_paths_to_global(file_paths = file_paths)
   .assign_project_info_to_global(project_info = project_info)
   .assign_outcome_info_to_global(outcome_info = outcome_info)
-  .assign_backend_options_to_global(
-    backend_type = settings$run$backend_type,
-    server_port = settings$run$server_port
-  )
   .assign_data_to_backend(
     data = data,
     backend_type = settings$run$backend_type,
     server_port = settings$run$server_port
   )
-  .assign_parallel_options_to_global(
-    is_external_cluster = is_external_cluster,
-    restart_cluster = settings$run$restart_cluster,
-    n_cores = settings$run$parallel_nr_cores,
-    cluster_type = settings$run$cluster_type
-  )
-  
-  # Make sure that backend server will close after the process finishes.
-  on.exit(
-    shutdown_backend_server(
-      backend_type = settings$run$backend_type,
-      server_port = settings$run$server_port
-    ),
-    add = TRUE
-  )
-  
-  if (
-    settings$run$parallel &&
-    !settings$run$restart_cluster &&
-    !is_external_cluster
-  ) {
-    # Start local cluster in the overall process.
-    cl <- .restart_cluster(cl = NULL, assign = "all")
-    on.exit(.terminate_cluster(cl), add = TRUE)
-    
-  } else if (
-    settings$run$parallel &&
-    settings$run$restart_cluster &&
-    !is_external_cluster
-  ) {
-    # Start processes locally.
-    cl <- waiver()
-    
-  } else if (settings$run$parallel && is_external_cluster) {
-    # Make sure that everything is present on the external cluster.
+
+  if (settings$run$parallel) {
+    # Make sure that everything is present on the cluster.
     cl <- .update_cluster(cl = cl, assign = "all")
-    
-  } else if (!settings$run$parallel) {
-    # No cluster is created when 
-    cl <- NULL
-  }
+  } 
   
   # Clean familiar environment on exit. This is run last to avoid cleaning up
   # the familiar environment prior to shutting down the socket server process.
