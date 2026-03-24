@@ -122,6 +122,9 @@
 
 - Added support for `ggplot2` version 4.0. Due to changes in how legends are 
   handled, the minimum `ggplot2` version is now `4.0.0`.
+  
+- Some plot functions now have a `limit_n_features` argument, which limits the
+  number of features that appear in a plot.
 
 - Concordance index metrics for survival endpoints are now computed using 
   `survival::concordance` for improved performance.
