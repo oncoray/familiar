@@ -45,10 +45,15 @@ setMethod(
 setMethod(
   "..vimp",
   signature(object = "familiarConcordanceVimp"),
-  function(object, data, ...) {
+  function(
+    object,
+    data,
+    cl = NULL,
+    ...
+  ) {
     
     if (is_empty(data)) return(callNextMethod())
-
+    
     # Use concordance-based measures for variable importance:
     # - Gini index for binomial and multinomial outcomes
     # - Kendall's Tau for continuous and counts outcomes
@@ -71,10 +76,12 @@ setMethod(
       feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
       
       # Compute auc-roc
-      auc_roc <- sapply(
-        encoded_data$encoded_data@data[, mget(feature_columns)],
-        .compute_auc_roc,
-        y_obs = encoded_data$encoded_data@data$outcome
+      auc_roc <- fam_sapply(
+        cl = cl,
+        X = encoded_data$encoded_data@data[, mget(feature_columns)],
+        FUN = .compute_auc_roc,
+        y_obs = encoded_data$encoded_data@data$outcome,
+        chopchop = TRUE
       )
       
       # Map to [0, 1] range.
@@ -103,7 +110,8 @@ setMethod(
 
       return(..vimp(
         object = new_vimp_object,
-        data = data
+        data = data,
+        cl = cl
       ))
       
     } else if (object@outcome_type == "survival") {
@@ -123,11 +131,12 @@ setMethod(
       feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
 
       # Compute concordance indices
-      c_index <- sapply(
-        encoded_data$encoded_data@data[, mget(feature_columns)],
-        ..compute_concordance_index,
+      c_index <- fam_sapply(
+        X = encoded_data$encoded_data@data[, mget(feature_columns)],
+        FUN = ..compute_concordance_index,
         time = encoded_data$encoded_data@data$outcome_time,
-        event = encoded_data$encoded_data@data$outcome_event
+        event = encoded_data$encoded_data@data$outcome_event,
+        chopchop = TRUE
       )
 
       # Map to [0, 1] range.

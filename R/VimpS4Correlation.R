@@ -47,7 +47,12 @@ setMethod(
 setMethod(
   "..vimp",
   signature(object = "familiarCorrelationVimp"),
-  function(object, data, ...) {
+  function(
+    object,
+    data,
+    cl = NULL,
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     outcome_event <- NULL
 
@@ -78,32 +83,21 @@ setMethod(
     # Find feature columns in the data.
     feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
 
+    if (object@outcome_type =="survival") {
+      outcome <- encoded_data$encoded_data@data$outcome_time
+      
+    } else {
+      outcome <- encoded_data$encoded_data@data$outcome
+    }
+    
     # Compute correlation coefficients.
-    correlation_coefficients <- sapply(
-      feature_columns,
-      function(feature, data, outcome_type, correlation_method) {
-        if (outcome_type == "survival") {
-          # Use the outcome_time column for survival data.
-          correlation_coefficient <- stats::cor(
-            x = data[[feature]],
-            y = data[["outcome_time"]],
-            method = correlation_method
-          )
-          
-        } else {
-          # Use the outcome column for continuous and count data.
-          correlation_coefficient <- stats::cor(
-            x = data[[feature]],
-            y = data[["outcome"]],
-            method = correlation_method
-          )
-        }
-        
-        return(correlation_coefficient)
-      },
-      data = encoded_data$encoded_data@data,
-      outcome_type = object@outcome_type,
-      correlation_method = object@vimp_method
+    correlation_coefficients <- fam_sapply(
+      cl = cl,
+      X = encoded_data$encoded_data@data[, mget(feature_columns)],
+      FUN = stats::cor,
+      y = outcome,
+      method = object@vimp_method,
+      chopchop = TRUE
     )
 
     # Create variable importance object.
