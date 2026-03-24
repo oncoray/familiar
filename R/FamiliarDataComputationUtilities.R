@@ -243,11 +243,15 @@
   if (is(object, "familiarEnsemble")) {
     # Make sure that models are loaded:
     object <- load_models(object, suppress_auto_detach = TRUE)
+    if (!model_is_trained(object)) return(NULL)
+    
     vimp_table <- lapply(object@model_list, function(x) (x@vimp_table))
     vimp_aggregation_method <- object@model_list[[1L]]@vimp_aggregation_method
     vimp_rank_threshold <- object@model_list[[1L]]@vimp_rank_threshold
     
   } else {
+    if (!model_is_trained(object)) return(NULL)
+    
     vimp_table <- object@vimp_table
     vimp_aggregation_methpd <- object@vimp_aggregation_method
     vimp_rank_threshold <- object@vimp_rank_threshold
