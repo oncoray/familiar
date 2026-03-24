@@ -79,6 +79,7 @@ setMethod(
     object, 
     data, 
     is_pre_processed = FALSE,
+    cl = NULL,
     ...
   ) {
     # Suppress NOTES due to non-standard evaluation in data.table
@@ -117,10 +118,11 @@ setMethod(
         run_table = object@run_table
       ))
     }
-
+    
     # Identify invariant features and remove them.
     available_features <- get_feature_columns(x = data)
     is_invariant <- fam_sapply(
+      cl = cl,
       X = data@data[, mget(available_features)],
       FUN = is_singular_data,
       progress_bar = FALSE,
@@ -145,7 +147,11 @@ setMethod(
     }
 
     # Determine variable importance.
-    vimp_object <- ..vimp(object = object, data = data)
+    vimp_object <- ..vimp(
+      object = object,
+      data = data,
+      cl = cl
+    )
 
     # Find signature features.
     signature_features <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
