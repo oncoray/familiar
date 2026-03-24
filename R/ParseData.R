@@ -831,7 +831,8 @@
   # Compute concordance.
   vimp_table <- suppressWarnings(get_vimp_table(.vimp(
     object = vimp_object,
-    data = data
+    data = data,
+    cl = cl
   )))
   
   # Identify features with perfect concordance (1.0) or discordance (also 1.0),

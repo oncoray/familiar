@@ -269,7 +269,8 @@ summon_familiar <- function(
   .check_data_plausibility(
     data = data,
     settings = settings,
-    verbose = verbose
+    verbose = verbose,
+    cl = cl
   )
   
   # Load experiment data -------------------------------------------------------
