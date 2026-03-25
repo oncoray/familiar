@@ -240,6 +240,9 @@
     ..error_reached_unreachable_code(paste0("invalid object class: ", class(object)))
   }
   
+  # Check that the model has any features, i.e. is not naive.
+  if (object@vimp_method %in% .get_available_no_features_vimp_methods()) return(NULL)
+  
   if (is(object, "familiarEnsemble")) {
     # Make sure that models are loaded:
     object <- load_models(object, suppress_auto_detach = TRUE)
@@ -256,7 +259,6 @@
     vimp_aggregation_methpd <- object@vimp_aggregation_method
     vimp_rank_threshold <- object@vimp_rank_threshold
   }
-  
   
   # Flatten lists, if necessary.
   if (rlang::is_bare_list(vimp_table)) {
@@ -278,8 +280,7 @@
   # being selected.
   use_fallback <- object@vimp_method %in% c(
     .get_available_none_vimp_methods(),
-    .get_available_random_vimp_methods(),
-    .get_available_no_features_vimp_methods()
+    .get_available_random_vimp_methods()
   )
   
   # Check that fallback is required: in case there is no variable importance
