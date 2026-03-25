@@ -9,7 +9,7 @@ familiar:::test_plots(
   plot_function = familiar:::plot_calibration_data,
   data_element = "calibration_data",
   not_available_all_prospective = TRUE,
-  not_available_any_prospective = TRUE,
+  not_available_mostly_prospective = TRUE,
   not_available_single_sample = TRUE,
   debug = debug_flag
 )
@@ -20,7 +20,7 @@ familiar:::test_plots(
   detail_level = "ensemble",
   data_element = "calibration_data",
   not_available_all_prospective = TRUE,
-  not_available_any_prospective = TRUE,
+  not_available_mostly_prospective = TRUE,
   not_available_single_sample = TRUE,
   debug = debug_flag
 )
@@ -31,7 +31,7 @@ familiar:::test_plots(
   estimation_type = "bias_correction",
   data_element = "calibration_data",
   not_available_all_prospective = TRUE,
-  not_available_any_prospective = TRUE,
+  not_available_mostly_prospective = TRUE,
   not_available_single_sample = TRUE,
   debug = debug_flag
 )
@@ -42,7 +42,7 @@ familiar:::test_plots(
   estimation_type = "point",
   data_element = "calibration_data",
   not_available_all_prospective = TRUE,
-  not_available_any_prospective = TRUE,
+  not_available_mostly_prospective = TRUE,
   not_available_single_sample = TRUE,
   debug = debug_flag
 )

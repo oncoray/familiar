@@ -5343,7 +5343,7 @@ get_test_collection_generation <- function(...) {
     not_available_all_predictions_fail = TRUE,
     not_available_some_predictions_fail = TRUE,
     not_available_all_prospective = FALSE,
-    not_available_any_prospective = FALSE,
+    not_available_mostly_prospective = FALSE,
     not_available_single_sample = FALSE,
     not_available_extreme_probability = FALSE,
     use_prediction_table = FALSE,
@@ -5425,9 +5425,9 @@ get_test_collection_generation <- function(...) {
         .not_available_single_feature <- any(.not_available_single_feature == outcome_type)
       }
       
-      .not_available_any_prospective <- not_available_any_prospective
-      if (is.character(.not_available_any_prospective)) {
-        .not_available_any_prospective <- any(.not_available_any_prospective == outcome_type)
+      .not_available_mostly_prospective <- not_available_mostly_prospective
+      if (is.character(.not_available_mostly_prospective)) {
+        .not_available_mostly_prospective <- any(.not_available_mostly_prospective == outcome_type)
       }
       
       .not_available_all_prospective <- not_available_all_prospective
@@ -5608,7 +5608,7 @@ get_test_collection_generation <- function(...) {
         test_expectation <- "all_absent"
         if (
           outcome_type %in% outcome_type_available &&
-          (!.not_available_any_prospective || !.not_available_single_sample)
+          (!.not_available_mostly_prospective || !.not_available_single_sample)
         ) {
           test_expectation <- "all_present"
         }

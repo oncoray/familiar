@@ -12,7 +12,7 @@ familiar:::test_plots(
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
   not_available_all_prospective = TRUE,
-  not_available_any_prospective = TRUE,
+  not_available_mostly_prospective = TRUE,
   not_available_single_sample = TRUE,
   debug = debug_flag
 )
@@ -73,7 +73,7 @@ familiar:::test_plots(
   data_element = "auc_data",
   outcome_type_available = c("binomial", "multinomial"),
   not_available_all_prospective = TRUE,
-  not_available_any_prospective = TRUE,
+  not_available_mostly_prospective = TRUE,
   not_available_single_sample = TRUE,
   debug = debug_flag
 )

@@ -10,7 +10,7 @@ familiar:::test_plots(
   plot_function = familiar:::plot_model_performance,
   data_element = "model_performance",
   not_available_all_prospective = TRUE,
-  not_available_any_prospective = c("binomial", "multinomial", "survival"),
+  not_available_mostly_prospective = c("binomial", "multinomial", "survival"),
   not_available_single_sample = c("binomial", "multinomial", "survival"),
   outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   debug = debug_flag
