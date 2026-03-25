@@ -242,6 +242,7 @@
   
   # Check that the model has any features, i.e. is not naive.
   if (object@vimp_method %in% .get_available_no_features_vimp_methods()) return(NULL)
+  if (length(object@model_features) == 0L) return(NULL)
   
   if (is(object, "familiarEnsemble")) {
     # Make sure that models are loaded:
