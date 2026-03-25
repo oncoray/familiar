@@ -257,10 +257,19 @@
     vimp_rank_threshold <- object@vimp_rank_threshold
   }
   
+  
   # Flatten lists, if necessary.
   if (rlang::is_bare_list(vimp_table)) {
     vimp_table <- unlist(vimp_table)
   }
+  
+  # Get available features for the model or ensemble.
+  features <- features_after_clustering(
+    features = object@model_features,
+    feature_info_list = object@feature_info
+  )
+  # TODO: Enable after fixing issues.
+  # if (length(features) <= n_important_features) return(features)
   
   # Determine which features are pre-assigned to the signature.
   signature_features <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
@@ -336,12 +345,7 @@
   
   # Check that features may be added, and the rank table is not empty.
   if (n_allowed_features > 0L && !is_empty(vimp_table)) {
-    # Get available features.
-    features <- features_after_clustering(
-      features = object@model_features,
-      feature_info_list = object@feature_info
-    )
-    
+
     # Remove signature features, if any, to prevent duplicates.
     features <- setdiff(features, signature_features)
     
