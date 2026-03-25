@@ -10,7 +10,7 @@ testthat::test_that(
   {
     if (!debug_flag) on.exit(unlink(exp_dir, recursive = TRUE), add = TRUE)
     
-    testthat::expect_success(
+    testthat::expect_no_error(
       suppressWarnings(
         familiar::summon_familiar(
           data = datasets::iris,
@@ -35,7 +35,7 @@ testthat::test_that(
   {
     if (!debug_flag) on.exit(unlink(exp_dir, recursive = TRUE), add = TRUE)
     
-    testthat::expect_success(
+    testthat::expect_no_error(
       suppressWarnings(
         familiar::summon_familiar(
           Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width,
@@ -62,7 +62,7 @@ testthat::test_that(
   {
     if (!debug_flag) on.exit(unlink(exp_dir, recursive = TRUE), add = TRUE)
     
-    testthat::expect_success(
+    testthat::expect_no_error(
       suppressWarnings(
         experiment_data <- familiar::precompute_feature_info(
           data = iris,
@@ -77,7 +77,7 @@ testthat::test_that(
     )
     unlink(exp_dir, recursive = TRUE)
     
-    testthat::expect_success(
+    testthat::expect_no_error(
       suppressWarnings(
         familiar::summon_familiar(
           data = iris,
