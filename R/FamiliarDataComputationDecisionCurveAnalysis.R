@@ -500,7 +500,7 @@ setMethod(
         "data" = data,
         "threshold_probabilities" = threshold_probabilities
       ),
-      progress_bar = progress_bar,
+      progress_bar = progress_bar && verbose,
       chopchop = TRUE
     )
     
@@ -584,7 +584,7 @@ setMethod(
         "data" = data,
         "threshold_probabilities" = threshold_probabilities
       ),
-      progress_bar = progress_bar,
+      progress_bar = progress_bar && verbose,
       chopchop = TRUE
     )
     

@@ -501,7 +501,7 @@ setMethod(
       "x" = threshold_probabilities,
       "is_single_curve" = is_single_curve
     ),
-    progress_bar = progress_bar,
+    progress_bar = progress_bar && verbose,
     chopchop = TRUE
   )
   

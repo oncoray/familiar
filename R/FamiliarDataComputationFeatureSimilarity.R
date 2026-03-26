@@ -292,7 +292,7 @@ setMethod(
         "data" = data,
         "feature_info_list" = object@feature_info
       ),
-      progress_bar = progress_bar,
+      progress_bar = progress_bar && verbose,
       chopchop = TRUE
     )
     

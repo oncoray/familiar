@@ -415,7 +415,7 @@ setMethod(
       ),
       list(...)
     ),
-    progress_bar = progress_bar,
+    progress_bar = progress_bar && verbose,
     chopchop = TRUE
   )
   

@@ -430,6 +430,7 @@ setMethod(
     cl = NULL,
     metric,
     aggregate_results,
+    verbose = FALSE,
     progress_bar = FALSE,
     ...
   ) {
@@ -460,7 +461,7 @@ setMethod(
       bootstrap = bootstrap_data$bootstrap,
       bootstrap_seed = bootstrap_data$seed,
       MoreArgs = list("data" = object),
-      progress_bar = progress_bar,
+      progress_bar = progress_bar && verbose,
       chopchop = TRUE
     )
     

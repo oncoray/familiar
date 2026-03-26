@@ -518,7 +518,7 @@ setMethod(
       bootstrap = bootstrap_data$bootstrap,
       bootstrap_seed = bootstrap_data$seed,
       MoreArgs = list("object" = object),
-      progress_bar = progress_bar,
+      progress_bar = progress_bar && verbose,
       chopchop = TRUE
     )
     
