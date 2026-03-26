@@ -8,7 +8,9 @@ setMethod(
   signature(object = "familiarEnsemble"),
   function(
     object,
-    dir_path = NULL
+    dir_path = NULL,
+    message_indent = 0L,
+    verbose = FALSE,
   ) {
     # Fills out missing data from a familiarEnsemble based on attached models
     # and internal logic.
@@ -47,7 +49,9 @@ setMethod(
       # Aggregate calibration info
       calibration_info <- extract_calibration_info(
         object = object,
-        detail_level = "hybrid"
+        detail_level = "hybrid",
+        message_indent = message_indent,
+        verbose = verbose
       )
       calibration_info <- .compute_data_element_estimates(calibration_info)
       

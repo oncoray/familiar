@@ -379,7 +379,11 @@ setMethod(
     fam_ensemble@run_table <- run_table[n == length(fam_ensemble@model_list)][order(data_id)]
 
     # Complete the ensemble using information provided by the model
-    fam_ensemble <- complete_familiar_ensemble(object = fam_ensemble)
+    fam_ensemble <- complete_familiar_ensemble(
+      object = fam_ensemble,
+      message_indent = message_indent + 1L,
+      verbose = verbose
+    )
     
     # Set evaluation level.
     detail_level <- settings$eval$detail_level

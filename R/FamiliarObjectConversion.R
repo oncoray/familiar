@@ -127,7 +127,9 @@ setMethod(
     fam_ensemble <- add_package_version(object = fam_ensemble)
 
     # Complete the ensemble using information provided by the model(s)
-    fam_ensemble <- complete_familiar_ensemble(object = fam_ensemble)
+    fam_ensemble <- complete_familiar_ensemble(
+      object = fam_ensemble
+    )
 
     return(fam_ensemble)
   }
