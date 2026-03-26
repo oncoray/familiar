@@ -150,7 +150,7 @@ setMethod(
         paste0(
           "Computing SHAP values for features in the dataset."
         ),
-        indent = message_indent,
+        indent = message_indent + 1L,
         verbose = verbose
       )
       
@@ -159,7 +159,7 @@ setMethod(
         paste0(
           "Computing SHAP values for selected features: ", paste_s(features), "."
         ),
-        indent = message_indent,
+        indent = message_indent + 1L,
         verbose = verbose
       )
     }
