@@ -3509,7 +3509,7 @@
 #'  `list("sample_similarity"=100, "permutation_vimp"=1000)`.
 #'
 #'  This parameter can be set for the following data elements:
-#'  `sample_similarity`, `shap`, and `ice_data`.
+#'  `sample_similarity`, `shap`, `permutation_vimp`, and `ice_data`.
 #'  
 #' @param n_important_features (*optional*) Set the number of features that are
 #'  evaluated in evaluation steps. Cannot be 0 or fewer.

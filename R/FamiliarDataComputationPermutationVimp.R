@@ -46,6 +46,7 @@ setGeneric(
     feature_similarity_threshold = waiver(),
     metric = waiver(),
     evaluation_times = waiver(),
+    sample_limit = waiver(),
     detail_level = waiver(),
     estimation_type = waiver(),
     aggregate_results = waiver(),
@@ -80,6 +81,7 @@ setMethod(
     feature_similarity_threshold = waiver(),
     metric = waiver(),
     evaluation_times = waiver(),
+    sample_limit = waiver(),
     detail_level = waiver(),
     estimation_type = waiver(),
     aggregate_results = waiver(),
@@ -175,6 +177,15 @@ setMethod(
       x = aggregate_results,
       object = object,
       default = TRUE,
+      data_element = "permutation_vimp"
+    )
+    
+    # Check the sample limit. This defines the subset of samples that are being
+    # assessed (if real data is used instead of a minimum subset).
+    sample_limit <- .parse_sample_limit(
+      x = sample_limit,
+      object = object,
+      default = 200L,
       data_element = "permutation_vimp"
     )
     
@@ -291,6 +302,7 @@ setMethod(
       is_pre_processed = is_pre_processed,
       ensemble_method = ensemble_method,
       metric = metric,
+      sample_limit = sample_limit,
       evaluation_times = evaluation_times,
       important_features = important_features,
       aggregate_results = aggregate_results,
@@ -370,6 +382,7 @@ setMethod(
     is_pre_processed,
     cl,
     ensemble_method,
+    sample_limit,
     important_features,
     similarity_table,
     cluster_method,
@@ -486,7 +499,8 @@ setMethod(
         "data" = data,
         "prediction_data" = prediction_data,
         "ensemble_method" = ensemble_method,
-        "important_features" = important_features
+        "important_features" = important_features,
+        "sample_limit" = sample_limit
       ),
       list(...)
     ),
@@ -509,6 +523,7 @@ setMethod(
     data_element,
     bootstrap,
     bootstrap_seed,
+    sample_limit,
     shuffled_features,
     important_features,
     similarity_threshold,
@@ -525,7 +540,8 @@ setMethod(
   if (bootstrap) {
     data <- get_bootstrap_sample(
       data = data,
-      seed = bootstrap_seed
+      seed = bootstrap_seed,
+      n_samples = sample_limit
     )
   }
   
@@ -533,7 +549,8 @@ setMethod(
   if (bootstrap) {
     prediction_data <- get_bootstrap_sample(
       data = prediction_data,
-      seed = bootstrap_seed
+      seed = bootstrap_seed,
+      n_samples = sample_limit
     )
   }
   

@@ -718,7 +718,13 @@ setMethod(
 setMethod(
   "get_bootstrap_sample",
   signature(data = "dataObject"),
-  function(data, seed = NULL, rstream_object = NULL, ...) {
+  function(
+    data, 
+    seed = NULL, 
+    rstream_object = NULL, 
+    n_samples = NULL, 
+    ...
+  ) {
     if (.as_preprocessing_level(data) > "none") {
       # Indicating that some preprocessing has taken please.
 
@@ -726,7 +732,8 @@ setMethod(
       data@data <- get_bootstrap_sample(
         data = data@data,
         seed = seed,
-        rstream_object = rstream_object
+        rstream_object = rstream_object,
+        n_samples = n_samples
       )
       
     } else if (length(data@sample_set_on_load) > 0L) {
@@ -734,9 +741,9 @@ setMethod(
         data@sample_set_on_load <- get_bootstrap_sample(
           data = data@sample_set_on_load,
           seed = seed,
-          rstream_object = rstream_object
+          rstream_object = rstream_object,
+          n_samples = n_samples
         )
-        
       } else {
         # Reshuffle the samples -- This is for backward compatibility.
         data@sample_set_on_load <- fam_sample(
@@ -744,7 +751,7 @@ setMethod(
           size = length(data@sample_set_on_load),
           replace = TRUE,
           seed = seed,
-          rstream_object = rstream_object
+          rstream_object = rstream_object,
         )
       }
     } else {
@@ -761,7 +768,13 @@ setMethod(
 setMethod(
   "get_bootstrap_sample", 
   signature(data = "data.table"),
-  function(data, seed = NULL, rstream_object = NULL, ...) {
+  function(
+    data, 
+    seed = NULL, 
+    rstream_object = NULL, 
+    n_samples = NULL,
+    ...
+  ) {
     # Find identifier columns at the sample level, i.e. excluding repetitions
     # and series.
     id_columns <- intersect(
@@ -770,10 +783,13 @@ setMethod(
     )
 
     if (length(id_columns) == 0L) {
+      size <- nrow(data)
+      if (!is.null(n_samples)) size <- min(n_samples, size)
+      
       # Sample rows.
       row_ids <- fam_sample(
         x = seq_len(nrow(data)),
-        size = nrow(data),
+        size = size,
         replace = TRUE,
         seed = seed,
         rstream_object = rstream_object
@@ -786,10 +802,13 @@ setMethod(
       # List unique samples.
       id_table <- unique(data[, mget(id_columns)])
 
+      size <- nrow(id_table)
+      if (!is.null(n_samples)) size <- min(n_samples, size)
+      
       # Sample the unique rows of the identifier table.
       row_ids <- fam_sample(
         x = seq_len(nrow(id_table)),
-        size = nrow(id_table),
+        size = size,
         replace = TRUE,
         seed = seed,
         rstream_object = rstream_object

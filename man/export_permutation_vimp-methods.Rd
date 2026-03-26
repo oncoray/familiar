@@ -115,6 +115,15 @@ creation of the underlying \code{familiarModel} objects.}
 computation and extraction of various data elements.}
     \item{\code{message_indent}}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
+    \item{\code{sample_limit}}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be fewer than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity}, \code{shap}, \code{permutation_vimp}, and \code{ice_data}.}
     \item{\code{n_important_features}}{(\emph{optional}) Set the number of features that are
 evaluated in evaluation steps. Cannot be 0 or fewer.
 

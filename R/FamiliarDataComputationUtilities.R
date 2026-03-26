@@ -35,7 +35,7 @@
   can_set_estimation_type <- c(can_set_estimation_type, "feature_similarity")
   
   # Data elements that allow for setting a sample limit.
-  can_set_sample_limit <- c("sample_similarity", "ice_data", "shap")
+  can_set_sample_limit <- c("sample_similarity", "ice_data", "shap", "permutation_vimp")
   
   # Data elements that allow for setting the number of important features.
   can_set_n_important_features <- c("permutation_vimp", "ice_data", "shap")

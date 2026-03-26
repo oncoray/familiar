@@ -78,7 +78,7 @@ value in a named list with data elements, e.g.
 \code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
 
 This parameter can be set for the following data elements:
-\code{sample_similarity}, \code{shap}, and \code{ice_data}.}
+\code{sample_similarity}, \code{shap}, \code{permutation_vimp}, and \code{ice_data}.}
 
 \item{n_important_features}{(\emph{optional}) Set the number of features that are
 evaluated in evaluation steps. Cannot be 0 or fewer.

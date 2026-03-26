@@ -90,6 +90,19 @@ familiar:::test_plot_ordering(
   debug = debug_flag
 )
 
+
+# With limiting the number of samples during calculation.
+familiar:::test_plots(
+  plot_function = familiar:::plot_permutation_variable_importance,
+  data_element = "permutation_vimp",
+  test_config = "normal",
+  sample_limit = 50L,
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  estimation_type = "point",
+  debug = debug_flag
+)
+
+
 # With limiting the number of features during calculation.
 familiar:::test_plots(
   plot_function = familiar:::plot_permutation_variable_importance,

@@ -17,6 +17,7 @@ extract_permutation_vimp(
   feature_similarity_threshold = waiver(),
   metric = waiver(),
   evaluation_times = waiver(),
+  sample_limit = waiver(),
   detail_level = waiver(),
   estimation_type = waiver(),
   aggregate_results = waiver(),
@@ -106,6 +107,16 @@ of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
+
+\item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
+that are used during evaluation steps. Cannot be fewer than 20.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
+
+This parameter can be set for the following data elements:
+\code{sample_similarity}, \code{shap}, \code{permutation_vimp}, and \code{ice_data}.}
 
 \item{detail_level}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.

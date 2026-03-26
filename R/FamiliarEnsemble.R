@@ -10,7 +10,7 @@ setMethod(
     object,
     dir_path = NULL,
     message_indent = 0L,
-    verbose = FALSE,
+    verbose = FALSE
   ) {
     # Fills out missing data from a familiarEnsemble based on attached models
     # and internal logic.
