@@ -43,4 +43,10 @@ for (outcome_type in outcome_type_available) {
     verbose = debug_flag,
     parallel = FALSE
   ))
+  
+  testthat::test_that("Output is correctly formed.", {
+    testthat::expect_length(output$familiarModel, 4L)
+    testthat::expect_length(output$familiarData, 8L)
+    testthat::expect_length(output$familiarCollection, 1L)
+  })
 }
