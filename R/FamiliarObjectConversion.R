@@ -616,15 +616,6 @@ setMethod(
     # Obtain names of the familiarData objects.
     object_names <- sapply(object, function(fam_data_obj) (fam_data_obj@name))
 
-    # Check if all the datasets are unique.
-    if (anyDuplicated(object_names)) {
-      ..error(paste0(
-        "familiarCollections cannot contain identical familiarData sets. ",
-        "The following duplicates were found: ",
-        paste_s(unique(object_names[duplicated(object_names)]))
-      ))
-    }
-
     # Check if names for the data are externally provided, and obtain them from
     # the familiarData objects otherwise.
     if (is.null(familiar_data_names)) {
@@ -635,6 +626,13 @@ setMethod(
     if (!is.factor(familiar_data_names)) {
       familiar_data_names <- factor(familiar_data_names, levels = unique(familiar_data_names))
     }
+    
+    # Get names ordered correctly without duplicates.
+    data_set_table <- data.table::data.table(
+      name_object = object_names,
+      name_used = familiar_data_names
+    )
+    data_set_table <- unique(data_set_table)
 
     # Check if the collection has a name
     if (is.null(collection_name)) {
@@ -763,8 +761,9 @@ setMethod(
     # Create labels for the data names for correct ordering of plots etc.
     fam_collect <- set_data_set_names(
       x = fam_collect,
-      new = as.character(familiar_data_names),
-      order = levels(familiar_data_names)
+      old = data_set_table$name_object,
+      new = as.character(data_set_table$name_used),
+      order = levels(data_set_table$name_used)
     )
 
     return(fam_collect)
