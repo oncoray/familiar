@@ -13,6 +13,7 @@ summon_familiar(
   config_id = 1L,
   verbose = TRUE,
   .stop_after = "export",
+  .force_output = FALSE,
   ...
 )
 }
@@ -62,6 +63,9 @@ table indicated by \code{config} contains more than one set of configurations.}
 messages and warnings are returned.}
 
 \item{.stop_after}{Variable for internal use.}
+
+\item{.force_output}{Generates output even if results have been written to
+the file system.}
 
 \item{...}{
   Arguments passed on to \code{\link[=.parse_file_paths]{.parse_file_paths}}, \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_variable_importance_settings]{.parse_variable_importance_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}

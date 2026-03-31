@@ -72,6 +72,8 @@
 #' @param verbose Indicates verbosity of the results. Default is TRUE, and all
 #'   messages and warnings are returned.
 #' @param .stop_after Variable for internal use.
+#' @param .force_output Generates output even if results have been written to
+#'   the file system.
 #'
 #' @inheritDotParams .parse_file_paths -config -verbose
 #' @inheritDotParams .parse_experiment_settings -config
@@ -100,6 +102,7 @@ summon_familiar <- function(
     config_id = 1L,
     verbose = TRUE,
     .stop_after = "export",
+    .force_output = FALSE,
     ...
 ) {
   
@@ -537,6 +540,10 @@ summon_familiar <- function(
     file_paths = file_paths,
     verbose = verbose
   )
+  
+  if (.force_output) {
+    return(.import_all_familiar_objects(file_paths = file_paths))
+  }
   
   return(invisible(TRUE))
 }
