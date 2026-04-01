@@ -628,6 +628,14 @@ setMethod(
         proto_data_element@data$shap_outcome,
         levels = get_outcome_class_levels(object)
       )
+      
+    } else if (object@outcome_type == "survival") {
+      # Convert shap_outcome to categorical values corresponding to the
+      # evaluation time
+      proto_data_element@data$shap_outcome <- factor(
+        proto_data_element@data$shap_outcome,
+        levels = as.character(evaluation_times)
+      )
     }
     
   } else {
