@@ -751,7 +751,7 @@ setMethod(
 ) {
   actual_label <- feature_label
   actual_label[is.na(feature_label)] <- signif(feature_value[is.na(feature_label)], 3L)
-  actual_label[!is.na(actual_label)] <- paste0(": ", actual_label[!is.na(feature_label)])
+  actual_label[!is.na(actual_label)] <- paste0(": ", actual_label[!is.na(actual_label)])
   actual_label[is.na(actual_label)] <- ""
   
   return(paste0(feature_name, actual_label))
