@@ -271,8 +271,7 @@
     features = object@model_features,
     feature_info_list = object@feature_info
   )
-  # TODO: Enable after fixing issues.
-  # if (length(features) <= n_important_features) return(features)
+  if (length(features) <= n_important_features) return(features)
   
   # Determine which features are pre-assigned to the signature.
   signature_features <- names(object@feature_info)[sapply(object@feature_info, is_in_signature)]
