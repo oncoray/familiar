@@ -97,4 +97,33 @@ for (outcome_type in c("binomial", "multinomial", "continuous", "survival")) {
     verbose = FALSE,
     draw = debug_flag
   )
+  
+  testthat::test_that("Waterfall plot was correctly created.", {
+    testthat::expect_true(ggplot2::is_ggplot(plot[[1L]]))
+  })
+  
+  # With only 2 features shown.
+  plot <- familiar::plot_shap_waterfall(
+    object = model,
+    data = data@data[1L, ],
+    shap_phi_0 = switch(
+      outcome_type,
+      "binomial" = 0.5,
+      "multinomial" = c(0.4, 0.3, 0.3),
+      "continuous" = 0.25,
+      "survival" = c(0.2, 0.1)
+    ),
+    evaluation_times = switch(
+      outcome_type,
+      "survival" = c(2.0, 3.0),
+      NULL
+    ),
+    limit_n_features = 2L,
+    verbose = FALSE,
+    draw = debug_flag
+  )
+  
+  testthat::test_that("Waterfall plot was correctly created with a limited number of features shown.", {
+    testthat::expect_true(ggplot2::is_ggplot(plot[[1L]]))
+  })
 }
