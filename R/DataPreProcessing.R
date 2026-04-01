@@ -447,6 +447,9 @@
     verbose = verbose && settings$prep$cluster_method != "none"
   )
   
+  # Determine the number of features prior to clustering.
+  n_features_current <- length(get_available_features(feature_info_list = feature_info_list))
+  
   # Add clustering skeletons.
   feature_info_list <- create_cluster_parameter_skeleton(
     feature_info_list = feature_info_list,
@@ -469,9 +472,6 @@
   
   # Build cluster table.
   cluster_table <- .create_clustering_table(feature_info_list = feature_info_list)
-  
-  # Determine the number of features prior to clustering.
-  n_features_current <- nrow(cluster_table)
   
   # Further summarise the clusters by grouping.
   cluster_table <- cluster_table[, list("cluster_size" = .N), by = "cluster_name"]
