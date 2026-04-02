@@ -262,6 +262,30 @@ setMethod(
 )
 
 
+## as_familiar_data (dataObject) -----------------------------------------------
+
+#' @rdname as_familiar_data-methods
+setMethod(
+  "as_familiar_data",
+  signature(object = "dataObject"),
+  function(object, name = NULL, ...) {
+    # Familiar data
+    fam_data <- do.call(
+      extract_data,
+      args = c(
+        list("object" = object),
+        list(...)
+      )
+    )
+    
+    # Set a placeholder name or a user-provided name for the familiarData
+    # object.
+    fam_data <- set_object_name(x = fam_data, new = name)
+    
+    return(fam_data)
+  }
+)
+
 
 ## as_familiar_data (model) ----------------------------------------------------
 
@@ -538,6 +562,66 @@ setMethod(
 
 
 
+## as_familiar_collection (dataObject) -----------------------------------------
+
+#' @rdname as_familiar_collection-methods
+setMethod(
+  "as_familiar_collection",
+  signature(object = "dataObject"),
+  function(
+    object,
+    familiar_data_names = NULL,
+    collection_name = NULL,
+    ...
+  ) {
+    # Pass to as_familiar_collection
+    return(do.call(
+      as_familiar_collection,
+      args = c(
+        list(
+          "object" = list(object),
+          "familiar_data_names" = familiar_data_names,
+          "collection_name" = collection_name
+        ),
+        list(...)
+      ))
+    ) 
+  }
+)
+
+
+## as_familiar_collection (data.table) -----------------------------------------
+
+#' @rdname as_familiar_collection-methods
+setMethod(
+  "as_familiar_collection",
+  signature(object = "data.table"),
+  function(
+    object,
+    familiar_data_names = NULL,
+    collection_name = NULL,
+    ...
+  ) {
+    # Convert to dataObject.
+    object <- as_data_object(
+      data = object,
+      ...
+    )
+    
+    # Pass to method for dataObject.
+    return(do.call(
+      as_familiar_collection,
+      list(
+        "object" = object,
+        "familiar_data_names" = familiar_data_names,
+        "collection_name" = collection_name
+      ),
+      list(...)
+    ))
+  }
+)
+
+
 ## as_familiar_collection (list) -----------------------------------------------
 
 #' @rdname as_familiar_collection-methods
@@ -596,6 +680,20 @@ setMethod(
 
     # Convert prediction table objects to familiarData.
     if (all(sapply(object, is, class2 = "familiarDataElementPredictionTable"))) {
+      object <- do.call(
+        as_familiar_data,
+        args = c(
+          list("object" = object),
+          list(...)
+        )
+      )
+      
+      # Store in list, if required.
+      if (!is(object, "list")) object <- list(object)
+    }
+    
+    # Convert dataObject objects to familiarData.
+    if (all(sapply(object, is, class2 = "dataObject"))) {
       object <- do.call(
         as_familiar_data,
         args = c(
