@@ -269,6 +269,7 @@ setMethod(
   "as_familiar_data",
   signature(object = "dataObject"),
   function(object, name = NULL, ...) {
+    browser()
     # Familiar data
     fam_data <- do.call(
       extract_data,
@@ -277,6 +278,9 @@ setMethod(
         list(...)
       )
     )
+    
+    # Set name of the current batch as name.
+    if (is.null(name)) name <- as.character(object@data[[get_id_columns("batch")]][1L])
     
     # Set a placeholder name or a user-provided name for the familiarData
     # object.
@@ -334,9 +338,13 @@ setMethod(
     if (all(sapply(object, is, "dataObject"))) {
       
       # Split by batch-id.
-      browser()
-      return(lapply)
+      object <- lapply(object, .split_data_by_batch_id)
       
+      # Flatten list.
+      object <- unlist(object, recursive = FALSE)
+      if (!rlang::is_bare_list(object)) object <- list(object)
+      
+      return(lapply(object, as_familiar_data, ...))
     }
     
     # Convert familiarModel(s) to familiarEnsemble.
@@ -344,7 +352,6 @@ setMethod(
       object <- list(as_familiar_ensemble(object = object))
     }
     
-browser()
     # Check if a single familiarEnsemble has been supplied or generated.
     if (!all(sapply(object, is, "familiarEnsemble")) || length(object) > 1L) {
       ..error(paste0(

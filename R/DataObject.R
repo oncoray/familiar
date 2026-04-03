@@ -579,6 +579,31 @@ setMethod(
 }
 
 
+.split_data_by_batch_id <- function(data) {
+  # Don't split if there is no data.
+  if (is_empty(data)) return(NULL)
+  
+  # Split by batch id.
+  split_data <- split(
+    data@data,
+    by = get_id_columns(id_depth = "batch")
+  )
+  
+  # Update dataObject.
+  data <- lapply(
+    split_data,
+    function(x, data) {
+      data@data <- x
+      return(data)
+    },
+    data = data
+  )
+  
+  return(data)
+}
+
+
+
 # load_delayed_data methods ----------------------------------------------------
 
 ## load_delayed_data (dataObject, ANY) -----------------------------------------
