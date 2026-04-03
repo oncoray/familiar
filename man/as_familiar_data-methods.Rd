@@ -5,6 +5,7 @@
 \alias{as_familiar_data,familiarData-method}
 \alias{as_familiar_data,familiarEnsemble-method}
 \alias{as_familiar_data,familiarDataElementPredictionTable-method}
+\alias{as_familiar_data,dataObject-method}
 \alias{as_familiar_data,familiarModel-method}
 \alias{as_familiar_data,list-method}
 \alias{as_familiar_data,character-method}
@@ -18,6 +19,8 @@ as_familiar_data(object, ...)
 \S4method{as_familiar_data}{familiarEnsemble}(object, name = NULL, ...)
 
 \S4method{as_familiar_data}{familiarDataElementPredictionTable}(object, name = NULL, ...)
+
+\S4method{as_familiar_data}{dataObject}(object, name = NULL, ...)
 
 \S4method{as_familiar_data}{familiarModel}(object, ...)
 

@@ -7,6 +7,8 @@
 \alias{as_familiar_collection,familiarEnsemble-method}
 \alias{as_familiar_collection,familiarModel-method}
 \alias{as_familiar_collection,familiarDataElementPredictionTable-method}
+\alias{as_familiar_collection,dataObject-method}
+\alias{as_familiar_collection,data.table-method}
 \alias{as_familiar_collection,list-method}
 \alias{as_familiar_collection,character-method}
 \alias{as_familiar_collection,ANY-method}
@@ -48,6 +50,20 @@ as_familiar_collection(
 )
 
 \S4method{as_familiar_collection}{familiarDataElementPredictionTable}(
+  object,
+  familiar_data_names = NULL,
+  collection_name = NULL,
+  ...
+)
+
+\S4method{as_familiar_collection}{dataObject}(
+  object,
+  familiar_data_names = NULL,
+  collection_name = NULL,
+  ...
+)
+
+\S4method{as_familiar_collection}{data.table}(
   object,
   familiar_data_names = NULL,
   collection_name = NULL,

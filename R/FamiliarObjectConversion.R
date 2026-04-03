@@ -320,16 +320,31 @@ setMethod(
     # uniqueness of classes.
     object <- load_familiar_object(object = object)
 
-    # Return the object if it contains a single familiarEnsemble.
+    # Return the object if it contains a single familiarData object.
     if (length(object) == 1L && all(sapply(object, is, "familiarData"))) {
       return(object[[1L]])
     }
 
+    # Parse prediction table.
+    if (all(sapply(object, is, "familiarDataElementPredictionTable"))) {
+      return(lapply(object, as_familiar_data, ...))
+    }
+    
+    # Parse dataObject.
+    if (all(sapply(object, is, "dataObject"))) {
+      
+      # Split by batch-id.
+      browser()
+      return(lapply)
+      
+    }
+    
     # Convert familiarModel(s) to familiarEnsemble.
     if (all(sapply(object, is, "familiarModel"))) {
       object <- list(as_familiar_ensemble(object = object))
     }
-
+    
+browser()
     # Check if a single familiarEnsemble has been supplied or generated.
     if (!all(sapply(object, is, "familiarEnsemble")) || length(object) > 1L) {
       ..error(paste0(
@@ -982,12 +997,15 @@ setMethod(
       all(sapply(fam_object, is, class2 = "familiarNoveltyDetector")) ||
       all(sapply(fam_object, is, class2 = "familiarEnsemble")) ||
       all(sapply(fam_object, is, class2 = "familiarData")) ||
-      all(sapply(fam_object, is, class2 = "familiarCollection"))
+      all(sapply(fam_object, is, class2 = "familiarCollection")) ||
+      all(sapply(fam_object, is, class2 = "dataObject")) ||
+      all(sapply(fam_object, is, class2 = "familiarDataElementPredictionTable"))
     )) {
       ..error(paste0(
         "Could not load familiar objects because they are not uniquely ",
+        "familiarDataElementPredictionTable", "dataObject",
         "familiarModel, familiarNoveltyDetector, familiarEnsemble, familiarData ",
-        "or familiarCollection objects."
+        "or familiarCollection objects. Do not mix objects with different classes."
       ))
     }
 
@@ -995,6 +1013,27 @@ setMethod(
     fam_object <- lapply(fam_object, update_object)
 
     return(fam_object)
+  }
+)
+
+
+# load_familiar_object (prediction table) --------------------------------------
+setMethod(
+  "load_familiar_object",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object) {
+    return(object)
+  }
+)
+
+
+
+# load_familiar_object (dataObject)
+setMethod(
+  "load_familiar_object",
+  signature(object = "dataObject"),
+  function(object) {
+    return(object)
   }
 )
 

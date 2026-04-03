@@ -63,3 +63,7 @@ familiar:::test_plots(
   debug = debug_flag,
   test_config = "normal"
 )
+
+
+data <- familiar:::test_create_good_data(outcome_type = "continuous")
+familiar::plot_feature_similarity(object=data)
