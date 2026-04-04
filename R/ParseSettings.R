@@ -4524,37 +4524,10 @@
       default_cluster_linkage_method = prep_cluster_linkage_method,
       sample_cluster_method = sample_cluster_method,
       sample_linkage_method = sample_linkage_method,
-      sample_similarity_metric = sample_similarity_metric
+      sample_similarity_metric = sample_similarity_metric,
+      .check_more = any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements)
     )
   )
-
-  # Check similarity metrics can be feasibly computed.
-  if (
-    any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &&
-    settings$sample_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")
-  ) {
-    if (!require_package(
-      x = "nnet",
-      purpose = paste0(
-        "to compute log-likelihood pseudo R2 similarity using the ",
-        settings$sample_similarity_metric, " metric"
-      ),
-      message_type = "backend_warning"
-    )) {
-      settings$sample_similarity_metric <- "gower_winsor"
-    }
-  }
-
-  # Check the proposed cluster parameters.
-  if (any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements)) {
-    .check_cluster_parameters(
-      cluster_method = settings$sample_cluster_method,
-      cluster_linkage = settings$sample_linkage_method,
-      cluster_similarity_metric = settings$sample_similarity_metric,
-      data_type = "sample",
-      message_type = "backend_error"
-    )
-  }
 
   # eval_aggregation_method ----------------------------------------------------
   # Variable importance aggregation methods
@@ -4760,13 +4733,168 @@
 
 
 
+.parse_feature_clustering <- function(
+    config = NULL,
+    default_cluster_method = waiver(),
+    default_cluster_linkage_method = waiver(),
+    default_cluster_cut_method = waiver(),
+    default_cluster_similarity_metric = waiver(),
+    default_cluster_similarity_threshold = waiver(),
+    feature_cluster_method = waiver(),
+    feature_linkage_method = waiver(),
+    feature_cluster_cut_method = waiver(),
+    feature_similarity_metric = waiver(),
+    feature_similarity_threshold = waiver(),
+    .check_more = TRUE
+) {
+  settings <- list()
+  
+  # Set default cluster method.
+  if (is.waive(default_cluster_method)) default_cluster_method <- "hclust"
+  if (is.waive(default_cluster_linkage_method)) default_cluster_linkage_method <- "average"
+  if (is.waive(default_cluster_cut_method)) {
+    default_cluster_cut_method <- ifelse(default_cluster_method == "pam", "silhouette", "fixed_cut")
+  }
+  if (is.waive(default_cluster_similarity_metric)) default_cluster_similarity_metric <- "mutual_information"
+  if (is.waive(default_cluster_similarity_threshold)) default_cluster_similarity_threshold <- NULL
+  
+  # feature_cluster_method -----------------------------------------------------
+  # Feature cluster method
+  settings$feature_cluster_method <- .parse_arg(
+    x_config = config$feature_cluster_method,
+    x_var = feature_cluster_method,
+    var_name = "feature_cluster_method",
+    type = "character",
+    optional = TRUE,
+    default = default_cluster_method
+  )
+  
+  # feature_linkage_method -----------------------------------------------------
+  # Feature linkage method
+  settings$feature_linkage_method <- .parse_arg(
+    x_config = config$feature_linkage_method,
+    x_var = feature_linkage_method,
+    var_name = "feature_linkage_method",
+    type = "character",
+    optional = TRUE,
+    default = default_cluster_linkage_method
+  )
+  
+  # feature_cluster_cut_method -------------------------------------------------
+  # Feature cluster cluster cut method
+  settings$feature_cluster_cut_method <- .parse_arg(
+    x_config = config$feature_cut_method,
+    x_var = feature_cluster_cut_method,
+    var_name = "feature_cluster_cut_method",
+    type = "character",
+    optional = TRUE,
+    default = default_cluster_cut_method
+  )
+  
+  # feature_similarity_metric --------------------------------------------------
+  # Feature similarity metric
+  settings$feature_similarity_metric <- .parse_arg(
+    x_config = config$feature_similarity_metric,
+    x_var = feature_similarity_metric,
+    var_name = "feature_similarity_metric",
+    type = "character",
+    optional = TRUE,
+    default = default_cluster_similarity_metric
+  )
+  
+  # Perform additional checks, if required.
+  if (.check_more && settings$feature_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")) {
+    if (!require_package(
+      x = "nnet",
+      purpose = paste0(
+        "to compute log-likelihood pseudo R2 similarity using the ",
+        settings$feature_similarity_metric, " metric"
+      ),
+      message_type = "backend_warning"
+    )) {
+      settings$feature_similarity_metric <- "spearman"
+    }
+    
+  } else if (.check_more && settings$feature_similarity_metric %in% c("mutual_information")) {
+    if (!require_package(
+      x = "praznik",
+      purpose = paste0(
+        "to compute similarity using the ",
+        settings$feature_similarity_metric, " metric"
+      ),
+      message_type = "backend_warning"
+    )) {
+      settings$feature_similarity_metric <- "spearman"
+    }
+  }
+  
+  # feature_similarity_threshold -----------------------------------------------
+  # Feature similarity threshold
+  settings$feature_similarity_threshold <- .parse_arg(
+    x_config = config$feature_similarity_threshold,
+    x_var = feature_similarity_threshold,
+    var_name = "feature_similarity_threshold",
+    type = "numeric_list",
+    optional = TRUE,
+    default = default_cluster_similarity_threshold
+  )
+  
+  if (is.null(settings$feature_similarity_threshold)) {
+    if (settings$cluster_cut_method %in% c("fixed_cut")) {
+      # Fixed cut requires stringent defaults, otherwise non-sense clusters will
+      # be produced.
+      if (settings$feature_similarity_metric %in% c("mcfadden_r2")) {
+        settings$feature_similarity_threshold <- 0.30
+      } else if (settings$feature_similarity_metric %in% c("mutual_information")) {
+        settings$feature_similarity_threshold <- 0.23
+      } else if (settings$feature_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")) {
+        settings$feature_similarity_threshold <- 0.75
+      } else {
+        settings$feature_similarity_threshold <- 0.90
+      }
+      
+    } else {
+      # The similarity threshold is also used to determine if any clusters could
+      # potentially be found. The threshold is set low so that other cut methods
+      # can be explored.
+      if (settings$feature_similarity_metric %in% c("mcfadden_r2")) {
+        settings$feature_similarity_threshold <- 0.25
+      } else if (settings$feature_similarity_metric %in% c("mutual_information")) {
+        settings$feature_similarity_threshold <- 0.10
+      } else if (settings$feature_similarity_metric %in% c("cox_snell_r2", "nagelkerke_r2")) {
+        settings$feature_similarity_threshold <- 0.40
+      } else {
+        settings$feature_similarity_threshold <- 0.70
+      }
+    }
+  }
+  
+  # Check the proposed cluster parameters.
+  if (.check_more) {
+    .check_cluster_parameters(
+      cluster_method = settings$feature_cluster_method,
+      cluster_linkage = settings$feature_linkage_method,
+      cluster_cut_method = settings$feature_cluster_cut_method,
+      cluster_similarity_threshold = settings$feature_similarity_threshold,
+      cluster_similarity_metric = settings$feature_similarity_metric,
+      data_type = "feature",
+      message_type = "backend_error"
+    )
+  }
+  
+  return(settings)
+}
+  
+
+
 .parse_sample_clustering <- function(
     config = NULL,
     default_cluster_method = waiver(),
     default_cluster_linkage_method = waiver(),
     sample_cluster_method = waiver(),
     sample_linkage_method = waiver(),
-    sample_similarity_metric = waiver()
+    sample_similarity_metric = waiver(),
+    .check_more = TRUE
 ) {
   settings <- list()
   
@@ -4806,6 +4934,34 @@
     optional = TRUE,
     default = "gower_winsor"
   )
+  
+  # Check similarity metrics can be feasibly computed.
+  if (
+    .check_more &&
+    settings$sample_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")
+  ) {
+    if (!require_package(
+      x = "nnet",
+      purpose = paste0(
+        "to compute log-likelihood pseudo R2 similarity using the ",
+        settings$sample_similarity_metric, " metric"
+      ),
+      message_type = "backend_warning"
+    )) {
+      settings$sample_similarity_metric <- "gower_winsor"
+    }
+  }
+  
+  # Check the proposed cluster parameters.
+  if (.check_more) {
+    .check_cluster_parameters(
+      cluster_method = settings$sample_cluster_method,
+      cluster_linkage = settings$sample_linkage_method,
+      cluster_similarity_metric = settings$sample_similarity_metric,
+      data_type = "sample",
+      message_type = "backend_error"
+    )
+  }
   
   return(settings)
 }
