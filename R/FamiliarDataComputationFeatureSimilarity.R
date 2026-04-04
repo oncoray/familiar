@@ -226,6 +226,155 @@ setMethod(
 
 
 
+# extract_feature_similarity (dataObject) --------------------------------------
+
+setMethod(
+  "extract_feature_similarity",
+  signature(object = "dataObject"),
+  function(
+    object,
+    cl = NULL,
+    estimation_type = waiver(),
+    aggregate_results = waiver(),
+    confidence_level = waiver(),
+    bootstrap_ci_method = waiver(),
+    is_pre_processed = FALSE,
+    feature_cluster_method = waiver(),
+    feature_linkage_method = waiver(),
+    feature_cluster_cut_method = waiver(),
+    feature_similarity_threshold = waiver(),
+    feature_similarity_metric = waiver(),
+    verbose = FALSE,
+    message_indent = 0L,
+    ...
+  ) {
+    
+    # Message extraction start
+    logger_message(
+      paste0("Computing pairwise similarity between features."),
+      indent = message_indent,
+      verbose = verbose
+    )
+    
+    # There are no settings attached to dataObject, so we pass these through.
+    # TODO: UPDATE
+    browser()
+    # Set default cluster method.
+    if (is.waive(feature_cluster_method)) {
+      feature_cluster_method <- object@settings$feature_cluster_method
+    }
+    
+    # Obtain linkage function from stored settings, if required.
+    if (is.waive(feature_linkage_method)) {
+      feature_linkage_method <- object@settings$feature_linkage_method
+    } 
+    
+    # Obtain feature cluster cut method from stored settings, if required.
+    if (is.waive(feature_cluster_cut_method)) {
+      feature_cluster_cut_method <- object@settings$feature_cluster_cut_method
+    } 
+    
+    # Obtain cluster similarity threshold from stored settings, if required.
+    if (is.waive(feature_similarity_threshold)) {
+      feature_similarity_threshold <- object@settings$feature_similarity_threshold
+    }
+    
+    # Obtain similarity metric from stored settings, if required.
+    if (is.waive(feature_similarity_metric)) {
+      feature_similarity_metric <- object@settings$feature_similarity_metric
+    }
+    
+    # Replace feature cluster method == "none" with "hclust"
+    if (feature_cluster_method == "none") {
+      feature_cluster_method <- "hclust"
+    } 
+    
+    .check_cluster_parameters(
+      cluster_method = feature_cluster_method,
+      cluster_linkage = feature_linkage_method,
+      cluster_cut_method = feature_cluster_cut_method,
+      cluster_similarity_threshold = feature_similarity_threshold,
+      cluster_similarity_metric = feature_similarity_metric,
+      data_type = "feature"
+    )
+    
+    # Obtain confidence level from the settings file stored with the
+    # familiarEnsemble object.
+    if (is.waive(confidence_level)) {
+      confidence_level <- object@settings$confidence_level
+    }
+    
+    # Check alpha
+    .check_number_in_valid_range(
+      x = confidence_level,
+      var_name = "confidence_level",
+      range = c(0.0, 1.0),
+      closed = c(FALSE, FALSE)
+    )
+    
+    # Load the bootstrap method
+    if (is.waive(bootstrap_ci_method)) {
+      bootstrap_ci_method <- object@settings$bootstrap_ci_method
+    }
+    
+    .check_parameter_value_is_valid(
+      x = bootstrap_ci_method,
+      var_name = "bootstrap_ci_methpd",
+      values = .get_available_bootstrap_confidence_interval_methods()
+    )
+    
+    # Check the estimation type.
+    estimation_type <- .parse_estimation_type(
+      x = estimation_type,
+      object = object,
+      default = "point",
+      data_element = "feature_similarity",
+      detail_level = "ensemble",
+      has_internal_bootstrap = TRUE
+    )
+    
+    # Check whether results should be aggregated.
+    aggregate_results <- .parse_aggregate_results(
+      x = aggregate_results,
+      object = object,
+      default = TRUE,
+      data_element = "feature_similarity"
+    )
+    
+    
+    # Generate a prototype data element.
+    proto_data_element <- new(
+      "familiarDataElementFeatureSimilarity",
+      estimation_type = estimation_type,
+      confidence_level = confidence_level,
+      bootstrap_ci_method = bootstrap_ci_method,
+      similarity_metric = feature_similarity_metric,
+      cluster_method = feature_cluster_method,
+      linkage_method = feature_linkage_method,
+      cluster_cut_method = feature_cluster_cut_method,
+      similarity_threshold = feature_similarity_threshold
+    )
+    
+    # Generate elements to send to dispatch.
+    similarity_data <- extract_dispatcher(
+      FUN = .extract_feature_similarity,
+      has_internal_bootstrap = TRUE,
+      cl = cl,
+      object = object,
+      data = data,
+      proto_data_element = proto_data_element,
+      is_pre_processed = is_pre_processed,
+      aggregate_results = aggregate_results,
+      message_indent = message_indent + 1L,
+      verbose = verbose
+    )
+    
+    return(similarity_data)
+  }
+)
+
+
+
 .extract_feature_similarity <- function(
     object,
     data,
