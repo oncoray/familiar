@@ -84,7 +84,7 @@ setMethod(
     is_pre_processed = FALSE,
     ...
   ) {
-    # Generates a familiarData object from the ensemble.
+    # Generates a familiarData object from a prediction table.
     
     if (is.waive(data_element)) {
       data_element <- .get_available_data_elements(check_from_prediction_table = TRUE)
@@ -95,7 +95,41 @@ setMethod(
       .check_parameter_value_is_valid(
         x = data_element,
         var_name = "data_element",
-        values = .get_available_data_elements()
+        values = .get_available_data_elements(check_from_prediction_table = TRUE)
+      )
+    }
+    
+    # Pass to .extract_data
+    return(.extract_data(
+      object = object,
+      data_element = data_element,
+      ...
+    ))
+  }
+)
+
+
+# extract_data (dataObject) ----------------------------------------------------
+setMethod(
+  "extract_data",
+  signature(object = "dataObject"),
+  function(
+    object,
+    data_element = waiver(),
+    is_pre_processed = TRUE,
+    ...
+  ) {
+    # Generates a familiarData object from a dataObject.
+    if (is.waive(data_element)) {
+      data_element <- .get_available_data_elements(check_from_data_object = TRUE)
+    }
+    browser()
+    # Check the data_element argument.
+    if (length(data_element) > 0L) {
+      .check_parameter_value_is_valid(
+        x = data_element,
+        var_name = "data_element",
+        values = .get_available_data_elements(check_from_data_object = TRUE)
       )
     }
     
