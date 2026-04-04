@@ -4515,39 +4515,20 @@
     )
   }
 
-  # sample_cluster_method ------------------------------------------------------
-  # Sample cluster method
-  settings$sample_cluster_method <- .parse_arg(
-    x_config = config$sample_cluster_method,
-    x_var = sample_cluster_method,
-    var_name = "sample_cluster_method",
-    type = "character",
-    optional = TRUE,
-    default = prep_cluster_method
+  # Add sample cluster options.
+  settings <- c(
+    settings,
+    .parse_sample_clustering(
+      config = config,
+      default_cluster_method = prep_cluster_method,
+      default_cluster_linkage_method = prep_cluster_linkage_method,
+      sample_cluster_method = sample_cluster_method,
+      sample_linkage_method = sample_linkage_method,
+      sample_similarity_metric = sample_similarity_metric
+    )
   )
 
-  # sample_linkage_method ------------------------------------------------------
-  # Sample cluster linkage method
-  settings$sample_linkage_method <- .parse_arg(
-    x_config = config$sample_linkage_method,
-    x_var = sample_linkage_method,
-    var_name = "sample_linkage_method",
-    type = "character",
-    optional = TRUE,
-    default = prep_cluster_linkage_method
-  )
-
-  # sample_similarity_metric ---------------------------------------------------
-  # Sample similarity metric
-  settings$sample_similarity_metric <- .parse_arg(
-    x_config = config$sample_similarity_metric,
-    x_var = sample_similarity_metric,
-    var_name = "sample_similarity_metric",
-    type = "character",
-    optional = TRUE,
-    default = "gower_winsor"
-  )
-
+  # Check similarity metrics can be feasibly computed.
   if (
     any(c("sample_similarity", "feature_expressions") %in% settings$evaluation_data_elements) &&
     settings$sample_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")
@@ -4774,6 +4755,58 @@
   if (!parallel) settings$do_parallel <- "FALSE"
 
   # Return list of settings
+  return(settings)
+}
+
+
+
+.parse_sample_clustering <- function(
+    config = NULL,
+    default_cluster_method = waiver(),
+    default_cluster_linkage_method = waiver(),
+    sample_cluster_method = waiver(),
+    sample_linkage_method = waiver(),
+    sample_similarity_metric = waiver()
+) {
+  settings <- list()
+  
+  # Set default cluster method.
+  if (is.waive(default_cluster_method)) default_cluster_method <- "hclust"
+  if (is.waive(default_cluster_linkage_method)) default_cluster_linkage_method <- "average"
+  
+  # sample_cluster_method ------------------------------------------------------
+  # Sample cluster method
+  settings$sample_cluster_method <- .parse_arg(
+    x_config = config$sample_cluster_method,
+    x_var = sample_cluster_method,
+    var_name = "sample_cluster_method",
+    type = "character",
+    optional = TRUE,
+    default = default_cluster_method
+  )
+  
+  # sample_linkage_method ------------------------------------------------------
+  # Sample cluster linkage method
+  settings$sample_linkage_method <- .parse_arg(
+    x_config = config$sample_linkage_method,
+    x_var = sample_linkage_method,
+    var_name = "sample_linkage_method",
+    type = "character",
+    optional = TRUE,
+    default = default_cluster_linkage_method
+  )
+  
+  # sample_similarity_metric ---------------------------------------------------
+  # Sample similarity metric
+  settings$sample_similarity_metric <- .parse_arg(
+    x_config = config$sample_similarity_metric,
+    x_var = sample_similarity_metric,
+    var_name = "sample_similarity_metric",
+    type = "character",
+    optional = TRUE,
+    default = "gower_winsor"
+  )
+  
   return(settings)
 }
 
