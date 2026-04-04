@@ -4,7 +4,8 @@
     check_has_detail_level = FALSE, 
     check_has_sample_limit = FALSE,
     check_has_n_important_features = FALSE,
-    check_from_prediction_table = FALSE
+    check_from_prediction_table = FALSE,
+    check_from_data_object = FALSE
 ) {
   
   # All data elements.
@@ -41,7 +42,13 @@
   can_set_n_important_features <- c("permutation_vimp", "ice_data", "shap")
   
   # Data elements that can be computed from prediction table objects.
-  can_use_prediction_table <- c("prediction_data")
+  can_use_prediction_table <- c(
+    "prediction_data", "auc_data", "calibration_data", "decision_curve_analyis",
+    "model_performance"
+  )
+  
+  # Data elements that can be computed from data objects.
+  can_use_data_object <- c("risk_stratification_data", "feature_similarity", "sample_similarity")
   
   if (check_has_sample_limit) {
     all_data_elements <- intersect(all_data_elements, can_set_sample_limit)
@@ -57,6 +64,10 @@
   
   if (check_from_prediction_table) {
     all_data_elements <- intersect(all_data_elements, can_use_prediction_table)
+  }
+  
+  if (check_from_data_object) {
+    all_data_elements <- intersect(all_data_elements, can_use_data_object)
   }
   
   return(all_data_elements)
