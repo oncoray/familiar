@@ -333,7 +333,6 @@ setMethod(
       data_element = "feature_similarity"
     )
     
-    
     # Generate a prototype data element.
     proto_data_element <- new(
       "familiarDataElementFeatureSimilarity",
@@ -353,7 +352,7 @@ setMethod(
       has_internal_bootstrap = TRUE,
       cl = cl,
       object = object,
-      data = data,
+      data = object,
       proto_data_element = proto_data_element,
       is_pre_processed = is_pre_processed,
       aggregate_results = aggregate_results,
