@@ -4414,108 +4414,27 @@
     optional = TRUE,
     default = NULL
   )
-  
-  # feature_cluster_method -----------------------------------------------------
-  # Feature cluster method
-  settings$feature_cluster_method <- .parse_arg(
-    x_config = config$feature_cluster_method,
-    x_var = feature_cluster_method,
-    var_name = "feature_cluster_method",
-    type = "character",
-    optional = TRUE,
-    default = prep_cluster_method
-  )
 
-  # feature_linkage_method -----------------------------------------------------
-  # Feature linkage method
-  settings$feature_linkage_method <- .parse_arg(
-    x_config = config$feature_linkage_method,
-    x_var = feature_linkage_method,
-    var_name = "feature_linkage_method",
-    type = "character",
-    optional = TRUE,
-    default = prep_cluster_linkage_method
-  )
-
-  # feature_cluster_cut_method -------------------------------------------------
-  # Feature cluster cluster cut method
-  settings$feature_cluster_cut_method <- .parse_arg(
-    x_config = config$feature_cut_method,
-    x_var = feature_cluster_cut_method,
-    var_name = "feature_cluster_cut_method",
-    type = "character",
-    optional = TRUE,
-    default = prep_cluster_cut_method
-  )
-
-  # feature_similarity_metric --------------------------------------------------
-  # Feature similarity metric
-  settings$feature_similarity_metric <- .parse_arg(
-    x_config = config$feature_similarity_metric,
-    x_var = feature_similarity_metric,
-    var_name = "feature_similarity_metric",
-    type = "character",
-    optional = TRUE,
-    default = prep_cluster_similarity_metric
-  )
-
-  if (
-    any(
-      c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements
-    ) && settings$feature_similarity_metric %in% c("mcfadden_r2", "cox_snell_r2", "nagelkerke_r2")
-  ) {
-    if (!require_package(
-      x = "nnet",
-      purpose = paste0(
-        "to compute log-likelihood pseudo R2 similarity using the ",
-        settings$feature_similarity_metric, " metric"
-      ),
-      message_type = "backend_warning"
-    )) {
-      settings$feature_similarity_metric <- "spearman"
-    }
-    
-  } else if (settings$feature_similarity_metric %in% c("mutual_information")) {
-    if (!require_package(
-      x = "praznik",
-      purpose = paste0(
-        "to compute similarity using the ",
-        settings$feature_similarity_metric, " metric"
-      ),
-      message_type = "backend_warning"
-    )) {
-      settings$cluster_similarity_metric <- "spearman"
-    }
-  }
-
-  # feature_similarity_threshold -----------------------------------------------
-  # Feature similarity threshold
-  settings$feature_similarity_threshold <- .parse_arg(
-    x_config = config$feature_similarity_threshold,
-    x_var = feature_similarity_threshold,
-    var_name = "feature_similarity_threshold",
-    type = "numeric_list",
-    optional = TRUE,
-    default = prep_cluster_similarity_threshold
-  )
-
-  # Check the proposed cluster parameters.
-  if (any(
-    c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in%
-    settings$evaluation_data_elements
-  )) {
-    .check_cluster_parameters(
-      cluster_method = settings$feature_cluster_method,
-      cluster_linkage = settings$feature_linkage_method,
-      cluster_cut_method = settings$feature_cluster_cut_method,
-      cluster_similarity_threshold = settings$feature_similarity_threshold,
-      cluster_similarity_metric = settings$feature_similarity_metric,
-      data_type = "feature",
-      message_type = "backend_error"
+  # feature cluster options ----------------------------------------------------
+  settings <- c(
+    settings,
+    .parse_feature_clustering(
+      config = config,
+      default_cluster_method = prep_cluster_method,
+      default_cluster_linkage_method = prep_cluster_linkage_method,
+      default_cluster_cut_method = prep_cluster_cut_method,
+      default_cluster_similarity_metric = prep_cluster_similarity_metric,
+      default_cluster_similarity_threshold = prep_cluster_similarity_threshold,
+      feature_cluster_method = feature_cluster_method,
+      feature_linkage_method = feature_linkage_method,
+      feature_cluster_cut_method = feature_cluster_cut_method,
+      feature_similarity_metric = feature_similarity_metric,
+      feature_similarity_threshold = feature_similarity_threshold,
+      .check_more = any(c("feature_similarity", "univariate_analysis", "feature_expressions", "permutation_vimp") %in% settings$evaluation_data_elements)
     )
-  }
-
-  # Add sample cluster options.
+  )
+  
+  # sample cluster options -----------------------------------------------------
   settings <- c(
     settings,
     .parse_sample_clustering(
@@ -4840,7 +4759,7 @@
   )
   
   if (is.null(settings$feature_similarity_threshold)) {
-    if (settings$cluster_cut_method %in% c("fixed_cut")) {
+    if (settings$feature_cluster_cut_method %in% c("fixed_cut")) {
       # Fixed cut requires stringent defaults, otherwise non-sense clusters will
       # be produced.
       if (settings$feature_similarity_metric %in% c("mcfadden_r2")) {
