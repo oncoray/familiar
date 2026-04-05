@@ -123,7 +123,7 @@ setMethod(
     if (is.waive(data_element)) {
       data_element <- .get_available_data_elements(check_from_data_object = TRUE)
     }
-    browser()
+    
     # Check the data_element argument.
     if (length(data_element) > 0L) {
       .check_parameter_value_is_valid(
@@ -673,7 +673,7 @@ setMethod(
       ...
     )
   }
-  
+  browser()
   # Set up outcome information object.
   outcome_info <- .create_outcome_info(object)
 

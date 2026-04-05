@@ -269,7 +269,7 @@ setMethod(
   "as_familiar_data",
   signature(object = "dataObject"),
   function(object, name = NULL, ...) {
-    browser()
+
     # Familiar data
     fam_data <- do.call(
       extract_data,
@@ -285,7 +285,7 @@ setMethod(
     # Set a placeholder name or a user-provided name for the familiarData
     # object.
     fam_data <- set_object_name(x = fam_data, new = name)
-    
+    browser()    
     return(fam_data)
   }
 )
