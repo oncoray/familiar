@@ -400,10 +400,12 @@ setMethod(
   
   # Maintain only important features. The current set is based on the required
   # features.
-  data <- filter_features(
-    data = data,
-    available_features = object@model_features
-  )
+  if (is(object, "familiarEnsemble")) {
+    data <- filter_features(
+      data = data,
+      available_features = object@model_features
+    )
+  }
   
   # Identify eligible columns.
   feature_columns <- get_feature_columns(x = data)
