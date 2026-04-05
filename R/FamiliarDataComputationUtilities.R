@@ -124,7 +124,7 @@
     default <- "point"
   }
   
-  if (is.waive(x)) x <- object@settings$estimation_type
+  if (is.waive(x) && .hasSlot(object, "settings")) x <- object@settings$estimation_type
   
   if (is.null(x)) return(default)
   
