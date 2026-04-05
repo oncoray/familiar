@@ -256,53 +256,47 @@ setMethod(
       verbose = verbose
     )
     
-    # There are no settings attached to dataObject, so we pass these through.
-    # TODO: UPDATE
-    browser()
+    # Parse input.
+    settings <- .parse_feature_clustering(
+      feature_cluster_method = feature_cluster_method,
+      feature_linkage_method = feature_linkage_method,
+      feature_cluster_cut_method = feature_cluster_cut_method,
+      feature_similarity_metric = feature_similarity_metric,
+      feature_similarity_threshold = feature_similarity_threshold
+    )
+    
+    # There are no settings attached to dataObject, so we pass these through.browser()
     # Set default cluster method.
     if (is.waive(feature_cluster_method)) {
-      feature_cluster_method <- object@settings$feature_cluster_method
+      feature_cluster_method <- settings$feature_cluster_method
     }
     
     # Obtain linkage function from stored settings, if required.
     if (is.waive(feature_linkage_method)) {
-      feature_linkage_method <- object@settings$feature_linkage_method
+      feature_linkage_method <- settings$feature_linkage_method
     } 
     
     # Obtain feature cluster cut method from stored settings, if required.
     if (is.waive(feature_cluster_cut_method)) {
-      feature_cluster_cut_method <- object@settings$feature_cluster_cut_method
+      feature_cluster_cut_method <- settings$feature_cluster_cut_method
     } 
     
     # Obtain cluster similarity threshold from stored settings, if required.
     if (is.waive(feature_similarity_threshold)) {
-      feature_similarity_threshold <- object@settings$feature_similarity_threshold
+      feature_similarity_threshold <- settings$feature_similarity_threshold
     }
     
     # Obtain similarity metric from stored settings, if required.
     if (is.waive(feature_similarity_metric)) {
-      feature_similarity_metric <- object@settings$feature_similarity_metric
+      feature_similarity_metric <- settings$feature_similarity_metric
     }
     
     # Replace feature cluster method == "none" with "hclust"
-    if (feature_cluster_method == "none") {
-      feature_cluster_method <- "hclust"
-    } 
-    
-    .check_cluster_parameters(
-      cluster_method = feature_cluster_method,
-      cluster_linkage = feature_linkage_method,
-      cluster_cut_method = feature_cluster_cut_method,
-      cluster_similarity_threshold = feature_similarity_threshold,
-      cluster_similarity_metric = feature_similarity_metric,
-      data_type = "feature"
-    )
+    if (feature_cluster_method == "none") feature_cluster_method <- "hclust"
     
     # Obtain confidence level from the settings file stored with the
     # familiarEnsemble object.
-    if (is.waive(confidence_level)) {
-      confidence_level <- object@settings$confidence_level
-    }
+    if (is.waive(confidence_level)) confidence_level <- 0.95
     
     # Check alpha
     .check_number_in_valid_range(
@@ -313,9 +307,7 @@ setMethod(
     )
     
     # Load the bootstrap method
-    if (is.waive(bootstrap_ci_method)) {
-      bootstrap_ci_method <- object@settings$bootstrap_ci_method
-    }
+    if (is.waive(bootstrap_ci_method)) bootstrap_ci_method <- "percentile"
     
     .check_parameter_value_is_valid(
       x = bootstrap_ci_method,
