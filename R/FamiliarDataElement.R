@@ -778,7 +778,7 @@ setMethod(
 )
 
 
-# extract_dispatcher -----------------------------------------------------------
+# extract_dispatcher (familiarEnsemble) ----------------------------------------
 
 #'@title Internal function to dispatch extraction functions.
 #'
@@ -1014,7 +1014,7 @@ setMethod(
 )
 
 
-
+# extract_dispatcher (familiarDataElementPredictionTable) ----------------------
 setMethod(
   "extract_dispatcher",
   signature(
@@ -1058,7 +1058,7 @@ setMethod(
       # Add a message
       if (verbose) {
         message(paste0(
-          "extract_dispatcher,familiarEnsemble,familiarDataElement: ",
+          "extract_dispatcher,familiarDataElementPredictionTable,familiarDataElement: ",
           "too few models to compute confidence intervals."
         ))
       } 
@@ -1192,6 +1192,70 @@ setMethod(
   }
 )
 
+
+# extract_dispatcher (dataObject) ----------------------------------------------
+setMethod(
+  "extract_dispatcher",
+  signature(
+    object = "dataObject",
+    proto_data_element = "familiarDataElement"
+  ),
+  function(
+    cl = NULL,
+    FUN,
+    object,
+    proto_data_element,
+    aggregate_results,
+    has_internal_bootstrap,
+    ...,
+    message_indent = 0L,
+    verbose = TRUE
+  ) {
+    
+    # Determine the number of instances we need to find the estimates.
+    if (proto_data_element@estimation_type == "point") {
+      n_instances <- 1L
+      
+    } else if (proto_data_element@estimation_type %in% c("bias_correction", "bc")) {
+      n_instances <- 20L
+      
+    } else if (proto_data_element@estimation_type %in% c("bootstrap_confidence_interval", "bci")) {
+      n_instances <- as.integer(ceiling(signif(20.0 / (1.00 - proto_data_element@confidence_level))))
+    }
+    
+    if (proto_data_element@detail_level != "ensemble") {
+      ..error_reached_unreachable_code("Only ensemble-level detail levels are possible for extract_dispatcher with dataObject.")
+    }
+    
+    # Determine the number of bootstraps that should be computed internally.
+    n_bootstraps <- 0L
+    if (has_internal_bootstrap) n_bootstraps <- n_instances
+    
+    # If one bootstrap is required, that means no bootstraps are required.
+    if (n_bootstraps <= 1L) n_bootstraps <- 0L
+    
+    # Determine the number of parallel cluster nodes.
+    parallel_external <- FALSE
+    
+    # Dispatch for results aggregated at the ensemble level.
+    x <- .extract_dispatcher_ensemble(
+      cl = cl,
+      FUN = FUN,
+      object = object,
+      proto_data_element = proto_data_element,
+      aggregate_results = aggregate_results,
+      n_instances = n_instances,
+      n_bootstraps = n_bootstraps,
+      n_models = 1L,
+      parallel_external = FALSE,
+      message_indent = message_indent,
+      verbose = verbose,
+      ...
+    )
+    
+    return(x)
+  }
+)
 
 
 
