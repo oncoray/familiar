@@ -1472,6 +1472,25 @@ setMethod(
 )
 
 
+## process_input_data (dataObject) -----------------------------------------------
+setMethod(
+  "process_input_data",
+  signature(
+    object = "dataObject",
+    data = "ANY"
+  ),
+  function(
+    object,
+    data,
+    is_pre_processed = FALSE,
+    stop_at = "clustering",
+    keep_novelty = FALSE
+  ) {
+    return(data)
+  }
+)
+
+
 
 .process_input_data <- function(
     object,
@@ -2790,3 +2809,23 @@ create_data_column_info <- function(settings) {
   # Combine into one table and add to object
   return(rbind(data_info_table, outcome_info_table))
 }
+
+
+
+# add_model_name (familiarDataElement, dataObject)------------------------
+setMethod(
+  "add_model_name",
+  signature(
+    data = "familiarDataElement",
+    object = "dataObject"
+  ),
+  function(data, object) {
+    
+    data <- add_data_element_identifier(
+      x = data,
+      model_name = "custom_data"
+    )[[1L]]
+    
+    return(data)
+  }
+)
