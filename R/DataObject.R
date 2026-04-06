@@ -2731,6 +2731,27 @@ setMethod(
 
 
 
+## get_model_features (familiarEnsemble) ---------------------------------------
+setMethod(
+  "get_model_features",
+  signature(x = "familiarEnsemble"),
+  function(x, ...) {
+    return(x@model_features)
+  }
+)
+
+
+
+## get_model_features (familiarModel) ------------------------------------------
+setMethod(
+  "get_model_features",
+  signature(x = "familiarModel"),
+  function(x, ...) {
+    return(x@model_features)
+  }
+)
+
+
 create_data_column_info <- function(settings) {
   
   # Read from settings. If not set, these will be NULL.
