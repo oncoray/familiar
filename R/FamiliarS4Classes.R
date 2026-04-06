@@ -670,6 +670,9 @@ setClass("familiarCollection",
 #' @slot outcome_type character, determines the outcome type.
 #' @slot outcome_info Outcome information object, which contains additional
 #'   information concerning the outcome, such as class levels.
+#' @slot feature_info List of objects containing feature information, e.g.,
+#'   name, class levels, transformation, normalisation and clustering
+#'   parameters. Optional.
 #' @slot data_column_info Object containing column information.
 #' @slot data_id Data identifier for dataset. Set using internal routines if the
 #'   `dataObject` was created from a `delayedDataObject`
@@ -690,7 +693,9 @@ setClass(
     outcome_type = "character",
     # Outcome info, such as class levels, mean values etc.
     outcome_info = "ANY",
-    # Info related to the columns in the dataset.
+    # Info related to features in the data.
+    feature_info = "ANY",
+    # Info related to the other columns in the dataset.
     data_column_info = "ANY",
     # Data id
     data_id = "integer",
@@ -706,6 +711,7 @@ setClass(
     preprocessing_level = "none",
     outcome_type = NA_character_,
     outcome_info = NULL,
+    feature_info = NULL,
     data_column_info = NULL,
     data_id = NA_integer_,
     run_id = NA_integer_,
@@ -732,6 +738,9 @@ setClass(
 #' @slot outcome_type character, determines the outcome type.
 #' @slot outcome_info Outcome information object, which contains additional
 #'   information concerning the outcome, such as class levels.
+#' @slot feature_info List of objects containing feature information, e.g.,
+#'   name, class levels, transformation, normalisation and clustering
+#'   parameters. Optional.
 #' @slot data_column_info Object containing column information.
 #' @slot data_id integer. Defines the data_id of the dataset that should be
 #'   loaded.

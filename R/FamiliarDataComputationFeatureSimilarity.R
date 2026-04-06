@@ -346,6 +346,13 @@ setMethod(
       similarity_threshold = feature_similarity_threshold
     )
     
+    # Generate feature info by running the familiarTaskGenericFeatureInfo task.
+    generic_feature_info_task <- new("familiarTaskGenericFeatureInfo")
+    object@feature_info <- .perform_task(
+      object = generic_feature_info_task,
+      data = object
+    )
+    
     # Generate elements to send to dispatch.
     similarity_data <- extract_dispatcher(
       FUN = .extract_feature_similarity,
@@ -398,15 +405,15 @@ setMethod(
   # if not.
   if (get_n_samples(data, "series") <= 5L) return(NULL)
   
-  # Maintain only important features. The current set is based on the required
-  # features.
   if (is(object, "familiarEnsemble")) {
+    # Maintain only important features. The current set is based on the required
+    # features.
     data <- filter_features(
       data = data,
-      available_features = object@model_features
+      available_features = get_model_features(object)
     )
   }
-  
+
   # Identify eligible columns.
   feature_columns <- get_feature_columns(x = data)
   

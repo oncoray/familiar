@@ -24,6 +24,10 @@ already conducted. \code{"none"} by default.}
 \item{\code{outcome_info}}{Outcome information object, which contains additional
 information concerning the outcome, such as class levels.}
 
+\item{\code{feature_info}}{List of objects containing feature information, e.g.,
+name, class levels, transformation, normalisation and clustering
+parameters. Optional.}
+
 \item{\code{data_column_info}}{Object containing column information.}
 
 \item{\code{data_id}}{integer. Defines the data_id of the dataset that should be
