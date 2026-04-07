@@ -3,7 +3,8 @@ test_create_good_data <- function(
     to_data_object = TRUE,
     seed = 1844L,
     rstream_object = NULL,
-    one_relevant_feature = FALSE
+    one_relevant_feature = FALSE,
+    use_two_groups = FALSE
 ) {
   
   # Create random stream object so that the same numbers are produced every
@@ -116,6 +117,12 @@ test_create_good_data <- function(
   } else {
     data[, ":="("outcome" = outcome_value)]
     outcome_column <- "outcome"
+  }
+  
+  # Update batch_id
+  if (use_two_groups) {
+    data[1L:75L, "batch_id" := "group_a"]
+    data[76L:150L, "batch_id" := "group_b"]
   }
   
   # Convert to a data object.
