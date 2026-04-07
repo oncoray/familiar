@@ -188,7 +188,7 @@
     default,
     data_element
 ) {
-  if (is.waive(x)) x <- object@settings$sample_limit
+  if (is.waive(x) && .hasSlot(object, "settings")) x <- object@settings$sample_limit
   
   if (is.null(x)) return(default)
   
