@@ -65,5 +65,37 @@ familiar:::test_plots(
 )
 
 
+# Test plotting from dataObject.
 data <- familiar:::test_create_good_data(outcome_type = "continuous")
-familiar::plot_feature_similarity(object = data)
+p <- familiar::plot_feature_similarity(object = data, feature_similarity_metric = "spearman")
+testthat::test_that("Plotting feature similarity using dataObject works.", {
+  testthat::expect_true(is(p[[1]], "gtable"))
+})
+
+
+# Test plotting from data.table.
+data <- familiar:::test_create_good_data(outcome_type = "continuous", to_data_object = FALSE)
+p <- familiar::plot_feature_similarity(
+  object = data,
+  feature_similarity_metric = "spearman",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  outcome_type = "continuous",
+  outcome_column = "outcome"
+)
+testthat::test_that("Plotting feature similarity using data.table works.", {
+  testthat::expect_true(is(p[[1]], "gtable"))
+})
+
+
+# Test plotting from data.table without outcome data.
+data <- familiar:::test_create_good_data(outcome_type = "continuous", to_data_object = FALSE)
+data[, ":="("batch_id" = NULL, "sample_id" = NULL, "series_id" = NULL, "outcome" = NULL)]
+p <- familiar::plot_feature_similarity(
+  object = data,
+  feature_similarity_metric = "spearman"
+)
+testthat::test_that("Plotting feature similarity using data.table works.", {
+  testthat::expect_true(is(p[[1]], "gtable"))
+})
