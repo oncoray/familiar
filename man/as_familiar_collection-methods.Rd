@@ -67,8 +67,6 @@ as_familiar_collection(
   object,
   familiar_data_names = NULL,
   collection_name = NULL,
-  outcome_type = waiver(),
-  outcome_column = waiver(),
   ...
 )
 

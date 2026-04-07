@@ -622,10 +622,19 @@ setMethod(
     object,
     familiar_data_names = NULL,
     collection_name = NULL,
-    outcome_type = waiver(),
-    outcome_column = waiver(),
     ...
   ) {
+    dots <- list(...)
+    
+    # Extract outcome_type and outcome_column to provide overrides.
+    outcome_type <- dots$outcome_type
+    dots$outcome_type <- NULL
+    if (is.null(outcome_type)) outcome_type <- waiver()
+    
+    outcome_column <- dots$outcome_column
+    dots$outcome_column <- NULL
+    if (is.null(outcome_column)) outcome_column <- waiver()
+    
     if (is.waive(outcome_column) || is.waive(outcome_type)) outcome_type <- "unsupervised"
     
     # Convert to dataObject.
@@ -645,7 +654,7 @@ setMethod(
           "familiar_data_names" = familiar_data_names,
           "collection_name" = collection_name
         ),
-        list(...)
+        dots
       )
     ))
   }
