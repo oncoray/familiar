@@ -185,6 +185,100 @@ setMethod(
 
 
 
+# extract_feature_expression (dataObject) --------------------------------------
+setMethod(
+  "extract_feature_expression",
+  signature(object = "dataObject"),
+  function(
+    object,
+    data,
+    feature_similarity,
+    sample_similarity,
+    feature_cluster_method = waiver(),
+    feature_linkage_method = waiver(),
+    feature_similarity_metric = waiver(),
+    sample_cluster_method = waiver(),
+    sample_linkage_method = waiver(),
+    sample_similarity_metric = waiver(),
+    evaluation_times = waiver(),
+    message_indent = 0L,
+    verbose = FALSE
+  ) {
+    
+    # Message extraction start
+    logger_message(
+      paste0("Compute feature expression."),
+      indent = message_indent,
+      verbose = verbose
+    )
+    
+    if (
+      is.waive(evaluation_times) &&
+      object@outcome_type %in% c("survival", "competing_risk")
+    ) {
+      # Get default evaluation times.
+      settings <- .parse_evaluation_time_settings(
+        data = object@data,
+        outcome_type = object@outcome_type
+      )
+      
+      evaluation_times <- settings$eval_times
+      
+    } else if (is.waive(evaluation_times)) {
+      evaluation_times <- NULL
+    }
+    
+    # Check if evaluation_times is correct.
+    if (object@outcome_type %in% c("survival", "competing_risk")) {
+      sapply(
+        evaluation_times,
+        .check_number_in_valid_range,
+        var_name = "evaluation_times",
+        range = c(0.0, Inf),
+        closed = c(FALSE, TRUE)
+      )
+    }
+    
+    if (is_empty(object)) return(NULL)
+
+    # Generate feature info by running the familiarTaskGenericFeatureInfo task.
+    generic_feature_info_task <- new("familiarTaskGenericFeatureInfo")
+    object@feature_info <- .perform_task(
+      object = generic_feature_info_task,
+      data = object
+    )
+    
+    # Perform inverse transformation
+    expression_data <- .copy(object)
+    
+    # Add sample_name to expression_data
+    row_names <- get_unique_row_names(expression_data)
+    expression_data@data[, ":="(
+      "sample_name" = row_names,
+      "batch_id" = NULL,
+      "sample_id" = NULL,
+      "series_id" = NULL,
+      "repetition_id" = NULL
+    )]
+    
+    # Set expression data.
+    expression_data <- methods::new(
+      "familiarDataElementFeatureExpression",
+      data = expression_data@data,
+      feature_info = object@feature_info,
+      evaluation_time = evaluation_times,
+      value_column = get_feature_columns(object)
+    )
+    
+    # Add model name.
+    expression_data <- add_model_name(expression_data, object)
+    
+    return(list(expression_data))
+  }
+)
+
+
+
 # export_feature_expressions (generic) -----------------------------------------
 
 #'@title Extract and export feature expressions.
