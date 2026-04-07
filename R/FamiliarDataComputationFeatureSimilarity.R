@@ -265,28 +265,28 @@ setMethod(
       feature_similarity_threshold = feature_similarity_threshold
     )
     
-    # There are no settings attached to dataObject, so we pass these through.browser()
+    # There are no settings attached to dataObject, so we pass these through.
     # Set default cluster method.
     if (is.waive(feature_cluster_method)) {
       feature_cluster_method <- settings$feature_cluster_method
     }
     
-    # Obtain linkage function from stored settings, if required.
+    # Set default linkage method, if required.
     if (is.waive(feature_linkage_method)) {
       feature_linkage_method <- settings$feature_linkage_method
     } 
     
-    # Obtain feature cluster cut method from stored settings, if required.
+    # Set default cluster cut method, if required.
     if (is.waive(feature_cluster_cut_method)) {
       feature_cluster_cut_method <- settings$feature_cluster_cut_method
     } 
     
-    # Obtain cluster similarity threshold from stored settings, if required.
+    # Set default cluster similarity threshold, if required.
     if (is.waive(feature_similarity_threshold)) {
       feature_similarity_threshold <- settings$feature_similarity_threshold
     }
     
-    # Obtain similarity metric from stored settings, if required.
+    # Obtain default similarity metric, if required.
     if (is.waive(feature_similarity_metric)) {
       feature_similarity_metric <- settings$feature_similarity_metric
     }
@@ -294,8 +294,7 @@ setMethod(
     # Replace feature cluster method == "none" with "hclust"
     if (feature_cluster_method == "none") feature_cluster_method <- "hclust"
     
-    # Obtain confidence level from the settings file stored with the
-    # familiarEnsemble object.
+    # Set default confidence level.
     if (is.waive(confidence_level)) confidence_level <- 0.95
     
     # Check alpha
