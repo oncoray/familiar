@@ -3897,9 +3897,6 @@
     parallel_evaluation = waiver(),
     ...
 ) {
-  # Suppress NOTES due to non-standard evaluation in data.table
-  outcome_event <- batch_id <- NULL
-  
   settings <- list()
   
   # pool_only ------------------------------------------------------------------
@@ -4551,69 +4548,18 @@
     closed = c(FALSE, FALSE)
   )
 
-  # time_max -------------------------------------------------------------------
-  # Study end time (this is used for plotting, and Uno's concordance index).
-  settings$time_max <- .parse_arg(
-    x_config = config$time_max,
-    x_var = time_max,
-    var_name = "time_max",
-    type = "numeric",
-    optional = TRUE,
-    default = NULL
-  )
-
-  # evaluation_times -----------------------------------------------------------
-  # Times at which calibration is evaluated for time-to-event (survival) data.
-  settings$eval_times <- .parse_arg(
-    x_config = config$evaluation_times,
-    evaluation_times,
-    var_name = "evaluation_time",
-    type = "numeric_list",
-    optional = TRUE,
-    default = NULL
-  )
-
-  # Update time_max and eval_times only if we are dealing with survival
-  # endpoints.
-  if (outcome_type %in% c("survival")) {
-    # Identify values for time_max if it has not been provided.
-    if (is.null(settings$time_max)) {
-      if (!is.null(settings$eval_times)) {
-        # Use maximum evaluation time
-        settings$time_max <- max(settings$eval_times)
-        
-      } else if (!is.null(development_batch_id)) {
-        # 98th percentile of all outcome times in the training cohorts.
-        settings$time_max <- .get_default_time_max(
-          data[outcome_event == 1L & batch_id %in% development_batch_id]$outcome_time
-        )
-        
-      } else {
-        # 98th percentile of all outcome times in the training cohorts.
-        settings$time_max <- .get_default_time_max(
-          data[outcome_event == 1L]$outcome_time
-        )
-      }
-    }
-
-    .check_number_in_valid_range(
-      settings$time_max,
-      var_name = "time_max",
-      range = c(0.0, Inf),
-      closed = c(FALSE, TRUE)
+  # evaluation time options ----------------------------------------------------
+  settings <- c(
+    settings,
+    .parse_evaluation_time_settings(
+      data = data,
+      outcome_type = outcome_type,
+      config = config,
+      time_max = time_max,
+      evaluation_times = evaluation_times,
+      development_batch_id = development_batch_id
     )
-    
-    # Identify evaluation times if they were not provided.
-    if (is.null(settings$eval_times)) settings$eval_times <- settings$time_max
-    
-    sapply(
-      settings$eval_times,
-      .check_number_in_valid_range,
-      var_name = "evaluation_times",
-      range = c(0.0, Inf),
-      closed = c(FALSE, TRUE)
-    )
-  }
+  )
 
   # dynamic_model_loading ------------------------------------------------------
   # Dynamic loading of models during evaluation.
@@ -4879,6 +4825,88 @@
       cluster_similarity_metric = settings$sample_similarity_metric,
       data_type = "sample",
       message_type = "backend_error"
+    )
+  }
+  
+  return(settings)
+}
+
+
+
+.parse_evaluation_time_settings <- function(
+    data,
+    outcome_type,
+    config = NULL,
+    time_max = waiver(),
+    evaluation_times = waiver(),
+    development_batch_id = NULL
+) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  outcome_event <- batch_id <- NULL
+  
+  settings <- list()
+  
+  # time_max -------------------------------------------------------------------
+  # Study end time (this is used for plotting, and Uno's concordance index).
+  settings$time_max <- .parse_arg(
+    x_config = config$time_max,
+    x_var = time_max,
+    var_name = "time_max",
+    type = "numeric",
+    optional = TRUE,
+    default = NULL
+  )
+  
+  # evaluation_times -----------------------------------------------------------
+  # Times at which calibration is evaluated for time-to-event (survival) data.
+  settings$eval_times <- .parse_arg(
+    x_config = config$evaluation_times,
+    evaluation_times,
+    var_name = "evaluation_time",
+    type = "numeric_list",
+    optional = TRUE,
+    default = NULL
+  )
+  
+  # Update time_max and eval_times only if we are dealing with survival
+  # endpoints.
+  if (outcome_type %in% c("survival")) {
+    # Identify values for time_max if it has not been provided.
+    if (is.null(settings$time_max)) {
+      if (!is.null(settings$eval_times)) {
+        # Use maximum evaluation time
+        settings$time_max <- max(settings$eval_times)
+        
+      } else if (!is.null(development_batch_id)) {
+        # 98th percentile of all outcome times in the training cohorts.
+        settings$time_max <- .get_default_time_max(
+          data[outcome_event == 1L & batch_id %in% development_batch_id]$outcome_time
+        )
+        
+      } else {
+        # 98th percentile of all outcome times in the training cohorts.
+        settings$time_max <- .get_default_time_max(
+          data[outcome_event == 1L]$outcome_time
+        )
+      }
+    }
+    
+    .check_number_in_valid_range(
+      settings$time_max,
+      var_name = "time_max",
+      range = c(0.0, Inf),
+      closed = c(FALSE, TRUE)
+    )
+    
+    # Identify evaluation times if they were not provided.
+    if (is.null(settings$eval_times)) settings$eval_times <- settings$time_max
+    
+    sapply(
+      settings$eval_times,
+      .check_number_in_valid_range,
+      var_name = "evaluation_times",
+      range = c(0.0, Inf),
+      closed = c(FALSE, TRUE)
     )
   }
   
