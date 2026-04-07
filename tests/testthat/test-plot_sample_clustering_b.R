@@ -82,3 +82,62 @@ familiar:::test_plot_ordering(
     "verbose" = FALSE),
   debug = debug_flag
 )
+
+
+
+# Test plotting from dataObject.
+data <- familiar:::test_create_good_data(outcome_type = "survival")
+p <- familiar::plot_sample_clustering(object = data, feature_similarity_metric = "spearman")
+testthat::test_that("Plotting sample similarity using dataObject works (survival).", {
+  testthat::expect_true(is(p[[1]], "gtable"))
+})
+
+data <- familiar:::test_create_good_data(outcome_type = "continuous")
+p <- familiar::plot_sample_clustering(object = data, feature_similarity_metric = "spearman")
+testthat::test_that("Plotting sample similarity using dataObject works (continuous).", {
+  testthat::expect_true(is(p[[1]], "gtable"))
+})
+
+
+
+# Test plotting from data.table.
+data <- familiar:::test_create_good_data(outcome_type = "survival", to_data_object = FALSE)
+p <- familiar::plot_sample_clustering(
+  object = data,
+  feature_similarity_metric = "spearman",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  outcome_type = "survival",
+  outcome_column = c("outcome_time", "outcome_event")
+)
+testthat::test_that("Plotting sample similarity using data.table works (survival).", {
+  testthat::expect_true(is(p[[1]], "gtable"))
+})
+
+data <- familiar:::test_create_good_data(outcome_type = "continuous", to_data_object = FALSE)
+p <- familiar::plot_sample_clustering(
+  object = data,
+  feature_similarity_metric = "spearman",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  outcome_type = "continuous",
+  outcome_column = "outcome"
+)
+testthat::test_that("Plotting sample similarity using data.table works (continuous).", {
+  testthat::expect_true(is(p[[1]], "gtable"))
+})
+
+
+
+# Test plotting from data.table without outcome data.
+data <- familiar:::test_create_good_data(outcome_type = "continuous", to_data_object = FALSE)
+data[, ":="("batch_id" = NULL, "sample_id" = NULL, "series_id" = NULL, "outcome" = NULL)]
+p <- familiar::plot_sample_clustering(
+  object = data,
+  feature_similarity_metric = "spearman"
+)
+testthat::test_that("Plotting sample similarity using data.table works.", {
+  testthat::expect_true(is(p[[1]], "gtable"))
+})
