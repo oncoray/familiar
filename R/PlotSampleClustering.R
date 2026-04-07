@@ -500,6 +500,9 @@ setMethod(
         outcome_legend_label <- "value"
       } else if (object@outcome_type %in% c("survival", "competing_risk")) {
         outcome_legend_label <- "event"
+      } else if (object@outcome_type == "unsupervised") {
+        outcome_legend_label <- "unset"
+        show_outcome <- FALSE
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
       }
