@@ -48,7 +48,7 @@
   )
   
   # Data elements that can be computed from data objects.
-  can_use_data_object <- c("risk_stratification_data", "feature_similarity", "sample_similarity")
+  can_use_data_object <- c("risk_stratification_data", "feature_similarity", "sample_similarity", "feature_expressions")
   
   if (check_has_sample_limit) {
     all_data_elements <- intersect(all_data_elements, can_set_sample_limit)
