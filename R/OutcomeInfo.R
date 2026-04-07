@@ -741,6 +741,10 @@ setMethod(
         competing_risk_str, ".\n"
       )
       
+    } else if (object@outcome_type == "unsupervised") {
+      # No further details provided.
+      outcome_str <- paste0(outcome_str, ".\n")
+      
     } else {
       ..error_no_known_outcome_type(object@outcome_type)
     }
