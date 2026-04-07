@@ -172,6 +172,104 @@ setMethod(
 
 
 
+# extract_sample_similarity (dataObject) ---------------------------------------
+setMethod(
+  "extract_sample_similarity",
+  signature(object = "dataObject"),
+  function(
+    object,
+    data,
+    cl = NULL,
+    is_pre_processed = FALSE,
+    sample_limit = waiver(),
+    sample_cluster_method = waiver(),
+    sample_linkage_method = waiver(),
+    sample_similarity_metric = waiver(),
+    verbose = FALSE,
+    message_indent = 0L,
+    ...
+  ) {
+    
+    # Message extraction start
+    logger_message(
+      paste0("Computing pairwise similarity between samples."),
+      indent = message_indent,
+      verbose = verbose
+    )
+    
+    settings <- .parse_sample_clustering(
+      sample_cluster_method = sample_cluster_method,
+      sample_linkage_method = sample_linkage_method,
+      sample_similarity_metric = sample_similarity_metric
+    )
+    
+    # Set default cluster method, if required.
+    if (is.waive(sample_cluster_method)) {
+      sample_cluster_method <- settings$sample_cluster_method
+    }
+    
+    # Set default linkage function, if required.
+    if (is.waive(sample_linkage_method)) {
+      sample_linkage_method <- settings$sample_linkage_method
+    }
+    
+    # Set default similarity metric, if required.
+    if (is.waive(sample_similarity_metric)) {
+      sample_similarity_metric <- settings$sample_similarity_metric
+    }
+    
+    # Replace sample cluster method == "none" with "hclust"
+    if (sample_cluster_method == "none") {
+      sample_cluster_method <- "hclust"
+    }
+    
+    # Check the sample limit.
+    sample_limit <- .parse_sample_limit(
+      x = sample_limit,
+      object = object,
+      default = Inf,
+      data_element = "sample_similarity"
+    )
+    
+    # Generate a prototype data element.
+    proto_data_element <- new(
+      "familiarDataElementSampleSimilarity",
+      similarity_metric = sample_similarity_metric,
+      cluster_method = sample_cluster_method,
+      linkage_method = sample_linkage_method
+    )
+    
+    # Assume data is transformed.
+    object@preprocessing_level <- "transformation"
+    
+    # Generate feature info by running the familiarTaskGenericFeatureInfo task.
+    generic_feature_info_task <- new("familiarTaskGenericFeatureInfo")
+    object@feature_info <- .perform_task(
+      object = generic_feature_info_task,
+      data = object
+    )
+    
+    # Generate elements to send to dispatch.
+    similarity_data <- extract_dispatcher(
+      FUN = .extract_sample_similarity,
+      has_internal_bootstrap = FALSE,
+      cl = cl,
+      object = object,
+      data = object,
+      sample_limit = sample_limit,
+      proto_data_element = proto_data_element,
+      is_pre_processed = is_pre_processed,
+      aggregate_results = TRUE,
+      message_indent = message_indent + 1L,
+      verbose = verbose
+    )
+    
+    return(similarity_data)
+  }
+)
+
+
+
 .extract_sample_similarity <- function(
     object,
     data,
@@ -213,15 +311,17 @@ setMethod(
     seed = 0L
   )
   
-  # Maintain only important features. The current set is based on the required
-  # features.
-  data <- filter_features(
-    data = data,
-    available_features = object@model_features
-  )
-  
-  # Aggregate features.
-  data <- aggregate_data(data = data)
+  if (is(object, "familiarEnsemble")){
+    # Maintain only important features when assessing data from the perspective
+    # of an ensemble. The current set is based on the required features.
+    data <- filter_features(
+      data = data,
+      available_features = object@model_features
+    )
+    
+    # Aggregate features.
+    data <- aggregate_data(data = data)
+  }
   
   # Identify eligible columns.
   feature_columns <- get_feature_columns(x = data)
