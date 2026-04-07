@@ -626,21 +626,27 @@ setMethod(
     outcome_column = waiver(),
     ...
   ) {
+    if (is.waive(outcome_column) || is.waive(outcome_type)) outcome_type <- "unsupervised"
+    
     # Convert to dataObject.
     object <- as_data_object(
       data = object,
+      outcome_column = outcome_column,
+      outcome_type = outcome_type,
       ...
     )
     
     # Pass to method for dataObject.
     return(do.call(
       as_familiar_collection,
-      list(
-        "object" = object,
-        "familiar_data_names" = familiar_data_names,
-        "collection_name" = collection_name
-      ),
-      list(...)
+      args = c(
+        list(
+          "object" = object,
+          "familiar_data_names" = familiar_data_names,
+          "collection_name" = collection_name
+        ),
+        list(...)
+      )
     ))
   }
 )
