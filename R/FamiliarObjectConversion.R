@@ -282,10 +282,10 @@ setMethod(
     # Set name of the current batch as name.
     if (is.null(name)) name <- as.character(object@data[[get_id_columns("batch")]][1L])
     
-    # Set a placeholder name or a user-provided name for the familiarData
-    # object.
+    # Set a name derived from the batch identifier or a user-provided name for
+    # the familiarData object.
     fam_data <- set_object_name(x = fam_data, new = name)
-    browser()    
+    
     return(fam_data)
   }
 )

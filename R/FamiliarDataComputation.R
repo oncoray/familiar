@@ -673,7 +673,7 @@ setMethod(
       ...
     )
   }
-  browser()
+  
   # Set up outcome information object.
   outcome_info <- .create_outcome_info(object)
 
@@ -689,8 +689,8 @@ setMethod(
     hyperparameter_data = NULL,
     required_features = .optional_from_slot(object, "required_features", alternative = NULL),
     model_features = .optional_from_slot(object, "model_features", alternative = NULL),
-    learner = object@learner,
-    vimp_method = object@vimp_method,
+    learner = .optional_from_slot(object, "learner", alternative = "none"),
+    vimp_method = .optional_from_slot(object, "vimp_method", alternative = "none"),
     prediction_data = prediction_data,
     confusion_matrix = confusion_matrix_info,
     decision_curve_data = decision_curve_data,
