@@ -980,7 +980,7 @@ setMethod(
           # dataset.
           normalisation_method <- sapply(
             data@feature_info,
-            function(feature) (feature@normalisation_parameters@method)
+            function(feature) (.optional_from_slot(feature@normalisation_parameters, "method", alternative = "standardisation_winsor"))
           )
           
           return(unname(normalisation_method))
