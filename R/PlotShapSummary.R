@@ -566,7 +566,7 @@ setMethod(
     outcome_type
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  shap_value <- vimp <- feature_value <- NULL
+  shap_value <- vimp <- feature_value <- feature_name <- NULL
   
   value_group_columns <- c("vimp_method", "learner", "feature_name")
   if ("evaluation_time" %in% colnames(x)) value_group_columns <- c(value_group_columns, "evaluation_time")
