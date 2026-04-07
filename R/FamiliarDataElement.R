@@ -768,6 +768,26 @@ setMethod(
   }
 )
 
+
+# .copy (dataObject) -----------------------------------------------------------
+setMethod(
+  ".copy",
+  signature(object = "dataObject"),
+  function(object) {
+    slots_present <- methods::slotNames(object)
+    
+    for (current_slot in slots_present) {
+      # Make deepcopy of data.tables present in the dataset.
+      if (data.table::is.data.table(methods::slot(object, current_slot))) {
+        methods::slot(object, current_slot) <- data.table::copy(methods::slot(object, current_slot))
+      }
+    }
+    
+    return(object)
+  }
+)
+
+
 # .copy (null) -----------------------------------------------------------------
 setMethod(
   ".copy",
