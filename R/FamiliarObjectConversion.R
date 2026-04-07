@@ -638,11 +638,16 @@ setMethod(
     if (is.waive(outcome_column) || is.waive(outcome_type)) outcome_type <- "unsupervised"
     
     # Convert to dataObject.
-    object <- as_data_object(
-      data = object,
-      outcome_column = outcome_column,
-      outcome_type = outcome_type,
-      ...
+    object <- do.call(
+      as_data_object,
+      args = c(
+        list(
+          "data" = object,
+          "outcome_column" = outcome_column,
+          "outcome_type" = outcome_type
+        ),
+        dots
+      )
     )
     
     # Pass to method for dataObject.
