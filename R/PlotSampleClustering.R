@@ -708,10 +708,10 @@ setMethod(
 
     # Add default splitting variables
     if (is.null(split_by) & is.null(facet_by)) {
-      # Split by variable importance method and learner
+      # Split by variable importance method, learner and data set
       split_by <- c("vimp_method", "learner", "data_set")
 
-      # Facet by dataset
+      # Do not use facets.
       facet_by <- NULL
     }
 

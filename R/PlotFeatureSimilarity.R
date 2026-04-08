@@ -52,8 +52,8 @@ NULL
 #' @details This function generates area under the ROC curve plots.
 #'
 #'   Available splitting variables are: `vimp_method`, `learner`, and `data_set`.
-#'   By default, the data is split by `vimp_method` and `learner`, with facetting
-#'   by `data_set`.
+#'   By default, the data is split by `vimp_method`, `learner` and `data_set`,
+#'   since the features may be ordered differently for each data set.
 #'
 #'   Note that similarity is determined based on the underlying data. Hence the
 #'   ordering of features may differ between facets, and tick labels are
@@ -352,11 +352,11 @@ setMethod(
 
     # Add default splitting variables
     if (is.null(split_by) & is.null(facet_by)) {
-      # Split by feature selection method and learner
-      split_by <- c("vimp_method", "learner")
-
-      # Facet by dataset
-      facet_by <- "data_set"
+      # Split by variable importance method, learner and data set
+      split_by <- c("vimp_method", "learner", "data_set")
+      
+      # Do not use facets.
+      facet_by <- NULL
     }
 
     # Check splitting variables and generate sanitised output
