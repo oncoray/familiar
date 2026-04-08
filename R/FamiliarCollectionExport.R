@@ -552,6 +552,7 @@ setMethod(
       )) {
         
         if (!is.null(x[[current_column_name]])) {
+          browser()
           data.table::set(
             x,
             j = current_column_name,

@@ -1121,7 +1121,7 @@ setMethod(
     
     if (is_empty(object)) return(object)
     
-    # Check outcome type
+    # Set outcome type
     object@outcome_type <- "unsupervised"
     
     # Check that one set of prediction data are provided.
@@ -1162,8 +1162,16 @@ setMethod(
         
       } else {
         group_labels <- unique_na(object@prediction_data$group)
-        if (length(group_labels) > NULL) object@groups <- sort(group_labels)
+        if (length(group_labels) > 0L) object@groups <- sort(group_labels)
       }
+    }
+    
+    # Set group to factor.
+    if (!is.factor(object@prediction_data$group)) {
+      object@prediction_data$group <- factor(
+        object@prediction_data,
+        levels = object@groups
+      )
     }
     
     return(object)

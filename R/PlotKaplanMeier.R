@@ -280,7 +280,7 @@ setMethod(
       object = object,
       export_strata = FALSE
     )
-    
+    browser()
     # Check that the data are not empty.
     if (is_empty(x)) return(NULL)
 

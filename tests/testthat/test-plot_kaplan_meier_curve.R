@@ -85,3 +85,41 @@ familiar:::test_plot_ordering(
     "split_by" = "stratification_method"),
   debug = debug_flag
 )
+
+
+
+# Test plotting from dataObject.
+data <- familiar:::test_create_good_data(outcome_type = "survival")
+p <- familiar::plot_kaplan_meier(object = data)
+testthat::test_that("Plotting kaplan-meier curves using dataObject works (survival).", {
+  testthat::expect_true(is(p[[1L]], "gtable"))
+})
+
+
+# Test plotting from dataObject with two groups.
+data <- familiar:::test_create_good_data(outcome_type = "survival", two_groups = TRUE)
+p <- familiar::plot_kaplan_meier(object = data)
+testthat::test_that("Plotting kaplan-meier curves for two groups works.", {
+  testthat::expect_length(p, 2L)
+  testthat::expect_true(is(p[[1L]], "gtable"))
+  testthat::expect_true(is(p[[2L]], "gtable"))
+})
+
+
+# Test plotting from data.table.
+data <- familiar:::test_create_good_data(outcome_type = "survival", to_data_object = FALSE)
+p <- familiar::plot_kaplan_meier(
+  object = data,
+  feature_similarity_metric = "spearman",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  outcome_type = "survival",
+  outcome_column = c("outcome_time", "outcome_event")
+)
+testthat::test_that("Plotting kaplan-meier curves using data.table works (survival).", {
+  testthat::expect_true(is(p[[1L]], "gtable"))
+})
+
+
+# Test plotting from data.table without feature data.

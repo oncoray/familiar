@@ -225,6 +225,86 @@ setMethod(
 
 
 
+# extract_risk_stratification_data (dataObject) --------------------------------
+setMethod(
+  "extract_risk_stratification_data",
+  signature(object = "dataObject"),
+  function(
+    object,
+    data,
+    cl = NULL,
+    is_pre_processed = FALSE,
+    ensemble_method = waiver(),
+    detail_level = waiver(),
+    confidence_level = waiver(),
+    stratification_method = waiver(),
+    message_indent = 0L,
+    verbose = FALSE,
+    ...
+  ) {
+    
+    # This mostly follows the same routines as extract_prediction_data. In
+    # addition, tests are created during export.
+    
+    # Only assess stratification for survival outcomes.
+    if (!object@outcome_type %in% c("survival")) return(NULL)
+    
+    # Message extraction start
+    logger_message(
+      paste0("Assessing stratification into risk groups."),
+      indent = message_indent,
+      verbose = verbose
+    )
+    
+    # Set default confidence alpha from object settings attribute if not provided
+    # externally.
+    if (is.waive(confidence_level)) confidence_level <- 0.95
+    
+    # Check confidence_level input argument
+    .check_number_in_valid_range(
+      x = confidence_level, 
+      var_name = "confidence_level",
+      range = c(0.0, 1.0),
+      closed = c(FALSE, FALSE)
+    )
+
+    # Generate a prototype data element.
+    # performance_data <- new(
+    #   "predictionTableRiskGroups",
+    #   detail_level = "ensemble",
+    #   confidence_level = confidence_level,
+    #   estimation_type = "point"
+    # )
+    
+    prediction_data <- as_prediction_table(
+      x = object@data$batch_id,
+      type = "risk_stratification",
+      data = object
+    )
+    prediction_data <- .merge_slots_into_data(prediction_data)
+    browser()
+    prediction_data@detail_level <- "ensemble"
+    prediction_data@estimation_type <- "point"
+    prediction_data@confidence_level <- confidence_level
+    prediction_data@bootstrap_ci_method <- "percentile"
+    prediction_data@is_aggregated <- FALSE
+    prediction_data@learner <- "none"
+    prediction_data@vimp_method <- "none"
+    
+    # Add model name.
+    prediction_data <- add_model_name(prediction_data, object = object)
+    
+    # Add stratification methods.
+    prediction_data <- add_data_element_identifier(
+      x = prediction_data,
+      stratification_method = "external"
+    )
+    
+    return(prediction_data)
+  }
+)
+
+
 
 # extract_risk_stratification_data (prediction table) --------------------------
 setMethod(
@@ -842,7 +922,6 @@ setMethod(
     export_collection = FALSE,
     ...
   ) {
-    
     # Make sure the collection object is updated.
     object <- update_object(object = object)
     

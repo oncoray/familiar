@@ -869,6 +869,7 @@ setMethod(
       ))
       
     } else if (upd_slot == "km_group_labels") {
+      browser()
       data <- unique(c(
         "low", "moderate", "high",
         unlist(lapply(x@km_data, function(x) (levels(x@data$group))))

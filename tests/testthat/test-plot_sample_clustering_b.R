@@ -108,6 +108,7 @@ testthat::test_that("Plotting sample similarity for two groups works.", {
   testthat::expect_true(is(p[[2L]], "gtable"))
 })
 
+
 # Test plotting from data.table.
 data <- familiar:::test_create_good_data(outcome_type = "survival", to_data_object = FALSE)
 p <- familiar::plot_sample_clustering(
@@ -136,7 +137,6 @@ p <- familiar::plot_sample_clustering(
 testthat::test_that("Plotting sample similarity using data.table works (continuous).", {
   testthat::expect_true(is(p[[1L]], "gtable"))
 })
-
 
 
 # Test plotting from data.table without outcome data.

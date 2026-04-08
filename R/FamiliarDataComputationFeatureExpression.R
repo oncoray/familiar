@@ -296,19 +296,14 @@ setMethod(
 #'
 #'@inheritDotParams extract_feature_expression
 #'@inheritDotParams as_familiar_collection
+#'@inheritDotParams as_data_object
 #'
-#'@details Data is usually collected from a `familiarCollection` object.
-#'  However, you can also provide one or more `familiarData` objects, that will
-#'  be internally converted to a `familiarCollection` object. It is also
-#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
-#'  objects together with the data from which data is computed prior to export.
-#'  Paths to the previous files can also be provided.
-#'
+#'@details 
 #'  All parameters aside from `object` and `dir_path` are only used if `object`
 #'  is not a `familiarCollection` object, or a path to one.
-#'
-#'  Feature expressions are computed by standardising each feature, i.e. sample
-#'  mean is 0 and standard deviation is 1.
+#'  
+#'  Feature similarity data can be created from `dataObject`, or `data.table` objects.
+#'  For `data.table`, see \code{\link{as_data_object}} for additional arguments.
 #'
 #'@return A data.table (if `dir_path` is not provided), or nothing, as all data
 #'  is exported to `csv` files.

@@ -86,7 +86,7 @@ computation and extraction of various data elements.}
 \item{...}{Unused arguments.}
 }
 \value{
-A data.table containing pairwise distance between samples. This data
+An object containing pairwise distance between samples. This data
 is only the upper triangular of the complete matrix (i.e. the sparse
 unitriangular representation). Diagonals will always be 0.0 and the lower
 triangular is mirrored.

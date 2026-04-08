@@ -109,11 +109,14 @@ element objects.}
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}
+  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[=as_data_object]{as_data_object}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
 parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
+    \item{\code{data}}{A \code{data.frame} or \code{data.table}, a path to such tables on a local
+or network drive, or a path to tabular data that may be converted to these
+formats.}
   }}
 }
 \value{
@@ -125,13 +128,9 @@ Extract and export mutual correlation between features in a
 familiarCollection.
 }
 \details{
-Data is usually collected from a \code{familiarCollection} object.
-However, you can also provide one or more \code{familiarData} objects, that will
-be internally converted to a \code{familiarCollection} object. It is also
-possible to provide a \code{familiarEnsemble} or one or more \code{familiarModel}
-objects together with the data from which data is computed prior to export.
-Paths to the previous files can also be provided.
-
 All parameters aside from \code{object} and \code{dir_path} are only used if \code{object}
 is not a \code{familiarCollection} object, or a path to one.
+
+Feature similarity data can be created from \code{dataObject}, or \code{data.table} objects.
+For \code{data.table}, see \code{\link{as_data_object}} for additional arguments.
 }
