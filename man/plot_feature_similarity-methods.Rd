@@ -379,8 +379,8 @@ more similar features appear together.
 This function generates area under the ROC curve plots.
 
 Available splitting variables are: \code{vimp_method}, \code{learner}, and \code{data_set}.
-By default, the data is split by \code{vimp_method} and \code{learner}, with facetting
-by \code{data_set}.
+By default, the data is split by \code{vimp_method}, \code{learner} and \code{data_set},
+since the features may be ordered differently for each data set.
 
 Note that similarity is determined based on the underlying data. Hence the
 ordering of features may differ between facets, and tick labels are
@@ -389,4 +389,7 @@ maintained for each panel.
 Labeling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
+
+This plot can be created from \code{dataObject}, or \code{data.table} objects.
+For \code{data.table}, see \code{\link{as_data_object}} for additional arguments.
 }

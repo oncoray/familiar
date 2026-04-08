@@ -62,6 +62,9 @@ NULL
 #'   Labeling methods such as `set_vimp_method_names` or `set_data_set_names` can
 #'   be applied to the `familiarCollection` object to update labels, and order
 #'   the output in the figure.
+#'   
+#'   This plot can be created from `dataObject`, or `data.table` objects.
+#'   For `data.table`, see \code{\link{as_data_object}} for additional arguments.
 #'
 #' @return `NULL` or list of plot objects, if `dir_path` is `NULL`.
 #'

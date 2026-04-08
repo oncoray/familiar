@@ -425,6 +425,11 @@ setMethod(
 #'   object. It is also possible to provide a `familiarEnsemble` or one or more
 #'   `familiarModel` objects together with the data from which data is computed
 #'   prior to export. Paths to such files can also be provided.
+#'   
+#'   Additionally, some `familiarData` objects can be created from prediction
+#'   tables (`familiarDataElementPredictionTable`). Other `familiarData` objects
+#'   can be created from data (`dataObject`, or `data.table`). Please
+#'   check *details* for more information.
 #' @param familiar_data_names Names of the dataset(s). Only used if the `object`
 #'   parameter is one or more `familiarData` objects.
 #' @param collection_name Name of the collection.
@@ -782,7 +787,7 @@ setMethod(
     } else {
       collection_name <- as.character(collection_name)
     }
-
+    
     # Generate data names
     fam_collect <- methods::new("familiarCollection",
       name = collection_name,

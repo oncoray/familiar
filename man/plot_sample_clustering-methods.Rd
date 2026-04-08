@@ -495,4 +495,7 @@ maintained for each panel.
 Labeling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
+
+This plot can be created from \code{dataObject}, or \code{data.table} objects.
+For \code{data.table}, see \code{\link{as_data_object}} for additional arguments.
 }

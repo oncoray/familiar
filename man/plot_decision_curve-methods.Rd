@@ -104,7 +104,12 @@ plot_decision_curve(
 objects, that will be internally converted to a \code{familiarCollection}
 object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
-prior to export. Paths to such files can also be provided.}
+prior to export. Paths to such files can also be provided.
+
+Additionally, some \code{familiarData} objects can be created from prediction
+tables (\code{familiarDataElementPredictionTable}). Other \code{familiarData} objects
+can be created from data (\code{dataObject}, or \code{data.table}). Please
+check \emph{details} for more information.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
