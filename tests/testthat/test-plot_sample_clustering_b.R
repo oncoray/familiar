@@ -89,16 +89,24 @@ familiar:::test_plot_ordering(
 data <- familiar:::test_create_good_data(outcome_type = "survival")
 p <- familiar::plot_sample_clustering(object = data, feature_similarity_metric = "spearman")
 testthat::test_that("Plotting sample similarity using dataObject works (survival).", {
-  testthat::expect_true(is(p[[1]], "gtable"))
+  testthat::expect_true(is(p[[1L]], "gtable"))
 })
 
 data <- familiar:::test_create_good_data(outcome_type = "continuous")
 p <- familiar::plot_sample_clustering(object = data, feature_similarity_metric = "spearman")
 testthat::test_that("Plotting sample similarity using dataObject works (continuous).", {
-  testthat::expect_true(is(p[[1]], "gtable"))
+  testthat::expect_true(is(p[[1L]], "gtable"))
 })
 
 
+# Test plotting from dataObject with two groups.
+data <- familiar:::test_create_good_data(outcome_type = "continuous", two_groups = TRUE)
+p <- familiar::plot_sample_clustering(object = data, feature_similarity_metric = "spearman")
+testthat::test_that("Plotting sample similarity for two groups works.", {
+  testthat::expect_length(p, 2L)
+  testthat::expect_true(is(p[[1L]], "gtable"))
+  testthat::expect_true(is(p[[2L]], "gtable"))
+})
 
 # Test plotting from data.table.
 data <- familiar:::test_create_good_data(outcome_type = "survival", to_data_object = FALSE)
@@ -112,7 +120,7 @@ p <- familiar::plot_sample_clustering(
   outcome_column = c("outcome_time", "outcome_event")
 )
 testthat::test_that("Plotting sample similarity using data.table works (survival).", {
-  testthat::expect_true(is(p[[1]], "gtable"))
+  testthat::expect_true(is(p[[1L]], "gtable"))
 })
 
 data <- familiar:::test_create_good_data(outcome_type = "continuous", to_data_object = FALSE)
@@ -126,7 +134,7 @@ p <- familiar::plot_sample_clustering(
   outcome_column = "outcome"
 )
 testthat::test_that("Plotting sample similarity using data.table works (continuous).", {
-  testthat::expect_true(is(p[[1]], "gtable"))
+  testthat::expect_true(is(p[[1L]], "gtable"))
 })
 
 

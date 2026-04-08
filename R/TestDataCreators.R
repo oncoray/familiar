@@ -4,7 +4,7 @@ test_create_good_data <- function(
     seed = 1844L,
     rstream_object = NULL,
     one_relevant_feature = FALSE,
-    use_two_groups = FALSE
+    two_groups = FALSE
 ) {
   
   # Create random stream object so that the same numbers are produced every
@@ -120,7 +120,7 @@ test_create_good_data <- function(
   }
   
   # Update batch_id
-  if (use_two_groups) {
+  if (two_groups) {
     data[1L:75L, "batch_id" := "group_a"]
     data[76L:150L, "batch_id" := "group_b"]
   }

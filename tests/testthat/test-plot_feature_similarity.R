@@ -69,7 +69,16 @@ familiar:::test_plots(
 data <- familiar:::test_create_good_data(outcome_type = "continuous")
 p <- familiar::plot_feature_similarity(object = data, feature_similarity_metric = "spearman")
 testthat::test_that("Plotting feature similarity using dataObject works.", {
-  testthat::expect_true(is(p[[1]], "gtable"))
+  testthat::expect_true(is(p[[1L]], "gtable"))
+})
+
+# Test plotting from dataObject with two groups.
+data <- familiar:::test_create_good_data(outcome_type = "continuous", two_groups = TRUE)
+p <- familiar::plot_feature_similarity(object = data, feature_similarity_metric = "spearman")
+testthat::test_that("Plotting feature similarity for two groups works.", {
+  testthat::expect_length(p, 2L)
+  testthat::expect_true(is(p[[1L]], "gtable"))
+  testthat::expect_true(is(p[[2L]], "gtable"))
 })
 
 
@@ -85,7 +94,7 @@ p <- familiar::plot_feature_similarity(
   outcome_column = "outcome"
 )
 testthat::test_that("Plotting feature similarity using data.table works.", {
-  testthat::expect_true(is(p[[1]], "gtable"))
+  testthat::expect_true(is(p[[1L]], "gtable"))
 })
 
 
@@ -97,5 +106,5 @@ p <- familiar::plot_feature_similarity(
   feature_similarity_metric = "spearman"
 )
 testthat::test_that("Plotting feature similarity using data.table works.", {
-  testthat::expect_true(is(p[[1]], "gtable"))
+  testthat::expect_true(is(p[[1L]], "gtable"))
 })
