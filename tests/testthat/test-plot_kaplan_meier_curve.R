@@ -122,3 +122,13 @@ testthat::test_that("Plotting kaplan-meier curves using data.table works (surviv
 
 
 # Test plotting from data.table without feature data.
+data <- familiar:::test_create_data_without_feature(outcome_type = "survival", to_data_object = FALSE)
+p <- familiar::plot_kaplan_meier(
+  object = data,
+  feature_similarity_metric = "spearman",
+  batch_id_column = "batch_id",
+  sample_id_column = "sample_id",
+  series_id_column = "series_id",
+  outcome_type = "survival",
+  outcome_column = c("outcome_time", "outcome_event")
+)

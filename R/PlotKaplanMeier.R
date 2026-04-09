@@ -172,7 +172,8 @@ setMethod(
       args = c(
         list(
           "object" = object,
-          "data_element" = "risk_stratification_data"
+          "data_element" = "risk_stratification_data",
+          ".no_features_required" = TRUE
         ),
         list(...)
       )

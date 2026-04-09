@@ -17,7 +17,8 @@
   event_indicator,
   competing_risk_indicator,
   check_stringency = "strict",
-  reference_method = "auto"
+  reference_method = "auto",
+  .no_features_required = FALSE
 )
 }
 \arguments{
@@ -142,6 +143,9 @@ Automatically detected categorical features are simply sorted, and the
 first level is then used as the reference level. This was the behaviour
 prior to familiar version 1.3.0.
 }}
+
+\item{.no_features_required}{Internal flag to signify that data without
+features is allowed. Default: FALSE (most processing steps require features).}
 }
 \value{
 data.table with expected column names.

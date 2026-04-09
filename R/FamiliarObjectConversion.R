@@ -336,7 +336,6 @@ setMethod(
     
     # Parse dataObject.
     if (all(sapply(object, is, "dataObject"))) {
-      
       # Split by batch-id.
       object <- lapply(object, .split_data_by_batch_id)
       
@@ -642,6 +641,11 @@ setMethod(
     
     if (is.waive(outcome_column) || is.waive(outcome_type)) outcome_type <- "unsupervised"
     
+    # Extract .no_features_required to override checks on features in as_data_object.
+    .no_features_required <- dots$.no_features_required
+    dots$.no_features_required <- NULL
+    if (is.null(.no_features_required)) .no_features_required <- FALSE
+    
     # Convert to dataObject.
     object <- do.call(
       as_data_object,
@@ -649,7 +653,8 @@ setMethod(
         list(
           "data" = object,
           "outcome_column" = outcome_column,
-          "outcome_type" = outcome_type
+          "outcome_type" = outcome_type,
+          ".no_features_required" = .no_features_required
         ),
         dots
       )

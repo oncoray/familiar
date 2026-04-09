@@ -30,6 +30,7 @@ as_data_object(data, ...)
   include_features = waiver(),
   reference_method = waiver(),
   check_stringency = "strict",
+  .no_features_required = FALSE,
   ...
 )
 
@@ -194,6 +195,9 @@ checking data for evaluation and explanation.
 stringent checks, particularly for identifier and outcome columns, which may
 be completely absent. Used internally for \code{predict}.
 }}
+
+\item{.no_features_required}{Internal flag to signify that data without
+features is allowed. Default: FALSE (most processing steps require features).}
 }
 \value{
 A \code{dataObject} object.

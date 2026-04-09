@@ -37,6 +37,9 @@ NULL
 #'  stringent checks, particularly for identifier and outcome columns, which may
 #'  be completely absent. Used internally for `predict`.
 #'
+#'@param .no_features_required Internal flag to signify that data without
+#'  features is allowed. Default: FALSE (most processing steps require features).
+#'
 #'@inheritParams .parse_experiment_settings
 #'
 #'@details You can specify settings for your data manually, e.g. the column for
@@ -96,9 +99,9 @@ setMethod(
     include_features = waiver(),
     reference_method = waiver(),
     check_stringency = "strict",
+    .no_features_required = FALSE,
     ...
   ) {
-    
     # Suppress NOTES due to non-standard evaluation in data.table
     type <- outcome_event <- NULL
     
@@ -309,7 +312,8 @@ setMethod(
       event_indicator = settings$data$event_indicator,
       competing_risk_indicator = settings$data$competing_risk_indicator,
       check_stringency = check_stringency,
-      reference_method = settings$data$reference_method
+      reference_method = settings$data$reference_method,
+      .no_features_required = .no_features_required
     )
     
     # Update the dataset according to the feature info list.
@@ -581,7 +585,7 @@ setMethod(
 
 .split_data_by_batch_id <- function(data) {
   # Don't split if there is no data.
-  if (is_empty(data)) return(NULL)
+  if (is_empty(data, allow_no_features = TRUE)) return(NULL)
   
   # Split by batch id.
   split_data <- split(

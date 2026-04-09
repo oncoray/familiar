@@ -327,13 +327,15 @@ test_create_empty_data <- function(outcome_type) {
 
 
 
-test_create_data_without_feature <- function(outcome_type) {
+test_create_data_without_feature <- function(outcome_type, to_data_object = TRUE) {
   # Create good dataset first and work from there.
   data <- test_create_good_data(outcome_type)
 
   # Remove features.
   data@data <- data@data[, mget(get_non_feature_columns(outcome_type))]
 
+  if (!to_data_object) data <- data@data
+  
   return(data)
 }
 

@@ -445,7 +445,8 @@
     event_indicator,
     competing_risk_indicator,
     check_stringency = "strict",
-    reference_method = "auto"
+    reference_method = "auto",
+    .no_features_required = FALSE
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   sample_id <- batch_id <- n <- NULL
@@ -720,25 +721,29 @@
     data <- data[, mget(c(get_non_feature_columns(x = outcome_type), include_features))]
   }
 
-  # Check if the data actually contains any features at this point
-  if (!has_feature_data(x = data, outcome_type = outcome_type)) {
-    ..error_data_set_has_no_features()
+  # Perform feature processing and checks. Skip if features are not required
+  # to be present.
+  if (!.no_features_required) {
+    # Check if the data actually contains any features at this point
+    if (!has_feature_data(x = data, outcome_type = outcome_type)) {
+      ..error_data_set_has_no_features()
+    }
+    
+    # Convert data to categorical features
+    data <- .parse_categorical_features(
+      data = data,
+      outcome_type = outcome_type,
+      reference_method = reference_method
+    )
+    
+    # Convert integer data to double. This prevents rare errors later e.g., 
+    # when aggregating data by computing a median value (that is not guaranteed to
+    # be an integer).
+    data <- .parse_integer_features(
+      data = data,
+      outcome_type = outcome_type
+    )
   }
-
-  # Convert data to categorical features
-  data <- .parse_categorical_features(
-    data = data,
-    outcome_type = outcome_type,
-    reference_method = reference_method
-  )
-
-  # Convert integer data to double. This prevents rare errors later e.g., 
-  # when aggregating data by computing a median value (that is not guaranteed to
-  # be an integer).
-  data <- .parse_integer_features(
-    data = data,
-    outcome_type = outcome_type
-  )
   
   return(data)
 }
