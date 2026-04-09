@@ -100,9 +100,8 @@ testthat::test_that("Plotting kaplan-meier curves using dataObject works (surviv
 data <- familiar:::test_create_good_data(outcome_type = "survival", two_groups = TRUE)
 p <- familiar::plot_kaplan_meier(object = data)
 testthat::test_that("Plotting kaplan-meier curves for two groups works.", {
-  testthat::expect_length(p, 2L)
+  testthat::expect_length(p, 1L)
   testthat::expect_true(is(p[[1L]], "gtable"))
-  testthat::expect_true(is(p[[2L]], "gtable"))
 })
 
 

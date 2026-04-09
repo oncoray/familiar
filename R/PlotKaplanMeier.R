@@ -839,20 +839,29 @@ setMethod(
     p <- p + ggplot2::geom_step()
     
   } else if (!is.null(color_by) && is.null(linetype_by)) {
-    p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
-      colour = !!sym("color_breaks")
-    ))
+    p <- p + ggplot2::geom_step(
+      mapping = ggplot2::aes(
+        colour = !!sym("color_breaks")
+      ),
+      show.legend = TRUE
+    )
     
   } else if (is.null(color_by) && !is.null(linetype_by)) {
-    p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
-      linetype = !!sym("linetype_breaks")
-    ))
+    p <- p + ggplot2::geom_step(
+      mapping = ggplot2::aes(
+        linetype = !!sym("linetype_breaks")
+      ),
+      show.legend = TRUE
+    )
     
   } else {
-    p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
-      colour = !!sym("color_breaks"),
-      linetype = !!sym("linetype_breaks")
-    ))
+    p <- p + ggplot2::geom_step(
+      mapping = ggplot2::aes(
+        colour = !!sym("color_breaks"),
+        linetype = !!sym("linetype_breaks")
+      ),
+      show.legend = TRUE
+    )
   }
 
   # Set colour
@@ -929,12 +938,14 @@ setMethod(
         ))
         
       } else {
-        p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
-          y = !!sym("ci_low"),
-          linetype = "ci_up",
-          colour = !!sym("color_breaks"),
-          na.rm = TRUE
-        ))
+        p <- p + ggplot2::geom_step(
+          mapping = ggplot2::aes(
+            y = !!sym("ci_low"),
+            linetype = "ci_up",
+            colour = !!sym("color_breaks"),
+            na.rm = TRUE
+          )
+        )
 
         p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
           y = !!sym("ci_low"),
@@ -976,7 +987,8 @@ setMethod(
             fill = !!sym("color_breaks")
           ),
           alpha = conf_int_alpha,
-          na.rm = TRUE
+          na.rm = TRUE,
+          show.legend = TRUE
         )
       }
     }
