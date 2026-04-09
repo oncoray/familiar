@@ -1169,7 +1169,7 @@ setMethod(
     # Set group to factor.
     if (!is.factor(object@prediction_data$group)) {
       object@prediction_data$group <- factor(
-        object@prediction_data,
+        x = object@prediction_data$group,
         levels = object@groups
       )
     }

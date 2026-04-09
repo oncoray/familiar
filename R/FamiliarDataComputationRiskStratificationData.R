@@ -282,7 +282,8 @@ setMethod(
       data = object
     )
     prediction_data <- .merge_slots_into_data(prediction_data)
-    browser()
+    
+    # Manually set attributes for this dataElement.
     prediction_data@detail_level <- "ensemble"
     prediction_data@estimation_type <- "point"
     prediction_data@confidence_level <- confidence_level

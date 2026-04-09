@@ -869,11 +869,14 @@ setMethod(
       ))
       
     } else if (upd_slot == "km_group_labels") {
-      browser()
-      data <- unique(c(
-        "low", "moderate", "high",
-        unlist(lapply(x@km_data, function(x) (levels(x@data$group))))
-      ))
+      data <- unique(unlist(lapply(x@km_data, function(x) (levels(x@data$group)))))
+      if (all(data %in% c("low", "moderate", "high"))) {
+        # Standard labels for 2 or three groups.
+        data <- c("low", "moderate", "high")
+      } else {
+        # Custom labels are sorted alphabetically.
+        data <- sort(data)
+      }
       
     } else if (upd_slot == "class_labels") {
       data <- get_outcome_class_levels(x)
