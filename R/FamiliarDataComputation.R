@@ -564,7 +564,8 @@ setMethod(
       detail_level = detail_level,
       confidence_level = confidence_level,
       message_indent = message_indent,
-      verbose = verbose
+      verbose = verbose,
+      ...
     )
   }
   

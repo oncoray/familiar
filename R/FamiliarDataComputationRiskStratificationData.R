@@ -240,6 +240,7 @@ setMethod(
     stratification_method = waiver(),
     message_indent = 0L,
     verbose = FALSE,
+    risk_group_column = waiver(),
     ...
   ) {
     
@@ -268,16 +269,24 @@ setMethod(
       closed = c(FALSE, FALSE)
     )
 
-    # Generate a prototype data element.
-    # performance_data <- new(
-    #   "predictionTableRiskGroups",
-    #   detail_level = "ensemble",
-    #   confidence_level = confidence_level,
-    #   estimation_type = "point"
-    # )
+    if (is.waive(risk_group_column)) risk_group_column <- get_id_columns("batch")
     
+    # Check if only one column is provided as risk_group_column.
+    .check_argument_length(
+      x = risk_group_column,
+      var_name = "risk_group_column",
+      min = 1L,
+      max = 1L
+    )
+    
+    # Check that the risk group column can be found in the dataset.
+    if (!risk_group_column %in% colnames(object@data)) {
+      ..error(paste0(risk_group_column, " is not a column in the data."))
+    }
+    
+    # Convert to prediction table.
     prediction_data <- as_prediction_table(
-      x = object@data$batch_id,
+      x = object@data[[risk_group_column]],
       type = "risk_stratification",
       data = object
     )

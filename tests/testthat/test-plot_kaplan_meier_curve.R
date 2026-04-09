@@ -132,3 +132,16 @@ p <- familiar::plot_kaplan_meier(
   outcome_type = "survival",
   outcome_column = c("outcome_time", "outcome_event")
 )
+testthat::test_that("Plotting kaplan-meier curves using data.table without any feature works (survival).", {
+  testthat::expect_true(is(p[[1L]], "gtable"))
+})
+
+
+# Test plotting from dataObject with a risk_group_column.
+data <- familiar:::test_create_good_data(outcome_type = "survival")
+data@data[, "risk_group" := "risk-group A"]
+data@data[51L:100L, "risk_group" := "risk-group B"]
+p <- familiar::plot_kaplan_meier(object = data, risk_group_column = "risk_group")
+testthat::test_that("Plotting kaplan-meier curves using data.table without a risk_group_column works (survival).", {
+  testthat::expect_true(is(p[[1L]], "gtable"))
+})
