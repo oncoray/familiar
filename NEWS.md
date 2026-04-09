@@ -131,6 +131,9 @@
   
 - `show` for familiar models now shows an (aggregated) variable importance table.
 
+- Checks on installed packages and their versions are now much more efficient.
+  Repeated look-up was expensive, and results are now cached instead.
+
 ## Fixes
 
 - Fixed errors when creating feature or similarity plots caused by sample or 
