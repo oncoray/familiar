@@ -920,39 +920,45 @@ setMethod(
       hjust = "inward"
     )
   }
-
+  
   # Plot confidence intervals
   if (conf_int_style[1L] != "none" && !is_empty(x)) {
     if (conf_int_style[1L] == "step") {
       if (is.null(color_by)) {
-        p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
-          y = !!sym("ci_low"),
-          linetype = "ci_up",
+        p <- p + ggplot2::geom_step(
+          mapping = ggplot2::aes(
+            y = !!sym("ci_low")
+          ),
+          linetype = "dashed",
           na.rm = TRUE
-        ))
+        )
 
-        p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
-          y = !!sym("ci_low"),
-          linetype = "ci_up",
+        p <- p + ggplot2::geom_step(
+          mapping = ggplot2::aes(
+            y = !!sym("ci_up")
+          ),
+          linetype = "dashed",
           na.rm = TRUE
-        ))
+        )
         
       } else {
         p <- p + ggplot2::geom_step(
           mapping = ggplot2::aes(
             y = !!sym("ci_low"),
-            linetype = "ci_up",
-            colour = !!sym("color_breaks"),
-            na.rm = TRUE
-          )
+            colour = !!sym("color_breaks")
+          ),
+          linetype = "dashed",
+          na.rm = TRUE
         )
 
-        p <- p + ggplot2::geom_step(mapping = ggplot2::aes(
-          y = !!sym("ci_low"),
-          linetype = "ci_up",
-          colour = !!sym("color_breaks"),
+        p <- p + ggplot2::geom_step(
+          mapping = ggplot2::aes(
+            y = !!sym("ci_up"),
+            colour = !!sym("color_breaks")
+          ),
+          linetype = "dashed",
           na.rm = TRUE
-        ))
+        )
       }
       
     } else if (conf_int_style[1L] == "ribbon") {

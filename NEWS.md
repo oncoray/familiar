@@ -151,6 +151,9 @@
 - Fixed an error when trying to identify features prior to clustering using 
   `features_before_clustering`.
 
+- Fixed an issue where the confidence intervals for Kaplan-Meier curves were
+  not shown correctly when using `conf_int_style = "step"`.
+
 # Version 1.5.0 (Whole Whale)
 
 ## Major changes
