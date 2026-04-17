@@ -44,7 +44,7 @@
   # Data elements that can be computed from prediction table objects.
   can_use_prediction_table <- c(
     "prediction_data", "auc_data", "calibration_data", "decision_curve_analyis",
-    "model_performance"
+    "model_performance", "risk_stratification_data"
   )
   
   # Data elements that can be computed from data objects.
