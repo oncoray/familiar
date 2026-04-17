@@ -1,7 +1,7 @@
 ---
 title: "Evaluation and explanation"
 author: "Alex Zwanenburg"
-date: "2025-09-09"
+date: "2026-04-17"
 output:
   rmarkdown::html_vignette:
     includes:
@@ -27,8 +27,6 @@ vignette: >
 ``` r
 library(familiar)
 library(data.table)
-#> Warning: package 'data.table' was built under R version 4.4.3
-#> data.table 1.17.8 using 24 threads (see ?getDTthreads).  Latest news: r-datatable.com
 
 set.seed(19)
 ```
@@ -48,7 +46,7 @@ estimate is computed from (at least) 20 point estimates.
 bootstrap confidence intervals [@Efron2016-ws]. This estimation type allows for
 plotting confidence intervals in plots. The number of point estimates required
 depends on the `confidence_level` parameter. Familiar uses a rule of thumb of
-$n=20/(1-\textrm{confidence_level})$, i.e. at least 400 points for
+n=20/(1-`confidence_level`), i.e. at least 400 points for
 `confidence_level=0.95`.
 
 Another argument, `detail_level` determines how the required point estimates are
@@ -86,31 +84,31 @@ that sufficient models are created. Experimental designs such as
 expensive.
 
 Several methods do not require any more information than that provided in a 
-list of predictions, and can be used as a stand-alone method.
+prediction table or dataset.
 
-| Name                                     | Plot function                                                                         | Export function                       | Estimation type | Detail level | Sample limit | Stand-alone |
-|------------------------------------------|---------------------------------------------------------------------------------------|---------------------------------------|:---------------:|:------------:|:------------:|:-----------:|
-| AUC-PR^a^                                | `plot_auc_precision_recall_curve`                                                     | `export_auc_data`                     |        ×        |      ×       |              |      ×      |
-| AUC-ROC^a^                               | `plot_auc_roc_curve`                                                                  | `export_auc_data`                     |        ×        |      ×       |              |      ×      |
-| Calibration info^c^                      |                                                                                       | `export_calibration_info`             |                 |      ×       |              |             |
-| Confusion matrix^a^                      | `plot_confusion_matrix`                                                               | `export_confusion_matrix_data`        |                 |      ×       |              |      ×      |
-| Decision curve analysis^ab^              | `plot_decision_curve`                                                                 | `export_decision_curve_analysis_data` |        ×        |      ×       |              |      ×      |
-| Feature expression^c^                    | `plot_sample_clustering`                                                              | `export_feature_expressions`          |                 |              |              |             |
-| Feature selection variable importance^c^ | `plot_feature_selection_occurrence`; `plot_feature_selection_variable_importance`     | `export_fs_vimp`                      |                 |              |              |             |
-| Feature similarity^c^                    | `plot_feature_similarity`                                                             | `export_feature_similarity`           |        ×        |              |              |             |
-| Hyperparameters^c^                       |                                                                                       | `export_hyperparameters`              |                 |              |              |             |
-| Individual conditional expectation^c^    | `plot_ice`                                                                            | `export_ice_data`                     |      ×^d^       |      ×       |      ×       |             |
-| Model calibration^ce^                    | `plot_calibration_data`                                                               | `export_calibration_data`             |        ×        |      ×       |              |             |
-| Model performance^c^                     | `plot_model_performance`                                                              | `export_model_performance`            |        ×        |      ×       |              |      ×      |
-| Model predictions^c^                     |                                                                                       | `export_prediction_data`              |      ×^d^       |      ×       |              |      x      |
-| Model variable importance^ce^            | `plot_model_signature_occurrence`; `plot_model_signature_variable_importance`         | `export_model_vimp`                   |                 |              |              |             |
-| Partial dependence^c^                    | `plot_pd`                                                                             | `export_partial_dependence_data`      |      ×^d^       |      ×       |      ×       |             |
-| Permutation variable importance^c^       | `plot_permutation_variable_importance`                                                | `export_permutation_vimp`             |        ×        |      ×       |              |             |
-| Risk stratification info^b^              |                                                                                       | `export_risk_stratification_info`     |                 |      ×       |              |             |
-| Risk stratification data^b^              | `plot_kaplan_meier`                                                                   | `export_risk_stratification_data`     |                 |              |              |      ×      |
-| Sample similarity^c^                     |                                                                                       | `export_sample_similarity`            |        ×        |              |      ×       |             |
-| SHAP values                              | `plot_shap_summary`, `plot_shap_waterfall`, `plot_shap_force`, `plot_shap_dependence` | `export_shap`                         |                 |      ×       |      ×       |             |
-| Univariate analysis^c^                   | `plot_univariate_importance`                                                          | `export_univariate_analysis_data`     |                 |              |              |             |
+| Name                                     | Plot function                                                                         | Export function                       | Est. type | Detail level | Sample limit | Model | Pred. table | Dataset |
+|------------------------------------------|---------------------------------------------------------------------------------------|---------------------------------------|:---------:|:------------:|:------------:|:-----:|:-----------:|:-------:|
+| AUC-PR^a^                                | `plot_auc_precision_recall_curve`                                                     | `export_auc_data`                     | ×         |      ×       |              | ×     |      ×      |         |
+| AUC-ROC^a^                               | `plot_auc_roc_curve`                                                                  | `export_auc_data`                     | ×         |      ×       |              | ×     |      ×      |         |
+| Calibration info^c^                      |                                                                                       | `export_calibration_info`             |           |      ×       |              | ×     |             |         |
+| Confusion matrix^a^                      | `plot_confusion_matrix`                                                               | `export_confusion_matrix_data`        |           |      ×       |              | ×     |      ×      |         |
+| Decision curve analysis^ab^              | `plot_decision_curve`                                                                 | `export_decision_curve_analysis_data` | ×         |      ×       |              | ×     |      ×      |         |
+| Feature expression^c^                    | `plot_sample_clustering`                                                              | `export_feature_expressions`          |           |              |              | ×     |             | ×       |
+| Feature selection variable importance^c^ | `plot_feature_selection_occurrence`; `plot_feature_selection_variable_importance`     | `export_fs_vimp`                      |           |              |              | ×     |             |         |
+| Feature similarity^c^                    | `plot_feature_similarity`                                                             | `export_feature_similarity`           | ×         |              |              | ×     |             | ×       |
+| Hyperparameters^c^                       |                                                                                       | `export_hyperparameters`              |           |              |              | ×     |             |         |
+| Individual conditional expectation^c^    | `plot_ice`                                                                            | `export_ice_data`                     | ×^d^      |      ×       |      ×       | ×     |             |         |
+| Model calibration^ce^                    | `plot_calibration_data`                                                               | `export_calibration_data`             | ×         |      ×       |              | ×     |             |         |
+| Model performance^c^                     | `plot_model_performance`                                                              | `export_model_performance`            | ×         |      ×       |              | ×     |      ×      |         |
+| Model predictions^c^                     |                                                                                       | `export_prediction_data`              | ×^d^      |      ×       |              | ×     |      x      |         |
+| Model variable importance^ce^            | `plot_model_signature_occurrence`; `plot_model_signature_variable_importance`         | `export_model_vimp`                   |           |              |              | ×     |             |         |
+| Partial dependence^c^                    | `plot_pd`                                                                             | `export_partial_dependence_data`      | ×^d^      |      ×       |      ×       | ×     |             |         |
+| Permutation variable importance^c^       | `plot_permutation_variable_importance`                                                | `export_permutation_vimp`             | ×         |      ×       |              | ×     |             |         |
+| Risk stratification info^b^              |                                                                                       | `export_risk_stratification_info`     |           |      ×       |              | ×     |             |         |
+| Risk stratification data^b^              | `plot_kaplan_meier`                                                                   | `export_risk_stratification_data`     |           |              |              | ×     |      ×      |         |
+| Sample similarity^c^                     |                                                                                       | `export_sample_similarity`            | ×         |              |      ×       | ×     |             | ×       |
+| SHAP values                              | `plot_shap_summary`, `plot_shap_waterfall`, `plot_shap_force`, `plot_shap_dependence` | `export_shap`                         |           |      ×       |      ×       | ×     |             |         |
+| Univariate analysis^c^                   | `plot_univariate_importance`                                                          | `export_univariate_analysis_data`     |           |              |              | ×     |             |         |
 
 : Evaluation and explanation steps.\
 ^a^ Available for binomial and multinomial outcomes.\
@@ -120,9 +118,8 @@ list of predictions, and can be used as a stand-alone method.
 ^e^ May not be available for all models.
 
 When familiar is run from `summon_familiar` plots and tables are exported
-automatically. The corresponding plot and export functions can all be used externally as well,
-as is described in the *Using familiar prospectively* vignette. Indeed, to
-showcase some of the functionality we will employ the techniques discussed there.
+automatically. The corresponding plot and export functions can all be used externally as well.
+This vignette shows their use.
 
 We will first create two models. The first model aims to predict the risk for
 ischemic stroke based on clinical and image features. This is a classification problem.
@@ -271,30 +268,28 @@ predictions <- predict(
 
 # Create a prediction table object using as_prediction_table. The minimum
 # you need to provide here are: prediction probabilities for the positive class
-# (yes), the type of prediction (classification), and providing the class levels
-# (no, yes).
+# (yes), the reference labels, the type of prediction (classification), 
+# and providing the class levels (no, yes).
 predictions <- familiar::as_prediction_table(
   x = predictions$yes,
+  y = ischemic_stroke_data$stroke,
   type = "classification",
   class_levels = c("no", "yes")
 )
-#> Warning in .complete_new_prediction_table(object): The positive class cannot be directly inferred from names of the provided prediction data, and is assumed to be yes.
+#> Warning in familiar::as_prediction_table(x = predictions$yes, y = ischemic_stroke_data$stroke, : The positive class cannot be directly inferred from names of the provided prediction data, and is assumed to be yes.
 
-# The prediction table object is then provided as data.
+# The prediction table object is then provided as object
 plots <- familiar::plot_model_performance(
-  data = predictions,
+  object = predictions,
   metric = c("auc", "brier", "f1_score"),
   x_axis_by = "metric"
 )
-#> Error in familiar::plot_model_performance(data = predictions, metric = c("auc", : argument "object" is missing, with no default
-
-plots[[1L]]
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/model-performance-plot-standalone-1.png" alt="plot of chunk model-performance-plot-standalone"  />
-<p class="caption">plot of chunk model-performance-plot-standalone</p>
+<img src="eval_and_explain/model-performance-plot-standalone-1.png" alt="Model performance obtained using a prediction table."  />
+<p class="caption">Model performance obtained using a prediction table.</p>
 </div>
+
 This produces the exact same plot. Model performance can also be exported to a 
 table using using `export_model_performance`.
 
@@ -306,39 +301,9 @@ results <- familiar::export_model_performance(
   metric = c("auc", "brier", "f1_score"),
   aggregate_results = TRUE
 )
-results
-#> [[1]]
-#> An object of class "familiarDataElementModelPerformance"
-#> Slot "data":
-#>                      data_set vimp_method                      learner ensemble_model_name   metric     value    ci_low     ci_up
-#>                        <fctr>      <fctr>                       <fctr>              <fctr>   <fctr>     <num>     <num>     <num>
-#> 1: 94528_vaYlrMM6XXSNOt9rEIz4        none random_forest_ranger_default      ensemble.NA.NA      auc 0.7117647 0.4998611 0.9001974
-#> 2: 94528_vaYlrMM6XXSNOt9rEIz4        none random_forest_ranger_default      ensemble.NA.NA    brier 0.2139492 0.1685492 0.2583556
-#> 3: 94528_vaYlrMM6XXSNOt9rEIz4        none random_forest_ranger_default      ensemble.NA.NA f1_score 0.6666667 0.4347826 0.8387097
-#> 
-#> Slot "identifiers":
-#> named list()
-#> 
-#> Slot "detail_level":
-#> [1] "hybrid"
-#> 
-#> Slot "estimation_type":
-#> [1] "bootstrap_confidence_interval"
-#> 
-#> Slot "confidence_level":
-#> [1] 0.95
-#> 
-#> Slot "bootstrap_ci_method":
-#> [1] "percentile"
-#> 
-#> Slot "value_column":
-#> [1] "value"  "ci_low" "ci_up" 
-#> 
-#> Slot "grouping_column":
-#> [1] "ensemble_model_name" "metric"              "data_set"            "vimp_method"         "learner"            
-#> 
-#> Slot "is_aggregated":
-#> [1] TRUE
+results@data
+#> Error in `results@data`:
+#> ! no applicable method for `@` applied to an object of class "list"
 ```
 In the above table, `data_set` is randomly generated because we call this method
 on a (technically) *new* dataset. `ensemble_model_name` contains a placeholder
@@ -381,8 +346,8 @@ These are then used to compute sensitivity and specificity.
 
 The above plot shows the average of 400 single curves, with 95% confidence
 intervals. To achieve this, familiar interrogates each curve over the complete
-range of potential specificity values ($[0.000, 1.000]$) with a step size of
-$0.005$. Linear interpolation is used for this purpose [@Davis2006-xb]. This
+range of potential specificity values ([0.000, 1.000]) with a step size of
+0.005. Linear interpolation is used for this purpose [@Davis2006-xb]. This
 allows for assessing the distribution of sensitivity at fixed specificity
 values.
 
@@ -419,7 +384,7 @@ true negatives but false positives. In case the number of negative instances
 greatly exceeds the number of positive instances, a large change in the number
 of false positives reduces the ROC curve somewhat, but this change is far easier
 observed in the PR curve [@Davis2006-xb]. Hence the PR curve is commonly
-assessed if the positive class is more important than and rare compared to the
+assessed if the positive class is more important than and rarer compared to the
 negative class. For the ischemic stroke dataset, the precision-recall curve is as
 follows:
 
@@ -450,7 +415,7 @@ values are then used to compute recall and precision.
 
 The above plot shows the average of 400 single curves, with 95% confidence
 intervals. To achieve this, familiar interrogates each curve over the complete
-range of recall values ($[0.000, 1.000]$) with a step size of $0.005$. We use
+range of recall values ([0.000, 1.000]) with a step size of 0.005. We use
 linear interpolation for this purpose, treating the PR curve as a piecewise
 function to manage the situation identified by Davis and Goadrich
 [@Davis2006-xb]. Interpolating in this manner allows for assessing the
@@ -501,7 +466,7 @@ plot(plots[[1L]])
 Familiar selects the class with the highest predicted class probability as the
 expected class. It is currently not possible in familiar to obtain confusion
 matrices for set probability thresholds, such as the threshold that maximises
-the Matthews correlation coefficient.
+the Youden's Index.
 
 ## Kaplan-Meier survival curves
 
@@ -509,7 +474,7 @@ Kaplan-Meier survival curves are a standard method for assessing survival over t
 a population, or for assessing survival differences between groups.
 
 Familiar applies one or more thresholds to stratify instances to risk groups.
-These thresholds are created during model development to avoid bias. The number
+These thresholds are created during training to avoid bias. The number
 and value of these thresholds is determined by two parameters:
 `stratification_method` and `stratification_threshold`. Both parameters are set
 when calling `summon_familiar` or `train_familiar`.
@@ -646,7 +611,6 @@ plots <- familiar::plot_calibration_data(
   data = ischemic_stroke_data,
   estimation_type = "point"
 )
-#> Error in set.seed(seed): supplied seed is not a valid integer
 
 plot(plots[[1L]])
 ```
@@ -799,10 +763,10 @@ threshold values.
 
 By default, similarity between features is assessed using McFadden's
 pseudo-$R^2$. This metric can assess similarity between different types of
-features, i.e. numeric and categorical. The default thresholds are 0.3 and 1.0
+features, i.e. numeric and categorical. The default thresholds are 0.23 and 1.0
 that respectively cluster similar features and permute all features
 individually. The dataset contains many features that are highly
-similar and exceed the relatively stringent threshold of 0.3.
+similar and exceed the relatively stringent threshold of 0.23.
 
 ## SHAP summary plots
 
@@ -832,7 +796,7 @@ y-axis, with the most important feature on top, i.e. the feature that has the
 highest mean absolute SHAP value. Each point corresponds to the value in an
 instance (a patient), and each point is coloured according to its (normalised)
 value. For the purpose of representation, all feature values are mapped to the
-$[-1.0, 1.0]$ range.
+[-1.0, 1.0] range.
 
 The default presentation might provide too much detail. It is therefore possible
 to change the `plot_type` or `value_representation`. For example,
