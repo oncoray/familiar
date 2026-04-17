@@ -121,6 +121,12 @@ setMethod(
       return(NULL)
     }
     
+    # Reference labels should be present.
+    if (!.has_reference_data(object)) {
+      ..warning_prediction_table_lacks_reference("confusion matrix")
+      return(NULL)
+    }
+    
     # Message extraction start
     logger_message(
       paste0("Computing confusion matrix."),

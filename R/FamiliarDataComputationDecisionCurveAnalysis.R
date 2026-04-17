@@ -162,19 +162,15 @@ setMethod(
       is(object, "predictionTableSurvivalProbability") || 
       is(object, "predictionTableClassification")
     )) {
-      warn_str <- paste0(
-        "Decision curves can only be computed using prediction tables that contain ",
-        "either class (binomial or multinomial) or survival probabilities. Found: ",
-        paste_s(class(object))
-      )
-      
-      logger_warning(
-        warn_str = warn_str,
-        warn_class = "prediction_table_no_data_extraction_warning"
-      )
+      ..warning_no_data_extraction_from_prediction_table("decision curves")
       
       return(NULL)
     } 
+    # Reference labels should be present.
+    if (!.has_reference_data(object)) {
+      ..warning_prediction_table_lacks_reference("decision curves")
+      return(NULL)
+    }
     
     # Message extraction start
     logger_message(

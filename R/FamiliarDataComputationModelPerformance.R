@@ -157,6 +157,12 @@ setMethod(
       verbose = verbose
     )
     
+    # Reference labels should be present.
+    if (!.has_reference_data(object)) {
+      ..warning_prediction_table_lacks_reference("model performance metrics")
+      return(NULL)
+    }
+    
     # Load evaluation_times and ensemble method from the prediction table.
     if (is.waive(evaluation_times) && methods::.hasSlot(object, "time")) {
       evaluation_times <- object@time

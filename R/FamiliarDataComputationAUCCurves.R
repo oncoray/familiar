@@ -173,6 +173,12 @@ setMethod(
       
       return(NULL)
     }
+    
+    # Reference labels should be present.
+    if (!.has_reference_data(object)) {
+      ..warning_prediction_table_lacks_reference("AUC curve data")
+      return(NULL)
+    }
 
     # Message start of auc computations
     logger_message(

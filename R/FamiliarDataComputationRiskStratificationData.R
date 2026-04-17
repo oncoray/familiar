@@ -198,6 +198,12 @@ setMethod(
   ) {
     if (is_empty(object)) return(NULL)
     
+    # Reference labels should be present.
+    if (!.has_reference_data(object)) {
+      ..warning_prediction_table_lacks_reference("risk stratification")
+      return(NULL)
+    }
+    
     # Ensure that all slots are merged into data.
     object <- .copy(object)
     object <- .merge_slots_into_data(object)
