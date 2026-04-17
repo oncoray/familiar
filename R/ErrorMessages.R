@@ -45,6 +45,25 @@
 
 
 
+..warning_prediction_table_lacks_reference <- function(
+    data_element_description,
+    call = rlang::caller_env()
+) {
+  message_string <- paste0(
+    "Unable to compute ", data_element_description, " using prediction tables as reference data are missing."
+  )
+  
+  logger_warning(
+    warn_str = message_string,
+    warn_class = "prediction_table_no_data_extraction_warning",
+    call = call
+  )
+  
+  return(invisible(TRUE))
+}
+
+
+
 ..warning_no_data_extraction_from_prediction_table <- function(
     data_element_description,
     call = rlang::caller_env()
