@@ -264,17 +264,18 @@ predictions <- predict(
 
 # Create a prediction table object using as_prediction_table. The minimum
 # you need to provide here are: prediction probabilities for the positive class
-# (yes), the type of prediction (classification), and providing the class levels
-# (no, yes).
+# (yes), the reference labels, the type of prediction (classification), 
+# and providing the class levels (no, yes).
 predictions <- familiar::as_prediction_table(
   x = predictions$yes,
+  y = ischemic_stroke_data$stroke,
   type = "classification",
   class_levels = c("no", "yes")
 )
 
-# The prediction table object is then provided as data.
+# The prediction table object is then provided as object
 plots <- familiar::plot_model_performance(
-  data = predictions,
+  object = predictions,
   metric = c("auc", "brier", "f1_score"),
   x_axis_by = "metric"
 )
