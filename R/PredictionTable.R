@@ -1338,6 +1338,68 @@ setMethod(
 
 
 
+# .has_reference_data (generic) ------------------------------------------------
+setGeneric(
+  ".has_reference_data",
+  function(object, ...) standardGeneric(".has_reference_data")
+)
+
+
+
+# .has_reference_date (general) ------------------------------------------------
+setMethod(
+  ".has_reference_data",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    if (is_empty(object)) return(FALSE)
+    
+    if (.is_merged_prediction_table(object)) {
+      outcome_columns <- c("outcome", "outcome_time", "outcome_event")
+      present_outcome_columns <- intersect(colnames(object@data), outcome_columns)
+      
+      return(length(present_outcome_columns) > 0L)
+      
+    } else {
+      return(!is_empty(object@reference_data))
+    }
+  }
+)
+
+
+
+# .has_reference_date (novelty) ------------------------------------------------
+setMethod(
+  ".has_reference_data",
+  signature(object = "predictionTableNovelty"),
+  function(object, ...) {
+    return(FALSE)
+  }
+)
+
+
+
+# .has_reference_date (grouping) -----------------------------------------------
+setMethod(
+  ".has_reference_data",
+  signature(object = "predictionTableGrouping"),
+  function(object, ...) {
+    return(FALSE)
+  }
+)
+
+
+
+# .has_reference_date (NULL) ---------------------------------------------------
+setMethod(
+  ".has_reference_data",
+  signature(object = "NULL"),
+  function(object, ...) {
+    return(FALSE)
+  }
+)
+
+
+
 # .drop_reference_data (generic) -----------------------------------------------
 setGeneric(
   ".drop_reference_data",
