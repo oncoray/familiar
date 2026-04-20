@@ -237,15 +237,28 @@ vignette, and can be set using the `evaluation_metric` argument of the
 `summon_familiar` function or `metric` for plot and export functions. For
 example, this results in the following plot for the ischemic stroke dataset:
 
-```{r, fig.align='center', fig.width=7, label="model-performance-plot"}
+```{r}
 plots <- familiar::plot_model_performance(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   metric = c("auc", "brier", "f1_score"),
   x_axis_by = "metric"
 )
+```
+```{r}
+#| label = "model-performance-plot",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Performance of the ischemic stroke model on hold-out test data.
+#|  The model is a classifier, and was assessed using three metrics:
+#|  area under the receiver-operating characteristic curve (AUC), the Brier 
+#|  score, and the F1-score. Higher AUC and F1-scores, and lower Brier score, 
+#|  indicate better models. The graph shows the distribution of performance 
+#|  metrics obtained from bootstraps of the dataset, along with 2.5th, 50.0th
+#|  and 97.5th percentiles."
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
 The plot shows distributions of the area under the receiver operating
@@ -257,7 +270,7 @@ it possible to assess predictions made by non-familiar models. This involves
 conversion of the predictions to a prediction table object using `as_prediction_table`,
 as shown below:
 
-```{r}
+```{r, warning=FALSE}
 predictions <- predict(
   object = ischemic_stroke_model,
   newdata = ischemic_stroke_data
@@ -281,11 +294,15 @@ plots <- familiar::plot_model_performance(
   x_axis_by = "metric"
 )
 ```
+
 ```{r}
 #| label = "model-performance-plot-standalone",
-#| echo = FALSE, message = FALSE,
+#| echo = FALSE, 
+#| message = FALSE,
 #| fig.width = 7.0, fig.height = 4.0,
-#| fig.cap = "Model performance obtained using a prediction table."
+#| fig.cap = "Performance for the ischemic strok model obtained using a 
+#|   prediction table. This results in the same figure as above, obtained
+#|   using the model itself."
 
 plot(plots[[1L]])
 ```
@@ -300,7 +317,7 @@ results <- familiar::export_model_performance(
   metric = c("auc", "brier", "f1_score"),
   aggregate_results = TRUE
 )
-results@data
+results[[1L]]@data
 ```
 In the above table, `data_set` is randomly generated because we call this method
 on a (technically) *new* dataset. `ensemble_model_name` contains a placeholder
@@ -315,13 +332,21 @@ the trade-off between sensitivity and specificity of the model. The
 receiver-operating characteristic curve for the ischemic stroke dataset is as
 follows:
 
-```{r, fig.align='center', fig.width=7, label="auc-roc-curve-bci"}
+```{r}
 plots <- familiar::plot_auc_roc_curve(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
+```
+```{r}
+#| label = "auc-roc-curve-bci",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Receiver-operating characteristic curve for the ischemic stroke 
+#|  model on hold-out test data. The 95% confidence interval is shown (grey)."
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
 Under ideal circumstances, the curve would lie in the top-left corner of the
@@ -353,8 +378,18 @@ plots <- familiar::plot_auc_roc_curve(
   data = ischemic_stroke_data,
   estimation_type = "point"
 )
+```
+```{r}
+#| label = "auc-roc-curve-point",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Receiver-operating characteristic curve for the ischemic stroke 
+#|  model on hold-out test data. Whereas the previous figure shows the bootstrap
+#|  estimate and confidence interval, the current curve is formed
+#|  directly from the data."
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
 Note that we did not specify the detail level to create the above plot because
@@ -373,13 +408,21 @@ assessed if the positive class is more important than and rarer compared to the
 negative class. For the ischemic stroke dataset, the precision-recall curve is as
 follows:
 
-```{r, fig.align='center', fig.width=7, label="auc-pr-curve-bci"}
+```{r}
 plots <- familiar::plot_auc_precision_recall_curve(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
+```
+```{r}
+#| label = "auc-pr-curve-bci",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Precision-recall curve for the ischemic stroke model on hold-out 
+#| test data. The 95% confidence interval is shown (grey)."
 
-plots[[1L]]
+plot(plots[[1L]])
 ```
 
 Under ideal circumstances, the curve would lie in the top-right part of the
@@ -405,12 +448,22 @@ PR curve when evaluating the point estimate (`estimation_type="point"`) of a
 single model or of the complete ensemble of models (`detail_level="ensemble"`).
 In the ischemic strok dataset, this produces the following curve:
 
-```{r, fig.align='center', fig.width=7, label="auc-pr-curve-point"}
+```{r}
 plots <- familiar::plot_auc_precision_recall_curve(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   estimation_type = "point"
 )
+```
+```{r}
+#| label = "auc-pr-curve-point",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Precision-recall curve for the ischemic stroke 
+#|  model on hold-out test data. Whereas the previous figure shows the bootstrap
+#|  estimate and confidence interval, the current curve is formed
+#|  directly from the data."
 
 plot(plots[[1L]])
 ```
@@ -426,6 +479,15 @@ plots <- familiar::plot_confusion_matrix(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
+```
+```{r}
+#| label = "confusion-matrix",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 4.0, fig.height = 4.0,
+#| fig.cap = "Confusion matrix for the ischemic stroke 
+#|  model on hold-out test data. The number of instances with the prediction
+#|  of ischemic stroke (expected sroke), and actually observed stroke, is shown."
 
 plot(plots[[1L]])
 ```
@@ -469,11 +531,24 @@ third group with 25% of instances with lowest risk.
 Applying the survival model to the colon cancer dataset yields the following
 Kaplan-Meier plot:
 
-```{r, fig.align='center', fig.width=7, label="kaplan-meier-plot"}
+```{r, fig.align='center', fig.width=7, label=""}
 plots <- familiar::plot_kaplan_meier(
   object = survival_model,
   data = survival_data
 )
+
+plot(plots[[1L]])
+```
+```{r}
+#| label = "kaplan-meier-plot",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Kaplan-Meier plot for the colon cancer survival model on hold-out
+#|  test data. The hold-out test data were split into two risk groups by
+#|  applying a threshold that was defined during training. 95% confidence
+#|  intervals are shown. The number of patients surviving without tumour recurrence
+#|  is shown below the main plot."
 
 plot(plots[[1L]])
 ```
