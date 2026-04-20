@@ -648,12 +648,22 @@ same time points.
 We can observe the points thus created in a calibration plot when
 `estimation_type="point"`:
 
-```{r, fig.align='center', fig.width=7, label="calibration-data-point"}
+```{r}
 plots <- familiar::plot_calibration_data(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   estimation_type = "point"
 )
+```
+```{r}
+#| label = "calibration-data-point",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Calibration plot for the ischemic stroke model on hold-out
+#|  test data. Whereas in the earlier figure the calibration curve was the
+#|  bootstrap estimate, here the expected probability and observed proportions 
+#|  in several (random) groupings is shown."
 
 plot(plots[[1L]])
 ```
@@ -687,12 +697,26 @@ might constitute treatment of all patients, versus no treatment and treatment fo
 patients with malignancy predicted by the model. This produces the following
 figure:
 
-```{r, fig.align='center', fig.width=7, label="decision-curve-bci", warning=FALSE}
+```{r}
 plots <- familiar::plot_decision_curve(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   y_range = c(-0.2, 0.8)
 )
+```
+```{r}
+#| label = "decision-curve-bci",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Decision curve for the ischemic stroke model on hold-out
+#|  test data. Three lines are shown. The horizontal line intersecting the origin
+#|  corresponds to no (model-based) intervention, i.e. the status-quo. The
+#|  downward sloping curve corresponds to performing an intervention for everyone.
+#|  The final curve corresponds to model-based intervention, where every patient
+#|  with a predicted probability above the threshold receives the interventional
+#|  treatment. This curve is a bootstrap estimate, and is drawn with 95% 
+#|  confidence intervals. "
 
 plot(plots[[1L]])
 ```
@@ -726,19 +750,30 @@ measure of variable importance when features are normalised. In the case of the
 random forest model for the ischemic stroke dataset, permutation variable
 importance is determined. This produces the following plot:
 
-```{r, fig.align='center', fig.width=7, label="model-variable-importance", warning=FALSE}
+```{r, warning=FALSE}
 plots <- familiar::plot_model_signature_variable_importance(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   rotate_x_tick_labels = TRUE
 )
+```
+```{r}
+#| label = "model-variable-importance",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Variable importance plot for the ischemic stroke model on hold-out
+#|  test data. Features are sorted from highest to least importance. Features 
+#|  with letters indicate features that are highly similar, and could be 
+#|  clustered together. Note that because of the permutation variable 
+#|  importance method used within the random forest, such features do not 
+#|  receive the same score."
 
 plot(plots[[1L]])
 ```
-
 In such plots, we always order features so that the most important features are
 on the left, and the least important features on the right. Letters indicate
-features that are clustered.
+features that are clustered together.
 
 In case an ensemble of models is assessed, scores are aggregated using an
 aggregation method (see the *variable importance methods* vignette). This method
@@ -758,12 +793,24 @@ shuffling values of a feature across the instances in a dataset.
 
 For the ischemic stroke dataset, this results in the following figure:
 
-```{r, fig.align='center', fig.width=7, label="permutation-variable-importance-bc"}
+```{r}
 plots <- familiar::plot_permutation_variable_importance(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   estimation_type = "bias_correction"
 )
+```
+```{r}
+#| label = "permutation-variable-importance-bc",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Permutation variable importance plot for the ischemic stroke model on hold-out
+#|  test data. Features are sorted from highest (top) to least importance (bottom).
+#|  Permutation variable importance measures the model performance difference 
+#|  between normal and shuffled (informationless) input values for each feature.
+#|  At the threshold of 1.00 every feature is shuffled individually, whereas at 0.23
+#|  groups of similar features are shuffled simultaneously.
 
 plot(plots[[1L]])
 ```
@@ -797,14 +844,26 @@ positive, whereas the SHAP value for the winter season would likely be negative.
 Important features have larger SHAP values than less important features. Thus
 a SHAP summary plot can be used to evaluate feature importance.
 
-```{r, fig.align='center', fig.width=7, label="shap_summary"}
+```{r}
 plots <- familiar::plot_shap_summary(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
+```
+```{r}
+#| label = "shap_summary",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "SHAP summary plot for the ischemic stroke model on hold-out
+#|  test data. Features are sorted from highest (top) to least importance (bottom),
+#|  based on SHAP values. Each point represents the marginal contribution 
+#|  of a feature value to the predicted probability of the model, and is coloured
+#|  according to its (normalised) feature value.
 
 plot(plots[[1L]])
 ```
+
 The SHAP summary plot shows several things: features are listed along the
 y-axis, with the most important feature on top, i.e. the feature that has the
 highest mean absolute SHAP value. Each point corresponds to the value in an
@@ -816,15 +875,26 @@ The default presentation might provide too much detail. It is therefore possible
 to change the `plot_type` or `value_representation`. For example,
 the above data could be presented as violin plots:
 
-```{r, fig.align='center', fig.width=7, label="shap_summary_violin"}
+```{r}
 plots <- familiar::plot_shap_summary(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   plot_type = "violinplot"
 )
+```
+```{r}
+#| label = "shap_summary_violin",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "SHAP summary plot for the ischemic stroke model on hold-out
+#|  test data. Features are sorted from highest (top) to least importance (bottom),
+#|  based on SHAP values. The distribution of SHAP values for each feature
+#|  is shown as a violin plot.
 
 plot(plots[[1L]])
 ```
+
 The violin plot shows the distribution of values more clearly, at the cost 
 of losing information concerning underlying feature values.
 
@@ -838,6 +908,17 @@ plots <- familiar::plot_shap_summary(
   data = ischemic_stroke_data,
   value_representation = "abs_mean"
 )
+
+plot(plots[[1L]])
+```
+```{r}
+#| label = "shap_summary_violin",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "SHAP summary plot for the ischemic stroke model on hold-out
+#|  test data. Features are sorted from highest (top) to least importance (bottom),
+#|  based on the mean of the absolute SHAP values in the underlying data.
 
 plot(plots[[1L]])
 ```
@@ -856,12 +937,26 @@ features influence the model. As an example, we can create an ICE plot for the
 `max_remodeling_ratio` feature that was found to be important for predicting
 ischemic stroke.
 
-```{r, fig.align='center', fig.width=7, label="ice-max-remodeling-ratio"}
+```{r}
 plots <- familiar::plot_ice(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   features = "max_remodeling_ratio"
 )
+
+plot(plots[[1L]])
+```
+```{r}
+#| label = "ice-max-remodeling-ratio",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Individual conditional expectation plot for the max_remodeling_ratio feature
+#|  in the ischemic stroke model using instances from the hold-out test data. 
+#|  Each curve follows the predicted probability for an instance where only
+#|  the value of the max_remodeling_ratio is changed. The thick line corresponds to
+#|  the average of all individual curves, i.e. partial dependence. High novelty scores
+#|  signify values that are more likely to be outliers."
 
 plot(plots[[1L]])
 ```
@@ -892,13 +987,27 @@ fixed value. In effect this can reduce some of the offset caused by other
 (fixed) features in each instance, and may help to elucidate the observed
 behaviour:
 
-```{r, fig.align='center', fig.width=7, label="ice-max-remodeling-ratio-anchored"}
+```{r}
 plots <- familiar::plot_ice(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   features = "max_remodeling_ratio",
   anchor_values = list("max_remodeling_ratio" = 2.5)
 )
+```
+```{r}
+#| label = "ice-max-remodeling-ratio-anchored",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Individual conditional expectation plot for the max_remodeling_ratio feature
+#|  in the ischemic stroke model using instances from the hold-out test data. 
+#|  Each curve follows the predicted probability for an instance where only
+#|  the value of the max_remodeling_ratio is changed. This curve was anchored at
+#|  max_remodeling_ratio=2.5, i.e. at this value, every curve has a (relative)
+#|  predicted probability of 0.0. The thick line corresponds to the average of all
+#|  individual curves, i.e. partial dependence. High novelty scores
+#|  signify values that are more likely to be outliers."
 
 plot(plots[[1L]])
 ```
