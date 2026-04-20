@@ -531,13 +531,11 @@ third group with 25% of instances with lowest risk.
 Applying the survival model to the colon cancer dataset yields the following
 Kaplan-Meier plot:
 
-```{r, fig.align='center', fig.width=7, label=""}
+```{r}
 plots <- familiar::plot_kaplan_meier(
   object = survival_model,
   data = survival_data
 )
-
-plot(plots[[1L]])
 ```
 ```{r}
 #| label = "kaplan-meier-plot",
@@ -571,11 +569,27 @@ predictions for individual instances, e.g. how accurate an instance class
 probability is. Model calibration is assessed for this purpose. The model for
 the ischemic stroke dataset produces the following calibration plot:
 
-```{r, fig.align='center', fig.width=7, label="calibration-data-bci"}
+```{r}
 plots <- familiar::plot_calibration_data(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
+```
+```{r}
+#| label = "calibration-data-bci",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Calibration plot for the ischemic stroke model on hold-out
+#|  test data. The plot shows the predicted (expected) probability of ischemic 
+#|  stroke, against the observed occurrence within smaller groupings of data. 
+#|  The plot shows the ideal calibration (dashed line), the linear calibration
+#|  fit (thin line), and estimated calibration (thick line). 95% confidence
+#|  intervals, based on bootrstraps, are shown around the estimated calibration. 
+#|  The line above the plot shows the density of predicted probabilities. 
+#|  Calibration outside the main distribution is more uncertain. The inset 
+#|  describes the intercept and slope of the linear fit, and the results
+#|  of the Hosmer-Lemeshow goodness-of-fit test."
 
 plot(plots[[1L]])
 ```
