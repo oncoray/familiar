@@ -1,7 +1,7 @@
 ---
 title: "Evaluation and explanation"
 author: "Alex Zwanenburg"
-date: "2026-04-17"
+date: "2026-04-22"
 output:
   rmarkdown::html_vignette:
     includes:
@@ -241,13 +241,22 @@ plots <- familiar::plot_model_performance(
   metric = c("auc", "brier", "f1_score"),
   x_axis_by = "metric"
 )
-
-plots[[1L]]
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/model-performance-plot-1.png" alt="plot of chunk model-performance-plot"  />
-<p class="caption">plot of chunk model-performance-plot</p>
+<img src="eval_and_explain/model-performance-plot-1.png" alt="Performance of the ischemic stroke model on hold-out test data.
+ The model is a classifier, and was assessed using three metrics:
+ area under the receiver-operating characteristic curve (AUC), the Brier 
+ score, and the F1-score. Higher AUC and F1-scores, and lower Brier score, 
+ indicate better models. The graph shows the distribution of performance 
+ metrics obtained from bootstraps of the dataset, along with 2.5th, 50.0th
+ and 97.5th percentiles."  />
+<p class="caption">Performance of the ischemic stroke model on hold-out test data.
+ The model is a classifier, and was assessed using three metrics:
+ area under the receiver-operating characteristic curve (AUC), the Brier 
+ score, and the F1-score. Higher AUC and F1-scores, and lower Brier score, 
+ indicate better models. The graph shows the distribution of performance 
+ metrics obtained from bootstraps of the dataset, along with 2.5th, 50.0th
+ and 97.5th percentiles.</p>
 </div>
 
 The plot shows distributions of the area under the receiver operating
@@ -276,7 +285,8 @@ predictions <- familiar::as_prediction_table(
   type = "classification",
   class_levels = c("no", "yes")
 )
-#> Warning in familiar::as_prediction_table(x = predictions$yes, y = ischemic_stroke_data$stroke, : The positive class cannot be directly inferred from names of the provided prediction data, and is assumed to be yes.
+#> Error in `familiar::as_prediction_table()`:
+#> ! (converted from warning) The positive class cannot be directly inferred from names of the provided prediction data, and is assumed to be yes.
 
 # The prediction table object is then provided as object
 plots <- familiar::plot_model_performance(
@@ -284,10 +294,17 @@ plots <- familiar::plot_model_performance(
   metric = c("auc", "brier", "f1_score"),
   x_axis_by = "metric"
 )
+#> Error in `.local()`:
+#> ! data_element expects one of feature_expressions, risk_stratification_data, feature_similarity and sample_similarity as input. Found the following unknown values: model_performance
 ```
+
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/model-performance-plot-standalone-1.png" alt="Model performance obtained using a prediction table."  />
-<p class="caption">Model performance obtained using a prediction table.</p>
+<img src="eval_and_explain/model-performance-plot-standalone-1.png" alt="Performance for the ischemic strok model obtained using a 
+  prediction table. This results in the same figure as above, obtained
+  using the model itself."  />
+<p class="caption">Performance for the ischemic strok model obtained using a 
+  prediction table. This results in the same figure as above, obtained
+  using the model itself.</p>
 </div>
 
 This produces the exact same plot. Model performance can also be exported to a 
@@ -301,9 +318,12 @@ results <- familiar::export_model_performance(
   metric = c("auc", "brier", "f1_score"),
   aggregate_results = TRUE
 )
-results@data
-#> Error in `results@data`:
-#> ! no applicable method for `@` applied to an object of class "list"
+results[[1L]]@data
+#>                       data_set vimp_method                      learner ensemble_model_name   metric     value    ci_low     ci_up
+#>                         <fctr>      <fctr>                       <fctr>              <fctr>   <fctr>     <num>     <num>     <num>
+#> 1: 173529_2wFvaYlrMM6XXSNOt9rE        none random_forest_ranger_default      ensemble.NA.NA      auc 0.7387626 0.5166193 0.9146674
+#> 2: 173529_2wFvaYlrMM6XXSNOt9rE        none random_forest_ranger_default      ensemble.NA.NA    brier 0.2041370 0.1639073 0.2492457
+#> 3: 173529_2wFvaYlrMM6XXSNOt9rE        none random_forest_ranger_default      ensemble.NA.NA f1_score 0.7407407 0.5152258 0.8967186
 ```
 In the above table, `data_set` is randomly generated because we call this method
 on a (technically) *new* dataset. `ensemble_model_name` contains a placeholder
@@ -324,13 +344,12 @@ plots <- familiar::plot_auc_roc_curve(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
-
-plots[[1L]]
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/auc-roc-curve-bci-1.png" alt="plot of chunk auc-roc-curve-bci"  />
-<p class="caption">plot of chunk auc-roc-curve-bci</p>
+<img src="eval_and_explain/auc-roc-curve-bci-1.png" alt="Receiver-operating characteristic curve for the ischemic stroke 
+ model on hold-out test data. The 95% confidence interval is shown (grey)."  />
+<p class="caption">Receiver-operating characteristic curve for the ischemic stroke 
+ model on hold-out test data. The 95% confidence interval is shown (grey).</p>
 </div>
 
 Under ideal circumstances, the curve would lie in the top-left corner of the
@@ -363,13 +382,16 @@ plots <- familiar::plot_auc_roc_curve(
   data = ischemic_stroke_data,
   estimation_type = "point"
 )
-
-plots[[1L]]
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/auc-roc-curve-point-1.png" alt="plot of chunk auc-roc-curve-point"  />
-<p class="caption">plot of chunk auc-roc-curve-point</p>
+<img src="eval_and_explain/auc-roc-curve-point-1.png" alt="Receiver-operating characteristic curve for the ischemic stroke 
+ model on hold-out test data. Whereas the previous figure shows the bootstrap
+ estimate and confidence interval, the current curve is formed
+ directly from the data."  />
+<p class="caption">Receiver-operating characteristic curve for the ischemic stroke 
+ model on hold-out test data. Whereas the previous figure shows the bootstrap
+ estimate and confidence interval, the current curve is formed
+ directly from the data.</p>
 </div>
 
 Note that we did not specify the detail level to create the above plot because
@@ -394,13 +416,12 @@ plots <- familiar::plot_auc_precision_recall_curve(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
-
-plots[[1L]]
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/auc-pr-curve-bci-1.png" alt="plot of chunk auc-pr-curve-bci"  />
-<p class="caption">plot of chunk auc-pr-curve-bci</p>
+<img src="eval_and_explain/auc-pr-curve-bci-1.png" alt="Precision-recall curve for the ischemic stroke model on hold-out 
+test data. The 95% confidence interval is shown (grey)."  />
+<p class="caption">Precision-recall curve for the ischemic stroke model on hold-out 
+test data. The 95% confidence interval is shown (grey).</p>
 </div>
 
 Under ideal circumstances, the curve would lie in the top-right part of the
@@ -433,13 +454,16 @@ plots <- familiar::plot_auc_precision_recall_curve(
   data = ischemic_stroke_data,
   estimation_type = "point"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/auc-pr-curve-point-1.png" alt="plot of chunk auc-pr-curve-point"  />
-<p class="caption">plot of chunk auc-pr-curve-point</p>
+<img src="eval_and_explain/auc-pr-curve-point-1.png" alt="Precision-recall curve for the ischemic stroke 
+ model on hold-out test data. Whereas the previous figure shows the bootstrap
+ estimate and confidence interval, the current curve is formed
+ directly from the data."  />
+<p class="caption">Precision-recall curve for the ischemic stroke 
+ model on hold-out test data. Whereas the previous figure shows the bootstrap
+ estimate and confidence interval, the current curve is formed
+ directly from the data.</p>
 </div>
 
 ## Confusion matrix
@@ -454,13 +478,14 @@ plots <- familiar::plot_confusion_matrix(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/confusion-matrix-1.png" alt="plot of chunk confusion-matrix"  />
-<p class="caption">plot of chunk confusion-matrix</p>
+<img src="eval_and_explain/confusion-matrix-1.png" alt="Confusion matrix for the ischemic stroke 
+ model on hold-out test data. The number of instances with the prediction
+ of ischemic stroke (expected sroke), and actually observed stroke, is shown."  />
+<p class="caption">Confusion matrix for the ischemic stroke 
+ model on hold-out test data. The number of instances with the prediction
+ of ischemic stroke (expected sroke), and actually observed stroke, is shown.</p>
 </div>
 
 Familiar selects the class with the highest predicted class probability as the
@@ -508,13 +533,18 @@ plots <- familiar::plot_kaplan_meier(
   object = survival_model,
   data = survival_data
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/kaplan-meier-plot-1.png" alt="plot of chunk kaplan-meier-plot"  />
-<p class="caption">plot of chunk kaplan-meier-plot</p>
+<img src="eval_and_explain/kaplan-meier-plot-1.png" alt="Kaplan-Meier plot for the colon cancer survival model on hold-out
+ test data. The hold-out test data were split into two risk groups by
+ applying a threshold that was defined during training. 95% confidence
+ intervals are shown. The number of patients surviving without tumour recurrence
+ is shown below the main plot."  />
+<p class="caption">Kaplan-Meier plot for the colon cancer survival model on hold-out
+ test data. The hold-out test data were split into two risk groups by
+ applying a threshold that was defined during training. 95% confidence
+ intervals are shown. The number of patients surviving without tumour recurrence
+ is shown below the main plot.</p>
 </div>
 
 In the plot above, familiar divides instances into two groups by the median
@@ -541,13 +571,28 @@ plots <- familiar::plot_calibration_data(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/calibration-data-bci-1.png" alt="plot of chunk calibration-data-bci"  />
-<p class="caption">plot of chunk calibration-data-bci</p>
+<img src="eval_and_explain/calibration-data-bci-1.png" alt="Calibration plot for the ischemic stroke model on hold-out
+ test data. The plot shows the predicted (expected) probability of ischemic 
+ stroke, against the observed occurrence within smaller groupings of data. 
+ The plot shows the ideal calibration (dashed line), the linear calibration
+ fit (thin line), and estimated calibration (thick line). 95% confidence
+ intervals, based on bootrstraps, are shown around the estimated calibration. 
+ The line above the plot shows the density of predicted probabilities. 
+ Calibration outside the main distribution is more uncertain. The inset 
+ describes the intercept and slope of the linear fit, and the results
+ of the Hosmer-Lemeshow goodness-of-fit test."  />
+<p class="caption">Calibration plot for the ischemic stroke model on hold-out
+ test data. The plot shows the predicted (expected) probability of ischemic 
+ stroke, against the observed occurrence within smaller groupings of data. 
+ The plot shows the ideal calibration (dashed line), the linear calibration
+ fit (thin line), and estimated calibration (thick line). 95% confidence
+ intervals, based on bootrstraps, are shown around the estimated calibration. 
+ The line above the plot shows the density of predicted probabilities. 
+ Calibration outside the main distribution is more uncertain. The inset 
+ describes the intercept and slope of the linear fit, and the results
+ of the Hosmer-Lemeshow goodness-of-fit test.</p>
 </div>
 
 The calibration curve shows the expected (predicted) probability of ischemic
@@ -611,13 +656,16 @@ plots <- familiar::plot_calibration_data(
   data = ischemic_stroke_data,
   estimation_type = "point"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/calibration-data-point-1.png" alt="plot of chunk calibration-data-point"  />
-<p class="caption">plot of chunk calibration-data-point</p>
+<img src="eval_and_explain/calibration-data-point-1.png" alt="Calibration plot for the ischemic stroke model on hold-out
+ test data. Whereas in the earlier figure the calibration curve was the
+ bootstrap estimate, here the expected probability and observed proportions 
+ in several (random) groupings is shown."  />
+<p class="caption">Calibration plot for the ischemic stroke model on hold-out
+ test data. Whereas in the earlier figure the calibration curve was the
+ bootstrap estimate, here the expected probability and observed proportions 
+ in several (random) groupings is shown.</p>
 </div>
 
 The plot with point estimates and the earlier calibration plot with bootstrap
@@ -656,14 +704,15 @@ plots <- familiar::plot_decision_curve(
   data = ischemic_stroke_data,
   y_range = c(-0.2, 0.8)
 )
-
-plot(plots[[1L]])
 ```
 
-<div class="figure" style="text-align: center">
-<img src="eval_and_explain/decision-curve-bci-1.png" alt="plot of chunk decision-curve-bci"  />
-<p class="caption">plot of chunk decision-curve-bci</p>
-</div>
+```
+#> Error in `ggplot2::geom_line()`:
+#> ! Problem while converting geom to grob.
+#> ℹ Error occurred in the 1st layer.
+#> Caused by error:
+#> ! (converted from warning) Removed 33 rows containing missing values or values outside the scale range (`geom_line()`).
+```
 
 The shaded curve is the decision curve produced by the model, with 95%
 confidence intervals. The declining curve represents the intervention for all
@@ -701,18 +750,18 @@ plots <- familiar::plot_model_signature_variable_importance(
   data = ischemic_stroke_data,
   rotate_x_tick_labels = TRUE
 )
-
-plot(plots[[1L]])
 ```
 
-<div class="figure" style="text-align: center">
-<img src="eval_and_explain/model-variable-importance-1.png" alt="plot of chunk model-variable-importance"  />
-<p class="caption">plot of chunk model-variable-importance</p>
-</div>
-
+```
+#> Error in `ggplot2::geom_bar()`:
+#> ! Problem while converting geom to grob.
+#> ℹ Error occurred in the 1st layer.
+#> Caused by error:
+#> ! (converted from warning) Removed 13 rows containing missing values or values outside the scale range (`geom_bar()`).
+```
 In such plots, we always order features so that the most important features are
 on the left, and the least important features on the right. Letters indicate
-features that are clustered.
+features that are clustered together.
 
 In case an ensemble of models is assessed, scores are aggregated using an
 aggregation method (see the *variable importance methods* vignette). This method
@@ -739,13 +788,20 @@ plots <- familiar::plot_permutation_variable_importance(
   data = ischemic_stroke_data,
   estimation_type = "bias_correction"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/permutation-variable-importance-bc-1.png" alt="plot of chunk permutation-variable-importance-bc"  />
-<p class="caption">plot of chunk permutation-variable-importance-bc</p>
+<img src="eval_and_explain/permutation-variable-importance-bc-1.png" alt="Permutation variable importance plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest (top) to least importance (bottom).
+ Permutation variable importance measures the model performance difference 
+ between normal and shuffled (informationless) input values for each feature.
+ At the threshold of 1.00 every feature is shuffled individually, whereas at 0.23
+ groups of similar features are shuffled simultaneously."  />
+<p class="caption">Permutation variable importance plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest (top) to least importance (bottom).
+ Permutation variable importance measures the model performance difference 
+ between normal and shuffled (informationless) input values for each feature.
+ At the threshold of 1.00 every feature is shuffled individually, whereas at 0.23
+ groups of similar features are shuffled simultaneously.</p>
 </div>
 
 The figure shows the features along the y-axis, and the loss in AUC-ROC caused
@@ -783,14 +839,20 @@ plots <- familiar::plot_shap_summary(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/shap_summary-1.png" alt="plot of chunk shap_summary"  />
-<p class="caption">plot of chunk shap_summary</p>
+<img src="eval_and_explain/shap_summary-1.png" alt="SHAP summary plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest (top) to least importance (bottom),
+ based on SHAP values. Each point represents the marginal contribution 
+ of a feature value to the predicted probability of the model, and is coloured
+ according to its (normalised) feature value."  />
+<p class="caption">SHAP summary plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest (top) to least importance (bottom),
+ based on SHAP values. Each point represents the marginal contribution 
+ of a feature value to the predicted probability of the model, and is coloured
+ according to its (normalised) feature value.</p>
 </div>
+
 The SHAP summary plot shows several things: features are listed along the
 y-axis, with the most important feature on top, i.e. the feature that has the
 highest mean absolute SHAP value. Each point corresponds to the value in an
@@ -809,14 +871,18 @@ plots <- familiar::plot_shap_summary(
   data = ischemic_stroke_data,
   plot_type = "violinplot"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/shap_summary_violin-1.png" alt="plot of chunk shap_summary_violin"  />
-<p class="caption">plot of chunk shap_summary_violin</p>
+<img src="eval_and_explain/shap_summary_violin-1.png" alt="SHAP summary plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest (top) to least importance (bottom),
+ based on SHAP values. The distribution of SHAP values for each feature
+ is shown as a violin plot."  />
+<p class="caption">SHAP summary plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest (top) to least importance (bottom),
+ based on SHAP values. The distribution of SHAP values for each feature
+ is shown as a violin plot.</p>
 </div>
+
 The violin plot shows the distribution of values more clearly, at the cost 
 of losing information concerning underlying feature values.
 
@@ -831,13 +897,14 @@ plots <- familiar::plot_shap_summary(
   data = ischemic_stroke_data,
   value_representation = "abs_mean"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/shap_summary_bar-1.png" alt="plot of chunk shap_summary_bar"  />
-<p class="caption">plot of chunk shap_summary_bar</p>
+<img src="eval_and_explain/shap_summary_bar-1.png" alt="SHAP summary plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest (top) to least importance (bottom),
+ based on the mean of the absolute SHAP values in the underlying data."  />
+<p class="caption">SHAP summary plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest (top) to least importance (bottom),
+ based on the mean of the absolute SHAP values in the underlying data.</p>
 </div>
 
 # Feature effects
@@ -861,13 +928,20 @@ plots <- familiar::plot_ice(
   data = ischemic_stroke_data,
   features = "max_remodeling_ratio"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/ice-max-remodeling-ratio-1.png" alt="plot of chunk ice-max-remodeling-ratio"  />
-<p class="caption">plot of chunk ice-max-remodeling-ratio</p>
+<img src="eval_and_explain/ice-max-remodeling-ratio-1.png" alt="Individual conditional expectation plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data. 
+ Each curve follows the predicted probability for an instance where only
+ the value of the max_remodeling_ratio is changed. The thick line corresponds to
+ the average of all individual curves, i.e. partial dependence. High novelty scores
+ signify values that are more likely to be outliers."  />
+<p class="caption">Individual conditional expectation plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data. 
+ Each curve follows the predicted probability for an instance where only
+ the value of the max_remodeling_ratio is changed. The thick line corresponds to
+ the average of all individual curves, i.e. partial dependence. High novelty scores
+ signify values that are more likely to be outliers.</p>
 </div>
 
 The ICE plot shows multiple curves for individual samples, as well as their
@@ -904,13 +978,24 @@ plots <- familiar::plot_ice(
   features = "max_remodeling_ratio",
   anchor_values = list("max_remodeling_ratio" = 2.5)
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/ice-max-remodeling-ratio-anchored-1.png" alt="plot of chunk ice-max-remodeling-ratio-anchored"  />
-<p class="caption">plot of chunk ice-max-remodeling-ratio-anchored</p>
+<img src="eval_and_explain/ice-max-remodeling-ratio-anchored-1.png" alt="Individual conditional expectation plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data. 
+ Each curve follows the predicted probability for an instance where only
+ the value of the max_remodeling_ratio is changed. This curve was anchored at
+ max_remodeling_ratio=2.5, i.e. at this value, every curve has a (relative)
+ predicted probability of 0.0. The thick line corresponds to the average of all
+ individual curves, i.e. partial dependence. High novelty scores
+ signify values that are more likely to be outliers."  />
+<p class="caption">Individual conditional expectation plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data. 
+ Each curve follows the predicted probability for an instance where only
+ the value of the max_remodeling_ratio is changed. This curve was anchored at
+ max_remodeling_ratio=2.5, i.e. at this value, every curve has a (relative)
+ predicted probability of 0.0. The thick line corresponds to the average of all
+ individual curves, i.e. partial dependence. High novelty scores
+ signify values that are more likely to be outliers.</p>
 </div>
 
 In the plot above, we have anchored the values at `max-remodeling-ratio = 2.5`.
@@ -927,14 +1012,18 @@ plots <- familiar::plot_ice(
   data = ischemic_stroke_data,
   features = c("max_remodeling_ratio", "coronary_artery_disease")
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/ice-2d-1.png" alt="plot of chunk ice-2d"  />
-<p class="caption">plot of chunk ice-2d</p>
+<img src="eval_and_explain/ice-2d-1.png" alt="Partial depence plot for the max_remodeling_ratio and coronary_artery_disease
+ features in the ischemic stroke model using instances from the hold-out test data. 
+ Individual curves are not shown for 2D plots. High novelty scores,
+ indicated by smaller points, signify values that are more likely to be outliers."  />
+<p class="caption">Partial depence plot for the max_remodeling_ratio and coronary_artery_disease
+ features in the ischemic stroke model using instances from the hold-out test data. 
+ Individual curves are not shown for 2D plots. High novelty scores,
+ indicated by smaller points, signify values that are more likely to be outliers.</p>
 </div>
+
 
 The partial dependence plot above shows `max_remodeling_ratio` along the x-axis
 and `coronary_artery_disease` along the y-axis. Higher intensities are
@@ -960,13 +1049,18 @@ plots <- familiar::plot_ice(
   ),
   show_novelty = FALSE
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/ice-2d-anchored-1.png" alt="plot of chunk ice-2d-anchored"  />
-<p class="caption">plot of chunk ice-2d-anchored</p>
+<img src="eval_and_explain/ice-2d-anchored-1.png" alt="Partial depence plot for the max_remodeling_ratio and coronary_artery_disease
+ features in the ischemic stroke model using instances from the hold-out test data.
+ Without novelty, elements are shown as rectangles to better show probability.
+ Moreover, probabilities were anchored at max_remodeling_ratio = 2.5, and
+ coronary_artery_disease = no. Individual curves are not shown for 2D plots."  />
+<p class="caption">Partial depence plot for the max_remodeling_ratio and coronary_artery_disease
+ features in the ischemic stroke model using instances from the hold-out test data.
+ Without novelty, elements are shown as rectangles to better show probability.
+ Moreover, probabilities were anchored at max_remodeling_ratio = 2.5, and
+ coronary_artery_disease = no. Individual curves are not shown for 2D plots.</p>
 </div>
 
 We disabled novelty (`show_novelty=FALSE`) for plotting the 2D anchored plot.
@@ -992,13 +1086,12 @@ plots <- familiar::plot_shap_dependence(
   data = ischemic_stroke_data,
   shap_feature = "max_remodeling_ratio"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/shap-dependence-1.png" alt="plot of chunk shap-dependence"  />
-<p class="caption">plot of chunk shap-dependence</p>
+<img src="eval_and_explain/shap-dependence-1.png" alt="SHAP dependence plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data."  />
+<p class="caption">SHAP dependence plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data.</p>
 </div>
 The above plot shows that with increasing value of `max_remodeling_ratio`, the
 marginal contribution to the prediction changes from negative (low values
@@ -1017,13 +1110,14 @@ plots <- familiar::plot_shap_dependence(
   shap_feature = "max_remodeling_ratio",
   interaction_feature = "coronary_artery_disease"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/shap-dependence-interaction-1.png" alt="plot of chunk shap-dependence-interaction"  />
-<p class="caption">plot of chunk shap-dependence-interaction</p>
+<img src="eval_and_explain/shap-dependence-interaction-1.png" alt="SHAP dependence plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data.
+ Each point shows the corresponding value for coronary_artery_disease."  />
+<p class="caption">SHAP dependence plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data.
+ Each point shows the corresponding value for coronary_artery_disease.</p>
 </div>
 The addition of an interaction feature does not alter the shape of the plot, but
 now individual values are coloured by the value of the `coronary_artery_disease`
@@ -1038,13 +1132,14 @@ plots <- familiar::plot_shap_dependence(
   shap_feature = "max_remodeling_ratio",
   interaction_feature = "max_dilation_by_area"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/shap-dependence_interaction_2-1.png" alt="plot of chunk shap-dependence_interaction_2"  />
-<p class="caption">plot of chunk shap-dependence_interaction_2</p>
+<img src="eval_and_explain/shap-dependence_interaction_2-1.png" alt="SHAP dependence plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data.
+ Each point shows the corresponding value for max_dilation_by_area."  />
+<p class="caption">SHAP dependence plot for the max_remodeling_ratio feature
+ in the ischemic stroke model using instances from the hold-out test data.
+ Each point shows the corresponding value for max_dilation_by_area.</p>
 </div>
 The `max_dilation_by_area` feature, however, is much more strongly correlated,
 as shown in the SHAP dependence plot above.
@@ -1061,13 +1156,14 @@ plots <- familiar::plot_shap_force(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/shap_force_plot-1.png" alt="plot of chunk shap_force_plot"  />
-<p class="caption">plot of chunk shap_force_plot</p>
+<img src="eval_and_explain/shap_force_plot-1.png" alt="SHAP force plot for the ischemic stroke model using all instances
+ from the hold-out test data. The force plot show the stacked positive and 
+ negative marginal contributions for all features."  />
+<p class="caption">SHAP force plot for the ischemic stroke model using all instances
+ from the hold-out test data. The force plot show the stacked positive and 
+ negative marginal contributions for all features.</p>
 </div>
 Force plots are not highly informative. However, one can set one or more highlight
 features. For example, setting `max_remodeling_ratio` as a highlight yields the
@@ -1080,13 +1176,16 @@ plots <- familiar::plot_shap_force(
   data = ischemic_stroke_data,
   highlight_feature = "max_remodeling_ratio"
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/shap_force_plot_highlight-1.png" alt="plot of chunk shap_force_plot_highlight"  />
-<p class="caption">plot of chunk shap_force_plot_highlight</p>
+<img src="eval_and_explain/shap_force_plot_highlight-1.png" alt="SHAP force plot for the ischemic stroke model using all instances
+ from the hold-out test data. The force plot show the stacked positive and 
+ negative marginal contributions for all features. The contributions by
+ the max_remodeling_ratio feature are highlighted."  />
+<p class="caption">SHAP force plot for the ischemic stroke model using all instances
+ from the hold-out test data. The force plot show the stacked positive and 
+ negative marginal contributions for all features. The contributions by
+ the max_remodeling_ratio feature are highlighted.</p>
 </div>
 
 ## SHAP waterfall plots
@@ -1100,13 +1199,16 @@ plots <- familiar::plot_shap_waterfall(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/shap_waterfall-1.png" alt="plot of chunk shap_waterfall"  />
-<p class="caption">plot of chunk shap_waterfall</p>
+<img src="eval_and_explain/shap_waterfall-1.png" alt="SHAP waterfall plot for the ischemic stroke model for a single sample
+ from the hold-out test data. The waterfall plot shows the marginal
+ contributions of each feature for a sample. Features with the largest
+ contributions are shown at the top."  />
+<p class="caption">SHAP waterfall plot for the ischemic stroke model for a single sample
+ from the hold-out test data. The waterfall plot shows the marginal
+ contributions of each feature for a sample. Features with the largest
+ contributions are shown at the top.</p>
 </div>
 The above plot shows a waterfall plot for the first sample, which has a
 predicted value of $0.43$, where the average predicted value in
@@ -1127,13 +1229,16 @@ plots <- familiar::plot_feature_similarity(
   feature_similarity_metric = "spearman",
   rotate_x_tick_labels = TRUE
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/feature-similarity-1.png" alt="plot of chunk feature-similarity"  />
-<p class="caption">plot of chunk feature-similarity</p>
+<img src="eval_and_explain/feature-similarity-1.png" alt="Feature similarity heatmap for features used in the ischemic
+ stroke model. Similarity is computed using Spearman's rank correlation
+ coefficient. Features are clustered by similarity, with strongly (anti-)correlated
+ features being grouped together more closely."  />
+<p class="caption">Feature similarity heatmap for features used in the ischemic
+ stroke model. Similarity is computed using Spearman's rank correlation
+ coefficient. Features are clustered by similarity, with strongly (anti-)correlated
+ features being grouped together more closely.</p>
 </div>
 
 Because we specify `feature_similarity_metric = "spearman"` the heatmap displays
@@ -1155,13 +1260,20 @@ plots <- familiar::plot_sample_clustering(
   feature_similarity_metric = "spearman",
   rotate_x_tick_labels = TRUE
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/sample-similarity-1.png" alt="plot of chunk sample-similarity"  />
-<p class="caption">plot of chunk sample-similarity</p>
+<img src="eval_and_explain/sample-similarity-1.png" alt="Sample similarity heatmap of samples in the hold-out test set based on 
+ features used in the ischemic stroke model. Similarity between features is
+ computed using Spearman's rank correlation coefficient, whereas similarity
+ between samples is computed using Gower's distance. Strongly (anti-)correlated
+ features and samples being grouped together more closely, respectively.
+ Feature values are normalised."  />
+<p class="caption">Sample similarity heatmap of samples in the hold-out test set based on 
+ features used in the ischemic stroke model. Similarity between features is
+ computed using Spearman's rank correlation coefficient, whereas similarity
+ between samples is computed using Gower's distance. Strongly (anti-)correlated
+ features and samples being grouped together more closely, respectively.
+ Feature values are normalised.</p>
 </div>
 
 The sample clustering figure shows an absence of clear structure among the
@@ -1185,13 +1297,22 @@ plots <- familiar::plot_sample_clustering(
   show_normalised_data = "none",
   rotate_x_tick_labels = TRUE
 )
-
-plot(plots[[1L]])
 ```
-
 <div class="figure" style="text-align: center">
-<img src="eval_and_explain/sample-similarity-unnormalised-1.png" alt="plot of chunk sample-similarity-unnormalised"  />
-<p class="caption">plot of chunk sample-similarity-unnormalised</p>
+<img src="eval_and_explain/sample-similarity-unnormalised-1.png" alt="Sample similarity heatmap of samples in the hold-out test set based on 
+ features used in the ischemic stroke model. Similarity between features is
+ computed using Spearman's rank correlation coefficient, whereas similarity
+ between samples is computed using Gower's distance. Strongly (anti-)correlated
+ features and samples being grouped together more closely, respectively.
+ Feature values were not normalised (for plotting), and are coloured according to
+ their actual value."  />
+<p class="caption">Sample similarity heatmap of samples in the hold-out test set based on 
+ features used in the ischemic stroke model. Similarity between features is
+ computed using Spearman's rank correlation coefficient, whereas similarity
+ between samples is computed using Gower's distance. Strongly (anti-)correlated
+ features and samples being grouped together more closely, respectively.
+ Feature values were not normalised (for plotting), and are coloured according to
+ their actual value.</p>
 </div>
 
 # References
