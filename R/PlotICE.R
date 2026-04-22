@@ -161,8 +161,8 @@ setGeneric(
     x_label = waiver(),
     y_label = waiver(),
     legend_label = waiver(),
-    plot_title = NULL,
-    plot_sub_title = NULL,
+    plot_title = waiver(),
+    plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
     x_n_breaks = 5L,
@@ -214,8 +214,8 @@ setMethod(
     x_label = waiver(),
     y_label = waiver(),
     legend_label = waiver(),
-    plot_title = NULL,
-    plot_sub_title = NULL,
+    plot_title = waiver(),
+    plot_sub_title = waiver(),
     caption = NULL,
     x_range = NULL,
     x_n_breaks = 5L,
@@ -851,7 +851,7 @@ setMethod(
         color_by = color_by
       )
     }
-
+    
     # Check input arguments for validity.
     .check_input_plot_args(
       conf_int_alpha = conf_int_alpha,
