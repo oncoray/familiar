@@ -372,7 +372,7 @@ will plot an exact ROC curve if the point estimate (`estimation_type="point"`)
 of a single model or the complete ensemble of models is evaluated
 (`detail_level="ensemble"`):
 
-```{r, fig.align='center', fig.width=7, label="auc-roc-curve-point"}
+```{r}
 plots <- familiar::plot_auc_roc_curve(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
@@ -474,7 +474,7 @@ A confusion matrix schematically represents the number of predicted (expected)
 class instances and their actual (observed) values. This may help identify
 potential weaknesses of classifiers, i.e. false positives or negatives.
 
-```{r, fig.align='center', fig.width=4, label="confusion-matrix"}
+```{r}
 plots <- familiar::plot_confusion_matrix(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
@@ -708,6 +708,7 @@ plots <- familiar::plot_decision_curve(
 #| label = "decision-curve-bci",
 #| echo = FALSE, 
 #| message = FALSE,
+#| warning = FALSE,
 #| fig.width = 7.0, fig.height = 4.0,
 #| fig.cap = "Decision curve for the ischemic stroke model on hold-out
 #|  test data. Three lines are shown. The horizontal line intersecting the origin
@@ -750,7 +751,7 @@ measure of variable importance when features are normalised. In the case of the
 random forest model for the ischemic stroke dataset, permutation variable
 importance is determined. This produces the following plot:
 
-```{r, warning=FALSE}
+```{r}
 plots <- familiar::plot_model_signature_variable_importance(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
@@ -761,6 +762,7 @@ plots <- familiar::plot_model_signature_variable_importance(
 #| label = "model-variable-importance",
 #| echo = FALSE, 
 #| message = FALSE,
+#| warning = FALSE,
 #| fig.width = 7.0, fig.height = 4.0,
 #| fig.cap = "Variable importance plot for the ischemic stroke model on hold-out
 #|  test data. Features are sorted from highest to least importance. Features 
@@ -810,7 +812,7 @@ plots <- familiar::plot_permutation_variable_importance(
 #|  Permutation variable importance measures the model performance difference 
 #|  between normal and shuffled (informationless) input values for each feature.
 #|  At the threshold of 1.00 every feature is shuffled individually, whereas at 0.23
-#|  groups of similar features are shuffled simultaneously.
+#|  groups of similar features are shuffled simultaneously."
 
 plot(plots[[1L]])
 ```
@@ -859,7 +861,7 @@ plots <- familiar::plot_shap_summary(
 #|  test data. Features are sorted from highest (top) to least importance (bottom),
 #|  based on SHAP values. Each point represents the marginal contribution 
 #|  of a feature value to the predicted probability of the model, and is coloured
-#|  according to its (normalised) feature value.
+#|  according to its (normalised) feature value."
 
 plot(plots[[1L]])
 ```
@@ -890,7 +892,7 @@ plots <- familiar::plot_shap_summary(
 #| fig.cap = "SHAP summary plot for the ischemic stroke model on hold-out
 #|  test data. Features are sorted from highest (top) to least importance (bottom),
 #|  based on SHAP values. The distribution of SHAP values for each feature
-#|  is shown as a violin plot.
+#|  is shown as a violin plot."
 
 plot(plots[[1L]])
 ```
@@ -902,23 +904,21 @@ If just variable importance is relevant, the SHAP summary plot can also be shown
 as a bar plot (`plot_type = "barplot"`) showing the mean absolute SHAP value by
 default (`value_representation = "abs_mean"`):
 
-```{r, fig.align='center', fig.width=7, label="shap_summary_bar"}
+```{r}
 plots <- familiar::plot_shap_summary(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   value_representation = "abs_mean"
 )
-
-plot(plots[[1L]])
 ```
 ```{r}
-#| label = "shap_summary_violin",
+#| label = "shap_summary_bar",
 #| echo = FALSE, 
 #| message = FALSE,
 #| fig.width = 7.0, fig.height = 4.0,
 #| fig.cap = "SHAP summary plot for the ischemic stroke model on hold-out
 #|  test data. Features are sorted from highest (top) to least importance (bottom),
-#|  based on the mean of the absolute SHAP values in the underlying data.
+#|  based on the mean of the absolute SHAP values in the underlying data."
 
 plot(plots[[1L]])
 ```
@@ -943,8 +943,6 @@ plots <- familiar::plot_ice(
   data = ischemic_stroke_data,
   features = "max_remodeling_ratio"
 )
-
-plot(plots[[1L]])
 ```
 ```{r}
 #| label = "ice-max-remodeling-ratio",
@@ -1019,15 +1017,26 @@ particular value.
 It is also possible to show the partial dependence of two features at the same
 time:
 
-```{r, fig.align='center', fig.width=7, label="ice-2d"}
+```{r}
 plots <- familiar::plot_ice(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   features = c("max_remodeling_ratio", "coronary_artery_disease")
 )
+```
+```{r}
+#| label = "ice-2d",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Partial depence plot for the max_remodeling_ratio and coronary_artery_disease
+#|  features in the ischemic stroke model using instances from the hold-out test data. 
+#|  Individual curves are not shown for 2D plots. High novelty scores,
+#|  indicated by smaller points, signify values that are more likely to be outliers."
 
 plot(plots[[1L]])
 ```
+
 
 The partial dependence plot above shows `max_remodeling_ratio` along the x-axis
 and `coronary_artery_disease` along the y-axis. Higher intensities are
@@ -1041,7 +1050,7 @@ underlying instances determines the size of each point.
 
 It also possible to anchor 2D partial dependence plots:
 
-```{r, fig.align='center', fig.width=7, label="ice-2d-anchored"}
+```{r}
 plots <- familiar::plot_ice(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
@@ -1052,6 +1061,17 @@ plots <- familiar::plot_ice(
   ),
   show_novelty = FALSE
 )
+```
+```{r}
+#| label = "ice-2d-anchored",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "Partial depence plot for the max_remodeling_ratio and coronary_artery_disease
+#|  features in the ischemic stroke model using instances from the hold-out test data.
+#|  Without novelty, elements are shown as rectangles to better show probability.
+#|  Moreover, probabilities were anchored at max_remodeling_ratio = 2.5, and
+#|  coronary_artery_disease = no. Individual curves are not shown for 2D plots."
 
 plot(plots[[1L]])
 ```
@@ -1072,12 +1092,20 @@ SHAP dependence plots function similar to dependence plots. The SHAP dependence
 plot below shows how the SHAP values of `max_remodeling_ratio` are related
 to its feature values.
 
-```{r, fig.align='center', fig.width=7, label="shap-dependence"}
+```{r}
 plots <- familiar::plot_shap_dependence(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   shap_feature = "max_remodeling_ratio"
 )
+```
+```{r}
+#| label = "shap-dependence",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "SHAP dependence plot for the max_remodeling_ratio feature
+#|  in the ischemic stroke model using instances from the hold-out test data."
 
 plot(plots[[1L]])
 ```
@@ -1090,13 +1118,22 @@ SHAP dependence plots can also show interaction with other features. For
 example, we can show the interaction with the `coronary_artery_disease`
 feature. 
 
-```{r, fig.align='center', fig.width=7, label="shap-dependence-interaction"}
+```{r}
 plots <- familiar::plot_shap_dependence(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   shap_feature = "max_remodeling_ratio",
   interaction_feature = "coronary_artery_disease"
 )
+```
+```{r}
+#| label = "shap-dependence-interaction",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "SHAP dependence plot for the max_remodeling_ratio feature
+#|  in the ischemic stroke model using instances from the hold-out test data.
+#|  Each point shows the corresponding value for coronary_artery_disease."
 
 plot(plots[[1L]])
 ```
@@ -1105,13 +1142,22 @@ now individual values are coloured by the value of the `coronary_artery_disease`
 feature for the same sample. It appears that `coronary_artery_disease` is not
 strongly interacting with `max_remodeling_ratio`.
 
-```{r, fig.align='center', fig.width=7, label="shap-dependence_interaction_2"}
+```{r}
 plots <- familiar::plot_shap_dependence(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   shap_feature = "max_remodeling_ratio",
   interaction_feature = "max_dilation_by_area"
 )
+```
+```{r}
+#| label = "shap-dependence_interaction_2",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "SHAP dependence plot for the max_remodeling_ratio feature
+#|  in the ischemic stroke model using instances from the hold-out test data.
+#|  Each point shows the corresponding value for max_dilation_by_area."
 
 plot(plots[[1L]])
 ```
@@ -1124,11 +1170,20 @@ SHAP force plots show the *force* exerted by features for individual samples.
 Samples are (by default) ordered by increasing predicted value, and the 
 positive and negative marginal contributions are shown for each sample.
 
-```{r, fig.align='center', fig.width=7, label="shap_force_plot"}
+```{r}
 plots <- familiar::plot_shap_force(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
+```
+```{r}
+#| label = "shap_force_plot",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "SHAP force plot for the ischemic stroke model using all instances
+#|  from the hold-out test data. The force plot show the stacked positive and 
+#|  negative marginal contributions for all features."
 
 plot(plots[[1L]])
 ```
@@ -1136,12 +1191,22 @@ Force plots are not highly informative. However, one can set one or more highlig
 features. For example, setting `max_remodeling_ratio` as a highlight yields the
 following figure:
 
-```{r, fig.align='center', fig.width=7, label="shap_force_plot_highlight"}
+```{r}
 plots <- familiar::plot_shap_force(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   highlight_feature = "max_remodeling_ratio"
 )
+```
+```{r}
+#| label = "shap_force_plot_highlight",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "SHAP force plot for the ischemic stroke model using all instances
+#|  from the hold-out test data. The force plot show the stacked positive and 
+#|  negative marginal contributions for all features. The contributions by
+#|  the max_remodeling_ratio feature are highlighted."
 
 plot(plots[[1L]])
 ```
@@ -1151,11 +1216,21 @@ plot(plots[[1L]])
 SHAP waterfall plots show how SHAP values for each feature value contribute to
 the predicted value for an individual sample.
 
-```{r, fig.align='center', fig.width=7, label="shap_waterfall"}
+```{r}
 plots <- familiar::plot_shap_waterfall(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data
 )
+```
+```{r}
+#| label = "shap_waterfall",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 4.0,
+#| fig.cap = "SHAP waterfall plot for the ischemic stroke model for a single sample
+#|  from the hold-out test data. The waterfall plot shows the marginal
+#|  contributions of each feature for a sample. Features with the largest
+#|  contributions are shown at the top."
 
 plot(plots[[1L]])
 ```
@@ -1170,13 +1245,23 @@ the magnitude of their corresponding SHAP value.
 Highly similar features can carry redundant information for a model. This can be
 visualised using similarity heatmaps:
 
-```{r, fig.align='center', fig.width=7, label="feature-similarity"}
+```{r}
 plots <- familiar::plot_feature_similarity(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   feature_similarity_metric = "spearman",
   rotate_x_tick_labels = TRUE
 )
+```
+```{r}
+#| label = "feature-similarity",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 7.0,
+#| fig.cap = "Feature similarity heatmap for features used in the ischemic
+#|  stroke model. Similarity is computed using Spearman's rank correlation
+#|  coefficient. Features are clustered by similarity, with strongly (anti-)correlated
+#|  features being grouped together more closely."
 
 plot(plots[[1L]])
 ```
@@ -1192,13 +1277,25 @@ if samples are readily stratified into clusters, which may or may not correlate
 to the endpoint of interest. For the ischemic stroke dataset, this yields the
 following heatmap:
 
-```{r, fig.align='center', fig.width=7, label="sample-similarity"}
+```{r}
 plots <- familiar::plot_sample_clustering(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
   feature_similarity_metric = "spearman",
   rotate_x_tick_labels = TRUE
 )
+```
+```{r}
+#| label = "sample-similarity",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 7.0,
+#| fig.cap = "Sample similarity heatmap of samples in the hold-out test set based on 
+#|  features used in the ischemic stroke model. Similarity between features is
+#|  computed using Spearman's rank correlation coefficient, whereas similarity
+#|  between samples is computed using Gower's distance. Strongly (anti-)correlated
+#|  features and samples being grouped together more closely, respectively.
+#|  Feature values are normalised."
 
 plot(plots[[1L]])
 ```
@@ -1215,7 +1312,7 @@ Normalisation options can be altered by changing the `show_normalised_data`
 argument. However, in the ischemic stroke dataset features do not have the same
 value ranges, so without normalisation the figure looks less interpretable:
 
-```{r, fig.align='center', fig.width=7, label="sample-similarity-unnormalised"}
+```{r}
 plots <- familiar::plot_sample_clustering(
   object = ischemic_stroke_model,
   data = ischemic_stroke_data,
@@ -1223,6 +1320,19 @@ plots <- familiar::plot_sample_clustering(
   show_normalised_data = "none",
   rotate_x_tick_labels = TRUE
 )
+```
+```{r}
+#| label = "sample-similarity-unnormalised",
+#| echo = FALSE, 
+#| message = FALSE,
+#| fig.width = 7.0, fig.height = 7.0,
+#| fig.cap = "Sample similarity heatmap of samples in the hold-out test set based on 
+#|  features used in the ischemic stroke model. Similarity between features is
+#|  computed using Spearman's rank correlation coefficient, whereas similarity
+#|  between samples is computed using Gower's distance. Strongly (anti-)correlated
+#|  features and samples being grouped together more closely, respectively.
+#|  Feature values were not normalised (for plotting), and are coloured according to
+#|  their actual value."
 
 plot(plots[[1L]])
 ```
