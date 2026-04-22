@@ -115,6 +115,8 @@ setMethod(
     message_indent = 0L,
     verbose = FALSE
   ) {
+    if (is_empty(object)) return(NULL)
+    
     if (!is(object, "predictionTableClassification")) {
       ..warning_no_data_extraction_from_prediction_table("confusion matrix")
       

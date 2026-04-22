@@ -155,6 +155,7 @@ setMethod(
     verbose = FALSE,
     ...
   ) {
+    if (is_empty(object)) return(NULL)
     
     # Decision curve analysis is only available for categorical and survival
     # outcomes.

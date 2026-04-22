@@ -150,6 +150,9 @@ setMethod(
     verbose = FALSE,
     ...
   ) {
+    
+    if (is_empty(object)) return(NULL)
+    
     # Message extraction start
     logger_message(
       paste0("Computing model performance metrics from the prediction table."),

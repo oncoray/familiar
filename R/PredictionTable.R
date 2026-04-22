@@ -1389,6 +1389,27 @@ setMethod(
 
 
 
+# .has_reference_date (risk groups) --------------------------------------------
+setMethod(
+  ".has_reference_data",
+  signature(object = "predictionTableRiskGroups"),
+  function(object, ...) {
+    if (is_empty(object)) return(FALSE)
+    
+    if (.is_merged_prediction_table(object)) {
+      outcome_columns <- c("outcome_time", "outcome_event")
+      present_outcome_columns <- intersect(colnames(object@data), outcome_columns)
+      
+      return(length(present_outcome_columns) > 0L)
+      
+    } else {
+      return(!is_empty(object@reference_data))
+    }
+  }
+)
+
+
+
 # .has_reference_date (NULL) ---------------------------------------------------
 setMethod(
   ".has_reference_data",

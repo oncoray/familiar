@@ -167,6 +167,8 @@ setMethod(
   ) {
     # Extract data for plotting AUC curves.
     
+    if (is_empty(object)) return(NULL)
+    
     # AUC data can only be prepared for binomial and multinomial outcomes
     if (!is(object, "predictionTableClassification")) {
       ..warning_no_data_extraction_from_prediction_table("AUC curve data")
