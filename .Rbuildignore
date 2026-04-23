@@ -17,3 +17,5 @@
 ^tests/testthat/Rplots\.pdf$
 ^tests/old_experiments$
 ^Rplots\.pdf$
+^\.positai$
+^\.claude$
