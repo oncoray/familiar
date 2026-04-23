@@ -29,8 +29,9 @@ plot_univariate_importance(
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
+  limit_n_features = waiver(),
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   significance_level_shown = 0.05,
   width = waiver(),
@@ -64,8 +65,9 @@ plot_univariate_importance(
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
+  limit_n_features = waiver(),
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   significance_level_shown = 0.05,
   width = waiver(),
@@ -99,8 +101,9 @@ plot_univariate_importance(
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
+  limit_n_features = waiver(),
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   significance_level_shown = 0.05,
   width = waiver(),
@@ -162,7 +165,7 @@ NULL no figures are saved, but are returned instead.}
 \item{p_adjustment_method}{(\emph{optional}) Indicates type of p-value that is
 shown. One of \code{holm}, \code{hochberg}, \code{hommel}, \code{bonferroni}, \code{BH}, \code{BY},
 \code{fdr}, \code{none}, \code{p_value} or \code{q_value} for adjusted p-values, uncorrected
-p-values and q-values. q-values may not be available.}
+p-values}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -187,14 +190,27 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette used to fill the bars in case a
-non-singular variable was provided to the \code{color_by} argument.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring the plot elements
+according to the groupings indicated by the \code{color_by} argument (if any).
+\code{familiar} has a default palette. Other palettes are supported by
+\code{paletteer}, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette}{(\emph{optional}) Palette to use for filling the bars in
 case the \code{color_by} argument is not set. The bars are then coloured
 according to their importance. By default, no gradient is used, and the
 bars are not filled according to importance. Use \code{NULL} to fill the bars
-using the default palette in \code{familiar}.}
+using the default palette in \code{familiar}. Other palettes are supported by
+the \code{paletteer} package, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -213,6 +229,10 @@ NULL, no subtitle is shown.}
 
 \item{caption}{(\emph{optional}) Label to provide as figure caption. If NULL, no
 caption is shown.}
+
+\item{limit_n_features}{(\emph{optional}) The number of features that should be
+included in the plot. Only the most important features are shown. By
+default, the number of features is not limited.}
 
 \item{x_range}{(\emph{optional}) Value range for the x-axis.}
 
@@ -251,7 +271,8 @@ parameter is one or more \code{familiarData} objects.}
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
-"print" (300), or "screen" (72). Applies only to raster output types.}
+"print" (300), or "screen" (72). Only applies when converting pixel units,
+as is typical for raster output types.}
     \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
@@ -293,7 +314,7 @@ familiarCollection object.
 \details{
 This function generates a horizontal barplot with the length of the
 bars corresponding to the 10-logarithm of the (multiple-testing corrected)
-p-value or q-value.
+p-value.
 
 Features are assessed univariately using one-sample location t-tests after
 fitting a suitable regression model. The fitted model coefficient and the
@@ -302,27 +323,19 @@ covariance matrix are then used to compute a p-value.
 The following splitting variables are available for \code{split_by}, \code{color_by}
 and \code{facet_by}:
 \itemize{
-\item \code{fs_method}: feature selection methods
+\item \code{vimp_method}: variable importance methods
 \item \code{learner}: learners
 \item \code{data_set}: data sets
 }
 
-Unlike for plots of feature ranking in feature selection and after
-modelling (as assessed by model-specific routines), clusters of features
-are now found during creation of underlying \code{familiarData} objects, instead
-of through consensus clustering. Hence, clustering results may differ due
-to differences in the underlying datasets.
+Unlike for plots of feature ranking in initial variable importance
+computation and after modelling (as assessed by model-specific routines),
+clusters of features are now found during creation of underlying
+\code{familiarData} objects, instead of through consensus clustering. Hence,
+clustering results may differ due to differences in the underlying
+datasets.
 
-Available palettes for \code{discrete_palette} and \code{gradient_palette} are those
-listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
-\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
-\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
-palettes of the same name in \code{grDevices}. If not specified, a default
-palette based on palettes in Tableau are used. You may also specify your
-own palette by using colour names listed by \code{grDevices::colors()} or
-through hexadecimal RGB strings.
-
-Labelling methods such as \code{set_fs_method_names} or \code{set_feature_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_feature_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

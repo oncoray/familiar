@@ -45,7 +45,7 @@ parameter is read from settings used at creation of the underlying
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=extract_feature_expression]{extract_feature_expression}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
+  Arguments passed on to \code{\link[=extract_feature_expression]{extract_feature_expression}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[=as_data_object]{as_data_object}}
   \describe{
     \item{\code{feature_similarity}}{Table containing pairwise distance between
 sample. This is used to determine cluster information, and indicate which
@@ -53,8 +53,8 @@ samples are similar. The table is created by the
 \code{extract_sample_similarity} method.}
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are assessed.}
-    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
@@ -131,16 +131,9 @@ Extract and export feature expressions for the features in a
 familiarCollection.
 }
 \details{
-Data is usually collected from a \code{familiarCollection} object.
-However, you can also provide one or more \code{familiarData} objects, that will
-be internally converted to a \code{familiarCollection} object. It is also
-possible to provide a \code{familiarEnsemble} or one or more \code{familiarModel}
-objects together with the data from which data is computed prior to export.
-Paths to the previous files can also be provided.
-
 All parameters aside from \code{object} and \code{dir_path} are only used if \code{object}
 is not a \code{familiarCollection} object, or a path to one.
 
-Feature expressions are computed by standardising each feature, i.e. sample
-mean is 0 and standard deviation is 1.
+Feature similarity data can be created from \code{dataObject}, or \code{data.table} objects.
+For \code{data.table}, see \code{\link{as_data_object}} for additional arguments.
 }

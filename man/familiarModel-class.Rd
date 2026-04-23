@@ -42,8 +42,16 @@ detect out-of-distribution samples.}
 
 \item{\code{learner}}{Learning algorithm used to create the model.}
 
-\item{\code{fs_method}}{Feature selection method used to determine variable
-importance for the model.}
+\item{\code{vimp_method}}{Method used to determine variable importance for the model.}
+
+\item{\code{vimp_table}}{Variable importance table or list of variable importance
+tables for the model.}
+
+\item{\code{vimp_aggregation_method}}{Method used for aggregating variable importance
+tables if more than one is present.)}
+
+\item{\code{vimp_rank_threshold}}{Threshold used for some variable importance
+aggregation methods.}
 
 \item{\code{required_features}}{The set of features required for complete
 reproduction, i.e. with imputation.}
@@ -57,6 +65,11 @@ detectors in the ensemble.}
 development cohort.}
 
 \item{\code{km_info}}{Data concerning stratification into risk groups.}
+
+\item{\code{data_id}}{Internal identifier for the dataset used to train the model.}
+
+\item{\code{run_id}}{Internal identifier for the specific subset of the dataset used
+used to train the model.}
 
 \item{\code{run_table}}{Run table for the data used to train the model. Used
 internally.}

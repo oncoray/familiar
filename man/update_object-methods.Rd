@@ -53,4 +53,7 @@ Provides backward compatibility for familiar objects exported to
 a file. This mitigates compatibility issues when working with files that
 become outdated as new versions of familiar are released, e.g. because
 slots have been removed.
+
+Major version releases (e.g., versions 1.0.0, 2.0.0) introduce breaking
+changes which can result in objects that cannot be updated.
 }

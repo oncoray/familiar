@@ -29,7 +29,7 @@ plot_model_performance(
   caption = NULL,
   rotate_x_tick_labels = waiver(),
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   width = waiver(),
   height = waiver(),
@@ -62,7 +62,7 @@ plot_model_performance(
   caption = NULL,
   rotate_x_tick_labels = waiver(),
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   width = waiver(),
   height = waiver(),
@@ -95,7 +95,7 @@ plot_model_performance(
   caption = NULL,
   rotate_x_tick_labels = waiver(),
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   width = waiver(),
   height = waiver(),
@@ -110,7 +110,12 @@ plot_model_performance(
 objects, that will be internally converted to a \code{familiarCollection}
 object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
-prior to export. Paths to such files can also be provided.}
+prior to export. Paths to such files can also be provided.
+
+Additionally, some \code{familiarData} objects can be created from prediction
+tables (\code{familiarDataElementPredictionTable}). Other \code{familiarData} objects
+can be created from data (\code{dataObject}, or \code{data.table}). Please
+check \emph{details} for more information.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
@@ -159,13 +164,25 @@ is not used for \code{heatmap} and \code{y_axis_by} is only used by \code{heatma
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to color the different
-plot elements in case a value was provided to the \code{color_by} argument. Only
-used when \code{plot_type} is not \code{heatmap}.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring plot elements
+indicated by the \code{color_by} argument (if any). Only used if \code{plot_type} is
+not \code{heatmap}. \code{familiar} has a default palette. Other palettes are
+supported by the \code{paletteer} package, \code{grDevices::palette.pals()} (requires
+R >= 4.0.0), \code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow},
+\code{heat.colors}, \code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which
+correspond to the palettes of the same name in \code{grDevices}. You may also
+specify your own palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
 color the raster in \code{heatmap} plots. This argument is not used for other
-\code{plot_type} value.}
+\code{plot_type} value. \code{familiar} has a default palette. Other palettes are
+supported by the \code{paletteer} package, \code{grDevices::palette.pals()} (requires
+R >= 4.0.0), \code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow},
+\code{heat.colors}, \code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which
+correspond to the palettes of the same name in \code{grDevices}. You may also
+specify your own palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette_range}{(\emph{optional}) Numerical range used to span the
 gradient. This should be a range of two values, e.g. \code{c(0, 1)}. Lower or
@@ -228,8 +245,8 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
-    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
@@ -292,7 +309,11 @@ evaluation steps by providing a parameter value in a named list with data
 elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
-\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.
+
+If results are computed from 10 samples or fewer, \code{ensemble} is
+automatically used. This prevents issues where evaluation steps do not have
+a required minimum number of samples for \code{hybrid} or \code{model}.}
     \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
 \itemize{
@@ -355,7 +376,8 @@ parameter is one or more \code{familiarData} objects.}
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
-"print" (300), or "screen" (72). Applies only to raster output types.}
+"print" (300), or "screen" (72). Only applies when converting pixel units,
+as is typical for raster output types.}
     \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
@@ -379,12 +401,12 @@ types of plots, as determined by \code{plot_type}.
 This function plots model performance based on empirical bootstraps,
 using various plot representations.
 
-Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set},
+Available splitting variables are: \code{vimp_method}, \code{learner}, \code{data_set},
 \code{evaluation_time} (survival outcome only) and \code{metric}. The default for
 \code{heatmap} is to split by \code{metric}, facet by \code{data_set} and
-\code{evaluation_time}, position \code{learner} along the x-axis and \code{fs_method}
+\code{evaluation_time}, position \code{learner} along the x-axis and \code{vimp_method}
 along the y-axis. The \code{color_by} argument is not used. The only valid
-options for \code{x_axis_by} and \code{y_axis_by} are \code{learner} and \code{fs_method}.
+options for \code{x_axis_by} and \code{y_axis_by} are \code{learner} and \code{vimp_method}.
 
 For other plot types (\code{barplot}, \code{boxplot} and \code{violinplot}), depends on
 the number of learners and feature selection methods:
@@ -394,25 +416,16 @@ the number of learners and feature selection methods:
 \item \emph{one feature selection and multiple learners}: the default is to split by
 \code{metric}, facet by \code{data_set} and have \code{learner} along the x-axis.
 \item \emph{multiple feature selection methods and one learner}: the default is to
-split by \code{metric}, facet by \code{data_set} and have \code{fs_method} along the
+split by \code{metric}, facet by \code{data_set} and have \code{vimp_method} along the
 x-axis.
 \item \emph{multiple feature selection methods and learners}: the default is to split
-by \code{metric}, facet by \code{data_set}, colour by \code{fs_method} and have \code{learner}
+by \code{metric}, facet by \code{data_set}, colour by \code{vimp_method} and have \code{learner}
 along the x-axis.
 }
 
 If applicable, additional faceting is performed for \code{evaluation_time}.
 
-Available palettes for \code{discrete_palette} and \code{gradient_palette} are those
-listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
-\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
-\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
-palettes of the same name in \code{grDevices}. If not specified, a default
-palette based on palettes in Tableau are used. You may also specify your
-own palette by using colour names listed by \code{grDevices::colors()} or
-through hexadecimal RGB strings.
-
-Labeling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
+Labeling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

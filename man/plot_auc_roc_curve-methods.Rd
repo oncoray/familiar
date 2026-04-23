@@ -22,12 +22,12 @@ plot_auc_roc_curve(
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   conf_int_style = c("ribbon", "step", "none"),
-  conf_int_alpha = 0.4,
+  conf_int_alpha = 0.2,
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -51,12 +51,12 @@ plot_auc_roc_curve(
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   conf_int_style = c("ribbon", "step", "none"),
-  conf_int_alpha = 0.4,
+  conf_int_alpha = 0.2,
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -80,12 +80,12 @@ plot_auc_roc_curve(
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   conf_int_style = c("ribbon", "step", "none"),
-  conf_int_alpha = 0.4,
+  conf_int_alpha = 0.2,
   width = waiver(),
   height = waiver(),
   units = waiver(),
@@ -98,14 +98,19 @@ plot_auc_roc_curve(
 objects, that will be internally converted to a \code{familiarCollection}
 object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
-prior to export. Paths to such files can also be provided.}
+prior to export. Paths to such files can also be provided.
+
+Additionally, some \code{familiarData} objects can be created from prediction
+tables (\code{familiarDataElementPredictionTable}). Other \code{familiarData} objects
+can be created from data (\code{dataObject}, or \code{data.table}). Please
+check \emph{details} for more information.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
-\item{dir_path}{(\emph{optional}) Path to the directory where the plots of receiver
-operating characteristic curves are saved to. Output is saved in the
-\code{performance} subdirectory. If \code{NULL} no figures are saved, but are returned
-instead.}
+\item{dir_path}{(\emph{optional}) Path to the directory where the plots of
+receiver operating characteristic curves are saved to. Output is saved in
+the \code{performance} subdirectory. If \code{NULL} no figures are saved, but are
+returned instead.}
 
 \item{split_by}{(\emph{optional}) Splitting variables. This refers to column names
 on which datasets are split. A separate figure is created for each split.
@@ -128,8 +133,15 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to color the different
-plot elements in case a value was provided to the \code{color_by} argument.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring the plot elements
+according to the groupings indicated by the \code{color_by} argument (if any).
+\code{familiar} has a default palette. Other palettes are supported by
+\code{paletteer}, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -192,7 +204,8 @@ parameter is one or more \code{familiarData} objects.}
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
-"print" (300), or "screen" (72). Applies only to raster output types.}
+"print" (300), or "screen" (72). Only applies when converting pixel units,
+as is typical for raster output types.}
     \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
@@ -264,7 +277,11 @@ evaluation steps by providing a parameter value in a named list with data
 elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
-\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.
+
+If results are computed from 10 samples or fewer, \code{ensemble} is
+automatically used. This prevents issues where evaluation steps do not have
+a required minimum number of samples for \code{hybrid} or \code{model}.}
     \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
 \itemize{
@@ -330,17 +347,9 @@ based on data in a familiarCollection object.
 \details{
 This function generates area under the ROC curve plots.
 
-Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set} and
-\code{positive_class}. By default, the data is split by \code{fs_method} and \code{learner},
-with faceting by \code{data_set} and colouring by \code{positive_class}.
-
-Available palettes for \code{discrete_palette} are those listed by
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
-\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
-name in \code{grDevices}. If not specified, a default palette based on palettes
-in Tableau are used. You may also specify your own palette by using colour
-names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
+Available splitting variables are: \code{vimp_method}, \code{learner}, \code{data_set} and
+\code{positive_class}. By default, the data is split by \code{vimp_method} and
+\code{learner}, with faceting by \code{data_set} and colouring by \code{positive_class}.
 
 Bootstrap confidence intervals of the ROC curve (if present) can be shown
 using various styles set by \code{conf_int_style}:
@@ -353,7 +362,7 @@ the point estimate of the ROC curve.
 curve is shown as usual.
 }
 
-Labelling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

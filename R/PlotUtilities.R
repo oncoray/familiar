@@ -22,24 +22,27 @@
 #' @return A complete plotting theme.
 #' @export
 theme_familiar <- function(
-    base_size = 10,
+    base_size = 10.0,
     base_family = "",
     base_line_size = 0.5,
-    base_rect_size = 0.5) {
+    base_rect_size = 0.5
+) {
   
   # The default familiar theme is based on ggplot2::theme_light.
   ggtheme <- ggplot2::theme_light(
     base_size = base_size,
     base_family = base_family,
     base_line_size = base_line_size,
-    base_rect_size = base_rect_size)
+    base_rect_size = base_rect_size
+  )
 
   # Set colour to black.
   ggtheme$axis.text$colour <- "black"
   ggtheme$axis.ticks$colour <- "black"
   ggtheme$axis.line <- ggplot2::element_line(
     colour = "black",
-    lineend = "square")
+    lineend = "square"
+  )
 
   # Legend does not have a legend or border, and reserves less space.
   ggtheme$legend.background <- ggplot2::element_blank()
@@ -69,34 +72,44 @@ theme_familiar <- function(
     size = ggplot2::rel(1.1),
     hjust = 0.0,
     vjust = 1.0,
-    margin = ggplot2::margin(b = base_size / 2))
+    margin = ggplot2::margin(b = base_size / 2.0)
+  )
 
   # Make subtitle a bit smaller.
   ggtheme$plot.subtitle <- ggplot2::element_text(
     size = ggplot2::rel(0.8),
     hjust = 0.0,
     vjust = 1.0,
-    margin = ggplot2::margin(b = base_size / 2))
+    margin = ggplot2::margin(b = base_size / 2.0)
+  )
 
   # Make caption a bit smaller.
   ggtheme$plot.caption <- ggplot2::element_text(
     size = ggplot2::rel(0.7),
     hjust = 1.0,
     vjust = 1.0,
-    margin = ggplot2::margin(b = base_size / 2))
+    margin = ggplot2::margin(b = base_size / 2.0)
+  )
 
   # Make tag bold.
   ggtheme$plot.tag <- ggplot2::element_text(
     face = "bold",
-    hjust = 0,
-    vjust = 0.7)
+    hjust = 0.0,
+    vjust = 0.7
+  )
 
   # Make strip text black.
   ggtheme$strip.text <- ggplot2::element_text(
     size = ggplot2::rel(0.8),
     colour = "grey10",
-    margin = grid::unit(
-      c(base_size / 4, base_size / 4, base_size / 4, base_size / 4), "pt"))
+    margin = ggplot2::margin(
+      t = base_size / 4.0, 
+      r = base_size / 4.0, 
+      b = base_size / 4.0,
+      l = base_size / 4.0,
+      unit = "pt"
+    )
+  )
 
   # Remove strip background
   ggtheme$strip.background <- ggplot2::element_blank()
@@ -111,14 +124,15 @@ theme_familiar <- function(
   if (inherits(ggtheme, "theme")) {
     # Check if the theme is complete.
     if (!attr(ggtheme, "complete")) {
-      stop(paste0(
+      ..error(paste0(
         "The plotting theme is not complete. The most likely cause is lack ",
         "of a valid template, such as theme_familiar or ggplot2::theme_light. ",
-        "Note that ggplot2::theme is designed to tweak existing themes when creating a plot."))
+        "Note that ggplot2::theme is designed to tweak existing themes when creating a plot."
+      ))
     }
     
   } else if (is.null(ggtheme)) {
-    ggtheme <- theme_familiar(base_size = 9)
+    ggtheme <- theme_familiar(base_size = 9.0)
     
   } else {
     # Get the specified theme.
@@ -133,15 +147,17 @@ theme_familiar <- function(
       "theme_light" = ggplot2::theme_light,
       "theme_dark" = ggplot2::theme_dark,
       "theme_minimal" = ggplot2::theme_minimal,
-      "theme_classic" = ggplot2::theme_classic)
+      "theme_classic" = ggplot2::theme_classic
+    )
 
     if (is.null(ggtheme_fun)) {
-      stop(paste0(
-        "The selected theme is not the default theme, or a standard ggplot2 theme. Found: ", ggtheme))
+      ..error(paste0(
+        "The selected theme is not the default theme, or a standard ggplot2 theme. Found: ", ggtheme
+      ))
     }
 
     # Generate theme
-    ggtheme <- ggtheme_fun(base_size = 9)
+    ggtheme <- ggtheme_fun(base_size = 9.0)
   }
 
   return(ggtheme)
@@ -196,42 +212,45 @@ theme_familiar <- function(
     facet_by = NULL,
     x_axis_by = NULL,
     y_axis_by = NULL,
-    available = NULL) {
+    available = NULL
+) {
   # Find unique variables
   splitting_vars <- c(split_by, color_by, linetype_by, facet_by, x_axis_by, y_axis_by)
 
-  if (is.null(available) && length(splitting_vars) == 0) {
+  if (is.null(available) && length(splitting_vars) == 0L) {
     return(list())
     
-  } else if (is.null(available) && length(splitting_vars) > 0) {
-    stop(paste0(
+  } else if (is.null(available) && length(splitting_vars) > 0L) {
+    ..error(paste0(
       "The current plot has no required splitting variables defined, but ",
       paste_s(splitting_vars),
-      ifelse(length(splitting_vars) == 1, " was assigned.", " were assigned.")))
+      ifelse(length(splitting_vars) == 1L, " was assigned.", " were assigned.")
+    ))
   }
 
   # Filter available down to those present in the data.
   filter_available <- intersect(available, colnames(x))
 
   # Filter available down to those that have more than one variable
-  filter_available <- filter_available[
-    sapply(
-      filter_available,
-      function(ii, x) (data.table::uniqueN(x = x, by = ii) > 1),
-      x = x)]
+  filter_available <- filter_available[sapply(
+    filter_available,
+    function(ii, x) (data.table::uniqueN(x = x, by = ii) > 1L),
+    x = x
+  )]
   
   if (is.null(filter_available)) {
     return(list())
     
   } else if (!all(filter_available %in% splitting_vars)) {
     missing_vars <- filter_available[!filter_available %in% splitting_vars]
-    stop(paste0(
+    ..error(paste0(
       "The current plot requires ",
       paste_s(filter_available),
-      ifelse(length(filter_available) > 1, " as splitting variables", " as a splitting_variable"),
+      ifelse(length(filter_available) > 1L, " as splitting variables", " as a splitting_variable"),
       ", but ",
       paste_s(missing_vars),
-      ifelse(length(missing_vars) == 1, " was not assigned.", " were not assigned.")))
+      ifelse(length(missing_vars) == 1L, " was not assigned.", " were not assigned.")
+    ))
   }
 
   # Update available
@@ -281,8 +300,8 @@ theme_familiar <- function(
   .check_value_not_shared(output_list$x_axis_by, output_list$y_axis_by, "x_axis_by", "y_axis_by")
 
   # Check length of x_axis_by and y_axis_by variables.
-  .check_argument_length(output_list$x_axis_by, "x_axis_by", min = 0, max = 1)
-  .check_argument_length(output_list$y_axis_by, "y_axis_by", min = 0, max = 1)
+  .check_argument_length(output_list$x_axis_by, "x_axis_by", min = 0L, max = 1L)
+  .check_argument_length(output_list$y_axis_by, "y_axis_by", min = 0L, max = 1L)
 
   return(output_list)
 }
@@ -293,7 +312,7 @@ theme_familiar <- function(
   if (is.null(facet_by)) {
     return(list())
     
-  } else if (length(facet_by) == 1) {
+  } else if (length(facet_by) == 1L) {
     if (is.null(facet_wrap_cols)) {
       return(list("facet_cols" = quos(!!ensym(facet_by))))
     } else {
@@ -302,11 +321,12 @@ theme_familiar <- function(
     
   } else {
     if (is.null(facet_wrap_cols)) {
-      facet_col <- facet_by[1]
-      facet_rows <- facet_by[2:length(facet_by)]
+      facet_col <- facet_by[1L]
+      facet_rows <- facet_by[2L:length(facet_by)]
       return(list(
         "facet_cols" = quos(!!ensym(facet_col)),
-        "facet_rows" = quos(!!!parse_exprs(facet_rows))))
+        "facet_rows" = quos(!!!parse_exprs(facet_rows))
+      ))
       
     } else {
       return(list("facet_by" = quos(!!!parse_exprs(facet_by))))
@@ -319,10 +339,11 @@ theme_familiar <- function(
 .create_plot_subtitle <- function(
     x, 
     split_by = NULL, 
-    additional = NULL) {
+    additional = NULL
+) {
   # Do not create a subtitle if there is no subtitle to be created.
   subtitle <- NULL
-
+  
   # Generate subtitle from splitting variables and data.
   if (!is.null(split_by)) {
     subtitle <- c(
@@ -332,12 +353,18 @@ theme_familiar <- function(
         function(name, x) {
           split_variable_name <- name
 
-          if (split_variable_name == "fs_method") {
+          if (split_variable_name == "vimp_method") {
             split_variable_name <- "VIMP method"
+          } else if (split_variable_name == "learner") {
+            split_variable_name <- "learner"
           } else if (split_variable_name == "data_set") {
             split_variable_name <- "data set"
           } else if (split_variable_name == "evaluation_time") {
             split_variable_name <- "time point"
+          } else if (split_variable_name == "sample_id") {
+            split_variable_name <- "sample"
+          } else if (split_variable_name %in% c("feature_name", "feature")) {
+            split_variable_name <- "feature"
           }
 
           # Remove all underscores.
@@ -345,16 +372,19 @@ theme_familiar <- function(
             x = split_variable_name, 
             pattern = "_",
             replacement = " ",
-            fixed = TRUE)
+            fixed = TRUE
+          )
 
           # Parse to an elementary string.
-          split_variable_name <- paste0(split_variable_name, ": ", x[[name]][1])
+          split_variable_name <- paste0(split_variable_name, ": ", x[[name]][1L])
 
           return(split_variable_name)
         },
-        x = x))
+        x = x
+      )
+    )
   }
-
+  
   # Generate additional strings from additional.
   if (!is.null(additional)) {
     subtitle <- c(
@@ -366,13 +396,16 @@ theme_familiar <- function(
             x = name, 
             pattern = "_",
             replacement = " ",
-            fixed = TRUE)
+            fixed = TRUE
+          )
 
           # Parse to an elementary string.
           split_variable_name <- paste0(split_variable_name, ": ", value)
         },
         name = names(additional),
-        value = additional))
+        value = additional
+      )
+    )
   }
 
   # Check if any subtitle was generated.
@@ -396,21 +429,25 @@ theme_familiar <- function(
     x,
     subtype = NULL, 
     split_by = NULL, 
-    additional = NULL) {
+    additional = NULL
+) {
   # Generate additional terms for the subtype, based on splits.
   if (!is.null(split_by)) {
     subtype <- c(
       subtype,
       as.character(sapply(
         split_by,
-        function(jj, x) (x[[jj]][1]),
-        x = x)))
+        function(jj, x) (x[[jj]][1L]),
+        x = x
+      ))
+    )
   }
 
   if (!is.null(additional)) {
     subtype <- c(
       subtype,
-      sapply(additional, function(jj) as.character(jj[1])))
+      sapply(additional, function(jj) as.character(jj[1L]))
+    )
   }
 
   if (is.null(subtype)) return(NULL)
@@ -427,21 +464,24 @@ theme_familiar <- function(
     user_label, 
     color_by = NULL,
     linetype_by = NULL, 
-    combine_legend = FALSE) {
+    combine_legend = FALSE
+) {
   # Sent for inspection
   .check_input_plot_args(
     legend_label = user_label,
-    combine_legend = combine_legend)
+    combine_legend = combine_legend
+  )
   
   if (is.null(color_by) && is.null(linetype_by)) {
     # No splitting variables are used
     return(list(
       "guide_color" = NULL,
-      "guide_linetype" = NULL))
+      "guide_linetype" = NULL
+    ))
   }
   
   # Collect required list entries
-  req_entries <- character(0)
+  req_entries <- character(0L)
   if (!is.null(color_by)) {
     req_entries <- c(req_entries, "guide_color")
   }
@@ -456,11 +496,13 @@ theme_familiar <- function(
         x = paste0(unique(c(color_by, linetype_by)), collapse = " & "),
         pattern = "_",
         replacement = " ",
-        fixed = TRUE)
+        fixed = TRUE
+      )
       
       return(list(
         "guide_color" = legend_label,
-        "guide_linetype" = legend_label))
+        "guide_linetype" = legend_label
+      ))
       
     } else {
       # Colour labels
@@ -469,7 +511,8 @@ theme_familiar <- function(
           x = paste0(color_by, collapse = " & "),
           pattern = "_",
           replacement = " ",
-          fixed = TRUE)
+          fixed = TRUE
+        )
         
       } else {
         color_guide_label <- NULL
@@ -481,7 +524,8 @@ theme_familiar <- function(
           x = paste0(linetype_by, collapse = " & "),
           pattern = "_",
           replacement = " ",
-          fixed = TRUE)
+          fixed = TRUE
+        )
         
       } else {
         linetype_guide_label <- NULL
@@ -489,14 +533,16 @@ theme_familiar <- function(
       
       return(list(
         "guide_color" = color_guide_label,
-        "guide_linetype" = linetype_guide_label))
+        "guide_linetype" = linetype_guide_label
+      ))
     }
   } else if (is.null(user_label)) {
     # NULL input
     
     return(list(
       "guide_color" = NULL,
-      "guide_linetype" = NULL))
+      "guide_linetype" = NULL
+    ))
     
   } else if (is.list(user_label)) {
     # List input
@@ -504,11 +550,12 @@ theme_familiar <- function(
     # Check entries for existence
     for (current_entry in req_entries) {
       if (!current_entry %in% names(user_label)) {
-        stop(paste0(
+        ..error(paste0(
           "A legend name is missing for ", current_entry, 
           ". Please set this name to a \"", current_entry, 
           "\" list element, e.g. list(\"",  current_entry, 
-          "\"=\"some name\", ...)."))
+          "\"=\"some name\", ...)."
+        ))
       }
     }
     
@@ -516,33 +563,37 @@ theme_familiar <- function(
     user_label <- user_label[names(user_label) %in% req_entries]
     
     # Check that all entries are the same
-    if (combine_legend && length(req_entries) >= 2) {
+    if (combine_legend && length(req_entries) >= 2L) {
       if (!all(sapply(
-        user_label[2:length(user_label)],
+        user_label[2L:length(user_label)],
         identical,
-        user_label[[1]]))) {
-        stop(paste0(
+        user_label[[1L]]
+      ))) {
+        ..error(paste0(
           "Not all provided legend names are identical, but identical legend ",
-          "names are required for combining the legend."))
+          "names are required for combining the legend."
+        ))
       }
     }
     
     return(user_label)
     
-  } else if (length(req_entries) >= 2 && !combine_legend) {
+  } else if (length(req_entries) >= 2L && !combine_legend) {
     # Single input where multiple is required
     
-    stop(paste0(
+    ..error(paste0(
       "Multiple legend names are required, but only one is provided. ",
       "Please return a list with ",
-      paste0("\"", req_entries, "\"", collapse = ", "), " elements."))
+      paste0("\"", req_entries, "\"", collapse = ", "), " elements."
+    ))
     
   } else {
     # Single input
     
     return(list(
       "guide_color" = user_label, 
-      "guide_linetype" = user_label))
+      "guide_linetype" = user_label
+    ))
   }
 }
 
@@ -553,7 +604,8 @@ theme_familiar <- function(
     color_by = NULL, 
     linetype_by = NULL, 
     discrete_palette = NULL, 
-    combine_legend = TRUE) {
+    combine_legend = TRUE
+) {
   
   .get_guide_tables <- function(x, color_by, linetype_by, discrete_palette) {
     # Suppress NOTES due to non-standard evaluation in data.table
@@ -569,7 +621,8 @@ theme_familiar <- function(
     guide_table <- data.table::data.table(expand.grid(lapply(
       rev(unique_vars), 
       function(ii, x) (levels(x[[ii]])), 
-      x = x)))
+      x = x
+    )))
     
     # Rename variables
     data.table::setnames(x = guide_table, rev(unique_vars))
@@ -578,28 +631,32 @@ theme_familiar <- function(
     for (ii in unique_vars) {
       guide_table[[ii]] <- factor(
         x = guide_table[[ii]],
-        levels = levels(x[[ii]]))
+        levels = levels(x[[ii]])
+      )
     }
     
     # Order columns according to unique_vars
     data.table::setcolorder(
       x = guide_table, 
-      neworder = unique_vars)
+      neworder = unique_vars
+    )
     
     # Order data set by columns
     data.table::setorderv(
       x = guide_table, 
-      cols = unique_vars)
+      cols = unique_vars
+    )
     
     # Set breaks
-    breaks <- apply(guide_table, 1, paste, collapse = ", ")
+    breaks <- apply(guide_table, 1L, paste, collapse = ", ")
     
     # Extend guide table
     if (!is.null(color_by)) {
       # Generate breaks
       guide_table$color_breaks <- factor(
         x = breaks,
-        levels = breaks)
+        levels = breaks
+      )
       
       # Define colour groups
       guide_table[, "color_id" := .GRP, by = color_by]
@@ -608,7 +665,8 @@ theme_familiar <- function(
       discr_palette <- .get_palette(
         x = discrete_palette,
         n = max(guide_table$color_id),
-        palette_type = "qualitative")
+        palette_type = "qualitative"
+      )
       
       # Assign colour values
       guide_table[, "color_values" := discr_palette[color_id]]
@@ -618,7 +676,8 @@ theme_familiar <- function(
       # Generate breaks
       guide_table$linetype_breaks <- factor(
         x = breaks,
-        levels = breaks)
+        levels = breaks
+      )
       
       # Define linetype groups
       guide_table[, "linetype_id" := .GRP, by = linetype_by]
@@ -642,12 +701,15 @@ theme_familiar <- function(
         x = x, 
         color_by = color_by, 
         linetype_by = linetype_by, 
-        discrete_palette = discrete_palette),
+        discrete_palette = discrete_palette
+      ),
       "guide_linetype" = .get_guide_tables(
         x = x, 
         color_by = color_by, 
         linetype_by = linetype_by, 
-        discrete_palette = discrete_palette))
+        discrete_palette = discrete_palette
+      )
+    )
     
   } else {
     guide_list <- list(
@@ -655,18 +717,21 @@ theme_familiar <- function(
         x = x, 
         color_by = color_by, 
         linetype_by = NULL, 
-        discrete_palette = discrete_palette),
+        discrete_palette = discrete_palette
+      ),
       "guide_linetype" = .get_guide_tables(
         x = x, 
         color_by = NULL, 
         linetype_by = linetype_by, 
-        discrete_palette = discrete_palette))
+        discrete_palette = discrete_palette
+      )
+    )
   }
   
   # Filter out lists corresponding to missing split variables
   guide_list <- guide_list[!sapply(list(color_by, linetype_by), is.null)]
   
-  if (length(guide_list) == 0) return(list("data" = x))
+  if (length(guide_list) == 0L) return(list("data" = x))
   
   # Initialise return list
   return_list <- list()
@@ -681,7 +746,8 @@ theme_familiar <- function(
           y = guide_list[[guide_type]][, mget(c(unique(c(color_by, linetype_by)), "color_breaks"))],
           by = unique(c(color_by, linetype_by)),
           all.x = TRUE,
-          all.y = FALSE)
+          all.y = FALSE
+        )
         
       } else {
         x <- merge(
@@ -689,7 +755,8 @@ theme_familiar <- function(
           y = guide_list[[guide_type]][, mget(c(color_by, "color_breaks"))],
           by = color_by,
           all.x = TRUE, 
-          all.y = FALSE)
+          all.y = FALSE
+        )
       }
       
       # Return guide_color
@@ -703,7 +770,8 @@ theme_familiar <- function(
           y = guide_list[[guide_type]][, mget(c(unique(c(color_by, linetype_by)), "linetype_breaks"))],
           by = unique(c(color_by, linetype_by)),
           all.x = TRUE, 
-          all.y = FALSE)
+          all.y = FALSE
+        )
         
       } else {
         x <- merge(
@@ -711,7 +779,8 @@ theme_familiar <- function(
           y = guide_list[[guide_type]][, mget(c(linetype_by, "linetype_breaks"))],
           by = linetype_by,
           all.x = TRUE, 
-          all.y = FALSE)
+          all.y = FALSE
+        )
       }
       
       # Return guide_linetype
@@ -731,27 +800,28 @@ theme_familiar <- function(
     x, 
     color_by = NULL, 
     facet_by = NULL, 
-    singular_cluster_character = "\u2014") {
+    singular_cluster_character = "\u2014"
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
   cluster_size <- cluster_id <- feature <- new_cluster_id <- cluster_name <- NULL
 
   ..integer_to_char <- function(x) {
     # Initialise placeholders
     x_remain <- x
-    new_string <- character(0)
+    new_string <- character(0L)
 
-    while (ceiling(x_remain / 26) > 0) {
+    while (as.integer(ceiling(x_remain / 26L)) > 0L) {
       # Determine the modulo.
-      mod <- x_remain %% 26
+      mod <- x_remain %% 26L
 
       # Find if mod is equal to 0, which would indicate Z.
-      mod <- ifelse(mod == 0, 26, mod)
+      mod <- ifelse(mod == 0L, 26L, mod)
 
       # Add letter
       new_string <- c(new_string, LETTERS[mod])
 
       # Update the remain variable
-      x_remain <- (x_remain - mod) / 26
+      x_remain <- (x_remain - mod) / 26L
     }
 
     return(paste(rev(new_string), collapse = ""))
@@ -761,7 +831,7 @@ theme_familiar <- function(
   splitting_vars <- unique(c(color_by, facet_by))
 
   # Split x by splitting variables.
-  if (length(splitting_vars) > 0) {
+  if (length(splitting_vars) > 0L) {
     x <- split(x, by = splitting_vars)
   } else {
     x <- list(x)
@@ -785,7 +855,7 @@ theme_familiar <- function(
       # Only determine cluster_name for those clusters that have cluster_size >
       # 1. Also, the most important features should receive a higher replacement
       # cluster_id.
-      y_short <- y[cluster_size > 1, mget(c("feature", "cluster_id"))]
+      y_short <- y[cluster_size > 1L, mget(c("feature", "cluster_id"))]
       
       if (!is_empty(y_short)) {
         # Remove unused levels for the name column. The levels of name are
@@ -798,9 +868,9 @@ theme_familiar <- function(
         new_id <- 1L
         for (current_feature in levels(y_short$feature)) {
           # Provide new cluster id in case none exists.
-          if (is.na(y_short[feature == current_feature, ]$new_cluster_id[1])) {
+          if (is.na(y_short[feature == current_feature, ]$new_cluster_id[1L])) {
             # Find the old cluster id.
-            old_cluster_id <- y_short[feature == current_feature, ]$cluster_id[1]
+            old_cluster_id <- y_short[feature == current_feature, ]$cluster_id[1L]
             
             # Update all entries with the same old cluster id.
             y_short[cluster_id == old_cluster_id, "new_cluster_id" := new_id]
@@ -816,14 +886,16 @@ theme_familiar <- function(
         # Drop redundant columns
         y_short[, ":="(
           "cluster_id" = NULL, 
-          "new_cluster_id" = NULL)]
+          "new_cluster_id" = NULL
+        )]
         
         # Merge with y.
         y <- merge(
           x = y, 
           y = y_short,
           by = "feature",
-          all = TRUE)
+          all = TRUE
+        )
         
         # Mark singular clusters
         y[is.na(cluster_name), "cluster_name" := singular_cluster_character]
@@ -849,24 +921,25 @@ theme_familiar <- function(
   if (is.null(plot_layout_table)) {
     plot_layout_table <- do.call(
       .get_plot_layout_table,
-      args = c(
-        list("x" = x),
-        list(...)))
+      args = c(list("x" = x), list(...))
+    )
   }
 
   # Derive facet_by
   facet_by <- setdiff(
     colnames(plot_layout_table),
-    c("col_id", "row_id"))
+    c("col_id", "row_id")
+  )
 
-  if (length(facet_by > 0)) {
+  if (length(facet_by) > 0L) {
     # Merge the plot_layout_table into x. This will keep things in order. All
     # levels are kept.
     x <- merge(
       x = x,
       y = plot_layout_table,
       by = facet_by,
-      all = TRUE)
+      all = TRUE
+    )
     
   } else {
     x <- cbind(x, plot_layout_table)
@@ -876,7 +949,8 @@ theme_familiar <- function(
   split_data <- split(
     x, 
     by = c("col_id", "row_id"), 
-    sorted = TRUE)
+    sorted = TRUE
+  )
 
   return(split_data)
 }
@@ -888,13 +962,15 @@ theme_familiar <- function(
   if (is.null(plot_layout_table)) {
     plot_layout_table <- do.call(
       .get_plot_layout_table, 
-      args = list(...))
+      args = list(...)
+    )
   }
 
   # Return (nrows, ncols)
   return(c(
     max(plot_layout_table$row_id),
-    max(plot_layout_table$col_id)))
+    max(plot_layout_table$col_id)
+  ))
 }
 
 
@@ -904,7 +980,8 @@ theme_familiar <- function(
     # Simple 1x1 layout without facets.
     plot_layout_table <- data.table::data.table(
       "col_id" = 1L,
-      "row_id" = 1L)
+      "row_id" = 1L
+    )
     
   } else if (is.null(facet_wrap_cols)) {
     # Generate a plot_layout_table and order it
@@ -912,23 +989,25 @@ theme_familiar <- function(
       lapply(
         facet_by,
         function(column, x) levels(x[[column]]),
-        x = x),
-      KEEP.OUT.ATTRS = FALSE)
+        x = x
+      ),
+      KEEP.OUT.ATTRS = FALSE
+    )
     
     plot_layout_table <- data.table::as.data.table(plot_layout_table)
     data.table::setnames(plot_layout_table, facet_by)
     data.table::setorderv(x = plot_layout_table, cols = facet_by)
 
     # Find the number of columns
-    n_cols <- length(unique(x[[facet_by[1]]]))
+    n_cols <- length(unique(x[[facet_by[1L]]]))
 
     # Add column id to the plot_layout_table
-    plot_layout_table[, "col_id" := .GRP, by = get(facet_by[1])]
+    plot_layout_table[, "col_id" := .GRP, by = get(facet_by[1L])]
 
-    if (length(facet_by) > 1) {
+    if (length(facet_by) > 1L) {
       # Find the number of rows
       n_levels <- sapply(
-        facet_by[2:length(facet_by)],
+        facet_by[2L:length(facet_by)],
         function(ii, x) {
           if (is.factor(x[[ii]])) {
             return(nlevels(x[[ii]]))
@@ -936,18 +1015,20 @@ theme_familiar <- function(
             return(length(unique(x[[ii]])))
           }
         },
-        x = x)
+        x = x
+      )
       n_rows <- prod(n_levels)
 
       # Add row id to the plot_layout_table
-      facet_row_cols <- facet_by[2:length(facet_by)]
+      facet_row_cols <- facet_by[2L:length(facet_by)]
       plot_layout_table[, "row_id" := .GRP, by = mget(facet_row_cols)]
       
     } else {
       # There is only one row
-      n_rows <- 1
+      n_rows <- 1L
       plot_layout_table[, "row_id" := 1L]
     }
+    
   } else {
     # Generate a plot_layout_table, and order
     plot_layout_table <- unique(x[, (facet_by), with = FALSE], by = facet_by)
@@ -965,7 +1046,8 @@ theme_familiar <- function(
     # Add column and row ids to the plot_layout_table.
     plot_layout_table[, ":="(
       "col_id" = col_ids,
-      "row_id" = row_ids)]
+      "row_id" = row_ids
+    )]
   }
 
   return(plot_layout_table)
@@ -973,140 +1055,547 @@ theme_familiar <- function(
 
 
 
-.update_plot_layout_table <- function(
+.combine_plot_elements <- function(
+  g_main,
+  g_new,
+  element_name,
+  spacer = NULL,
+  stack_direction = "vertical"
+) {
+  
+  for (current_element_name in element_name) {
+    # Determine matching elements in both g_main and g_new.
+    element_names_main <- g_main$layout$name
+    present_elements_main <- element_names_main[sapply(
+      element_names_main, 
+      startswith_any, 
+      prefix = current_element_name
+    )]
+    
+    element_names_new <- g_new$layout$name
+    present_elements_new <- element_names_new[sapply(
+      element_names_new,
+      startswith_any,
+      prefix = current_element_name
+    )]
+    
+    if (length(present_elements_main) != 1L || length(present_elements_new) != 1L) next
+    
+    grob_index_main <- which(g_main$layout$name == present_elements_main)
+    grob_index_new <- which(g_new$layout$name == present_elements_new)
+    
+    # Determine if there is anything to add from g_new.
+    if (any(sapply(c("zeroGrob", "nullGrob"), function(ii, x) (is(x, ii)), x = g_new$grobs[[grob_index_new]]))) next
+    
+    grob_main <- g_main$grobs[[grob_index_main]]
+    grob_new <- g_new$grobs[[grob_index_new]]
+    
+    # If there is an empty grob in g_main, simply copy the element from g_new
+    # into g_main.
+    if (any(sapply(c("zeroGrob", "nullGrob"), function(ii, x) (is(x, ii)), x = g_main$grobs[[grob_index_main]]))) {
+      g_main$grobs[[grob_index_main]] <- grob_new
+      
+    } else {
+      g <- list(grob_main, grob_new)
+      
+      # Find widths and heights
+      widths <- lapply(g, .gtable_get_grob_aspect_size, aspect = "width")
+      if (!is.null(spacer) && stack_direction == "horizontal") {
+        widths <- append(widths, 0L, after = 1L)
+        # Direct insertion of spacer with append results in spacer losing its
+        # simpleUnit class.
+        widths[[2L]] <- spacer
+      }
+      widths <- do.call(grid::unit.c, widths)
+      
+      heights <- lapply(g, .gtable_get_grob_aspect_size, aspect = "height")
+      if (!is.null(spacer) && stack_direction == "vertical") {
+       heights <- append(heights, 0L, after = 1L)
+       # Direct insertion of spacer with append results in spacer losing its
+       # simpleUnit class.
+       heights[[2L]] <- spacer
+      }
+      heights <- do.call(grid::unit.c, heights)
+      
+      if (stack_direction == "vertical") {
+        # Concatenate the widths.
+        widths <- max(widths)
+
+      } else {
+        # Concatenate the heights.
+        heights <- max(heights)
+      }
+      
+      # Set up basic gtable.
+      g_combine <- gtable::gtable(
+        widths = widths,
+        heights = heights,
+        name = present_elements_main
+      )
+      
+      # Insert grob from main.
+      g_combine <- gtable::gtable_add_grob(
+        g_combine,
+        grobs = g[[1L]],
+        t = 1L,
+        l = 1L
+      )
+      
+      # Insert grob from new.
+      g_combine <- gtable::gtable_add_grob(
+        g_combine,
+        grobs = g[[2L]],
+        t = length(heights),
+        l = length(widths)
+      )
+      
+      # Insert spacer.
+      if (!is.null(spacer) && stack_direction == "vertical") {
+        spacer_position <- c(2L, 2L, 1L, 1L)
+        names(spacer_position) <- c("t", "b", "l", "r")
+        
+        g_combine <- .gtable_insert_spacer(
+          g_combine,
+          position = spacer_position,
+          height = spacer
+        )
+        
+      } else if (!is.null(spacer) && stack_direction == "horizontal") {
+        spacer_position <- c(1L, 1L, 2L, 2L)
+        names(spacer_position) <- c("t", "b", "l", "r")
+        
+        g_combine <- .gtable_insert_spacer(
+          g_combine,
+          position = spacer_position,
+          width = spacer
+        )
+      }
+      
+      g_main$grobs[[grob_index_main]] <- g_combine
+    }
+  }
+  
+  g_main <- .gtable_update_layout(g = g_main)
+  
+  return(g_main)
+}
+
+
+
+.compose_figure <- function(
+    figure_list,
     plot_layout_table,
-    grobs,
     x_text_shared = "overall",
     x_label_shared = "overall",
     y_text_shared = "overall",
     y_label_shared = "overall",
-    facet_wrap_cols = NULL) {
+    facet_wrap_cols = NULL,
+    ggtheme = NULL
+) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  col_id <- row_id <- is_present <- fraction_present <- NULL
-
-  # Update the layout table by adding a figure id and determining if the grob
-  # is present.
-  plot_layout_table[, ":="(
-    "figure_id" = .I,
-    "is_present" = sapply(grobs, gtable::is.gtable))]
+  col_id <- row_id <- is_present <- n_present <- NULL
+  type <- NULL
   
-  # Drop panels in the plot.
-  if (!is.null(facet_wrap_cols)) {
-    # Keep only panels that are present.
-    plot_layout_table <- plot_layout_table[is_present == TRUE]
-  } else {
-    # Drop rows and columns from the table that do not contain any data.
-    empty_columns <- plot_layout_table[, list(
-      fraction_present = sum(is_present) / .N),
-      by = "col_id"]
-    empty_columns <- empty_columns[fraction_present == 0.0]$col_id
-    
-    if (length(empty_columns) > 0) {
-      plot_layout_table <- plot_layout_table[!col_id %in% empty_columns]
-    }
-
-    empty_rows <- plot_layout_table[, list(
-      fraction_present = sum(is_present) / .N),
-      by = "row_id"]
-    empty_rows <- empty_rows[fraction_present == 0.0]$row_id
-    
-    if (length(empty_rows) > 0) {
-      plot_layout_table <- plot_layout_table[!row_id %in% empty_rows]
-    }
+  # Global layout --------------------------------------------------------------
+  
+  # Add figure names to plot_layout_table.
+  plot_layout_table[, figure_name := paste0(row_id, ".", col_id)]
+  plot_layout_table[, is_present := figure_name %in% names(figure_list)]
+  
+  # Drop columns with only missing information.
+  empty_cols <- plot_layout_table[
+    ,
+    list("n_present" = sum(is_present)),
+    by = "col_id"
+  ]
+  empty_cols <- empty_cols[n_present == 0L]$col_id
+  if (length(empty_cols) > 0L) {
+    plot_layout_table <- plot_layout_table[!col_id %in% empty_cols]
+  }
+  
+  # Drop rows with only missing information.
+  empty_rows <- plot_layout_table[
+    ,
+    list("n_present" = sum(is_present)),
+    by = "row_id"
+  ]
+  empty_rows <- empty_rows[n_present == 0L]$row_id
+  if (length(empty_rows) > 0L) {
+    plot_layout_table <- plot_layout_table[!row_id %in% empty_rows]
   }
 
   # Check that any part of the plot is remaining
-  if (is_empty(plot_layout_table)) return(plot_layout_table)
-
-  if (!is.null(facet_wrap_cols)) {
-    # Number of columns is provided using facet_wrap_cols.
-    len_table <- nrow(plot_layout_table)
-    n_cols <- facet_wrap_cols
-    n_rows <- ceiling(len_table / n_cols)
-
-    # Generate the column and row positions.
-    col_ids <- rep(seq_len(n_cols), times = n_rows)[seq_len(len_table)]
-    row_ids <- rep(seq_len(n_rows), each = n_cols)[seq_len(len_table)]
-
-    # Set default elements
-    plot_layout_table[, ":="(
-      "col_id" = col_ids,
-      "row_id" = row_ids,
-      "has_strip_x" = TRUE,
-      "has_strip_y" = FALSE,
-      "has_axis_text_x" = x_text_shared %in% c("individual", "FALSE"),
-      "has_axis_text_y" = y_text_shared %in% c("individual", "FALSE"),
-      "has_axis_label_x" = x_label_shared == "individual",
-      "has_axis_label_y" = y_label_shared == "individual")]
-
-    for (current_col_id in seq_len(n_cols)) {
-      # Determine the bottom row.
-      max_row_id <- max(plot_layout_table[col_id == current_col_id]$row_id)
-
-      # Set x labels and text. Note that even when "overall" is set, axis text
-      # should stick to the panels.
-      if (x_text_shared %in% c("column", "overall", "TRUE")) {
-        plot_layout_table[
-          col_id == current_col_id & row_id == max_row_id,
-          "has_axis_text_x" := TRUE]
+  if (is_empty(plot_layout_table)) return(NULL)
+  
+  # Create missing figure panels -----------------------------------------------
+  
+  # Identify and add missing figures.
+  missing_figures <- plot_layout_table[is_present == FALSE]$figure_name
+  for (missing_figure in missing_figures) {
+    # Get col_id and row_id to identify template figures.
+    current_row_id <- plot_layout_table[figure_name == missing_figure]$row_id
+    current_col_id <- plot_layout_table[figure_name == missing_figure]$col_id
+    
+    # Identify figures to use as templates.
+    template_figure_row_name <- head(plot_layout_table[row_id == current_row_id & is_present == TRUE]$figure_name, n = 1L)
+    template_figure_col_name <- head(plot_layout_table[col_id == current_col_id & is_present == TRUE]$figure_name, n = 1L)
+    
+    # Add template.
+    figure_list[[missing_figure]] <- .create_placeholder_figure(
+      template_figure_row = figure_list[[template_figure_row_name]],
+      template_figure_col = figure_list[[template_figure_col_name]],
+      row_id = current_row_id,
+      col_id = current_col_id
+    )
+  }
+  
+  # Check that no figures are missing now.
+  plot_layout_table[, is_present := figure_name %in% names(figure_list)]
+  if (!all(plot_layout_table$is_present)) {
+    ..error_reached_unreachable_code("All panels of the figure should be present, but one or more are missing.")
+  }
+  
+  # Shared elements between figure panels --------------------------------------
+  
+  # Determine top and bottom rows, and left and right columns.
+  top_row_id <- min(plot_layout_table$row_id)
+  bottom_row_id <- max(plot_layout_table$row_id)
+  left_col_id <- min(plot_layout_table$col_id)
+  right_col_id <- max(plot_layout_table$col_id)
+  
+  # Remove elements from figures.
+  for (figure_name in names(figure_list)) {
+    # Configure removal.
+    figure_list[[figure_name]] <- .set_figure_element_removal(
+      object = figure_list[[figure_name]],
+      top_row_id = top_row_id,
+      bottow_row_id = bottom_row_id,
+      left_col_id = left_col_id,
+      right_col_id = right_col_id,
+      x_text_shared = x_text_shared,
+      y_text_shared = y_text_shared,
+      x_label_shared = x_label_shared,
+      y_label_shared = y_label_shared
+    )
+    
+    # Remove elements by replacing them with a zeroGrob. This maintains the
+    # size of the figure's gtable.
+    figure_list[[figure_name]] <- .remove_figure_elements(
+      object = figure_list[[figure_name]],
+      replace_by_zero_grob = TRUE
+    )
+  }
+  
+  # Compose figure panels ------------------------------------------------------
+  
+  # Form plot rows.
+  g <- NULL
+  spacer_width_x <- .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x")
+  spacer_width_y <- .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y")
+  unique_rows <- sort(unique(plot_layout_table$row_id))
+  unique_cols <- sort(unique(plot_layout_table$col_id))
+  for (current_row_id in unique_rows) {
+    # Merge columns within each row.
+    g_row <- NULL
+    for (current_col_id in unique_cols) {
+      if (is.null(g_row)) {
+        # Use 
+        g_row <- figure_list[[paste0(current_row_id, ".", current_col_id)]]@gtable
+        
+      } else {
+        # Insert column for spacer.
+        g_row <- gtable::gtable_add_cols(
+          g_row,
+          widths = spacer_width_x,
+          pos = ncol(g_row)
+        )
+        
+        # Add spacer.
+        g_row <- .gtable_insert_spacer(
+          g = g_row,
+          position = c("t" = 1L, "b" = nrow(g_row), "l" = ncol(g_row), "r" = ncol(g_row)),
+          width = spacer_width_x
+        )
+        
+        # Combine gtable by columns.
+        g_row <- cbind(g_row, figure_list[[paste0(current_row_id, ".", current_col_id)]]@gtable)
       }
-      if (x_label_shared == "column") {
-        plot_layout_table[
-          col_id == current_col_id & row_id == max_row_id,
-          "has_axis_label_x" := TRUE]
-      }
-    }
-
-    # Set y labels and text. Note that even when "overall" is set, axis text
-    # should stick to the panels.
-    if (y_text_shared %in% c("row", "overall", "TRUE")) {
-      plot_layout_table[col_id == 1L, "has_axis_text_y" := TRUE]
-    }
-    if (y_label_shared == "row") {
-      plot_layout_table[col_id == 1L, "has_axis_label_y" := TRUE]
     }
     
-  } else {
-    # Update the column and row ids.
-    plot_layout_table[, "col_id" := .GRP, by = "col_id"]
-    plot_layout_table[, "row_id" := .GRP, by = "row_id"]
-
-    # Set default elements
-    plot_layout_table[, ":="(
-      "has_strip_x" = FALSE,
-      "has_strip_y" = FALSE,
-      "has_axis_text_x" = x_text_shared %in% c("individual", "FALSE"),
-      "has_axis_text_y" = y_text_shared %in% c("individual", "FALSE"),
-      "has_axis_label_x" = x_label_shared == "individual",
-      "has_axis_label_y" = y_label_shared == "individual")]
-    
-    # Determine the number of rows and columns
-    n_cols <- max(plot_layout_table$col_id)
-    n_rows <- max(plot_layout_table$row_id)
-
-    # Add strips
-    if (n_rows > 1) plot_layout_table[col_id == n_cols, "has_strip_y" := TRUE]
-    if (n_cols > 1) plot_layout_table[row_id == 1L, "has_strip_x" := TRUE]
-
-    # Add axis text. Note that even when "overall" is set, axis text should
-    # stick to the panels.
-    if (x_text_shared %in% c("column", "overall", "TRUE")) {
-      plot_layout_table[row_id == n_rows, "has_axis_text_x" := TRUE]
+    # Merge with existing rows.
+    if (is.null(g)) {
+      g <- g_row
+      
+    } else {
+      # Insert row for spacer.
+      g_row <- gtable::gtable_add_rows(
+        g_row,
+        heights = spacer_width_y,
+        pos = nrow(g_row)
+      )
+      
+      # Add spacer element in the new row.
+      g_row <- .gtable_insert_spacer(
+        g = g_row,
+        position = c("t" = nrow(g_row), "b" = nrow(g_row), "l" = 1L, "r" = ncol(g_row)),
+        height = spacer_width_y
+      )
+      
+      # Combine gtable by rows.
+      g <- rbind(g, g_row)
     }
-    if (y_text_shared %in% c("row", "overall", "TRUE")) {
-      plot_layout_table[col_id == 1L, "has_axis_text_y" := TRUE]
+  }
+  
+  # Insert global elements -----------------------------------------------------
+  
+  # Insert global elements.
+  global_element_names <- c(
+    .all_gtable_title_names(),
+    .all_gtable_guide_names()
+  )
+  if (x_text_shared %in% c("overall", "TRUE")) {
+    global_element_names <- c(global_element_names, .all_gtable_axis_x_names())
+  }
+  if (x_label_shared %in% c("overall", "TRUE")) {
+    global_element_names <- c(global_element_names, .all_gtable_label_x_names())
+  }
+  if (y_text_shared %in% c("overall", "TRUE")) {
+    global_element_names <- c(global_element_names, .all_gtable_axis_y_names())
+  }
+  if (y_label_shared %in% c("overall", "TRUE")) {
+    global_element_names <- c(global_element_names, .all_gtable_label_x_names())
+  }
+  
+  # Isolate global elements that need to be updated.
+  global_elements <- figure_list[[1L]]@global_elements
+  global_element_name_list <- lapply(
+    names(global_elements),
+    function(x, y) {
+      if (!startswith_any(x, y)) return(NULL)
+      return(list(
+        "name" = x,
+        "type" =  y[sapply(y, function(y, x) {startsWith(x, y)}, x = x)]
+      ))
+    },
+    y = global_element_names
+  )
+  global_element_name_list <- data.table::rbindlist(global_element_name_list)
+  
+  # For title-like objects, insert in place, at the top.
+  if (any(global_element_name_list$type %in% .all_gtable_title_names("title"))) {
+    x <- global_element_name_list[type %in% .all_gtable_title_names("title")]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      position["t"] <- position["b"] <- min(element_positions$t)
+      position["l"] <- min(element_positions$l)
+      position["r"] <- max(element_positions$r)
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", position),
+        grob_name = x$name[ii]
+      )
     }
-
-    # Add axis labels
-    if (x_label_shared == "column") {
-      plot_layout_table[row_id == n_rows, "has_axis_label_x" := TRUE]
-    }
-    if (y_label_shared == "row") {
-      plot_layout_table[col_id == 1L, "has_axis_label_y" := TRUE]
+  }
+  
+  # For caption-like objects, insert in place, at the bottom.
+  if (any(global_element_name_list$type %in% .all_gtable_title_names("caption"))) {
+    x <- global_element_name_list[type %in% .all_gtable_title_names("caption")]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      position["t"] <- position["b"] <- max(element_positions$b)
+      position["l"] <- min(element_positions$l)
+      position["r"] <- max(element_positions$r)
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", position),
+        grob_name = x$name[ii]
+      )
     }
   }
 
-  return(plot_layout_table)
+  # For guide-like objects, insert at the corresponding position.
+  if (any(global_element_name_list$type %in% .all_gtable_guide_names())) {
+    x <- global_element_name_list[type %in% .all_gtable_guide_names()]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      
+      # Positioning 
+      if (x$type[ii] %in% .all_gtable_guide_names("top")) {
+        position["t"] <- position["b"] <- min(element_positions$t)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+        spacer_position <- position
+        spacer_position[["t"]] <- spacer_position[["b"]] <- position[["b"]] + 1L
+        g <- .gtable_insert_spacer(
+          g = g,
+          position = spacer_position,
+          height = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y"),
+          make_space = TRUE
+        )
+
+      } else if (x$type[ii] %in% .all_gtable_guide_names("bottom")) {
+        position["t"] <- position["b"] <- max(element_positions$b)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+        spacer_position <- position
+        spacer_position[["t"]] <- spacer_position[["b"]] <- position[["t"]]
+        g <- .gtable_insert_spacer(
+          g = g,
+          position = spacer_position,
+          height = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "y"),
+          make_space = TRUE
+        )
+        
+        # Inserting the spacer moves the guide object down.
+        position[["t"]] <- position[["t"]] + 1L
+        position[["b"]] <- position[["b"]] + 1L
+        
+      } else if (x$type[ii] %in% .all_gtable_guide_names("left")) {
+        position["l"] <- position["r"] <- min(element_positions$l)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+        spacer_position <- position
+        spacer_position[["l"]] <- spacer_position[["r"]] <- position[["r"]] + 1L
+        g <- .gtable_insert_spacer(
+          g = g,
+          position = spacer_position,
+          width = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x"),
+          make_space = TRUE
+        )
+        
+      } else if (x$type[ii] %in% .all_gtable_guide_names("right")) {
+        position["l"] <- position["r"] <- max(element_positions$r)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+        spacer_position <- position
+        spacer_position[["l"]] <- spacer_position[["r"]] <- position[["l"]]
+        g <- .gtable_insert_spacer(
+          g = g,
+          position = spacer_position,
+          width = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x"),
+          make_space = TRUE
+        )
+        
+        # Inserting the spacer moves the guide object right.
+        position[["l"]] <- position[["l"]] + 1L
+        position[["r"]] <- position[["r"]] + 1L
+        
+      } else {
+        ..error_reached_unreachable_code(paste0("unknown type: ", x$type[1L]))
+      }
+      
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", position),
+        grob_name = x$name[ii]
+      )
+    }
+  }
+  
+  # Labels
+  if (any(global_element_name_list$type %in% .all_gtable_label_names())) {
+    x <- global_element_name_list[type %in% .all_gtable_label_names()]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      
+      # Positioning 
+      if (x$type[ii] %in% .all_gtable_label_names("top")) {
+        position["t"] <- position["b"] <- min(element_positions$t)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_label_names("bottom")) {
+        position["t"] <- position["b"] <- max(element_positions$b)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_label_names("left")) {
+        position["l"] <- position["r"] <- min(element_positions$l)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else if (x$type[ii] %in% .all_gtable_label_names("right")) {
+        position["l"] <- position["r"] <- max(element_positions$r)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else {
+        ..error_reached_unreachable_code(paste0("unknown type: ", x$type[1L]))
+      }
+      
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", position),
+        grob_name = x$name[ii]
+      )
+    }
+  }
+  
+  # Axis elements
+  if (any(global_element_name_list$type %in% .all_gtable_axis_names())) {
+    x <- global_element_name_list[type %in% .all_gtable_axis_names()]
+    for (ii in seq_len(nrow(x))) {
+      element_positions <- g$layout[g$layout$name == x$name[ii], c("t", "l", "b", "r"), drop = FALSE]
+      position <- c("t" = 0L, "l" = 0L, "b" = 0L, "r" = 0L)
+      
+      # Positioning 
+      if (x$type[ii] %in% .all_gtable_axis_names("top")) {
+        position["t"] <- position["b"] <- min(element_positions$t)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_axis_names("bottom")) {
+        position["t"] <- position["b"] <- max(element_positions$b)
+        position["l"] <- min(element_positions$l)
+        position["r"] <- max(element_positions$r)
+        
+      } else if (x$type[ii] %in% .all_gtable_axis_names("left")) {
+        position["l"] <- position["r"] <- min(element_positions$l)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else if (x$type[ii] %in% .all_gtable_axis_names("right")) {
+        position["l"] <- position["r"] <- max(element_positions$r)
+        position["t"] <- min(element_positions$t)
+        position["b"] <- max(element_positions$b)
+        
+      } else {
+        ..error_reached_unreachable_code(paste0("unknown type: ", x$type[1L]))
+      }
+      
+      g <- .gtable_insert(
+        g = g,
+        g_new = global_elements[[x$name[ii]]],
+        where = c("at", position),
+        grob_name = x$name[ii]
+      )
+    }
+  }
+  
+  # Clean-up -------------------------------------------------------------------
+  
+  # Drop all zeroGrob elements to prevent occlusion by empty objects.
+  matched_elements <- !sapply(g$grobs, is, "zeroGrob")
+  g$layout <- g$layout[matched_elements, , drop = FALSE]
+  g$grobs <- g$grobs[matched_elements]
+  g <- gtable::gtable_trim(g)
+  
+  # Update heights and widths.
+  g <- .gtable_update_layout(g = g)
+
+  return(g)
 }
 
 
@@ -1117,11 +1606,7 @@ theme_familiar <- function(
 
   # Since ggplot 3.4.0, the width of a line is determined by linewidth instead
   # of size.
-  if (utils::packageVersion("ggplot2") >= "3.4.0") {
-    linewidth <- ggtheme$line$linewidth
-  } else {
-    linewidth <- ggtheme$line$size
-  }
+  linewidth <- ggtheme$line$linewidth
 
   return(linewidth)
 }
@@ -1133,12 +1618,39 @@ theme_familiar <- function(
 
   # Import default ggtheme in case none is provided.
   ggtheme <- .check_ggtheme(ggtheme)
-
-  # Get spacing for the specific axis, if present.
-  spacing <- ggtheme[[paste0(theme_element, ".", axis)]]
-
-  # Get spacing for the main element
-  if (is.null(spacing)) spacing <- ggtheme[[theme_element]]
+  
+  # Basic spacing settings
+  spacing <- ggtheme$spacing
+  spacing_rel <- 1.0
+  
+  # Attempt to base the text size on the general axis.text attribute.
+  if (!is.null(ggtheme[[theme_element]])) {
+    if (inherits(ggtheme[[theme_element]], "rel")) {
+      # Find the relative text size of axis text.
+      spacing_rel <- as.numeric(ggtheme[[theme_element]])
+      
+    } else {
+      # Set absolute text size.
+      spacing <- ggtheme[[theme_element]]
+      spacing_rel <- 1.0
+    }
+  }
+  
+  # Attempt to refine the text size using the axis.text.y attribute in
+  # particular.
+  if (!is.null(ggtheme[[paste0(theme_element, ".", axis)]])) {
+    if (inherits(ggtheme[[paste0(theme_element, ".", axis)]], "rel")) {
+      # Set relative text size of axis text
+      spacing_rel <- as.numeric(ggtheme[[paste0(theme_element, ".", axis)]])
+      
+    } else {
+      # Set absolute text size.
+      spacing <- ggtheme[[paste0(theme_element, ".", axis)]]
+      spacing_rel <- 1.0
+    }
+  }
+  
+  spacing <- spacing * spacing_rel
 
   # If no spacing is provided, produce 0.0 length spacing.
   if (!grid::is.unit(spacing)) spacing <- grid::unit(0.0, "pt")
@@ -1153,7 +1665,8 @@ theme_familiar <- function(
   return(..get_plot_element_spacing(
     ggtheme = ggtheme,
     axis = axis,
-    theme_element = "panel.spacing"))
+    theme_element = "panel.spacing"
+  ))
 }
 
 
@@ -1163,7 +1676,8 @@ theme_familiar <- function(
   return(..get_plot_element_spacing(
     ggtheme = ggtheme,
     axis = axis,
-    theme_element = "legend.box.spacing"))
+    theme_element = "legend.spacing"
+  ))
 }
 
 
@@ -1205,7 +1719,7 @@ theme_familiar <- function(
   }
 
   # Update the text size using the magical ggplot2 point size (ggplot2:::.pt).
-  geom_text_size <- fontsize * fontsize_rel / 2.845276
+  geom_text_size <- fontsize * fontsize_rel / ggplot2::.pt
 
   # Obtain lineheight
   lineheight <- ggtheme$text$lineheight
@@ -1237,7 +1751,8 @@ theme_familiar <- function(
     "colour" = colour,
     "family" = fontfamily,
     "face" = fontface,
-    "lineheight" = lineheight))
+    "lineheight" = lineheight
+  ))
 }
 
 
@@ -1246,1028 +1761,53 @@ theme_familiar <- function(
 
 
 
-#' Feature arrangement
-#'
-#' @param grobs list of graphic objects (grobs)
-#' @param plot_layout_table layout table
-#' @param panel_elements elements that should be added to each panel
-#' @param figure_elements elements that are added to the figure as a whole
-#' @param element_grobs grobs of the elements
-#' @param ggtheme ggtheme
-#'
-#' @return a single gtable
-#'
-#' @noRd
-.arrange_plot_grobs <- function(
-    grobs,
-    plot_layout_table,
-    element_grobs,
-    ggtheme) {
-  # Suppress NOTES due to non-standard evaluation in data.table
-  col_id <- row_id <- NULL
 
-  figure_data <- ..arrange_plot_grobs(
-    grobs = grobs,
-    element_grobs = element_grobs,
-    plot_layout_table = plot_layout_table,
-    ggtheme = ggtheme
+
+
+
+.rename_plot_grobs <- function(g, extension = "main", use_generic = TRUE) {
+  if (is.null(g)) return(g)
+
+  element_names <- c(
+    .all_gtable_panel_names(),
+    .all_gtable_label_x_names(),
+    .all_gtable_label_y_names(),
+    .all_gtable_axis_x_names(),
+    .all_gtable_axis_y_names()
   )
-
-  if (is_empty(figure_data)) return(NULL)
-
-  # Placeholder for final figure
-  g <- NULL
-
-  # Determine the number of rows and columns.
-  n_rows <- max(plot_layout_table$row_id)
-  n_cols <- max(plot_layout_table$col_id)
-
-  # Iterate over rows and columns.
-  for (ii in seq_len(n_rows)) {
-    # Create a placeholder.
-    g_current_row <- NULL
-
-    # Populate the current row with figures.
-    for (jj in seq_len(n_cols)) {
-      selected_figure_id <- plot_layout_table[col_id == jj & row_id == ii]$figure_id
-
-      # Check if the iterator exceeds the maximum number of available figures.
-      if (length(selected_figure_id) == 0) break
-
-      # Select the current grob.
-      current_grob <- figure_data[[selected_figure_id]]
-
-      if (is.null(g_current_row)) {
-        # If the current row is still empty, copy the first figure.
-        g_current_row <- current_grob
-        
-      } else {
-        # If the current row is not empty, use cbind.gtable to combine figures
-        # column-wise.
-
-        # First insert a column that spaces the facets.
-        g_current_row <- gtable::gtable_add_cols(
-          g_current_row,
-          widths = .get_plot_panel_spacing(ggtheme = ggtheme, axis = "x"))
-
-        # Add the figure to the current figure.
-        g_current_row <- cbind(g_current_row, current_grob)
-      }
-    }
-
-    # Populate the figure.
-    if (is.null(g)) {
-      # If the figure is still empty, copy the current row.
-      g <- g_current_row
+  
+  # Filter only elements that are present, and generate list of matching
+  # local and global elements.
+  renamable_elements <- g$layout$name
+  element_list <- lapply(
+    renamable_elements,
+    function(x, y) {
+      if (!startswith_any(x, prefix = y)) return(NULL)
       
-    } else {
-      # Use rbind.gtable to combine rows.
-      g <- rbind(g, g_current_row)
-    }
-
-    # Check if the iterator exceeds the maximum number of available figures.
-    if (length(selected_figure_id) == 0) break
-  }
-
-  # Identify data that should be re-inserted.
-  g <- ..insert_global_plot_grobs(
-    grobs = g,
-    element_grobs = element_grobs,
-    plot_layout_table = plot_layout_table,
-    ggtheme = ggtheme)
-
-  return(g)
-}
-
-
-
-..arrange_plot_grobs <- function(
-    grobs,
-    element_grobs,
-    plot_layout_table,
-    keep_axis_text_x = FALSE,
-    keep_axis_text_y = FALSE,
-    ggtheme = NULL) {
-  # Suppress NOTES due to non-standard evaluation in data.table
-  figure_id <- is_present <- col_id <- row_id <- NULL
+      y <- y[sapply(y, function(y, x) {startsWith(x, y)}, x = x)]
+      return(list("local" = x, "global" = y))
+    },
+    y = element_names
+  )
+  element_list <- data.table::rbindlist(element_list)
   
-  # Check whether the plot layout table is empty.
-  if (is_empty(plot_layout_table)) return(NULL)
-  
-  # Create a placeholder list. This is done to prevent losing a connection
-  # between figure id and the length of the list in case entire columns or rows
-  # were removed from the plot_layout_table.
-  figure_list <- replicate(n = max(plot_layout_table$figure_id), NULL)
-  
-  # Iterate over the plot layout table to compile all the data required to
-  # create the sub-figures.
-  
-  for (ii in plot_layout_table$figure_id) {
-    removed_axis_text_x <- removed_axis_text_y <- FALSE
-    
-    current_figure_list <- list()
-    if (plot_layout_table[figure_id == ii]$is_present) {
-      # Collect the main dataset.
-      current_figure_list$main <- grobs[[ii]]
-      
-      # Collect additional plot data.
-      if (plot_layout_table[figure_id == ii]$has_strip_x) {
-        current_figure_list$strip_x <- element_grobs[[ii]]$strip_x
-      }
-      if (plot_layout_table[figure_id == ii]$has_strip_y) {
-        current_figure_list$strip_y <- element_grobs[[ii]]$strip_y
-      }
-      
-      # Collect labels for the x-axis
-      if (plot_layout_table[figure_id == ii]$has_axis_label_x) {
-        current_figure_list$axis_label_b <- element_grobs[[ii]]$axis_label_b
-        current_figure_list$axis_label_t <- element_grobs[[ii]]$axis_label_t
-      }
-      
-      # Collect labels for the y-axis.
-      if (plot_layout_table[figure_id == ii]$has_axis_label_y) {
-        current_figure_list$axis_label_l <- element_grobs[[ii]]$axis_label_l
-        current_figure_list$axis_label_r <- element_grobs[[ii]]$axis_label_r
-      }
-      
-      # Collect axis text data for the x-axis.
-      if (plot_layout_table[figure_id == ii]$has_axis_text_x && !keep_axis_text_x) {
-        current_figure_list$axis_text_b <- element_grobs[[ii]]$axis_text_b
-        current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t
-        
-      } else if (!keep_axis_text_x) {
-        removed_axis_text_x <- TRUE
-        
-        current_figure_list$axis_text_b <- element_grobs[[ii]]$axis_text_b_nt
-        current_figure_list$axis_text_t <- element_grobs[[ii]]$axis_text_t_nt
-      }
-      
-      # Collect axis text data for the y-axis.
-      if (plot_layout_table[figure_id == ii]$has_axis_text_y && !keep_axis_text_y) {
-        current_figure_list$axis_text_l <- element_grobs[[ii]]$axis_text_l
-        current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r
-        
-      } else if (!keep_axis_text_y) {
-        removed_axis_text_y <- TRUE
-        
-        current_figure_list$axis_text_l <- element_grobs[[ii]]$axis_text_l_nt
-        current_figure_list$axis_text_r <- element_grobs[[ii]]$axis_text_r_nt
-      }
-      
-    } else {
-      # In this case the main plot data is not present.
-      replacement_grob <- .create_empty_plot_grob(
-        g = grobs[[plot_layout_table[is_present == TRUE]$figure_id[1]]],
-        keep_implicit = TRUE
-      )
-      
-      # Identify existing grobs from the same row and from the same column.
-      current_row_id <- plot_layout_table[figure_id == ii]$row_id
-      current_col_id <- plot_layout_table[figure_id == ii]$col_id
-      same_row_figure_id <- plot_layout_table[is_present == TRUE & row_id == current_row_id]$figure_id[1]
-      same_col_figure_id <- plot_layout_table[is_present == TRUE & col_id == current_col_id]$figure_id[1]
-      
-      # Set the replacement dataset as the main dataset.
-      current_figure_list$main <- replacement_grob
-      
-      if (plot_layout_table[figure_id == ii]$has_strip_x) {
-        current_figure_list$strip_x <- element_grobs[[same_col_figure_id]]$strip_x
-      }
-      if (plot_layout_table[figure_id == ii]$has_strip_y) {
-        current_figure_list$strip_y <- element_grobs[[same_row_figure_id]]$strip_y
-      }
-      
-      # Collect labels for the x-axis.
-      if (plot_layout_table[figure_id == ii]$has_axis_label_x) {
-        current_figure_list$axis_label_b <- element_grobs[[same_col_figure_id]]$axis_label_b
-        current_figure_list$axis_label_t <- element_grobs[[same_col_figure_id]]$axis_label_t
-      }
-      
-      # Collect labels for the y-axis
-      if (plot_layout_table[figure_id == ii]$has_axis_label_y) {
-        current_figure_list$axis_label_l <- element_grobs[[same_row_figure_id]]$axis_label_l
-        current_figure_list$axis_label_r <- element_grobs[[same_row_figure_id]]$axis_label_r
-      }
-    }
-    
-    # Merge elements with the main element.
-    g <- .reinsert_plot_grobs(
-      grob_list = current_figure_list,
-      ggtheme = ggtheme)
-    
-    if (removed_axis_text_x) {
-      g <- .update_axis_text_grobs(
-        g = g,
-        type = "heights")
-    }
-    
-    if (removed_axis_text_y) {
-      g <- .update_axis_text_grobs(
-        g = g,
-        type = "widths")
-    }
-    
-    # Add data to the figure list.
-    figure_list[[ii]] <- g
-  }
-  
-  return(figure_list)
-}
-
-
-
-..insert_global_plot_grobs <- function(
-    grobs,
-    element_grobs,
-    plot_layout_table,
-    ggtheme) {
-  # Suppress NOTES due to non-standard evaluation in data.table
-  is_present <- NULL
-  
-  figure_list <- list()
-  
-  # Select a figure that is present.
-  present_figure_id <- plot_layout_table[is_present == TRUE, ]$figure_id[1]
-  
-  if (!gtable::is.gtable(grobs)) {
-    ..error_reached_unreachable_code(
-      "..insert_global_plot_grobs: grob is not a gtable.")
-  }
-  
-  # Add main grob
-  figure_list$main <- grobs
-  
-  # Add guide.
-  figure_list$guide <- element_grobs[[present_figure_id]]$guide
-  
-  # Determine if axis labels need to be added.
-  if (all(plot_layout_table$has_axis_label_x == FALSE)) {
-    figure_list$axis_label_b <- element_grobs[[present_figure_id]]$axis_label_b
-    figure_list$axis_label_t <- element_grobs[[present_figure_id]]$axis_label_t
-  }
-  
-  if (all(plot_layout_table$has_axis_label_y == FALSE)) {
-    figure_list$axis_label_l <- element_grobs[[present_figure_id]]$axis_label_l
-    figure_list$axis_label_r <- element_grobs[[present_figure_id]]$axis_label_r
-  }
-  
-  # Add title, subtitle and caption.
-  figure_list$title <- element_grobs[[present_figure_id]]$title
-  figure_list$subtitle <- element_grobs[[present_figure_id]]$subtitle
-  figure_list$caption <- element_grobs[[present_figure_id]]$caption
-  
-  # Insert global elements.
-  g <- .reinsert_plot_grobs(
-    grob_list = figure_list,
-    ggtheme = ggtheme)
-  
-  return(g)
-}
-
-
-
-.rename_plot_grobs <- function(g = g, extension = "main") {
-  if (is.null(g)) return(g)
-
-  # Main panel
-  g <- .gtable_rename_element(
-    g = g,
-    old = "panel",
-    new = paste0("panel-", extension),
-    partial_match = TRUE, 
-    allow_missing = TRUE)
-
-  # Left axis text and label
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "axis-l",
-    new = paste0("axis-l-", extension), 
-    partial_match = TRUE, 
-    allow_missing = TRUE)
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "ylab-l",
-    new = paste0("ylab-l-", extension), 
-    partial_match = TRUE, 
-    allow_missing = TRUE)
-
-  # Bottom axis text and label
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "axis-b", 
-    new = paste0("axis-b-", extension), 
-    partial_match = TRUE,
-    allow_missing = TRUE)
-  g <- .gtable_rename_element(
-    g = g,
-    old = "xlab-b", 
-    new = paste0("xlab-b-", extension),
-    partial_match = TRUE, 
-    allow_missing = TRUE)
-
-  # Right axis text and label
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "axis-r", 
-    new = paste0("axis-r-", extension), 
-    partial_match = TRUE, 
-    allow_missing = TRUE)
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "ylab-r", 
-    new = paste0("ylab-r-", extension), 
-    partial_match = TRUE, 
-    allow_missing = TRUE)
-  
-  # Top axis text and label
-  g <- .gtable_rename_element(
-    g = g,
-    old = "axis-t",
-    new = paste0("axis-t-", extension),
-    partial_match = TRUE,
-    allow_missing = TRUE)
-  g <- .gtable_rename_element(
-    g = g, 
-    old = "xlab-t",
-    new = paste0("xlab-t-", extension),
-    partial_match = TRUE, 
-    allow_missing = TRUE)
-
-  return(g)
-}
-
-
-
-.extract_plot_grobs <- function(p) {
-  element_list <- list()
-
-  # Convert to grobs
-  g <- .convert_to_grob(p)
-
-  # Export list of elements.
-  if (is.null(g)) return(element_list)
-
-  # Update the names of the plot elements.
-  g <- .rename_plot_grobs(
-    g = g,
-    extension = "main")
-
-  # Legend
-  element_list$guide <- .gtable_extract(
-    g = g,
-    element = "guide-box",
-    drop_empty = TRUE)
-
-  # Axis label
-  element_list$axis_label_b <- .gtable_extract(
-    g = g, 
-    element = "xlab-b-main", 
-    drop_empty = TRUE)
-  element_list$axis_label_t <- .gtable_extract(
-    g = g, 
-    element = "xlab-t-main", 
-    drop_empty = TRUE)
-  element_list$axis_label_l <- .gtable_extract(
-    g = g, 
-    element = "ylab-l-main", 
-    drop_empty = TRUE)
-  element_list$axis_label_r <- .gtable_extract(
-    g = g, 
-    element = "ylab-r-main", 
-    drop_empty = TRUE)
-
-  # Strip x
-  element_list$strip_x <- .gtable_extract(
-    g = g, 
-    element = "strip-t", 
-    partial_match = TRUE, 
-    drop_empty = TRUE)
-  element_list$strip_y <- .gtable_extract(
-    g = g, 
-    element = "strip-r", 
-    partial_match = TRUE, 
-    drop_empty = TRUE)
-
-  # Axis text (with text)
-  element_list$axis_text_b <- .gtable_extract(
-    g = g, 
-    element = "axis-b-main", 
-    partial_match = TRUE,
-    drop_empty = TRUE)
-  element_list$axis_text_t <- .gtable_extract(
-    g = g, element = "axis-t-main",
-    partial_match = TRUE,
-    drop_empty = TRUE)
-  element_list$axis_text_l <- .gtable_extract(
-    g = g, 
-    element = "axis-l-main",
-    partial_match = TRUE,
-    drop_empty = TRUE)
-  element_list$axis_text_r <- .gtable_extract(
-    g = g,
-    element = "axis-r-main", 
-    partial_match = TRUE, 
-    drop_empty = TRUE)
-
-  # Title, subtitle and caption
-  element_list$title <- .gtable_extract(
-    g = g,
-    element = "title",
-    partial_match = FALSE,
-    drop_empty = TRUE)
-  element_list$subtitle <- .gtable_extract(
-    g = g, 
-    element = "subtitle",
-    partial_match = FALSE,
-    drop_empty = TRUE)
-  element_list$caption <- .gtable_extract(
-    g = g,
-    element = "caption",
-    partial_match = FALSE,
-    drop_empty = TRUE)
-
-  # Update plot by removing the axis text, title, subtitle and captions.
-  p <- p + ggplot2::theme(
-    axis.text.x = ggplot2::element_blank(),
-    axis.text.y = ggplot2::element_blank(),
-    plot.title = ggplot2::element_blank(),
-    plot.subtitle = ggplot2::element_blank(),
-    plot.caption = ggplot2::element_blank())
-
-  # Convert to grobs
-  g <- .convert_to_grob(p)
-
-  # Update the names of the plot elements.
-  g <- .rename_plot_grobs(
-    g = g,
-    extension = "main")
-
-  # Axis text (without text)
-  element_list$axis_text_b_nt <- .gtable_extract(
-    g = g, 
-    element = "axis-b-main", 
-    partial_match = TRUE, 
-    drop_empty = TRUE)
-  element_list$axis_text_t_nt <- .gtable_extract(
-    g = g, 
-    element = "axis-t-main", 
-    partial_match = TRUE, 
-    drop_empty = TRUE)
-  element_list$axis_text_l_nt <- .gtable_extract(
-    g = g, 
-    element = "axis-l-main", 
-    partial_match = TRUE, 
-    drop_empty = TRUE)
-  element_list$axis_text_r_nt <- .gtable_extract(
-    g = g, 
-    element = "axis-r-main", 
-    partial_match = TRUE, 
-    drop_empty = TRUE)
-
-  # Title, subtitle, caption (without text)
-  element_list$title_nt <- .gtable_extract(
-    g = g,
-    element = "title",
-    partial_match = FALSE,
-    drop_empty = TRUE)
-  element_list$subtitle_nt <- .gtable_extract(
-    g = g, 
-    element = "subtitle",
-    partial_match = FALSE, 
-    drop_empty = TRUE)
-  element_list$caption_nt <- .gtable_extract(
-    g = g, 
-    element = "caption", 
-    partial_match = FALSE, 
-    drop_empty = TRUE)
-
-  return(element_list)
-}
-
-
-.remove_plot_grobs <- function(p) {
-  # Remove elements that were extracted as a grob from plots.
-
-  # Check whether p is a ggplot.
-  if (!inherits(p, "ggplot")) return(p)
-
-  # Remove all relevant elements
-  p <- p + ggplot2::theme(
-    strip.background.x = ggplot2::element_blank(),
-    strip.text.x = ggplot2::element_blank(),
-    strip.background.y = ggplot2::element_blank(),
-    strip.text.y = ggplot2::element_blank(),
-    legend.position = "none",
-    axis.title.x = ggplot2::element_blank(),
-    axis.text.x = ggplot2::element_blank(),
-    axis.ticks.x = ggplot2::element_blank(),
-    axis.line.x = ggplot2::element_blank(),
-    axis.title.y = ggplot2::element_blank(),
-    axis.text.y = ggplot2::element_blank(),
-    axis.ticks.y = ggplot2::element_blank(),
-    axis.line.y = ggplot2::element_blank(),
-    plot.title = ggplot2::element_blank(),
-    plot.subtitle = ggplot2::element_blank(),
-    plot.caption = ggplot2::element_blank())
-
-  return(p)
-}
-
-
-
-.reinsert_plot_grobs <- function(
-    g = NULL, 
-    elements = NULL, 
-    grob_list, 
-    ggtheme) {
-  if (is.null(g)) {
-    g <- grob_list$main
-    elements <- names(grob_list)
+  # If generic names are not used, replace global (generic) names by the local
+  # names.
+  if (!use_generic) {
+    element_list$global <- element_list$local
   }
 
-  if (is.null(g)) return(g)
-
-  # Re-insert guides.
-  if ("guide" %in% elements && !is.null(grob_list$guide)) {
-    # Find legend position
-    legend_position <- ggtheme$legend.position
-
-    if (legend_position == "right") {
-      # Align to right of the plot, and iterate inward to find valid reference elements.
-      for (ref_element in c("strip-r", "ylab-r", "axis-r", "panel-main", "panel")) {
-        if (.gtable_element_in_layout(
-          g = g, 
-          element = ref_element, 
-          partial_match = TRUE)) {
-          # If the reference element exists, add and align along background.
-          g <- .gtable_insert_along(
-            g = g,
-            g_new = grob_list$guide,
-            ref_element = ref_element,
-            along_element = "panel",
-            spacer = list("l" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")),
-            where = legend_position,
-            partial_match_ref = TRUE,
-            partial_match_along = TRUE,
-            update_dimensions = FALSE)
-          
-          break
-        }
-      }
-      
-    } else if (legend_position == "left") {
-      # Align to left of the plot, and iterate inward to find valid reference
-      # elements.
-      for (ref_element in c("strip-l", "ylab-l", "axis-l", "panel-main", "panel")) {
-        if (.gtable_element_in_layout(
-          g = g, 
-          element = ref_element, 
-          partial_match = TRUE)) {
-          # If the reference element exists, add and align along background.
-          g <- .gtable_insert_along(
-            g = g,
-            g_new = grob_list$guide,
-            ref_element = ref_element,
-            along_element = "panel",
-            spacer = list("r" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")),
-            where = legend_position,
-            partial_match_ref = TRUE,
-            partial_match_along = TRUE,
-            update_dimensions = FALSE)
-
-          break
-        }
-      }
-      
-    } else if (legend_position == "bottom") {
-      # Align to bottom of the plot, and iterate inward to find valid reference
-      # elements.
-      for (ref_element in c("strip-b", "xlab-b", "axis-b", "panel-main", "panel")) {
-        if (.gtable_element_in_layout(
-          g = g,
-          element = ref_element, 
-          partial_match = TRUE)) {
-          # If the reference element exists, add and align along background.
-          g <- .gtable_insert_along(
-            g = g,
-            g_new = grob_list$guide,
-            ref_element = ref_element,
-            along_element = "panel",
-            spacer = list("t" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")),
-            where = legend_position,
-            partial_match_ref = TRUE,
-            partial_match_along = TRUE,
-            update_dimensions = FALSE)
-
-          break
-        }
-      }
-      
-    } else if (legend_position == "top") {
-      # Align to top of the plot, and iterate inward to find valid reference
-      # elements.
-      for (ref_element in c("strip-t", "xlab-t", "axis-t", "panel-main", "panel")) {
-        if (.gtable_element_in_layout(
-          g = g, 
-          element = ref_element, 
-          partial_match = TRUE)) {
-          # If the reference element exists, add and align along background.
-          g <- .gtable_insert_along(
-            g = g,
-            g_new = grob_list$guide,
-            ref_element = ref_element,
-            along_element = "panel",
-            spacer = list("b" = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "x")),
-            where = legend_position,
-            partial_match_ref = TRUE,
-            partial_match_along = TRUE,
-            update_dimensions = FALSE)
-
-          break
-        }
-      }
-    }
-  }
-
-  # Insert strip with facet text (for columns)
-  if ("strip_x" %in% elements && !is.null(grob_list$strip_x)) {
-    # Align top of the plot, and iterate inward to find valid reference elements.
-    for (ref_element in c("xlab-t", "axis-t", "panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element, 
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$strip_x,
-          ref_element = ref_element,
-          along_element = "panel",
-          where = "top",
-          partial_match_ref = TRUE,
-          partial_match_along = TRUE)
-
-        break
-      }
-    }
-  }
-
-
-  # Insert strip with facet text (for rows)
-  if ("strip_y" %in% elements && !is.null(grob_list$strip_y)) {
-    # Align to right of the plot, and iterate inward to find valid reference
-    # elements.
-    for (ref_element in c("ylab-r", "axis-r", "panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element,
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$strip_y,
-          ref_element = ref_element,
-          along_element = "panel",
-          where = "right",
-          partial_match_ref = TRUE,
-          partial_match_along = TRUE)
-
-        break
-      }
-    }
-  }
-
-  # Insert bottom x-axis text
-  if ("axis_text_b" %in% elements && !is.null(grob_list$axis_text_b)) {
-    # Align to bottom of the plot, and iterate inward to find valid reference
-    # elements.
-    for (ref_element in c("panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element, 
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$axis_text_b,
-          ref_element = ref_element,
-          along_element = "panel-main",
-          where = "bottom",
-          attempt_replace = TRUE,
-          partial_match_ref = FALSE,
-          partial_match_along = FALSE)
-
-        break
-      }
-    }
-  }
-
-  # Insert top x-axis text
-  if ("axis_text_t" %in% elements && !is.null(grob_list$axis_text_t)) {
-    # Align to bottom of the plot, and iterate inward to find valid reference
-    # elements.
-    for (ref_element in c("panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element, 
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$axis_text_t,
-          ref_element = ref_element,
-          along_element = "panel-main",
-          where = "top",
-          attempt_replace = TRUE,
-          partial_match_ref = FALSE,
-          partial_match_along = FALSE)
-
-        break
-      }
-    }
-  }
-
-  # Insert left y-axis text
-  if ("axis_text_l" %in% elements && !is.null(grob_list$axis_text_l)) {
-    # Align to bottom of the plot, and iterate inward to find valid reference
-    # elements.
-    for (ref_element in c("panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element, 
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$axis_text_l,
-          ref_element = ref_element,
-          along_element = "panel-main",
-          where = "left",
-          attempt_replace = TRUE,
-          partial_match_ref = FALSE,
-          partial_match_along = FALSE)
-
-        break
-      }
-    }
-  }
-
-  # Insert right y-axis text
-  if ("axis_text_r" %in% elements && !is.null(grob_list$axis_text_r)) {
-    # Align to bottom of the plot, and iterate inward to find valid reference
-    # elements.
-    for (ref_element in c("panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element, 
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$axis_text_r,
-          ref_element = ref_element,
-          along_element = "panel-main",
-          where = "right",
-          attempt_replace = TRUE,
-          partial_match_ref = FALSE,
-          partial_match_along = FALSE)
-
-        break
-      }
-    }
-  }
-
-  # Insert y-axis label to the left.
-  if ("axis_label_l" %in% elements && !is.null(grob_list$axis_label_l)) {
-    # Align to left of the plot, and iterate inward to find valid reference elements.
-    for (ref_element in c("axis-l-main", "axis-l", "panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element, 
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$axis_label_l,
-          ref_element = ref_element,
-          along_element = "panel",
-          where = "left",
-          attempt_replace = TRUE,
-          partial_match_ref = FALSE,
-          partial_match_along = FALSE)
-
-        break
-      }
-    }
-  }
-
-
-  # Insert y-axis label to the right.
-  if ("axis_label_r" %in% elements && !is.null(grob_list$axis_label_r)) {
-    # Align to right of the plot, and iterate inward to find valid reference elements.
-    for (ref_element in c("axis-r-main", "axis-r", "panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element, 
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$axis_label_r,
-          ref_element = ref_element,
-          along_element = "panel",
-          where = "right",
-          attempt_replace = TRUE,
-          partial_match_ref = FALSE,
-          partial_match_along = FALSE)
-        
-        break
-      }
-    }
-  }
-
-  # Insert x-axis label to the bottom.
-  if ("axis_label_b" %in% elements && !is.null(grob_list$axis_label_b)) {
-    # Align to bottom of the plot, and iterate inward to find valid reference elements.
-    for (ref_element in c("axis-b-main", "axis-b", "panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element,
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$axis_label_b,
-          ref_element = ref_element,
-          along_element = "panel",
-          where = "bottom",
-          attempt_replace = TRUE,
-          partial_match_ref = FALSE,
-          partial_match_along = FALSE)
-
-        break
-      }
-    }
-  }
-
-  # Insert x-axis label to the top.
-  if ("axis_label_t" %in% elements && !is.null(grob_list$axis_label_b)) {
-    # Align to bottom of the plot, and iterate inward to find valid reference elements.
-    for (ref_element in c("axis-t-main", "axis-t", "panel-main", "panel")) {
-      if (.gtable_element_in_layout(
-        g = g, 
-        element = ref_element, 
-        partial_match = TRUE)) {
-        # If the reference element exists, add and align along the panel(s).
-        g <- .gtable_insert_along(
-          g = g,
-          g_new = grob_list$axis_label_t,
-          ref_element = ref_element,
-          along_element = "panel",
-          where = "top",
-          attempt_replace = TRUE,
-          partial_match_ref = FALSE,
-          partial_match_along = FALSE)
-
-        break
-      }
-    }
-  }
-
-  if ("subtitle" %in% elements && !is.null(grob_list$subtitle)) {
-    # Insert subtitle label to the top.
-    g <- .gtable_insert_along(
+  # Rename elements and add extension.
+  for (ii in seq_len(nrow(element_list))) {
+    g <- .gtable_rename_element(
       g = g,
-      g_new = grob_list$subtitle,
-      ref_element = "subtitle",
-      where = "top",
-      attempt_replace = TRUE,
-      partial_match_ref = FALSE,
-      partial_match_along = FALSE)
+      old = element_list$local[ii],
+      new = paste0(element_list$global[ii], "-", extension),
+      partial_match = FALSE,
+      allow_missing = FALSE
+    )
   }
-
-
-  # Insert title label to the top.
-  if ("title" %in% elements && !is.null(grob_list$title)) {
-    g <- .gtable_insert_along(
-      g = g,
-      g_new = grob_list$title,
-      ref_element = "title",
-      where = "top",
-      attempt_replace = TRUE,
-      partial_match_ref = FALSE,
-      partial_match_along = FALSE)
-  }
-
-
-  # Insert caption to the bottom.
-  if ("caption" %in% elements && !is.null(grob_list$caption)) {
-    g <- .gtable_insert_along(
-      g = g,
-      g_new = grob_list$caption,
-      ref_element = "caption",
-      where = "bottom",
-      attempt_replace = TRUE,
-      partial_match_ref = FALSE,
-      partial_match_along = FALSE)
-  }
-
-  return(g)
-}
-
-
-
-
-
-.create_empty_plot_grob <- function(g, keep_implicit = FALSE) {
-  repl_grob <- g
-
-  # Replace grobs by empty grobs.
-  repl_grob$grobs <- replicate(
-    length(g),
-    ggplot2::zeroGrob(),
-    simplify = FALSE)
   
-  # Identify the panel grobs.
-  if (keep_implicit) {
-    for (grob_id in which(grepl(pattern = "panel", x = repl_grob$layout$name))) {
-      # Determine the location of the panel.
-      position <- as.list(repl_grob$layout[grob_id, c("t", "l", "b", "r")])
-
-      if (position$t == position$b) {
-        # Identify the height of the original panel.
-        if (grid::is.unit(g$grobs[[grob_id]]$heights)) {
-          grob_height <- g$grobs[[grob_id]]$heights
-        } else if (grid::is.unit(g$grobs[[grob_id]]$height)) {
-          grob_height <- g$grobs[[grob_id]]$height
-        } else if (grid::is.unit(g$heights[position$t])) {
-          grob_height <- g$heights[position$t]
-        } else {
-          grob_height <- grid::unit(1.0, "null")
-        }
-
-        if (as.numeric(grob_height) == 0) {
-          grob_height <- grid::unit(1.0, "null")
-        }
-
-        # Set the hight of the new panel.
-        repl_grob$grobs[[grob_id]]$height <- grob_height
-      }
-
-      if (position$l == position$r) {
-        # Identify the height of the original panel.
-        if (grid::is.unit(g$grobs[[grob_id]]$widths)) {
-          grob_width <- g$grobs[[grob_id]]$widths
-        } else if (grid::is.unit(g$grobs[[grob_id]]$width)) {
-          grob_width <- g$grobs[[grob_id]]$width
-        } else if (grid::is.unit(g$widths[position$l])) {
-          grob_width <- g$widths[position$l]
-        } else {
-          grob_width <- grid::unit(1.0, "null")
-        }
-
-        if (as.numeric(grob_width) == 0) {
-          grob_width <- grid::unit(1.0, "null")
-        }
-
-        # Set the hight of the new panel.
-        repl_grob$grobs[[grob_id]]$width <- grob_width
-      }
-    }
-  }
-
-  return(repl_grob)
-}
-
-
-
-.update_axis_text_grobs <- function(g, type) {
-  if (type == "widths") {
-    elements_main <- c("axis-l-main", "axis-r-main")
-    elements_side <- c("axis-l", "axis-r")
-  } else if (type == "heights") {
-    elements_main <- c("axis-t-main", "axis-b-main")
-    elements_side <- c("axis-t", "axis-b")
-  }
-
-  for (grob_id in which(g$layout$name %in% elements_main)) {
-    # Determine the location of the panel.
-    position <- as.list(g$layout[grob_id, c("t", "l", "b", "r")])
-
-    if (type == "widths" && position$l != position$r) next
-    if (type == "heights" && position$b != position$t) next
-
-    if (type == "widths" && 
-        any(g$layout$name %in% elements_side & g$layout$l == position$l)) {
-      g$grobs[[grob_id]]$widths <- grid::unit(1.0, "npc")
-    }
-
-    if (type == "heights" && 
-        any(g$layout$name %in% elements_side & g$layout$t == position$t)) {
-      g$grobs[[grob_id]]$heights <- grid::unit(1.0, "npc")
-    }
-  }
-
   return(g)
 }
 
@@ -2276,7 +1816,7 @@ theme_familiar <- function(
 .convert_to_grob <- function(plots_or_grobs) {
   # Convert to list if the input is a single grob or
   unlist_grobs <- FALSE
-  if (grid::is.grob(plots_or_grobs) || ggplot2::is.ggplot(plots_or_grobs)) {
+  if (grid::is.grob(plots_or_grobs) || ggplot2::is_ggplot(plots_or_grobs)) {
     plots_or_grobs <- list(plots_or_grobs)
 
     # Set a flag so that we unlist the results after conversion.
@@ -2291,7 +1831,8 @@ theme_familiar <- function(
       # Convert to grob
       g <- suppressWarnings(tryCatch(
         ggplot2::ggplotGrob(p),
-        error = identity))
+        error = identity
+      ))
       
       if (inherits(g, "error")) g <- NULL
 
@@ -2332,11 +1873,13 @@ theme_familiar <- function(
           }
         }
       }
+      
     } else if (inherits(p, "ggplot")) {
       # Convert to grob
       g <- suppressWarnings(tryCatch(
         ggplot2::ggplotGrob(p),
-        error = identity))
+        error = identity
+      ))
       
       if (inherits(g, "error")) g <- NULL
       
@@ -2345,16 +1888,25 @@ theme_familiar <- function(
       g <- p
       
     } else {
-      warning(paste0(
-        "Could not convert an object of class ", class(p), " to a grob."))
+      ..warning(paste0(
+        "Could not convert an object of class ", class(p), " to a grob."
+      ))
       g <- NULL
     }
-
+    
+    # Set panel sizes.
+    if (!is.null(g)) {
+      # Make panels inherit heights and widths, if they don't have any. This is done
+      # to ensure that panels retain heights and widths, even if supporting elements
+      # such as the axis text and label elements are stripped on figure composition.
+      g <- .gtable_update_panel_aspects(g = g)
+    }
+    
     grobs <- c(grobs, list(g))
   }
 
-  if (unlist_grobs) grobs <- grobs[[1]]
-
+  if (unlist_grobs) grobs <- grobs[[1L]]
+  
   return(grobs)
 }
 
@@ -2363,14 +1915,19 @@ theme_familiar <- function(
 .draw_plot <- function(plot_or_grob) {
   suppress_warnings(
     ..draw_plot(plot_or_grob),
-    regexp = c("containing missing values", "containing non-finite values")
+    regexp = c(
+      "containing missing values",
+      "containing non-finite values",
+      "no non-missing arguments to min",
+      "no non-missing arguments to max"
+    )
   )
 }
 
 
 
 ..draw_plot <- function(plot_or_grob) {
-  if (ggplot2::is.ggplot(plot_or_grob)) {
+  if (ggplot2::is_ggplot(plot_or_grob)) {
     show(plot_or_grob)
     
   } else if (grid::is.grob(plot_or_grob)) {
@@ -2378,11 +1935,12 @@ theme_familiar <- function(
     grid::grid.draw(plot_or_grob)
     
   } else {
-    stop("Plot could not be drawn.")
+    ..error("Plot could not be drawn.")
   }
   
   return(invisible(NULL))
 }
+
 
 
 .save_plot_to_file <- function(
@@ -2396,7 +1954,8 @@ theme_familiar <- function(
     additional = NULL,
     filename = NULL,
     device = "png",
-    ...) {
+    ...
+) {
   # ... are passed to ggplot2::ggsave
 
   # Check if the plot object exists
@@ -2405,8 +1964,9 @@ theme_familiar <- function(
   # Check if directory exists
   if (is.encapsulated_path(dir_path)) {
     file_dir <- normalizePath(
-      file.path(dir_path, object@name, type),
-      mustWork = FALSE)
+      file.path(dir_path, type),
+      mustWork = FALSE
+    )
     
   } else {
     file_dir <- normalizePath(dir_path, mustWork = FALSE)
@@ -2426,24 +1986,27 @@ theme_familiar <- function(
     # Test if a file extension is present.
     device_present <- endswith_any(
       filename, 
-      suffix = paste0(".", file_extensions))
+      suffix = paste0(".", file_extensions)
+    )
     
     if (any(device_present)) {
       # Update device indicated by the filename.
-      device <- head(file_extensions[device_present], n = 1)
+      device <- head(file_extensions[device_present], n = 1L)
 
       # Remove device from filename.
       filename <- sub_last(
         pattern = paste0(".", device),
         replacement = "",
-        x = filename)
+        x = filename
+      )
     }
 
     # Extend the filename if multiple plots are created from the same data.
     if (!is.null(split_by)) {
       subtype <- paste0(
-        as.character(sapply(split_by, function(jj, x) (x[[jj]][1]), x = x)),
-        collapse = "_")
+        as.character(sapply(split_by, function(jj, x) (x[[jj]][1L]), x = x)),
+        collapse = "_"
+      )
 
       filename <- paste0(filename, subtype, collapse = "_")
     }
@@ -2454,20 +2017,19 @@ theme_familiar <- function(
       x = x,
       subtype = subtype,
       split_by = split_by,
-      additional = additional)
+      additional = additional
+    )
 
     # Combine type and subtype as the filename.
     filename <- paste0(
       type,
-      ifelse(is.null(subtype), "", paste0("_", subtype)))
+      ifelse(is.null(subtype), "", paste0("_", subtype))
+    )
   }
 
   for (current_device in device) {
     # Add in extension again.
-    filename <- paste0(
-      filename,
-      ".",
-      current_device)
+    filename <- paste0(filename, ".", current_device)
 
     # There may be an issue with a cold RStudio where the plotting devices have
     # not started.
@@ -2482,15 +2044,22 @@ theme_familiar <- function(
               "filename" = filename,
               "plot" = plot_or_grob,
               "device" = current_device,
-              "path" = file_dir),
-            list(...)))),
+              "path" = file_dir
+            ),
+            list(...)
+          )
+        )
+      ),
       error = function(err) {
         logger_warning(
           paste0(
             "Could not create plot ",
             filename,
-            ". The OS may not allow long file names."))
-      })
+            ". The OS may not allow long file names."
+          )
+        )
+      }
+    )
   }
   
   return(invisible(NULL))
@@ -2502,7 +2071,8 @@ theme_familiar <- function(
     dir_path = NULL,
     plot_list = NULL,
     export_collection = FALSE,
-    object = NULL) {
+    object = NULL
+) {
   
   # Do not return plot information.
   if (!is.null(dir_path)) plot_list <- NULL
@@ -2510,7 +2080,8 @@ theme_familiar <- function(
   if (export_collection) {
     return(list(
       "collection" = object,
-      "plot_list" = plot_list))
+      "plot_list" = plot_list
+    ))
     
   } else {
     return(plot_list)
@@ -2519,28 +2090,56 @@ theme_familiar <- function(
 
 
 
-.format_plot_number <- function(x, digits = 3) {
+.format_plot_number <- function(
+    x,
+    digits = 3L,
+    common_base = NULL,
+    min_common_base = NULL,
+    max_common_base = NULL,
+    character_out = TRUE
+) {
+  # Determine the common base.
+  if (is.null(common_base)) {
+    common_base <- ..format_get_common_base(x)
+    if (is.numeric(max_common_base)) {
+      common_base <- ifelse(common_base > max_common_base, max_common_base, common_base)
+    }
+    if (is.numeric(min_common_base)) {
+      common_base <- ifelse(common_base < min_common_base, min_common_base, common_base)
+    }
+  }
+
+  # Round numbers.
+  x <- as.integer(round(x / 10.0^(1.0 + common_base - digits))) * 10.0^(1.0 + common_base - digits)
+
+  # Format output.
+  if (character_out) {
+    return(format(x, digits = digits, trim = TRUE))
+    
+  } else {
+    return(x)
+  }
+}
+
+
+
+..format_get_common_base <- function(x) {
   # Find the base-10 integer of the data.
   x_base <- floor(log10(abs(x)))
   x_base <- x_base[is.finite(x_base)]
-
-  # Determine the largest base.
-  common_base <- ifelse(length(x_base) > 0, max(x_base), 0)
-
-  # Round numbers.
-  x <- round(x / 10^(1 + common_base - digits)) * 10^(1 + common_base - digits)
-
-  # Format output.
-  return(format(x, digits = digits, trim = TRUE))
+  
+  return(as.integer(max(x_base)))
 }
+
 
 
 
 .format_plot_number_nice_range <- function(input_range, x) {
   # Shrink input range to first and last value
   input_range <- c(
-    head(input_range, n = 1),
-    tail(input_range, n = 1))
+    head(input_range, n = 1L),
+    tail(input_range, n = 1L)
+  )
 
   # Find values in input_range that should be replaced.
   replace_index <- is.na(input_range)
@@ -2556,10 +2155,11 @@ theme_familiar <- function(
 
   # Make the input range nice
   nice_range <- range(labeling::extended(
-    dmin = input_range[1],
-    dmax = input_range[2],
-    m = 5,
-    only.loose = TRUE))
+    dmin = input_range[1L],
+    dmax = input_range[2L],
+    m = 5L,
+    only.loose = TRUE
+  ))
 
   # Update the input_range with nice values
   input_range[replace_index] <- nice_range[replace_index]
@@ -2579,14 +2179,16 @@ theme_familiar <- function(
   # Determine the metric range.
   metric_range <- get_similarity_range(
     similarity_metric = similarity_metric, 
-    as_distance = TRUE)
+    as_distance = TRUE
+  )
 
   # Convert dendogram to a list of connectors that can later be used for
   # plotting. Note that we do not know where the origin should be located on the
   # x-axis. We will correct for that later.
   connectors <- .decompose_dendrogram(
     h = h,
-    parent_height = max(metric_range))
+    parent_height = max(metric_range)
+  )
 
   # Combine into single data.table.
   connectors <- data.table::rbindlist(connectors)
@@ -2602,17 +2204,20 @@ theme_familiar <- function(
   min_leaf_pos <- min(c(connectors$x_1, connectors$x_2))
   connectors[, ":="(
     "x_1" = x_1 - min_leaf_pos,
-    "x_2" = x_2 - min_leaf_pos)]
+    "x_2" = x_2 - min_leaf_pos
+  )]
   
   return(connectors)
 }
+
 
 
 .decompose_dendrogram <- function(
     h, 
     parent_height = Inf, 
     parent_x = NA, 
-    leafs_visited = 0) {
+    leafs_visited = 0L
+) {
   # Decompose dendogram. The function is designed to iterate through a
   # dendogram, and obtain the connector between node (h) and its parent, as well
   # as the connectors between the node and its children h[[1]] and h[[2]],
@@ -2633,7 +2238,8 @@ theme_familiar <- function(
       "y_1" = parent_height,
       "x_2" = parent_x,
       "y_2" = dend_attr$height,
-      "feature" = dend_attr$label)
+      "feature" = dend_attr$label
+    )
 
     return(list(conn_parent_child))
   }
@@ -2644,11 +2250,12 @@ theme_familiar <- function(
     "y_1" = parent_height,
     "x_2" = parent_x,
     "y_2" = dend_attr$height,
-    "feature" = NA_character_)
+    "feature" = NA_character_
+  )
   
   # Left child node x-axis location
-  if (!is.null(attributes(h[[1]])$midpoint)) {
-    child_l_pos <- leafs_visited + attributes(h[[1]])$midpoint
+  if (!is.null(attributes(h[[1L]])$midpoint)) {
+    child_l_pos <- leafs_visited + attributes(h[[1L]])$midpoint
   } else {
     child_l_pos <- leafs_visited
   }
@@ -2659,14 +2266,17 @@ theme_familiar <- function(
     "y_1" = dend_attr$height,
     "x_2" = child_l_pos,
     "y_2" = dend_attr$height,
-    "feature" = NA_character_)
+    "feature" = NA_character_
+  )
 
   # Right child node x-axis location
-  if (!is.null(attributes(h[[2]])$midpoint) &&
-      !is.null(attributes(h[[1]])$members)) {
-    child_r_pos <- leafs_visited + attributes(h[[1]])$members + attributes(h[[2]])$midpoint
-  } else if (!is.null(attributes(h[[1]])$members)) {
-    child_r_pos <- leafs_visited + attributes(h[[1]])$members
+  if (
+    !is.null(attributes(h[[2L]])$midpoint) &&
+    !is.null(attributes(h[[1L]])$members)
+  ) {
+    child_r_pos <- leafs_visited + attributes(h[[1L]])$members + attributes(h[[2L]])$midpoint
+  } else if (!is.null(attributes(h[[1L]])$members)) {
+    child_r_pos <- leafs_visited + attributes(h[[1L]])$members
   } else {
     child_r_pos <- leafs_visited
   }
@@ -2677,34 +2287,40 @@ theme_familiar <- function(
     "y_1" = dend_attr$height,
     "x_2" = child_r_pos,
     "y_2" = dend_attr$height,
-    "feature" = NA_character_)
+    "feature" = NA_character_
+  )
 
   # Add data.tables as list elements.
   connector_list <- list(
-    conn_parent_child, conn_child_l_leaf, conn_child_r_leaf)
+    conn_parent_child,
+    conn_child_l_leaf, 
+    conn_child_r_leaf
+  )
 
   # Left leaf
-  if (!is.null(h[[1]])) {
+  if (!is.null(h[[1L]])) {
     left_leaf_connectors <- .decompose_dendrogram(
-      h = h[[1]],
+      h = h[[1L]],
       parent_height = dend_attr$height,
       parent_x = child_l_pos,
-      leafs_visited = leafs_visited)
+      leafs_visited = leafs_visited
+    )
 
     # Append to list
     connector_list <- append(connector_list, left_leaf_connectors)
   }
 
   # Right leaf
-  if (!is.null(h[[2]])) {
+  if (!is.null(h[[2L]])) {
     right_leaf_connectors <- .decompose_dendrogram(
-      h = h[[2]],
+      h = h[[2L]],
       parent_height = dend_attr$height,
       parent_x = child_r_pos,
       leafs_visited = ifelse(
-        !is.null(attributes(h[[1]])$members),
-        leafs_visited + attributes(h[[1]])$members, 
-        leafs_visited)
+        !is.null(attributes(h[[1L]])$members),
+        leafs_visited + attributes(h[[1L]])$members, 
+        leafs_visited
+      )
     )
 
     # Append to list
@@ -2716,96 +2332,6 @@ theme_familiar <- function(
 
 
 
-.combine_guide_grobs <- function(g, ggtheme, no_empty = TRUE) {
-  # Find how tables should be organised.
-  guide_position <- ggtheme$legend.position
-
-  # Check if the guide position can be interpreted
-  if (!all(guide_position %in% c("none", "left", "right", "bottom", "top"))) {
-    stop(paste0(
-      ".combine_guide_grobs: Guide position (legend.position in the ggplot2 ",
-      "theme) is expect to be one of none, left, right, bottom, top."))
-  }
-
-  if (guide_position == "none") return(NULL)
-
-  # If necessary, check that all guides are present as a gtable.
-  if (no_empty) {
-    if (!all(sapply(g, gtable::is.gtable))) {
-      stop(paste0(
-        ".combine_guide_grobs: One of the guides in the g argument ",
-        "is not a gtable object."))
-    }
-  }
-
-  # Check if all guides are missing.
-  if (!any(sapply(g, gtable::is.gtable))) return(NULL)
-
-  # Keep only guides that are gtables.
-  g <- g[sapply(g, gtable::is.gtable)]
-
-  # Find widths and heights
-  widths <- lapply(g, gtable::gtable_width)
-  widths <- do.call(grid::unit.c, widths)
-
-  heights <- lapply(g, gtable::gtable_height)
-  heights <- do.call(grid::unit.c, heights)
-
-  if (guide_position %in% c("left", "right", "none")) {
-    # Concatenate the widths.
-    widths <- max(widths)
-
-    # Provide the matrix to order the guides.
-    order_matrix <- matrix(
-      data = seq_along(g),
-      nrow = length(g), 
-      ncol = 1)
-
-    # Create a grob matrix
-    g_matrix <- matrix(
-      data = g, 
-      ncol = 1)
-    
-  } else {
-    # Concatenate the heights.
-    heights <- max(heights)
-
-    # Provide the matrix to order the guides.
-    order_matrix <- matrix(
-      data = seq_along(g), 
-      nrow = 1, 
-      ncol = length(g))
-
-    # Create a grob matrix
-    g_matrix <- matrix(
-      data = g, 
-      nrow = 1)
-  }
-
-  # Create a gtable that combines all guide-boxes.
-  g <- gtable::gtable_matrix(
-    name = "guide-box",
-    grobs = g_matrix,
-    widths = widths,
-    heights = heights,
-    z = order_matrix,
-    respect = TRUE,
-    clip = "inherit")
-
-  # Wrap the combined guides into a single grob.
-  g <- gtable::gtable_matrix(
-    name = "guide-box",
-    grobs = matrix(list(g), nrow = 1, ncol = 1),
-    widths = sum(widths),
-    heights = sum(heights),
-    respect = TRUE,
-    clip = "inherit")
-
-  return(g)
-}
-
-
-
 ..set_edge_points <- function(x, range, type) {
   # Function used to determine edge points, such as used for ggplot2::geom_rect.
   if (!is.numeric(x)) {
@@ -2813,7 +2339,7 @@ theme_familiar <- function(
     range <- c(0.5, length(x) + 0.5)
   }
 
-  if (length(x) > 1) {
+  if (length(x) > 1L) {
     # Make sure x is sorted ascendingly.
     sort_index <- sort(x, index.return = TRUE)$ix
     x <- x[sort_index]
@@ -2836,8 +2362,8 @@ theme_familiar <- function(
     xmin[sort_index] <- xmin
     
   } else {
-    xmin <- range[1]
-    xmax <- range[2]
+    xmin <- range[1L]
+    xmax <- range[2L]
   }
 
   edge_points <- list(xmin, xmax)
@@ -2847,8 +2373,16 @@ theme_familiar <- function(
     names(edge_points) <- c("ymin", "ymax")
   } else {
     ..error_reached_unreachable_code(paste0(
-      "..set_edge_points: unknown type specified: ", type))
+      "..set_edge_points: unknown type specified: ", type
+    ))
   }
 
   return(edge_points)
+}
+
+
+
+..get_luminosity <- function(col) {
+  values <- as.vector(grDevices::col2rgb(col)) / 255.0
+  return ((min(values) + max(values)) / 2.0)
 }

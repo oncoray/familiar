@@ -166,8 +166,8 @@ testthat::test_that("Conversion of multiple familiarData objects to familiarColl
     "familiarCollection")
 })
 
-testthat::test_that("Conversion of multiple identical familiarEnsemble objects to familiarCollection fails", {
-  testthat::expect_error(
+testthat::test_that("Conversion of multiple identical familiarData objects to familiarCollection fails", {
+  testthat::expect_s4_class(
     familiar::as_familiar_collection(object = list(fam_data_1, fam_data_1)),
     "familiarCollection")
 })

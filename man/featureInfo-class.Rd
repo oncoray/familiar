@@ -91,6 +91,8 @@ features.}
 \item{\code{required_features}}{Details features required for clustering or
 imputation.}
 
+\item{\code{project_id}}{Identifier of the project that generated this collection.}
+
 \item{\code{familiar_version}}{Version of the familiar package.}
 }}
 

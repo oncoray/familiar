@@ -19,12 +19,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
         data_copy <- data.table::copy(data)
 
         # Create a list of featureInfo objects.
-        feature_info_list <- familiar:::.get_feature_info_data(
-          data = data_copy@data,
-          file_paths = NULL,
-          project_id = character(),
-          outcome_type = outcome_type
-        )[[1]]
+        feature_info_list <- test_create_generic_info(data = data_copy)
 
         # Add skeletons.
         feature_info_list <- familiar:::create_transformation_parameter_skeleton(
@@ -135,12 +130,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
         data_copy <- data.table::copy(data)
 
         # Create a list of featureInfo objects.
-        feature_info_list <- familiar:::.get_feature_info_data(
-          data = data_copy@data,
-          file_paths = NULL,
-          project_id = character(),
-          outcome_type = outcome_type
-        )[[1]]
+        feature_info_list <- test_create_generic_info(data = data_copy)
 
         # Add skeletons.
         feature_info_list <- familiar:::create_transformation_parameter_skeleton(
@@ -200,12 +190,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
         data_copy <- data.table::copy(data)
 
         # Create a list of featureInfo objects.
-        feature_info_list <- familiar:::.get_feature_info_data(
-          data = data_copy@data,
-          file_paths = NULL,
-          project_id = character(),
-          outcome_type = outcome_type
-        )[[1]]
+        feature_info_list <- test_create_generic_info(data = data_copy)
 
         # Add skeletons.
         feature_info_list <- familiar:::create_transformation_parameter_skeleton(
@@ -272,12 +257,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
         data_copy <- data.table::copy(data)
 
         # Create a list of featureInfo objects.
-        feature_info_list <- familiar:::.get_feature_info_data(
-          data = data_copy@data,
-          file_paths = NULL,
-          project_id = character(),
-          outcome_type = outcome_type
-        )[[1]]
+        feature_info_list <- test_create_generic_info(data = data_copy)
 
         # Add skeletons.
         feature_info_list <- familiar:::create_transformation_parameter_skeleton(
@@ -338,12 +318,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
         data_copy <- data.table::copy(data)
 
         # Create a list of featureInfo objects.
-        feature_info_list <- familiar:::.get_feature_info_data(
-          data = data_copy@data,
-          file_paths = NULL,
-          project_id = character(),
-          outcome_type = outcome_type
-        )[[1]]
+        feature_info_list <- test_create_generic_info(data = data_copy)
 
         # Add skeletons.
         feature_info_list <- familiar:::create_transformation_parameter_skeleton(
@@ -410,12 +385,7 @@ for (n_numeric_features in c(4, 3, 2, 1, 0)) {
         data_copy <- data.table::copy(data)
 
         # Create a list of featureInfo objects.
-        feature_info_list <- familiar:::.get_feature_info_data(
-          data = data_copy@data,
-          file_paths = NULL,
-          project_id = character(),
-          outcome_type = outcome_type
-        )[[1]]
+        feature_info_list <- test_create_generic_info(data = data_copy)
 
         # Add skeletons.
         feature_info_list <- familiar:::create_transformation_parameter_skeleton(
@@ -471,12 +441,7 @@ testthat::test_that(
     data_copy <- data.table::copy(data)
 
     # Create a list of featureInfo objects.
-    feature_info_list <- familiar:::.get_feature_info_data(
-      data = data_copy@data,
-      file_paths = NULL,
-      project_id = character(),
-      outcome_type = outcome_type
-    )[[1]]
+    feature_info_list <- test_create_generic_info(data = data_copy)
 
     # Add skeletons for features 1 and 2.
     feature_info_list <- familiar:::create_transformation_parameter_skeleton(

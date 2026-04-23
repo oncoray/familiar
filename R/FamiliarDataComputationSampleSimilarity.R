@@ -14,7 +14,8 @@ setClass(
     "linkage_method" = "character",
     "cluster_cut_method" = "character",
     "similarity_threshold" = "ANY",
-    "dendrogram" = "ANY"),
+    "dendrogram" = "ANY"
+  ),
   prototype = methods::prototype(
     detail_level = "ensemble",
     estimation_type = "point",
@@ -25,7 +26,9 @@ setClass(
     similarity_threshold = NULL,
     dendrogram = NULL,
     value_column = "value",
-    grouping_column = c("sample_1", "sample_2")))
+    grouping_column = c("sample_1", "sample_2")
+  )
+)
 
 
 
@@ -38,12 +41,13 @@ setClass(
 #'  This table can be used to cluster samples, and is exported directly by
 #'  `extract_feature_expression`.
 #'
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
-#'@return A data.table containing pairwise distance between samples. This data
+#'@return An object containing pairwise distance between samples. This data
 #'  is only the upper triangular of the complete matrix (i.e. the sparse
 #'  unitriangular representation). Diagonals will always be 0.0 and the lower
 #'  triangular is mirrored.
+#'  
 #'@md
 #'@keywords internal
 setGeneric(
@@ -59,10 +63,12 @@ setGeneric(
     sample_similarity_metric = waiver(),
     verbose = FALSE,
     message_indent = 0L,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_sample_similarity")
   }
 )
+
 
 
 # extract_sample_similarity (familiarEnsemble) ---------------------------------
@@ -80,13 +86,15 @@ setMethod(
     sample_similarity_metric = waiver(),
     verbose = FALSE,
     message_indent = 0L,
-    ...) {
+    ...
+  ) {
     
     # Message extraction start
     logger_message(
       paste0("Computing pairwise similarity between samples."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Obtain sample cluster method from stored settings, if required.
     if (is.waive(sample_cluster_method)) {
@@ -112,21 +120,24 @@ setMethod(
       cluster_method = sample_cluster_method,
       cluster_linkage = sample_linkage_method,
       cluster_similarity_metric = sample_similarity_metric,
-      data_type = "sample")
+      data_type = "sample"
+    )
     
     # Check the sample limit.
     sample_limit <- .parse_sample_limit(
       x = sample_limit,
       object = object,
       default = Inf,
-      data_element = "sample_similarity")
+      data_element = "sample_similarity"
+    )
     
     # Generate a prototype data element.
     proto_data_element <- new(
       "familiarDataElementSampleSimilarity",
       similarity_metric = sample_similarity_metric,
       cluster_method = sample_cluster_method,
-      linkage_method = sample_linkage_method)
+      linkage_method = sample_linkage_method
+    )
     
     # Generate elements to send to dispatch.
     similarity_data <- extract_dispatcher(
@@ -140,7 +151,119 @@ setMethod(
       is_pre_processed = is_pre_processed,
       aggregate_results = TRUE,
       message_indent = message_indent + 1L,
-      verbose = verbose)
+      verbose = verbose
+    )
+    
+    return(similarity_data)
+  }
+)
+
+
+
+# extract_sample_similarity (familiarDataElementPredictionTable) ---------------
+setMethod(
+  "extract_sample_similarity",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("sample similarity")
+    
+    return(NULL)
+  }
+)
+
+
+
+# extract_sample_similarity (dataObject) ---------------------------------------
+setMethod(
+  "extract_sample_similarity",
+  signature(object = "dataObject"),
+  function(
+    object,
+    data,
+    cl = NULL,
+    is_pre_processed = FALSE,
+    sample_limit = waiver(),
+    sample_cluster_method = waiver(),
+    sample_linkage_method = waiver(),
+    sample_similarity_metric = waiver(),
+    verbose = FALSE,
+    message_indent = 0L,
+    ...
+  ) {
+    
+    # Message extraction start
+    logger_message(
+      paste0("Computing pairwise similarity between samples."),
+      indent = message_indent,
+      verbose = verbose
+    )
+    
+    settings <- .parse_sample_clustering(
+      sample_cluster_method = sample_cluster_method,
+      sample_linkage_method = sample_linkage_method,
+      sample_similarity_metric = sample_similarity_metric
+    )
+    
+    # Set default cluster method, if required.
+    if (is.waive(sample_cluster_method)) {
+      sample_cluster_method <- settings$sample_cluster_method
+    }
+    
+    # Set default linkage function, if required.
+    if (is.waive(sample_linkage_method)) {
+      sample_linkage_method <- settings$sample_linkage_method
+    }
+    
+    # Set default similarity metric, if required.
+    if (is.waive(sample_similarity_metric)) {
+      sample_similarity_metric <- settings$sample_similarity_metric
+    }
+    
+    # Replace sample cluster method == "none" with "hclust"
+    if (sample_cluster_method == "none") {
+      sample_cluster_method <- "hclust"
+    }
+    
+    # Check the sample limit.
+    sample_limit <- .parse_sample_limit(
+      x = sample_limit,
+      object = object,
+      default = Inf,
+      data_element = "sample_similarity"
+    )
+    
+    # Generate a prototype data element.
+    proto_data_element <- new(
+      "familiarDataElementSampleSimilarity",
+      similarity_metric = sample_similarity_metric,
+      cluster_method = sample_cluster_method,
+      linkage_method = sample_linkage_method
+    )
+    
+    # Assume data is transformed.
+    object@preprocessing_level <- "transformation"
+    
+    # Generate feature info by running the familiarTaskGenericFeatureInfo task.
+    generic_feature_info_task <- new("familiarTaskGenericFeatureInfo")
+    object@feature_info <- .perform_task(
+      object = generic_feature_info_task,
+      data = object
+    )
+    
+    # Generate elements to send to dispatch.
+    similarity_data <- extract_dispatcher(
+      FUN = .extract_sample_similarity,
+      has_internal_bootstrap = FALSE,
+      cl = cl,
+      object = object,
+      data = object,
+      sample_limit = sample_limit,
+      proto_data_element = proto_data_element,
+      is_pre_processed = is_pre_processed,
+      aggregate_results = TRUE,
+      message_indent = message_indent + 1L,
+      verbose = verbose
+    )
     
     return(similarity_data)
   }
@@ -158,45 +281,48 @@ setMethod(
     message_indent,
     aggregate_results = TRUE,
     verbose = FALSE,
-    ...) {
+    ...
+) {
   
   # Add the name of the ensemble model
   data_element <- add_model_name(
     data = proto_data_element,
-    object = object)
+    object = object
+  )
   
   # Retrieve input data.
   data <- process_input_data(
     object = object,
     data = data,
     stop_at = "imputation",
-    is_pre_processed = is_pre_processed)
+    is_pre_processed = is_pre_processed
+  )
   
   # Check if the input data is not empty
   if (is_empty(data)) return(NULL)
   
   # Check if the number of samples is sufficient to form pairs (>= 2), and
   # return an empty table if not.
-  if (data.table::uniqueN(
-    data@data,
-    by = get_id_columns(id_depth = "sample")) < 2) {
-    return(data_element)
-  }
+  if (get_n_samples(data) < 2L) return(data_element)
   
   # Select samples up to sample_limit.
   data <- get_subsample(
     data = data,
     size = sample_limit,
-    seed = 0L)
+    seed = 0L
+  )
   
-  # Maintain only important features. The current set is based on the required
-  # features.
-  data <- filter_features(
-    data = data,
-    available_features = object@model_features)
-  
-  # Aggregate features.
-  data <- aggregate_data(data = data)
+  if (is(object, "familiarEnsemble")){
+    # Maintain only important features when assessing data from the perspective
+    # of an ensemble. The current set is based on the required features.
+    data <- filter_features(
+      data = data,
+      available_features = object@model_features
+    )
+    
+    # Aggregate features.
+    data <- aggregate_data(data = data)
+  }
   
   # Identify eligible columns.
   feature_columns <- get_feature_columns(x = data)
@@ -209,7 +335,8 @@ setMethod(
     data_type = "sample",
     cl = cl,
     message_indent = message_indent + 1L,
-    verbose = verbose)
+    verbose = verbose
+  )
   
   # Merge data elements
   data_elements <- merge_data_elements(list(data_element))
@@ -252,7 +379,8 @@ setMethod(
   # Compute the cluster table.
   cluster_table <- create_clusters(
     object = cluster_method_object,
-    as_cluster_object = FALSE)
+    as_cluster_object = FALSE
+  )
   
   return(cluster_table)
 }
@@ -263,7 +391,7 @@ setMethod(
   
   if (is_empty(x)) return(NULL)
   
-  if (length(x@similarity_threshold) > 1) {
+  if (length(x@similarity_threshold) > 1L) {
     # Remove 1.0 because that does not yield clustering info.
     available_thresholds <- setdiff(x@similarity_threshold, 1.0)
     
@@ -278,14 +406,16 @@ setMethod(
     cluster_linkage = x@linkage_method,
     cluster_cut_method = "none",
     cluster_similarity_metric = x@similarity_metric,
-    cluster_representation_method = "none")
+    cluster_representation_method = "none"
+  )
   
   # Attach the similarity table to the cluster_method_object.
   cluster_method_object@similarity_table <- methods::new(
     "similarityTable",
     data = x@data[, mget(c("sample_1", "sample_2", "value"))],
     similarity_metric = x@similarity_metric,
-    data_type = cluster_method_object@data_type)
+    data_type = cluster_method_object@data_type
+  )
   
   return(cluster_method_object)
 }
@@ -311,7 +441,8 @@ setMethod(
     sample_names,
     size = sample_limit,
     replace = FALSE,
-    seed = 0)
+    seed = 0L
+  )
   
   # Select only the selected samples.
   x@data <- x@data[sample_1 %in% sample_names & sample_2 %in% sample_names]
@@ -331,20 +462,18 @@ setMethod(
 #'@param export_dendrogram Add dendrogram in the data element objects.
 #'
 #'@inheritParams export_all
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'@inheritParams export_univariate_analysis_data
 #'
 #'@inheritDotParams as_familiar_collection
+#'@inheritDotParams as_data_object
 #'
-#'@details Data is usually collected from a `familiarCollection` object.
-#'  However, you can also provide one or more `familiarData` objects, that will
-#'  be internally converted to a `familiarCollection` object. It is also
-#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
-#'  objects together with the data from which data is computed prior to export.
-#'  Paths to the previous files can also be provided.
-#'
+#'@details 
 #'  All parameters aside from `object` and `dir_path` are only used if `object`
 #'  is not a `familiarCollection` object, or a path to one.
+#'
+#'  Sample similarity data can be created from `dataObject`, or `data.table` objects.
+#'  For `data.table`, see \code{\link{as_data_object}} for additional arguments.
 #'
 #'@return A list containing a data.table (if `dir_path` is not provided), or
 #'  nothing, as all data is exported to `csv` files.
@@ -362,7 +491,8 @@ setGeneric(
     sample_linkage_method = waiver(),
     export_dendrogram = FALSE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_sample_similarity")
   }
 )
@@ -384,7 +514,8 @@ setMethod(
     sample_linkage_method = waiver(),
     export_dendrogram = FALSE,
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -405,7 +536,8 @@ setMethod(
           x@cluster_method <- sample_cluster_method
           return(x)
         },
-        sample_cluster_method = sample_cluster_method)
+        sample_cluster_method = sample_cluster_method
+      )
     }
     
     # Check sample linkage method.
@@ -418,7 +550,8 @@ setMethod(
           x@linkage_method <- sample_linkage_method
           return(x)
         },
-        sample_linkage_method = sample_linkage_method)
+        sample_linkage_method = sample_linkage_method
+      )
     }
     
     # Check the sample limit.
@@ -426,7 +559,8 @@ setMethod(
       .check_number_in_valid_range(
         x = sample_limit,
         var_name = "sample_limit",
-        range = c(20L, Inf))
+        range = c(20L, Inf)
+      )
       
     } else {
       sample_limit <- Inf
@@ -435,12 +569,13 @@ setMethod(
     # Check whether the input parameters are valid and create a cluster
     # object.
     .check_cluster_parameters(
-      cluster_method = x[[1]]@cluster_method,
+      cluster_method = x[[1L]]@cluster_method,
       data_type = "sample",
-      cluster_linkage = x[[1]]@linkage_method,
+      cluster_linkage = x[[1L]]@linkage_method,
       cluster_cut_method = "none",
-      cluster_similarity_metric = x[[1]]@similarity_metric,
-      cluster_representation_method = "none")
+      cluster_similarity_metric = x[[1L]]@similarity_metric,
+      cluster_representation_method = "none"
+    )
     
     if (aggregate_results || export_dendrogram) {
       x <- .compute_data_element_estimates(x)
@@ -450,7 +585,8 @@ setMethod(
         x <- lapply(
           x,
           ..limit_sample_similarity_samples,
-          sample_limit = sample_limit)
+          sample_limit = sample_limit
+        )
       }
       
       # Add clustering information.
@@ -465,9 +601,10 @@ setMethod(
       dir_path = dir_path,
       aggregate_results = aggregate_results,
       type = "sample_similarity",
-      subtype = x[[1]]@similarity_metric,
+      subtype = x[[1L]]@similarity_metric,
       export_dendrogram = export_dendrogram,
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -486,7 +623,8 @@ setMethod(
     sample_cluster_method = waiver(),
     sample_linkage_method = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -498,8 +636,11 @@ setMethod(
           "sample_limit" = sample_limit,
           "aggregate_results" = aggregate_results,
           "sample_cluster_method" = sample_cluster_method,
-          "sample_linkage_method" = sample_linkage_method),
-        list(...)))
+          "sample_linkage_method" = sample_linkage_method
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_sample_similarity,
@@ -510,8 +651,11 @@ setMethod(
           "aggregate_results" = aggregate_results,
           "sample_cluster_method" = sample_cluster_method,
           "sample_linkage_method" = sample_linkage_method,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -526,7 +670,8 @@ setMethod(
     x_list,
     aggregate_results = FALSE, 
     export_dendrogram,
-    ...) {
+    ...
+  ) {
     # This is like .export,familiarDataElement, but the elements are merged
     # prior to computing estimates.
     
@@ -537,7 +682,8 @@ setMethod(
         x = x_list,
         as_data = "all",
         as_grouping_column = TRUE,
-        force_data_table = TRUE)
+        force_data_table = TRUE
+      )
       
     } else {
       x <- x_list

@@ -52,8 +52,8 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
-    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
@@ -112,7 +112,11 @@ evaluation steps by providing a parameter value in a named list with data
 elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
-\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.
+
+If results are computed from 10 samples or fewer, \code{ensemble} is
+automatically used. This prevents issues where evaluation steps do not have
+a required minimum number of samples for \code{hybrid} or \code{model}.}
     \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
 \itemize{

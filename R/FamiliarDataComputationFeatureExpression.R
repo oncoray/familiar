@@ -8,12 +8,15 @@ setClass(
   contains = "familiarDataElement",
   slots = list(
     "feature_info" = "ANY",
-    "evaluation_time" = "ANY"),
+    "evaluation_time" = "ANY"
+  ),
   prototype = methods::prototype(
     detail_level = "ensemble",
     estimation_type = "point",
     feature_info = NULL,
-    evaluation_time = NULL))
+    evaluation_time = NULL
+  )
+)
 
 
 # extract_feature_expression (generic) -----------------------------------------
@@ -27,7 +30,7 @@ setClass(
 #'  sample. This is used to determine cluster information, and indicate which
 #'  samples are similar. The table is created by the
 #'  `extract_sample_similarity` method.
-#'@inheritParams extract_data
+#'@inheritParams .extract_data
 #'
 #'@return A list with a data.table containing feature expressions.
 #'@md
@@ -48,7 +51,8 @@ setGeneric(
     evaluation_times = waiver(),
     message_indent = 0L,
     verbose = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("extract_feature_expression")
   }
 )
@@ -72,17 +76,21 @@ setMethod(
     sample_similarity_metric = waiver(),
     evaluation_times = waiver(),
     message_indent = 0L,
-    verbose = FALSE) {
+    verbose = FALSE
+  ) {
     
     # Message extraction start
     logger_message(
       paste0("Compute feature expression."),
       indent = message_indent,
-      verbose = verbose)
+      verbose = verbose
+    )
     
     # Obtain evaluation times from the data.
-    if (is.waive(evaluation_times) &&
-        object@outcome_type %in% c("survival", "competing_risk")) {
+    if (
+      is.waive(evaluation_times) &&
+      object@outcome_type %in% c("survival", "competing_risk")
+    ) {
       evaluation_times <- object@settings$eval_times
       
     } else if (is.waive(evaluation_times)) {
@@ -96,7 +104,8 @@ setMethod(
         .check_number_in_valid_range,
         var_name = "evaluation_times",
         range = c(0.0, Inf),
-        closed = c(FALSE, TRUE))
+        closed = c(FALSE, TRUE)
+      )
     }
     
     # Aggregate data
@@ -108,7 +117,8 @@ setMethod(
     data <- process_input_data(
       object = object,
       data = data,
-      stop_at = "batch_normalisation")
+      stop_at = "batch_normalisation"
+    )
     
     if (is_empty(data)) return(NULL)
     
@@ -118,21 +128,21 @@ setMethod(
     # Maintain only important features. The current set is based on the
     # important features of the model, i.e. those that end up in the
     # model (potentially as a cluster).
-    expression_data <- filter_features(
-      data = data,
-      available_features = model_features)
+    expression_data <- filter_features(data = data, available_features = model_features)
     
     # Perform inverse normalisation
     expression_data <- normalise_features(
       data = expression_data,
       feature_info_list = object@feature_info,
-      invert = TRUE)
+      invert = TRUE
+    )
     
     # Perform inverse transformation
     expression_data <- transform_features(
       data = expression_data,
       feature_info_list = object@feature_info,
-      invert = TRUE)
+      invert = TRUE
+    )
     
     # Add sample_name to expression_data
     row_names <- get_unique_row_names(expression_data)
@@ -141,7 +151,8 @@ setMethod(
       "batch_id" = NULL,
       "sample_id" = NULL,
       "series_id" = NULL,
-      "repetition_id" = NULL)]
+      "repetition_id" = NULL
+    )]
     
     # Set expression data.
     expression_data <- methods::new(
@@ -149,7 +160,115 @@ setMethod(
       data = expression_data@data,
       feature_info = object@feature_info[model_features],
       evaluation_time = evaluation_times,
-      value_column = model_features)
+      value_column = model_features
+    )
+    
+    # Add model name.
+    expression_data <- add_model_name(expression_data, object)
+    
+    return(list(expression_data))
+  }
+)
+
+
+
+# extract_feature_expression (prediction table) --------------------------------
+setMethod(
+  "extract_feature_expression",
+  signature(object = "familiarDataElementPredictionTable"),
+  function(object, ...) {
+    ..warning_no_data_extraction_from_prediction_table("feature expression")
+    
+    return(NULL)
+  }
+)
+
+
+
+# extract_feature_expression (dataObject) --------------------------------------
+setMethod(
+  "extract_feature_expression",
+  signature(object = "dataObject"),
+  function(
+    object,
+    data,
+    feature_similarity,
+    sample_similarity,
+    feature_cluster_method = waiver(),
+    feature_linkage_method = waiver(),
+    feature_similarity_metric = waiver(),
+    sample_cluster_method = waiver(),
+    sample_linkage_method = waiver(),
+    sample_similarity_metric = waiver(),
+    evaluation_times = waiver(),
+    message_indent = 0L,
+    verbose = FALSE
+  ) {
+    
+    # Message extraction start
+    logger_message(
+      paste0("Compute feature expression."),
+      indent = message_indent,
+      verbose = verbose
+    )
+    
+    if (
+      is.waive(evaluation_times) &&
+      object@outcome_type %in% c("survival", "competing_risk")
+    ) {
+      # Get default evaluation times.
+      settings <- .parse_evaluation_time_settings(
+        data = object@data,
+        outcome_type = object@outcome_type
+      )
+      
+      evaluation_times <- settings$eval_times
+      
+    } else if (is.waive(evaluation_times)) {
+      evaluation_times <- NULL
+    }
+    
+    # Check if evaluation_times is correct.
+    if (object@outcome_type %in% c("survival", "competing_risk")) {
+      sapply(
+        evaluation_times,
+        .check_number_in_valid_range,
+        var_name = "evaluation_times",
+        range = c(0.0, Inf),
+        closed = c(FALSE, TRUE)
+      )
+    }
+    
+    if (is_empty(object)) return(NULL)
+
+    # Generate feature info by running the familiarTaskGenericFeatureInfo task.
+    generic_feature_info_task <- new("familiarTaskGenericFeatureInfo")
+    object@feature_info <- .perform_task(
+      object = generic_feature_info_task,
+      data = object
+    )
+    
+    # Perform inverse transformation
+    expression_data <- .copy(object)
+    
+    # Add sample_name to expression_data
+    row_names <- get_unique_row_names(expression_data)
+    expression_data@data[, ":="(
+      "sample_name" = row_names,
+      "batch_id" = NULL,
+      "sample_id" = NULL,
+      "series_id" = NULL,
+      "repetition_id" = NULL
+    )]
+    
+    # Set expression data.
+    expression_data <- methods::new(
+      "familiarDataElementFeatureExpression",
+      data = expression_data@data,
+      feature_info = object@feature_info,
+      evaluation_time = evaluation_times,
+      value_column = get_feature_columns(object)
+    )
     
     # Add model name.
     expression_data <- add_model_name(expression_data, object)
@@ -177,19 +296,14 @@ setMethod(
 #'
 #'@inheritDotParams extract_feature_expression
 #'@inheritDotParams as_familiar_collection
+#'@inheritDotParams as_data_object
 #'
-#'@details Data is usually collected from a `familiarCollection` object.
-#'  However, you can also provide one or more `familiarData` objects, that will
-#'  be internally converted to a `familiarCollection` object. It is also
-#'  possible to provide a `familiarEnsemble` or one or more `familiarModel`
-#'  objects together with the data from which data is computed prior to export.
-#'  Paths to the previous files can also be provided.
-#'
+#'@details 
 #'  All parameters aside from `object` and `dir_path` are only used if `object`
 #'  is not a `familiarCollection` object, or a path to one.
-#'
-#'  Feature expressions are computed by standardising each feature, i.e. sample
-#'  mean is 0 and standard deviation is 1.
+#'  
+#'  Feature similarity data can be created from `dataObject`, or `data.table` objects.
+#'  For `data.table`, see \code{\link{as_data_object}} for additional arguments.
 #'
 #'@return A data.table (if `dir_path` is not provided), or nothing, as all data
 #'  is exported to `csv` files.
@@ -203,7 +317,8 @@ setGeneric(
     dir_path = NULL,
     evaluation_time = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     standardGeneric("export_feature_expressions")
   }
 )
@@ -221,7 +336,8 @@ setMethod(
     dir_path = NULL,
     evaluation_time = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
@@ -239,7 +355,8 @@ setMethod(
         evaluation_time,
         .check_number_in_valid_range,
         var_name = "evaluation_time",
-        range = c(0, Inf))
+        range = c(0.0, Inf)
+      )
       
       # Set clustering method.
       x <- lapply(
@@ -248,7 +365,8 @@ setMethod(
           x@evaluation_time <- evaluation_time
           return(x)
         },
-        evaluation_time = evaluation_time)
+        evaluation_time = evaluation_time
+      )
     }
     
     return(.export(
@@ -258,7 +376,8 @@ setMethod(
       aggregate_results = FALSE,
       type = "feature_expression",
       subtype = NULL,
-      export_collection = export_collection))
+      export_collection = export_collection
+    ))
   }
 )
 
@@ -275,7 +394,8 @@ setMethod(
     dir_path = NULL,
     evaluation_time = waiver(),
     export_collection = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Attempt conversion to familiarCollection object.
     object <- do.call(
@@ -284,8 +404,11 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "feature_expressions",
-          "evaluation_times" = evaluation_time),
-        list(...)))
+          "evaluation_times" = evaluation_time
+        ),
+        list(...)
+      )
+    )
     
     return(do.call(
       export_feature_expressions,
@@ -294,8 +417,11 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "evaluation_time" = evaluation_time,
-          "export_collection" = export_collection),
-        list(...))))
+          "export_collection" = export_collection
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -309,14 +435,16 @@ setMethod(
     x,
     x_list,
     aggregate_results = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Add grouping columns to data. Note that we do not merge the data elements.
     x <- lapply(
       x_list,
       .identifier_as_data_attribute,
       identifier = "all",
-      as_grouping_column = TRUE)
+      as_grouping_column = TRUE
+    )
     
     return(x)
   }

@@ -25,8 +25,13 @@
 #' @slot novelty_detector A familiarNoveltyDetector object that can be used to
 #'   detect out-of-distribution samples.
 #' @slot learner Learning algorithm used to create the model.
-#' @slot fs_method Feature selection method used to determine variable
-#'   importance for the model.
+#' @slot vimp_method Method used to determine variable importance for the model.
+#' @slot vimp_table Variable importance table or list of variable importance
+#'   tables for the model.
+#' @slot vimp_aggregation_method Method used for aggregating variable importance
+#'   tables if more than one is present.)
+#' @slot vimp_rank_threshold Threshold used for some variable importance
+#'   aggregation methods.
 #' @slot required_features The set of features required for complete
 #'   reproduction, i.e. with imputation.
 #' @slot model_features The set of features that is used to train the model,
@@ -35,6 +40,9 @@
 #' @slot calibration_info Calibration information, e.g. baseline survival in the
 #'   development cohort.
 #' @slot km_info Data concerning stratification into risk groups.
+#' @slot data_id Internal identifier for the dataset used to train the model.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   used to train the model.
 #' @slot run_table Run table for the data used to train the model. Used
 #'   internally.
 #' @slot settings A copy of the evaluation configuration parameters used at
@@ -79,14 +87,24 @@ setClass("familiarModel",
     novelty_detector = "ANY",
     # Name of learner
     learner = "character",
-    # Name of feature selection method
-    fs_method = "character",
+    # Name of variable importance method
+    vimp_method = "character",
+    # Variable importance table
+    vimp_table = "ANY",
+    # Vimp aggregation method.
+    vimp_aggregation_method = "character",
+    # Vimp rank threshold.
+    vimp_rank_threshold = "integer",
     # Required features for complete reconstruction, including imputation.
     required_features = "ANY",
     # Features that are required for the model.
     model_features = "ANY",
     # Features that are required for novelty detection.
     novelty_features = "ANY",
+    # data_id for the data used to train the model.
+    data_id = "integer",
+    # run_id for the data used to train the model.
+    run_id = "integer",
     # Run table for the current model
     run_table = "ANY",
     # Information required to assess model calibrations (e.g. baseline survival)
@@ -109,9 +127,10 @@ setClass("familiarModel",
     # Name of the package required to train the learner.
     package = "ANY",
     # Version of the learner for reproducibility.
-    package_version = "ANY"),
+    package_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     model = NULL,
     outcome_type = NA_character_,
     outcome_info = NULL,
@@ -122,12 +141,17 @@ setClass("familiarModel",
     calibration_model = NULL,
     novelty_detector = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
+    vimp_table = NULL,
+    vimp_aggregation_method = NA_character_,
+    vimp_rank_threshold = NA_integer_,
     required_features = NULL,
     model_features = NULL,
     novelty_features = NULL,
     calibration_info = NULL,
     km_info = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
     run_table = NULL,
     settings = NULL,
     is_trimmed = FALSE,
@@ -136,7 +160,8 @@ setClass("familiarModel",
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,
-    package_version = NULL)
+    package_version = NULL
+  )
 )
 
 
@@ -155,8 +180,8 @@ setClass("familiarModel",
 #' @slot data_column_info Data information object containing information
 #'   regarding identifier column names and outcome column names.
 #' @slot learner Learning algorithm used to create the models in the ensemble.
-#' @slot fs_method Feature selection method used to determine variable
-#'   importance for the models in the ensemble.
+#' @slot vimp_method Method used to determine variable importance for the models
+#'   in the ensemble.
 #' @slot feature_info List of objects containing feature information, e.g.,
 #'   name, class levels, transformation, normalisation and clustering
 #'   parameters.
@@ -166,6 +191,10 @@ setClass("familiarModel",
 #'   models in the ensemble,
 #' @slot novelty_features The combined set of features that is used to train all
 #'   novelty detectors in the ensemble.
+#' @slot data_id Internal identifier for the dataset used to train or
+#'   evaluate the ensemble.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   used to train or evaluate the ensemble.
 #' @slot run_table Run table for the data used to train the ensemble. Used
 #'   internally.
 #' @slot calibration_info Calibration information, e.g. baseline survival in the
@@ -197,8 +226,8 @@ setClass("familiarEnsemble",
     data_column_info = "ANY",
     # Name of learner.
     learner = "character",
-    # Name of feature selection method.
-    fs_method = "character",
+    # Name of variable importance method.
+    vimp_method = "character",
     # Data required for feature pre-processing.
     feature_info = "ANY",
     # Required features for complete reconstruction, including imputation.
@@ -208,8 +237,12 @@ setClass("familiarEnsemble",
     model_features = "ANY",
     # Features that are required for novelty detection.
     novelty_features = "ANY",
-    # Set of run tables for the current ensemble. This is only required for
-    # processing internal data.
+    # data_id for the data used to train the model.
+    data_id = "integer",
+    # run_id for the data used to train the model.
+    run_id = "integer",
+    # data_id for predictions. This forces the models to predict at the subsets
+    # in this layer, and overrides data_id (but only for predictions).
     run_table = "ANY",
     # Information required to assess model calibrations (e.g. baseline survival)
     calibration_info = "ANY",
@@ -226,26 +259,36 @@ setClass("familiarEnsemble",
     # Project identifier for consistency tracking.
     project_id = "ANY",
     # Package version for backward compatibility checks.
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     model_list = NULL,
     outcome_type = NA_character_,
     outcome_info = NULL,
     data_column_info = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     feature_info = NULL,
     required_features = NULL,
     model_features = NULL,
     novelty_features = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
     run_table = NULL,
     calibration_info = NULL,
     model_dir_path = NA_character_,
     auto_detach = FALSE,
     settings = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
+)
+
+
+setClassUnion(
+  "familiarModelUnion",
+  members = c("familiarModel", "familiarEnsemble")
 )
 
 
@@ -261,8 +304,7 @@ setClass("familiarEnsemble",
 #' @slot outcome_type Outcome type of the data used to create the object.
 #' @slot outcome_info Outcome information object, which contains additional
 #'   information concerning the outcome, such as class levels.
-#' @slot fs_vimp Variable importance data collected from feature selection
-#'   methods.
+#' @slot fs_vimp Data collected for variable importance methods.
 #' @slot model_vimp Variable importance data collected from model-specific
 #'   algorithms implemented by models created by familiar.
 #' @slot permutation_vimp Data collected for permutation variable importance.
@@ -275,8 +317,8 @@ setClass("familiarEnsemble",
 #'   model or ensemble of models, but without imputation.
 #' @slot learner Learning algorithm used to create the model or ensemble of
 #'   models.
-#' @slot fs_method Feature selection method used to determine variable
-#'   importance for the model or ensemble of models.
+#' @slot vimp_method Method used to determine variable importance for the model
+#'   or ensemble of models.
 #' @slot pooling_table Run table for the data underlying the familiarData
 #'   object. Used internally.
 #' @slot prediction_data Model predictions for a model or ensemble of models for
@@ -299,6 +341,8 @@ setClass("familiarEnsemble",
 #' @slot ice_data Individual conditional expectation data for features included
 #'   in a model or ensemble of models, based on the underlying dataset. Partial
 #'   dependence data are computed on the fly from these data.
+#' @slot shap_data SHAP values for features included in a model or ensemble of 
+#'   models.
 #' @slot univariate_analysis Univariate analysis of the underlying dataset.
 #' @slot feature_expressions Feature expression values of the underlying
 #'   dataset.
@@ -306,10 +350,6 @@ setClass("familiarEnsemble",
 #'   dataset.
 #' @slot sample_similarity Sample similarity information of the underlying
 #'   dataset.
-#' @slot is_validation Signifies whether the underlying data forms a validation
-#'   dataset. Used internally.
-#' @slot generating_ensemble Name of the ensemble that was used to generate the
-#'   familiarData object.
 #' @slot project_id Identifier of the project that generated the familiarData
 #'   object.
 #' @slot familiar_version Version of the familiar package.
@@ -327,7 +367,7 @@ setClass("familiarData",
     outcome_type = "character",
     # Outcome info, such as class levels, mean values etc.
     outcome_info = "ANY",
-    # Feature selection variable importance
+    # Variable importance method
     fs_vimp = "ANY",
     # Model variable importance
     model_vimp = "ANY",
@@ -344,8 +384,8 @@ setClass("familiarData",
     model_features = "ANY",
     # Name of learner
     learner = "character",
-    # Name of feature selection method
-    fs_method = "character",
+    # Name of variable importance method
+    vimp_method = "character",
     # Run table for the current data
     pooling_table = "ANY",
     # Model predictions for later reference
@@ -376,17 +416,15 @@ setClass("familiarData",
     sample_similarity = "ANY",
     # Information on individual conditional expectation
     ice_data = "ANY",
-    # Flag to signal whether the data concerns validation data (TRUE) or
-    # development data (FALSE)
-    is_validation = "logical",
-    # Name of the model ensemble used to generate this data
-    generating_ensemble = "character",
+    # Information on SHAP values
+    shap_data = "ANY",
     # Project identifier
     project_id = "ANY",
     # Package version for backward compatibility
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     outcome_type = NA_character_,
     outcome_info = NULL,
     fs_vimp = NULL,
@@ -397,7 +435,7 @@ setClass("familiarData",
     required_features = NULL,
     model_features = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     pooling_table = NULL,
     prediction_data = NULL,
     confusion_matrix = NULL,
@@ -413,11 +451,12 @@ setClass("familiarData",
     feature_similarity = NULL,
     sample_similarity = NULL,
     ice_data = NULL,
-    is_validation = FALSE,
-    generating_ensemble = character(0),
+    shap_data = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
+
 
 # familiarCollection object ----------------------------------------------------
 
@@ -431,8 +470,7 @@ setClass("familiarData",
 #' @slot outcome_type Outcome type for which the collection was created.
 #' @slot outcome_info Outcome information object, which contains information
 #'   concerning the outcome, such as class levels.
-#' @slot fs_vimp Variable importance data collected by feature selection
-#'   methods.
+#' @slot fs_vimp collected for variable importance methods.
 #' @slot model_vimp Variable importance data collected from model-specific
 #'   algorithms implemented by models created by familiar.
 #' @slot permutation_vimp Data collected for permutation variable importance.
@@ -444,7 +482,8 @@ setClass("familiarData",
 #' @slot model_features The set of features that are required for using the
 #'   model, but without imputation.
 #' @slot learner Learning algorithm(s) used for data in the collection.
-#' @slot fs_method Feature selection method(s) used for data in the collection.
+#' @slot vimp_method Variable importance method(s) used for data in the
+#'   collection.
 #' @slot prediction_data Model predictions for the data in the collection.
 #' @slot confusion_matrix Confusion matrix information for the data in the
 #'   collection.
@@ -463,6 +502,8 @@ setClass("familiarData",
 #' @slot ice_data Individual conditional expectation data for data in the
 #'   collection. Partial dependence data are computed on the fly from these
 #'   data.
+#' @slot shap_data SHAP values for features included in a model or ensemble of 
+#'   models.
 #' @slot univariate_analysis Univariate analysis results of data in the
 #'   collection.
 #' @slot feature_expressions Feature expression values for data in the
@@ -475,9 +516,9 @@ setClass("familiarData",
 #'   See `get_data_set_names` and `set_data_set_names`.
 #' @slot learner_labels Labels for the different learning algorithms used to
 #'   create the collection. See `get_learner_names` and `set_learner_names`.
-#' @slot fs_method_labels Labels for the different feature selection methods
-#'   used to create the collection. See `get_fs_method_names` and
-#'   `set_fs_method_names`.
+#' @slot vimp_method_labels Labels for the different variable importance methods
+#'   used to create the collection. See `get_vimp_method_names` and
+#'   `set_vimp_method_names`.
 #' @slot feature_labels Labels for the features in this collection. See
 #'   `get_feature_names` and `set_feature_names`.
 #' @slot km_group_labels Labels for the risk strata in this collection. See
@@ -523,8 +564,8 @@ setClass("familiarCollection",
     model_features = "ANY",
     # Name of learner
     learner = "character",
-    # Name of feature selection method
-    fs_method = "character",
+    # Name of variable importance method
+    vimp_method = "character",
     # Model predictions for later reference
     prediction_data = "ANY",
     # Confusion matrix for categorical outcomes
@@ -553,12 +594,14 @@ setClass("familiarCollection",
     sample_similarity = "ANY",
     # Information on individual conditional expectation
     ice_data = "ANY",
+    # Information on SHAP values
+    shap_data = "ANY",
     # Label and order of data names
     data_set_labels = "ANY",
     # Label and order of learners
     learner_labels = "ANY",
-    # Label and order of feature selection methods
-    fs_method_labels = "ANY",
+    # Label and order of variable importance methods
+    vimp_method_labels = "ANY",
     # Label and order of features
     feature_labels = "ANY",
     # Label and order of kaplan-meier groups
@@ -568,10 +611,11 @@ setClass("familiarCollection",
     # Project identifier
     project_id = "ANY",
     # Package version for backward compatibility
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
-    data_sets = character(0),
+    name = character(0L),
+    data_sets = character(0L),
     outcome_type = NA_character_,
     outcome_info = NULL,
     fs_vimp = NULL,
@@ -582,7 +626,7 @@ setClass("familiarCollection",
     required_features = NULL,
     model_features = NULL,
     learner = NA_character_,
-    fs_method = NA_character_,
+    vimp_method = NA_character_,
     prediction_data = NULL,
     confusion_matrix = NULL,
     decision_curve_data = NULL,
@@ -597,14 +641,16 @@ setClass("familiarCollection",
     feature_similarity = NULL,
     sample_similarity = NULL,
     ice_data = NULL,
+    shap_data = NULL,
     data_set_labels = NULL,
     learner_labels = NULL,
-    fs_method_labels = NULL,
+    vimp_method_labels = NULL,
     feature_labels = NULL,
     km_group_labels = NULL,
     class_labels = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 
@@ -622,21 +668,22 @@ setClass("familiarCollection",
 #' @slot preprocessing_level character indicating the level of pre-processing
 #'   already conducted.
 #' @slot outcome_type character, determines the outcome type.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
+#' @slot feature_info List of objects containing feature information, e.g.,
+#'   name, class levels, transformation, normalisation and clustering
+#'   parameters. Optional.
 #' @slot data_column_info Object containing column information.
-#' @slot delay_loading logical. Allows delayed loading data, which enables data
-#'   parsing downstream without additional workflow complexity or memory
-#'   utilisation.
-#' @slot perturb_level numeric. This is the perturbation level for data which
-#'   has not been loaded. Used for data retrieval by interacting with the run
-#'   table of the accompanying model.
-#' @slot load_validation logical. This determines which internal data set will
-#'   be loaded. If TRUE, the validation data will be loaded, whereas FALSE loads
-#'   the development data.
-#' @slot aggregate_on_load logical. Determines whether data is aggregated after
-#'   loading.
-#' @slot sample_set_on_load NULL or vector of sample identifiers to be loaded.
-#' 
-setClass("dataObject",
+#' @slot data_id Data identifier for dataset. Set using internal routines if the
+#'   `dataObject` was created from a `delayedDataObject`
+#' @slot run_id Run identifier for dataset. Set using internal routines if the
+#'   `dataObject` was created from a `delayedDataObject`
+#' @slot validation Identifies if validation or development samples were loaded.
+#'   Set using internal routines if the `dataObject` was created from a
+#'   `delayedDataObject`.
+#' @slot sample_seed Seed used for creating a bootstrap of the data.
+setClass(
+  "dataObject",
   slots = list(
     # Data
     data = "ANY",
@@ -646,30 +693,87 @@ setClass("dataObject",
     outcome_type = "character",
     # Outcome info, such as class levels, mean values etc.
     outcome_info = "ANY",
-    # Info related to the columns in the dataset.
+    # Info related to features in the data.
+    feature_info = "ANY",
+    # Info related to the other columns in the dataset.
     data_column_info = "ANY",
-    # Flag for delayed loading. This can only be meaningfully set using internal
-    # data.
-    delay_loading = "logical",
-    # Perturbation level for data which has not been loaded. Used for data
-    # retrieval in combination with the run table of the accompanying model.
-    perturb_level = "numeric",
-    # Determines which data should be loaded.
-    load_validation = "logical",
-    # Flag for aggregation after loading and pre-processing
-    aggregate_on_load = "logical",
-    # Samples to be loaded
-    sample_set_on_load = "ANY"),
+    # Data id
+    data_id = "integer",
+    # Run id
+    run_id = "integer",
+    # Validation marker.
+    validation = "logical",
+    # Sample seed
+    sample_seed = "integer"
+  ),
   prototype = list(
     data = NULL,
     preprocessing_level = "none",
     outcome_type = NA_character_,
     outcome_info = NULL,
-    delay_loading = FALSE,
-    perturb_level = NA_integer_,
-    load_validation = TRUE,
-    aggregate_on_load = FALSE,
-    sample_set_on_load = NULL)
+    feature_info = NULL,
+    data_column_info = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
+    validation = NA,
+    sample_seed = NA_integer_
+  )
+)
+
+
+
+# delayedDataObject object -----------------------------------------------------
+
+#' Data object with delayed loading
+#'
+#' The delayed loading object provides an interface to the backend data. This
+#' data object is typically used within the evaluation pipeline to load data
+#' when needed.
+#'
+#' @slot data NULL or data table containing the data. If present (not `NULL`),
+#'   data is considered loaded. This should not happen -- load_data_object auto-
+#'   matically creates a dataObject from the delayedDataObject.
+#' @slot preprocessing_level character indicating the level of pre-processing
+#'   already conducted. `"none"` by default.
+#' @slot outcome_type character, determines the outcome type.
+#' @slot outcome_info Outcome information object, which contains additional
+#'   information concerning the outcome, such as class levels.
+#' @slot feature_info List of objects containing feature information, e.g.,
+#'   name, class levels, transformation, normalisation and clustering
+#'   parameters. Optional.
+#' @slot data_column_info Object containing column information.
+#' @slot data_id integer. Defines the data_id of the dataset that should be
+#'   loaded.
+#' @slot run_id integer. Defines the run_id of the dataset that should be load.
+#'   Together with data_id, run_id and validation allows for looking up the
+#'   sample set. If run_id is left unset (NA_integer_), this will force the
+#'   run_id to be set using the model, vimp_method or ensemble object. This is
+#'   used during the evaluation process to load data specifically related to
+#'   training, internal validation and external validation. The run-tables
+#'   (which contain information about data partitioning) associated with these
+#'   objects are used to look-up the run_id based on the data_id (that is always
+#'   explicitly set). The perform_task method for familiarTaskEvaluate uses this
+#'   aspect explicitly.
+#' @slot validation logical. This determines which internal data set will be
+#'   loaded. If TRUE, the validation data will be loaded, whereas FALSE loads
+#'   the development data.
+#' @slot aggregate_on_load logical. Determines whether data is aggregated after
+#'   loading.
+#' @slot sample_set_on_load NULL or vector of sample identifiers to be loaded.
+#'   Overrides any `sample_seed` that may have been provided.
+setClass(
+  "delayedDataObject",
+  contains = "dataObject",
+  slots = list(
+    # Flag for aggregation after loading and pre-processing
+    aggregate_on_load = "logical",
+    # Samples to be loaded. 
+    sample_set_on_load = "ANY"
+  ),
+  prototype = list(
+    aggregate_on_load = NA,
+    sample_set_on_load = NULL
+  )
 )
 
 
@@ -735,6 +839,7 @@ setClass("dataObject",
 #'   features.
 #' @slot required_features Details features required for clustering or
 #'   imputation.
+#' @slot project_id Identifier of the project that generated this collection.
 #' @slot familiar_version Version of the familiar package.
 #'
 #' @export
@@ -767,7 +872,9 @@ setClass("featureInfo",
     imputation_parameters = "ANY",
     cluster_parameters = "ANY",
     required_features = "ANY",
-    familiar_version = "ANY"),
+    project_id = "ANY",
+    familiar_version = "ANY"
+  ),
   prototype = list(
     name = NA_character_,
     set_descriptor = NA_character_,
@@ -795,7 +902,9 @@ setClass("featureInfo",
     imputation_parameters = NULL,
     cluster_parameters = NULL,
     required_features = NULL,
-    familiar_version = NULL)
+    project_id = NULL,
+    familiar_version = NULL
+  )
 )
 
 
@@ -822,11 +931,13 @@ setClass("featureInfoParameters",
   slots = list(
     name = "character",
     complete = "logical",
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
     name = NA_character_,
     complete = FALSE,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
 )
 
 
@@ -836,11 +947,16 @@ setClass("featureInfoParameters",
 #' Variable importance table
 #'
 #' A vimpTable object contains information concerning variable importance of one
-#' or more features. These objects are created during feature selection.
+#' or more features. These objects are created during variable importance
+#' computation..
 #'
 #' @slot vimp_table Table containing features with corresponding scores.
 #' @slot vimp_method Method used to compute variable importance scores for each
 #'   feature.
+#' @slot data_id Internal identifier for the dataset used to derive the variable
+#'   importance table.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   to derive the variable importance table.
 #' @slot run_table Run table for the data used to compute variable importances
 #'   from. Used internally.
 #' @slot score_aggregation Method used to aggregate the score of contrasts for
@@ -904,7 +1020,9 @@ setClass("vimpTable",
     # Variable importance method that generated the current variable
     # importance table.
     vimp_method = "character",
-    # Run table for the current model
+    data_id = "integer",
+    run_id = "integer",
+    # Run table for the current table.
     run_table = "ANY",
     # Set how scores from encoded features should be aggregated.
     score_aggregation = "character",
@@ -920,10 +1038,13 @@ setClass("vimpTable",
     # Version of familiar used to create the object.
     familiar_version = "ANY",
     # State of the object.
-    state = "character"),
+    state = "character"
+  ),
   prototype = list(
     vimp_table = NULL,
     vimp_method = NA_character_,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
     run_table = NULL,
     score_aggregation = NA_character_,
     encoding_table = NULL,
@@ -931,7 +1052,8 @@ setClass("vimpTable",
     invert = FALSE,
     project_id = NULL,
     familiar_version = NULL,
-    state = "initial")
+    state = "initial"
+  )
 )
 
 
@@ -964,6 +1086,8 @@ setClass("vimpTable",
 #'   outcomes. Currently unused.
 #' @slot normalisation_parameters Parameters used for normalising numeric
 #'   outcomes. Currently unused.
+#' @slot familiar_version Version of the familiar package used to create this
+#'   object.
 #'
 #' @export
 
@@ -998,7 +1122,10 @@ setClass("outcomeInfo",
     # Transformation parameters for the outcome data.
     transformation_parameters = "ANY",
     # Normalisation parameters for the outcome data.
-    normalisation_parameters = "ANY"),
+    normalisation_parameters = "ANY",
+    # Version of familiar used to create the object.
+    familiar_version = "ANY"
+  ),
   prototype = list(
     name = NA_character_,
     outcome_type = NA_character_,
@@ -1014,7 +1141,9 @@ setClass("outcomeInfo",
     data_id = NA_integer_,
     run_id = NA_integer_,
     transformation_parameters = NULL,
-    normalisation_parameters = NULL)
+    normalisation_parameters = NULL,
+    familiar_version = NULL
+  )
 )
 
 
@@ -1031,6 +1160,10 @@ setClass("outcomeInfo",
 #'   method.
 #' @slot vimp_method The character string indicating the variable importance
 #'   method.
+#' @slot vimp_aggregation_method Method used for aggregating variable importance
+#'   tables if more than one is present.)
+#' @slot vimp_rank_threshold Threshold used for some variable importance
+#'   aggregation methods.
 #' @slot multivariate Flags whether the variable importance method is
 #'   multivariate vs. univariate.
 #' @slot outcome_info Outcome information object, which contains additional
@@ -1046,6 +1179,8 @@ setClass("outcomeInfo",
 #'   importance method. Used internally.
 #' @slot project_id Identifier of the project that generated the
 #'   familiarVimpMethod object.
+#' @slot familiar_version Version of the familiar package used to create this
+#'   object.
 #'
 #' @export
 setClass("familiarVimpMethod",
@@ -1056,6 +1191,10 @@ setClass("familiarVimpMethod",
     hyperparameters = "ANY",
     # Name of variable importance method
     vimp_method = "character",
+    # Vimp aggregation method.
+    vimp_aggregation_method = "character",
+    # Vimp rank threshold.
+    vimp_rank_threshold = "integer",
     # Indicates whether the method is a univariate or multivariate
     # method.
     multivariate = "logical",
@@ -1070,18 +1209,25 @@ setClass("familiarVimpMethod",
     # Run table for the current vimp method
     run_table = "ANY",
     # Project identifier for consistency tracking
-    project_id = "ANY"),
+    project_id = "ANY",
+    # Version of familiar used to create the object.
+    familiar_version = "ANY"
+  ),
   prototype = list(
     outcome_type = NA_character_,
     hyperparameters = NULL,
     vimp_method = NA_character_,
+    vimp_aggregation_method = NA_character_,
+    vimp_rank_threshold = NA_integer_,
     multivariate = FALSE,
     outcome_info = NULL,
     feature_info = NULL,
     required_features = NULL,
     package = NULL,
     run_table = NULL,
-    project_id = NULL)
+    project_id = NULL,
+    familiar_version = NULL
+  )
 )
 
 
@@ -1095,7 +1241,6 @@ setClass("familiarVimpMethod",
 #' dataset.
 #'
 #' @slot name Name of the familiarNoveltyDetector object.
-#' @slot learner Learning algorithm used to create the novelty detector.
 #' @slot model The actual novelty detector trained using a specific algorithm,
 #'   e.g. a isolation forest from the `isotree` package.
 #' @slot feature_info List of objects containing feature information, e.g.,
@@ -1103,18 +1248,33 @@ setClass("familiarVimpMethod",
 #'   parameters.
 #' @slot data_column_info Data information object containing information
 #'   regarding identifier column names.
-#' @slot conversion_parameters Parameters used to convert raw output to
-#'   statistical probability of being out-of-distribution. Currently unused.
 #' @slot hyperparameters Set of hyperparameters used to train the detector.
+#' @slot hyperparameter_data Information generated during hyperparameter
+#'   optimisation. Currently not used.
+#' @slot calibration_model Model used to convert raw output to statistical
+#'   probability of being out-of-distribution. Currently not used.
+#' @slot learner Learning algorithm used to create the novelty detector.
+#' @slot vimp_method Method used to determine variable importance for the
+#'   novelty detector.
+#' @slot vimp_table Variable importance table or list of variable importance
+#'   tables for the model.
+#' @slot vimp_aggregation_method Method used for aggregating variable importance
+#'   tables if more than one is present.)
+#' @slot vimp_rank_threshold Threshold used for some variable importance
+#'   aggregation methods.
 #' @slot required_features The set of features required for complete
 #'   reproduction, i.e. with imputation.
 #' @slot model_features The set of features that is used to train the detector.
+#' @slot data_id Internal identifier for the dataset used to train the detector.
+#' @slot run_id Internal identifier for the specific subset of the dataset used
+#'   used to train the detector.
 #' @slot run_table Run table for the data used to train the detector. Used
 #'   internally.
 #' @slot is_trimmed Flag that indicates whether the detector, stored in the
 #'   `model` slot, has been trimmed.
 #' @slot trimmed_function List of functions whose output has been captured prior
 #'   to trimming the model.
+#' @slot messages List of warning and error messages generated during training.
 #' @slot project_id Identifier of the project that generated the
 #'   familiarNoveltyDetector object.
 #' @slot familiar_version Version of the familiar package.
@@ -1130,57 +1290,82 @@ setClass("familiarVimpMethod",
 
 setClass("familiarNoveltyDetector",
   slots = list(
+    
     # Model name.
     name = "character",
-    # Detector
-    learner = "character",
     # Model container
     model = "ANY",
-    # Info related to the columns in the dataset.
-    data_column_info = "ANY",
-    # Parameters needed to convert raw novelty scores into p-values.
-    conversion_parameters = "ANY",
-    # Hyperparameters used to create the novelty detector.
-    hyperparameters = "ANY",
     # Data required for feature pre-processing
     feature_info = "ANY",
-    # Required features for complete reconstruction, including
-    # imputation.
+    # Info related to the columns in the dataset.
+    data_column_info = "ANY",
+    # Hyper-parameters (typically stored in the model as well)
+    hyperparameters = "ANY",
+    # Hyperparameter data, e.g. for visualising the hyperparameter space.
+    hyperparameter_data = "ANY",
+    # Models used for recalibration
+    calibration_model = "ANY",
+    # Name of learner
+    learner = "character",
+    # Name of variable importance method
+    vimp_method = "character",
+    # Variable importance table
+    vimp_table = "ANY",
+    # Vimp aggregation method.
+    vimp_aggregation_method = "character",
+    # Vimp rank threshold.
+    vimp_rank_threshold = "integer",
+    # Required features for complete reconstruction, including imputation.
     required_features = "ANY",
-    # Features that are required for novelty detection.
+    # Features that are required for the model.
     model_features = "ANY",
+    # data_id for the data used to train the model.
+    data_id = "integer",
+    # run_id for the data used to train the model.
+    run_id = "integer",
     # Run table for the current model
     run_table = "ANY",
-    # Flags trimming of the novelty detector.
+    # Flags trimming of the model
     is_trimmed = "logical",
-    # Restores functions lost due to model trimming, such as coef or
-    # vcov.
+    # Restores functions lost due to model trimming, such as coef or vcov.
     trimmed_function = "list",
+    # List of warning and error messages encountered during training.
+    messages = "list",
     # Project identifier for consistency tracking
     project_id = "ANY",
-    # Package version for backward compatibility.
+    # Package version for backward compatibility
     familiar_version = "ANY",
     # Name of the package required to train the learner.
     package = "ANY",
     # Version of the learner for reproducibility.
-    package_version = "ANY"),
+    package_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
-    learner = NA_character_,
+    name = character(0L),
     model = NULL,
-    data_column_info = NULL,
-    conversion_parameters = NULL,
-    hyperparameters = NULL,
     feature_info = NULL,
+    data_column_info = NULL,
+    hyperparameters = NULL,
+    hyperparameter_data = NULL,
+    calibration_model = NULL,
+    learner = NA_character_,
+    vimp_method = NA_character_,
+    vimp_table = NULL,
+    vimp_aggregation_method = NA_character_,
+    vimp_rank_threshold = NA_integer_,
     required_features = NULL,
     model_features = NULL,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
     run_table = NULL,
     is_trimmed = FALSE,
     trimmed_function = list(),
+    messages = list(),
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,
-    package_version = NULL)
+    package_version = NULL
+  )
 )
 
 
@@ -1247,9 +1432,10 @@ setClass("familiarHyperparameterLearner",
     # Name of the package required to train the learner.
     package = "ANY",
     # Version of the learner for reproducibility.
-    package_version = "ANY"),
+    package_version = "ANY"
+  ),
   prototype = list(
-    name = character(0),
+    name = character(0L),
     learner = NA_character_,
     target_learner = NA_character_,
     target_outcome_type = NA_character_,
@@ -1260,7 +1446,8 @@ setClass("familiarHyperparameterLearner",
     project_id = NULL,
     familiar_version = NULL,
     package = NULL,
-    package_version = NULL)
+    package_version = NULL
+  )
 )
 
 
@@ -1284,7 +1471,8 @@ setClass("familiarHyperparameterLearner",
 #'
 #' @export
 
-setClass("familiarMetric",
+setClass(
+  "familiarMetric",
   slots = list(
     # The metric itself.
     metric = "character",
@@ -1298,14 +1486,16 @@ setClass("familiarMetric",
     # function from.
     baseline_value = "ANY",
     # Flag that sets whether higher values denote better performance.
-    higher_better = "logical"),
+    higher_better = "logical"
+  ),
   prototype = list(
     metric = NA_character_,
     outcome_type = NA_character_,
     name = NA_character_,
     value_range = c(NA_real_, NA_real_),
     baseline_value = NULL,
-    higher_better = TRUE)
+    higher_better = TRUE
+  )
 )
 
 
@@ -1403,12 +1593,13 @@ setClass("familiarMetric",
 #'
 #' @export
 
-setClass("familiarDataElement",
+setClass(
+  "familiarDataElement",
   slots = list(
     # The primary results.
     data = "ANY",
-    # Identifiers of the data, e.g. the generating model name, the
-    # feature-selection method and learner.
+    # Identifiers of the data, e.g. the generating model name, the variable
+    # importance method and learner.
     identifiers = "ANY",
     # The level of detail at which the data was computed.
     detail_level = "character",
@@ -1428,7 +1619,8 @@ setClass("familiarDataElement",
     grouping_column = "ANY",
     # Flag that signals whether the data is aggregated, e.g. by computing
     # confidence intervals and a bias-corrected value.
-    is_aggregated = "logical"),
+    is_aggregated = "logical"
+  ),
   prototype = list(
     data = NULL,
     identifiers = NULL,
@@ -1438,7 +1630,8 @@ setClass("familiarDataElement",
     bootstrap_ci_method = NA_character_,
     value_column = NA_character_,
     grouping_column = NULL,
-    is_aggregated = FALSE)
+    is_aggregated = FALSE
+  )
 )
 
 
@@ -1458,6 +1651,9 @@ setClass("familiarDataElement",
 #' @slot feature_info Feature information objects. Only available if the
 #'   experimentData object was generated using the `precompute_feature_info` or
 #'   `precompute_vimp` functions.
+#' @slot vimp_hyperparameter_list List of hyperparameters for variable importance
+#'   objects.  Only available if the experimentData object was created using the
+#'   `precompute_vimp` function.
 #' @slot vimp_table_list List of variable importance table objects. Only
 #'   available if the experimentData object was created using the
 #'   `precompute_vimp` function.
@@ -1474,7 +1670,8 @@ setClass("familiarDataElement",
 #'   \code{\link{precompute_feature_info}}, \code{\link{precompute_vimp}}
 #' @export
 
-setClass("experimentData",
+setClass(
+  "experimentData",
   slots = list(
     # Experimental design.
     experiment_setup = "ANY",
@@ -1482,17 +1679,110 @@ setClass("experimentData",
     iteration_list = "ANY",
     # List of feature information objects.
     feature_info = "ANY",
+    # List of variable importance hyperparameters.
+    vimp_hyperparameter_list = "ANY",
     # List of variable importance tables.
     vimp_table_list = "ANY",
     # Project identifier for consistency tracking
     project_id = "ANY",
     # Package version for backward compatibility
-    familiar_version = "ANY"),
+    familiar_version = "ANY"
+  ),
   prototype = list(
     experiment_setup = NULL,
     iteration_list = NULL,
     feature_info = NULL,
+    vimp_hyperparameter_list = NULL,
     vimp_table_list = NULL,
     project_id = NULL,
-    familiar_version = NULL)
+    familiar_version = NULL
+  )
+)
+
+
+
+# familiarDataElementPredictionTable object ------------------------------------
+setClass(
+  "familiarDataElementPredictionTable",
+  contains = "familiarDataElement",
+  slots = list(
+    "learner" = "character",
+    "vimp_method" = "character",
+    "ensemble_method" = "character",
+    "percentiles" = "ANY",
+    "outcome_type" = "ANY",
+    "identifier_data" = "ANY",
+    "reference_data" = "ANY",
+    "prediction_data" = "ANY"
+  ),
+  prototype = methods::prototype(
+    bootstrap_ci_method = "percentile",
+    learner = "custom_learner",
+    vimp_method = "custom_vimp_method",
+    ensemble_method = "median",
+    percentiles = NULL,
+    outcome_type = NULL,
+    identifier_data = NULL,
+    reference_data = NULL, 
+    prediction_data = NULL
+  )
+)
+
+
+
+# familiarTask object ----------------------------------------------------------
+setClass(
+  "familiarTask",
+  slots = list(
+    "task_name" = "character",
+    "task_id" = "integer",
+    "n_tasks" = "integer",
+    "data_id" = "integer",
+    "run_id" = "integer",
+    "run_table" = "ANY",
+    "file" = "character",
+    "project_id" = "ANY"
+  ),
+  prototype = methods::prototype(
+    task_name = NA_character_,
+    task_id = 1L,
+    n_tasks = 1L,
+    data_id = NA_integer_,
+    run_id = NA_integer_,
+    run_table = NULL,
+    file = NA_character_,
+    project_id = NULL
+  )
+)
+
+
+# familiarPlot object ----------------------------------------------------------
+setClass(
+  "familiarPlot",
+  slots = list(
+    "gtable" = "ANY",
+    "global_elements" = "ANY",
+    "row_id" = "integer",
+    "col_id" = "integer",
+    "remove_strip_x" = "logical",
+    "remove_strip_y" = "logical",
+    "remove_axis_text_x" = "logical",
+    "remove_axis_text_y" = "logical",
+    "remove_axis_label_x" = "logical",
+    "remove_axis_label_y" = "logical",
+    "remove_panel" = "logical"
+  ),
+  prototype = methods::prototype(
+    gtable = NULL,
+    global_elements = NULL,
+    row_id = NA_integer_,
+    col_id = NA_integer_,
+    remove_strip_x = FALSE,
+    remove_strip_y = FALSE,
+    remove_axis_text_x = FALSE,
+    remove_axis_text_y = FALSE,
+    remove_axis_label_x = FALSE,
+    remove_axis_label_y = FALSE,
+    remove_panel = FALSE
+  )
 )

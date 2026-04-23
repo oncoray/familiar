@@ -12,10 +12,11 @@ extract_ice(
   features = NULL,
   feature_x_range = NULL,
   feature_y_range = NULL,
-  n_sample_points = 50L,
+  n_sample_points = 20L,
   ensemble_method = waiver(),
   evaluation_times = waiver(),
   sample_limit = waiver(),
+  n_important_features = waiver(),
   detail_level = waiver(),
   estimation_type = waiver(),
   aggregate_results = waiver(),
@@ -28,8 +29,9 @@ extract_ice(
 )
 }
 \arguments{
-\item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
-\code{familiarModel} objects.}
+\item{object}{A \code{familiarEnsemble}, which is an ensemble of one or more
+\code{familiarModel} objects, or a \code{familiarDataElementPredictionTable} object
+that contains prediction data.}
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are assessed.}
@@ -62,21 +64,31 @@ value for a sample.
 sample.
 }}
 
-\item{evaluation_times}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+\item{evaluation_times}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
 
 \item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
-that are used during evaluation steps. Cannot be less than 20.
+that are used during evaluation steps. Cannot be fewer than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.
 \code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
 
 This parameter can be set for the following data elements:
-\code{sample_similarity} and \code{ice_data}.}
+\code{sample_similarity}, \code{shap}, \code{permutation_vimp}, and \code{ice_data}.}
+
+\item{n_important_features}{(\emph{optional}) Set the number of features that are
+evaluated in evaluation steps. Cannot be 0 or fewer.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("ice_data"=10, "permutation_vimp"=5)}.
+
+This parameter can be set for the following data elements:
+\code{ice_data}, \code{permutation_vimp}, and \code{shap}.}
 
 \item{detail_level}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
@@ -121,7 +133,11 @@ evaluation steps by providing a parameter value in a named list with data
 elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
-\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.
+
+If results are computed from 10 samples or fewer, \code{ensemble} is
+automatically used. This prevents issues where evaluation steps do not have
+a required minimum number of samples for \code{hybrid} or \code{model}.}
 
 \item{estimation_type}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:

@@ -6,7 +6,7 @@ debug_flag <- FALSE
 # Simple test
 familiar:::integrated_test(
   experimental_design = "fs+mb",
-  fs_method = "none",
+  vimp_method = "none",
   cluster_method = "none",
   imputation_method = "simple",
   parallel = FALSE,
@@ -18,7 +18,7 @@ familiar:::integrated_test(
 # Bootstrap (without optimisation within bootstraps)
 familiar:::integrated_test(
   experimental_design = "bt(fs+mb, 5)",
-  fs_method = "none",
+  vimp_method = "none",
   cluster_method = "none",
   imputation_method = "simple",
   parallel = FALSE,
@@ -30,7 +30,7 @@ familiar:::integrated_test(
 # Bootstrap (with pre-processing and optimisation within bootstraps)
 familiar:::integrated_test(
   experimental_design = "bs(fs+mb, 5)",
-  fs_method = "none",
+  vimp_method = "none",
   cluster_method = "none",
   imputation_method = "simple",
   parallel = FALSE,
@@ -42,7 +42,7 @@ familiar:::integrated_test(
 # Cross-validation
 familiar:::integrated_test(
   experimental_design = "cv(fs+mb, 3)",
-  fs_method = "none",
+  vimp_method = "none",
   cluster_method = "none",
   imputation_method = "simple",
   parallel = FALSE,
@@ -54,7 +54,7 @@ familiar:::integrated_test(
 # Leave-one-out cross-validation
 familiar:::integrated_test(
   experimental_design = "lv(fs+mb)",
-  fs_method = "none",
+  vimp_method = "none",
   cluster_method = "none",
   imputation_method = "simple",
   parallel = FALSE,
@@ -67,14 +67,12 @@ familiar:::integrated_test(
 familiar:::integrated_test(
   experimental_design = "ip(fs+mb)",
   imbalance_correction_method = "full_undersampling",
-  fs_method = "none",
+  vimp_method = "none",
   cluster_method = "none",
   imputation_method = "simple",
   parallel = FALSE,
   skip_evaluation_elements = "all",
   outcome_type_available = "binomial",
-  warning_good = "Imbalance partitions are not required as data are not severely imbalanced.",
-  warning_bad = "Imbalance partitions are not required as data are not severely imbalanced.",
   debug = debug_flag
 )
 
@@ -83,13 +81,11 @@ familiar:::integrated_test(
   experimental_design = "ip(fs+mb)",
   imbalance_correction_method = "random_undersampling",
   imbalance_n_partitions = 3,
-  fs_method = "none",
+  vimp_method = "none",
   cluster_method = "none",
   imputation_method = "simple",
   parallel = FALSE,
   skip_evaluation_elements = "all",
   outcome_type_available = "binomial",
-  warning_good = "Imbalance partitions are not required as data are not severely imbalanced.",
-  warning_bad = "Imbalance partitions are not required as data are not severely imbalanced.",
   debug = debug_flag
 )

@@ -20,8 +20,7 @@ objects.
 \item{\code{outcome_info}}{Outcome information object, which contains information
 concerning the outcome, such as class levels.}
 
-\item{\code{fs_vimp}}{Variable importance data collected by feature selection
-methods.}
+\item{\code{fs_vimp}}{collected for variable importance methods.}
 
 \item{\code{model_vimp}}{Variable importance data collected from model-specific
 algorithms implemented by models created by familiar.}
@@ -41,7 +40,8 @@ model, but without imputation.}
 
 \item{\code{learner}}{Learning algorithm(s) used for data in the collection.}
 
-\item{\code{fs_method}}{Feature selection method(s) used for data in the collection.}
+\item{\code{vimp_method}}{Variable importance method(s) used for data in the
+collection.}
 
 \item{\code{prediction_data}}{Model predictions for the data in the collection.}
 
@@ -71,6 +71,9 @@ data in the collection.}
 collection. Partial dependence data are computed on the fly from these
 data.}
 
+\item{\code{shap_data}}{SHAP values for features included in a model or ensemble of
+models.}
+
 \item{\code{univariate_analysis}}{Univariate analysis results of data in the
 collection.}
 
@@ -89,9 +92,9 @@ See \code{get_data_set_names} and \code{set_data_set_names}.}
 \item{\code{learner_labels}}{Labels for the different learning algorithms used to
 create the collection. See \code{get_learner_names} and \code{set_learner_names}.}
 
-\item{\code{fs_method_labels}}{Labels for the different feature selection methods
-used to create the collection. See \code{get_fs_method_names} and
-\code{set_fs_method_names}.}
+\item{\code{vimp_method_labels}}{Labels for the different variable importance methods
+used to create the collection. See \code{get_vimp_method_names} and
+\code{set_vimp_method_names}.}
 
 \item{\code{feature_labels}}{Labels for the features in this collection. See
 \code{get_feature_names} and \code{set_feature_names}.}

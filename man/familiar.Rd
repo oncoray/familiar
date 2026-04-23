@@ -24,8 +24,8 @@ evaluation process come with confidence intervals.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/alexzwanenburg/familiar}
-  \item Report bugs at \url{https://github.com/alexzwanenburg/familiar/issues}
+  \item \url{https://github.com/oncoray/familiar}
+  \item Report bugs at \url{https://github.com/oncoray/familiar/issues}
 }
 
 }
@@ -39,12 +39,8 @@ Authors:
 
 Other contributors:
 \itemize{
-  \item Stefan Leger [contributor]
-  \item Iram Shahzadi [contributor]
-  \item Asier Rabasco Meneghetti [contributor]
-  \item Sebastian Starke [contributor]
-  \item Technische Universität Dresden [copyright holder]
   \item German Cancer Research Center (DKFZ) [copyright holder]
+  \item Technische Universität Dresden [copyright holder]
 }
 
 }

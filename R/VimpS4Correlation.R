@@ -4,7 +4,8 @@ NULL
 
 setClass(
   "familiarCorrelationVimp",
-  contains = "familiarVimpMethod")
+  contains = "familiarVimpMethod"
+)
 
 
 
@@ -19,7 +20,13 @@ setMethod(
   "is_available",
   signature(object = "familiarCorrelationVimp"),
   function(object, ...) {
-    return(object@outcome_type %in% c("continuous", "count", "survival"))
+    
+    if (object@outcome_type == "count") {
+      ..deprecation_count()
+      return(FALSE)
+    }
+    
+    return(object@outcome_type %in% c("continuous", "survival"))
   }
 )
 
@@ -40,7 +47,12 @@ setMethod(
 setMethod(
   "..vimp",
   signature(object = "familiarCorrelationVimp"),
-  function(object, data, ...) {
+  function(
+    object,
+    data,
+    cl = NULL,
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
     outcome_event <- NULL
 
@@ -49,7 +61,7 @@ setMethod(
     # Drop non-event data for censored data analysis for calculating correlation
     # and set outcome column.
     if (object@outcome_type == "survival") {
-      data@data <- data@data[outcome_event == 1, ]
+      data@data <- data@data[outcome_event == 1L, ]
 
       # Check whether the filtered data does not allow for assessing variable
       # importance.
@@ -65,46 +77,39 @@ setMethod(
       data = data,
       object = object,
       encoding_method = "dummy",
-      drop_levels = FALSE)
+      drop_levels = FALSE
+    )
 
     # Find feature columns in the data.
     feature_columns <- get_feature_columns(x = encoded_data$encoded_data)
 
+    if (object@outcome_type =="survival") {
+      outcome <- encoded_data$encoded_data@data$outcome_time
+      
+    } else {
+      outcome <- encoded_data$encoded_data@data$outcome
+    }
+    
     # Compute correlation coefficients.
-    correlation_coefficients <- sapply(
-      feature_columns,
-      function(feature, data, outcome_type, correlation_method) {
-        if (outcome_type == "survival") {
-          # Use the outcome_time column for survival data.
-          correlation_coefficient <- stats::cor(
-            x = data[[feature]],
-            y = data[["outcome_time"]],
-            method = correlation_method
-          )
-        } else {
-          # Use the outcome column for continuous and count data.
-          correlation_coefficient <- stats::cor(
-            x = data[[feature]],
-            y = data[["outcome"]],
-            method = correlation_method
-          )
-        }
-        
-        return(correlation_coefficient)
-      },
-      data = encoded_data$encoded_data@data,
-      outcome_type = object@outcome_type,
-      correlation_method = object@vimp_method
+    correlation_coefficients <- fam_sapply(
+      cl = cl,
+      X = encoded_data$encoded_data@data[, mget(feature_columns)],
+      FUN = stats::cor,
+      y = outcome,
+      method = object@vimp_method,
+      chopchop = TRUE
     )
 
     # Create variable importance object.
     vimp_object <- methods::new("vimpTable",
       vimp_table = data.table::data.table(
         "score" = abs(correlation_coefficients),
-        "name" = feature_columns),
+        "name" = feature_columns
+      ),
       encoding_table = encoded_data$reference_table,
       score_aggregation = "max",
-      invert = TRUE)
+      invert = TRUE
+    )
 
     return(vimp_object)
   }

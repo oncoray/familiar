@@ -1,3 +1,162 @@
+# Version 2.0.0 (Astonishing Anteater)
+
+## Breaking changes
+
+- Naming and on-disk location of variable importance tables, models, evaluated
+  datasets and collections, have changed. These are no longer nested to reduce 
+  path lengths and avoid issues due to long path lengths, particularly on 
+  Windows OS.
+
+- Ensembles are now no longer explicitly stored, but are formed at run-time.
+
+- Models now have and use new attributes related to variable importance that 
+  cannot be obtained from models trained prior to version 2.0.0. Models trained
+  with version 1 cannot be assessed. You will need to reinstall version 1.5.0 of
+  familiar.
+
+## Major changes
+
+- SHAP values can now be computed with familiar. SHAP values can be directly
+  exported using the `export_shap` method. Moreover, familiar now supports four
+  types of SHAP plots:
+  
+  - Summary plots (`plot_shap_summary`) provide a global overview of the 
+    relationship of feature values and SHAP-values. More impactful features 
+    tend to have a wider range of SHAP-values.
+    
+  - Force plots (`plot_shap_force`) shows how positive and negative SHAP 
+    values impact the predicted value. Specific features can be isolated.
+    
+  - Waterfall plots (`plot_shap_waterfall`) provide a detailed, local 
+    overview of how each SHAP value contributes to the predicted value for each
+    sample.
+    
+  - SHAP dependence plots (`plot_shap_dependence`) show how the SHAP values
+    depend on values of a feature. Interactions with other features can be shown
+    as well.
+
+- Some functionality was deprecated because of redundancy and stability issues:
+
+  - The `count` outcome type has been deprecated. `count` is a subset of 
+    `continuous` outcomes. Its previous implementation did not provide any 
+    benefits over `continuous`.
+
+  - Gradient boosting using the `mboost` package was deprecated. Use `xgboost` 
+    instead.
+
+  - The `qvalue` package for computing q-values was deprecated.
+
+  - The `VGAM` package, which has been soft-deprecated since version 1.3.0, has 
+    now fully been deprecated.
+
+  - The variable hunting feature selection method for random forests was removed
+    due to stability issues in unit tests.
+    
+  - The minimum depth feature selection method for random forests was removed
+    due to deprecation of the underlying function in `RandomForestSRC`.
+
+- Many evaluation steps that only require model predictions can now be called 
+  externally by providing a `familiarDataElementPredictionTable` object that 
+  contains model prediction data. Such objects can be created using the
+  `as_prediction_table` function.
+
+- Several configuration parameters were renamed to better reflect their actual use:
+
+  - `fs_method` was renamed to `vimp_method`.
+  
+  - `fs_method_parameter` was renamed to `vimp_method_parameter`.
+
+  - `parallel_feature_selection` was renamed to `parallel_vimp`.
+
+- It is now possible to build models without explicitly defining a variable 
+  importance (feature selection) step. For example, 
+  `experimental_design = mb + ev` is now valid and will result in training of a
+  single model on the development dataset with subsequent evaluation on an
+  external dataset. This is realised by using variable importance data obtained
+  during hyperparameter optimisation.
+
+## Minor changes
+
+- The `iteration_seed` configuration parameter was added to provide a fixed seed 
+  for the sampling algorithms that create e.g. bootstraps, cross-validation, for 
+  the experiment. Providing a seed allows for reproducing the sample division
+  across different experiments.
+
+- The `evaluation_elements` configuration parameter was added to allow for
+  specifying which evaluation steps should be performed.
+
+- Concordance variable importance for categorical outcomes now relies on the 
+  internal implementation for the area under the receiver operating 
+  characteristic curve instead of the Gini measure from the `corelearn` package.
+
+- Palettes from the `paletteer` package can now be used to customise plots.
+
+- The default palette was updated to use more vivid colours, particularly for
+  divergent and sequential palettes. The central part of the divergent palette,
+  and the starting grey for sequential palettes, are now darker for better
+  contrast with a white background.
+
+- Plausibility of datasets is now checked more thoroughly to detect common 
+  issues:
+
+  - The presence of duplicate rows with the same feature values and outcome.
+  
+  - The presence of one-to-one predictors of the outcome. This might be 
+    outcome-related columns that have been left in the data accidentally.
+  
+  - The presence of invariant predictors.
+  
+- Statistical tests now assess differences between batches if batch 
+  normalisation is performed, and warns if the outcome in any batch is 
+  significantly different from others.
+
+- The `n_important_features` parameter was introduced to limit the number of 
+  features that are assessed during, e.g., permutation variable importance.
+  By default, this is limited to the 20 most important features.
+
+- The `ensemble` method is now used as `detail_level` for evaluating models if 
+  the number of samples assessed for model is 10 or lower. This avoids an issue 
+  where the `hybrid` method used as a default in several evaluation steps would
+  lead to too few samples to allow for assessment. This affected 
+  Leave-One-Out-Cross-Validation (LOOCV) schemes in particular.
+
+- Added support for `ggplot2` version 4.0. Due to changes in how legends are 
+  handled, the minimum `ggplot2` version is now `4.0.0`.
+  
+- Some plot functions now have a `limit_n_features` argument, which limits the
+  number of features that appear in a plot.
+
+- Concordance index metrics for survival endpoints are now computed using 
+  `survival::concordance` for improved performance.
+  
+- `show` for familiar models now shows an (aggregated) variable importance table.
+
+- Checks on installed packages and their versions are now much more efficient.
+  Repeated look-up was expensive, and results are now cached instead.
+
+## Fixes
+
+- Fixed errors when creating feature or similarity plots caused by sample or 
+  feature names matching internal column names.
+
+- The `sample_similarity` evaluation element is now mentioned in the documentation.
+
+- Variable importance methods and outcome information objects were missing a 
+  familiar version attribute, which has now been added to ensure future 
+  compatibility.
+  
+- Some vignettes referred to `experiment_design` where `experimental_design` was
+  intended.
+  
+- Fixed an error where naive models would yield an incorrect number of predicted
+  values when samples appear multiple times (e.g. in bootstraps).
+  
+- Fixed an error when trying to identify features prior to clustering using 
+  `features_before_clustering`.
+
+- Fixed an issue where the confidence intervals for Kaplan-Meier curves were
+  not shown correctly when using `conf_int_style = "step"`.
+
 # Version 1.5.0 (Whole Whale)
 
 ## Major changes
@@ -26,7 +185,7 @@
 
 ## Bug fixes
 
-- Adapted tests to work when packages are missing.
+- Adapted tests to work when suggested packages are missing (addresses CRAN noSuggests check).
 
 - Fixed an issue that prevented hyperparameter optimisation of `xgboost` models for survival tasks.
 
@@ -40,7 +199,7 @@
 
   - Plot margins are now correctly set in the default familiar plotting theme.
   - Plot elements of composite plots are now correctly set.
-  
+
 - Fixed an incorrect data.table merge when computing survival predictions from random forests.
 
 # Version 1.4.6 (Talented Toad)

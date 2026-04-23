@@ -8,7 +8,7 @@ NULL
 
 #'@title Creates a valid data object from input data.
 #'
-#'@description Creates `dataObject` a object from input data. Input data can be
+#'@description Creates a `dataObject` object from input data. Input data can be
 #'  a `data.frame` or `data.table`, a path to such tables on a local or network
 #'  drive, or a path to tabular data that may be converted to these formats.
 #'
@@ -37,6 +37,9 @@ NULL
 #'  stringent checks, particularly for identifier and outcome columns, which may
 #'  be completely absent. Used internally for `predict`.
 #'
+#'@param .no_features_required Internal flag to signify that data without
+#'  features is allowed. Default: FALSE (most processing steps require features).
+#'
 #'@inheritParams .parse_experiment_settings
 #'
 #'@details You can specify settings for your data manually, e.g. the column for
@@ -55,7 +58,8 @@ NULL
 ## as_data_object (generic) ----------------------------------------------------
 setGeneric(
   "as_data_object",
-  function(data, ...) standardGeneric("as_data_object"))
+  function(data, ...) standardGeneric("as_data_object")
+)
 
 
 
@@ -64,7 +68,10 @@ setGeneric(
 setMethod(
   "as_data_object",
   signature(data = "dataObject"),
-  function(data, object = NULL, ...) return(data))
+  function(data, object = NULL, ...) {
+    return(data)
+  }
+)
 
 
 
@@ -76,8 +83,8 @@ setMethod(
   function(
     data,
     object = NULL,
-    sample_id_column = waiver(),
     batch_id_column = waiver(),
+    sample_id_column = waiver(),
     series_id_column = waiver(),
     development_batch_id = waiver(),
     validation_batch_id = waiver(),
@@ -92,10 +99,11 @@ setMethod(
     include_features = waiver(),
     reference_method = waiver(),
     check_stringency = "strict",
-    ...) {
-    
+    .no_features_required = FALSE,
+    ...
+  ) {
     # Suppress NOTES due to non-standard evaluation in data.table
-    type <- NULL
+    type <- outcome_event <- NULL
     
     # Determine whether the object contains data concerning columns, and
     # outcome. Note that user-provided names always take precedence.
@@ -112,7 +120,7 @@ setMethod(
     }
     
     if (check_stringency != "strict") {
-      if (!has_model_object) stop("Dummy columns cannot be set without a model or ensemble object.")
+      if (!has_model_object) ..error("Dummy columns cannot be set without a model or ensemble object.")
     } 
     
     # Attempt to identify a sample identifier column.
@@ -124,7 +132,7 @@ setMethod(
           
           # Check that the model actually has a column name (not character(0))
           # that is not NA, and set this column name.
-          if (length(model_sample_id_column) > 0) {
+          if (length(model_sample_id_column) > 0L) {
             if (!is.na(model_sample_id_column)) sample_id_column <- model_sample_id_column
           }
         }
@@ -140,7 +148,7 @@ setMethod(
           
           # Check that the model actually has a column name (not character(0))
           # that is not NA, and set this column name.
-          if (length(model_batch_id_column) > 0) {
+          if (length(model_batch_id_column) > 0L) {
             if (!is.na(model_batch_id_column)) batch_id_column <- model_batch_id_column
           }
         }
@@ -156,7 +164,7 @@ setMethod(
           
           # Check that the model actually has a column name (not character(0))
           # that is not NA, and set this column name.
-          if (length(model_series_id_column) > 0) {
+          if (length(model_series_id_column) > 0L) {
             if (!is.na(model_series_id_column)) series_id_column <- model_series_id_column
           }
         }
@@ -165,27 +173,6 @@ setMethod(
     
     # Development and validation batch ids are not incorporated into
     # familiarModel or familiarEnsemble objects.
-    
-    # Attempt to identify the name of the outcome.
-    if (is.waive(outcome_name)) {
-      if (has_model_object & has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          
-          # Check that the outcome name is not empty.
-          if (length(object@outcome_info@name) >= 1) outcome_name <- object@outcome_info@name
-        }
-      }
-    }
-    
-    # Attempt to identify the outcome columns.
-    if (is.waive(outcome_column)) {
-      if (has_model_object & has_outcome_info_slot) {
-        if (!is_empty(object@data_column_info)) {
-          # Find the model columns.
-          outcome_column <- object@data_column_info[type == "outcome_column"]$external
-        }
-      }
-    }
     
     # Attempt to identify the type of outcome.
     if (is.waive(outcome_type)) {
@@ -197,51 +184,74 @@ setMethod(
       }
     }
     
-    # Attempt to identify the event indicator.
-    if (is.waive(event_indicator)) {
-      if (has_model_object & has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          if (length(object@outcome_info@event) > 0) {
-            if (!is.na(object@outcome_info@event)) {
-              event_indicator <- object@outcome_info@event
-            } 
+    if (outcome_type != "unsupervised") {
+      # Attempt to identify the name of the outcome.
+      if (is.waive(outcome_name)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            
+            # Check that the outcome name is not empty.
+            if (length(object@outcome_info@name) >= 1L) outcome_name <- object@outcome_info@name
           }
         }
       }
-    }
-    
-    # Attempt to identify the censoring indicator.
-    if (is.waive(censoring_indicator)) {
-      if (has_model_object & has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          if (length(object@outcome_info@censored) > 0) {
-            if (!is.na(object@outcome_info@censored)) {
-              censoring_indicator <- object@outcome_info@censored
-            } 
+      
+      # Attempt to identify the outcome columns.
+      if (is.waive(outcome_column)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (!is_empty(object@data_column_info)) {
+            # Find the model columns.
+            outcome_column <- object@data_column_info[type == "outcome_column"]$external
           }
         }
       }
-    }
-    
-    # Attempt to identify the competing risk indicator.
-    if (is.waive(competing_risk_indicator)) {
-      if (has_model_object & has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          if (length(object@outcome_info@competing_risk) > 0) {
-            if (!is.na(object@outcome_info@competing_risk)) {
-              competing_risk_indicator <- object@outcome_info@competing_risk
-            } 
+      
+      # Attempt to identify the event indicator.
+      if (is.waive(event_indicator)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            if (length(object@outcome_info@event) > 0L) {
+              if (!is.na(object@outcome_info@event)) {
+                event_indicator <- object@outcome_info@event
+              } 
+            }
           }
         }
       }
-    }
-    
-    # Attempt to identify class levels of the outcome.
-    if (is.waive(class_levels)) {
-      if (has_model_object & has_outcome_info_slot) {
-        if (is(object@outcome_info, "outcomeInfo")) {
-          if (length(object@outcome_info@levels) > 0) {
-            class_levels <- object@outcome_info@levels
+      
+      # Attempt to identify the censoring indicator.
+      if (is.waive(censoring_indicator)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            if (length(object@outcome_info@censored) > 0L) {
+              if (!is.na(object@outcome_info@censored)) {
+                censoring_indicator <- object@outcome_info@censored
+              } 
+            }
+          }
+        }
+      }
+      
+      # Attempt to identify the competing risk indicator.
+      if (is.waive(competing_risk_indicator)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            if (length(object@outcome_info@competing_risk) > 0L) {
+              if (!is.na(object@outcome_info@competing_risk)) {
+                competing_risk_indicator <- object@outcome_info@competing_risk
+              } 
+            }
+          }
+        }
+      }
+      
+      # Attempt to identify class levels of the outcome.
+      if (is.waive(class_levels)) {
+        if (has_model_object && has_outcome_info_slot) {
+          if (is(object@outcome_info, "outcomeInfo")) {
+            if (length(object@outcome_info@levels) > 0L) {
+              class_levels <- object@outcome_info@levels
+            }
           }
         }
       }
@@ -267,21 +277,26 @@ setMethod(
           "class_levels" = class_levels,
           "exclude_features" = exclude_features,
           "include_features" = include_features,
-          "reference_method" = reference_method),
-        list(...)))
+          "reference_method" = reference_method
+        ),
+        list(...)
+      )
+    )
     
     # Prepare data.table.
     data <- .load_data(
       data = data,
       sample_id_column = settings$data$sample_col,
       batch_id_column = settings$data$batch_col,
-      series_id_column = settings$data$series_col)
+      series_id_column = settings$data$series_col
+    )
     
     # Update settings
     settings <- .update_initial_settings(
       data = data,
       settings = settings,
-      check_stringency = check_stringency)
+      check_stringency = check_stringency
+    )
     
     # Parse data
     data <- .finish_data_preparation(
@@ -297,7 +312,8 @@ setMethod(
       event_indicator = settings$data$event_indicator,
       competing_risk_indicator = settings$data$competing_risk_indicator,
       check_stringency = check_stringency,
-      reference_method = settings$data$reference_method
+      reference_method = settings$data$reference_method,
+      .no_features_required = .no_features_required
     )
     
     # Update the dataset according to the feature info list.
@@ -309,6 +325,12 @@ setMethod(
       outcome_info <- object@outcome_info
       
     } else {
+      if (settings$data$outcome_type %in% c("survival", "competing_risk")) {
+        # Update time max.
+        if (is.null(settings$eval$time_max)) {
+          settings$eval$time_max <- .get_default_time_max(data[outcome_event == 1L]$outcome_time)
+        }
+      }
       outcome_info <- create_outcome_info(settings = settings)
     }
     
@@ -331,7 +353,8 @@ setMethod(
       preprocessing_level = "none",
       outcome_type = settings$data$outcome_type,
       outcome_info = outcome_info,
-      data_column_info = data_info)
+      data_column_info = data_info
+    )
     
     return(data)
   }
@@ -350,7 +373,8 @@ setMethod(
     sample_id_column = waiver(),
     batch_id_column = waiver(),
     series_id_column = waiver(),
-    ...) {
+    ...
+  ) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
     type <- NULL
@@ -372,7 +396,7 @@ setMethod(
         
         # Check that the model actually has a column name (not character(0))
         # that is not NA, and set this column name.
-        if (length(model_sample_id_column) > 0) {
+        if (length(model_sample_id_column) > 0L) {
           if (!is.na(model_sample_id_column)) sample_id_column_local <- model_sample_id_column
         }
       }
@@ -391,7 +415,7 @@ setMethod(
         
         # Check that the model actually has a column name (not character(0))
         # that is not NA, and set this column name.
-        if (length(model_batch_id_column) > 0) {
+        if (length(model_batch_id_column) > 0L) {
           if (!is.na(model_batch_id_column)) batch_id_column_local <- model_batch_id_column
         }
       }
@@ -410,7 +434,7 @@ setMethod(
         
         # Check that the model actually has a column name (not
         # character(0)) that is not NA, and set this column name.
-        if (length(model_series_id_column) > 0) {
+        if (length(model_series_id_column) > 0L) {
           if (!is.na(model_series_id_column)) series_id_column_local <- model_series_id_column
         }
       }
@@ -424,7 +448,8 @@ setMethod(
       data = data,
       sample_id_column = sample_id_column_local,
       batch_id_column = batch_id_column_local,
-      series_id_column = series_id_column_local)
+      series_id_column = series_id_column_local
+    )
     
     # Pass on to data.table method.
     return(do.call(
@@ -435,8 +460,11 @@ setMethod(
           "object" = object,
           "sample_id_column" = sample_id_column,
           "batch_id_column" = batch_id_column,
-          "series_id_column" = series_id_column),
-        list(...))))
+          "series_id_column" = series_id_column
+        ),
+        list(...)
+      )
+    ))
   }
 )
 
@@ -449,7 +477,8 @@ setMethod(
   function(
     data,
     settings = NULL,
-    signature = NULL) {
+    signature = NULL
+  ) {
     
     # Suppress NOTES due to non-standard evaluation in data.table
     type <- NULL
@@ -465,28 +494,32 @@ setMethod(
         current = sample_id_column,
         data = data@data,
         internal = data@data_column_info[type == "sample_id_column"]$internal,
-        external = data@data_column_info[type == "sample_id_column"]$external)
+        external = data@data_column_info[type == "sample_id_column"]$external
+      )
       
       # Batch identifier
       batch_id_column <- ..set_identifier_column(
         current = batch_id_column,
         data = data@data,
         internal = data@data_column_info[type == "batch_id_column"]$internal,
-        external = data@data_column_info[type == "batch_id_column"]$external)
+        external = data@data_column_info[type == "batch_id_column"]$external
+      )
       
       # Series identifier
       series_id_column <- ..set_identifier_column(
         current = series_id_column,
         data = data@data,
         internal = data@data_column_info[type == "series_id_column"]$internal,
-        external = data@data_column_info[type == "series_id_column"]$external)
+        external = data@data_column_info[type == "series_id_column"]$external
+      )
       
       # Outcome columns
       outcome_columns <- ..set_identifier_column(
         current = outcome_columns,
         data = data@data,
         internal = data@data_column_info[type == "outcome_column"]$internal,
-        external = data@data_column_info[type == "outcome_column"]$external)
+        external = data@data_column_info[type == "outcome_column"]$external
+      )
     }
     
     if (is.null(outcome_columns)) get_outcome_columns(data)
@@ -515,14 +548,15 @@ setMethod(
     current = NULL,
     data = NULL,
     internal,
-    external) {
+    external
+) {
   
   if (!(is.waive(current) || is.null(current))) return(current)
   
   temporary <- NULL
   
   # Prefer external before internal, as long as it is present in data.
-  if (all(sapply(external, length) > 0)) {
+  if (all(lengths(external) > 0L)) {
     if (!any(sapply(external, is.na))) {
       if (data.table::is.data.table(data)) {
         if (all(external %in% colnames(data))) temporary <- external
@@ -536,7 +570,7 @@ setMethod(
   }
   
   # Use external if internal is not present in data.
-  if (all(sapply(external, length) > 0) && is.null(temporary)) {
+  if (all(lengths(external) > 0L) && is.null(temporary)) {
     if (!any(sapply(external, is.na))) temporary <- internal
   }
   
@@ -549,231 +583,187 @@ setMethod(
 }
 
 
+.split_data_by_batch_id <- function(data) {
+  # Don't split if there is no data.
+  if (is_empty(data, allow_no_features = TRUE)) return(NULL)
+  
+  # Split by batch id.
+  split_data <- split(
+    data@data,
+    by = get_id_columns(id_depth = "batch")
+  )
+  
+  # Update dataObject.
+  data <- lapply(
+    split_data,
+    function(x, data) {
+      data@data <- x
+      return(data)
+    },
+    data = data
+  )
+  
+  return(data)
+}
+
+
+
 # load_delayed_data methods ----------------------------------------------------
 
-## load_delayed_data (model) ---------------------------------------------------
+## load_delayed_data (dataObject, ANY) -----------------------------------------
 setMethod(
   "load_delayed_data",
   signature(
     data = "dataObject",
-    object = "ANY"),
+    object = "ANY"
+  ),
   function(
     data,
     object,
-    stop_at,
-    keep_novelty = FALSE) {
-    # Loads data from internal memory
-    
-    if (!(is(object, "familiarModel") ||
-         is(object, "familiarVimpMethod") ||
-         is(object, "familiarNoveltyDetector"))) {
-      ..error_reached_unreachable_code(paste0(
-        "load_delayed_data: object is expected to be a familiarModel, ",
-        "familiarVimpMethod or familiarNoveltyDetector."))
+    ...
+  ) {
+    # If data is a dataObject, the data already was loaded.
+    return(data)
+  }
+)
+
+
+
+## load_delayed_data (dataObject, NULL) ----------------------------------------
+setMethod(
+  "load_delayed_data",
+  signature(
+    data = "delayedDataObject",
+    object = "NULL"
+  ),
+  function(
+    data,
+    object,
+    column_names = NULL,
+    ...
+  ) {
+    if (is.na(data@validation) && is_empty(data@sample_set_on_load)) {
+      ..error_reached_unreachable_code("validation attribute was not set")
     }
     
-    # Check if loading was actually delayed
-    if (!data@delay_loading) return(data)
+    # Determine which samples are required.
+    if (is_empty(data@sample_set_on_load)) {
+      # Check if data_id and run_id were set.
+      if (is.na(data@data_id)) {
+        ..error_reached_unreachable_code("data_id attribute was not set")
+      }
+      if (is.na(data@run_id)) {
+        ..error_reached_unreachable_code("run_id attribute was not set")
+      }
+      
+      # From iteration list.
+      sample_identifiers <- .get_sample_identifiers(
+        iteration_list = get_project_list()$iter_list,
+        data_id = data@data_id,
+        run_id = data@run_id,
+        train_or_validate = ifelse(data@validation, "valid", "train")
+      )
+      
+    } else {
+      # From data object.
+      sample_identifiers <- data@sample_set_on_load
+    }
     
-    # Read project list and settings
-    iteration_list <- get_project_list()$iter_list
+    # Resample sample identifiers.
+    if (!is.na(data@sample_seed)) {
+      sample_identifiers <- fam_sample(
+        x = sample_identifiers,
+        seed = data@sample_seed
+      )
+    }
     
-    # Read required features
-    required_features <- object@required_features
+    # Initialise dataObject
+    new_data <- methods::new(
+      "dataObject",
+      data = NULL,
+      preprocessing_level = "none",
+      outcome_type = data@outcome_type,
+      outcome_info = data@outcome_info,
+      data_column_info = data@data_column_info,
+      data_id = data@data_id,
+      run_id = data@run_id,
+      validation = data@validation,
+      sample_seed = data@sample_seed
+    )
     
-    # Get columns in data frame which are not features, but identifiers and
-    # outcome instead.
-    non_feature_cols <- get_non_feature_columns(x = object)
-    
-    # Find the identifiers for the current run.
-    run_id_list <- .get_iteration_identifiers(
-      run = list("run_table" = object@run_table),
-      perturb_level = data@perturb_level)
-    
-    # Derive sample identifiers based on the selected iteration data.
-    sample_identifiers <- .get_sample_identifiers(
-      iteration_list = iteration_list,
-      data_id = run_id_list$data,
-      run_id = run_id_list$run,
-      train_or_validate = ifelse(data@load_validation, "valid", "train"))
-    
-    # Currently select only unique samples from the backend.
+    # Select only unique samples from the backend.
     if (!is_empty(sample_identifiers)) {
       unique_sample_identifiers <- unique(sample_identifiers)
       
     } else {
-      # Return an updated data object, but without data
-      return(methods::new(
-        "dataObject",
-        data = NULL,
-        preprocessing_level = "none",
-        outcome_type = data@outcome_type,
-        aggregate_on_load = data@aggregate_on_load))
+      # Return the dataObject placeholder.
+      return(new_data)
     }
     
-    # Prepare a new data object
-    new_data <- methods::new(
-      "dataObject",
-      data = get_data_from_backend(
-        sample_identifiers = unique_sample_identifiers,
-        column_names = c(non_feature_cols, required_features)),
-      preprocessing_level = "none",
-      outcome_type = data@outcome_type,
-      delay_loading = FALSE,
-      perturb_level = NA_integer_,
-      load_validation = data@load_validation,
-      aggregate_on_load = data@aggregate_on_load,
-      sample_set_on_load = data@sample_set_on_load)
-    
-    # Preprocess data
-    new_data <- preprocess_data(
-      data = new_data,
-      object = object,
-      stop_at = stop_at,
-      keep_novelty = keep_novelty)
-    
+    # Attach data.
+    new_data@data <- get_data_from_backend(
+      sample_identifiers = unique_sample_identifiers,
+      column_names = column_names
+    )
+
     # Recreate iteration. Note that we here also use duplicate samples to
     # recreate e.g. bootstraps.
     new_data <- select_data_from_samples(
       data = new_data,
-      samples = sample_identifiers)
+      samples = sample_identifiers
+    )
 
-    if (new_data@aggregate_on_load) {
-      
-      # Aggregate data if required
-      new_data <- aggregate_data(data = new_data)
-      
-      # Reset flag to FALSE, as data has been loaded
-      new_data@aggregate_on_load <- FALSE
-    }
-    
     return(new_data)
   }
 )
 
 
-
-## load_delayed_data (ensemble) ------------------------------------------------
+## load_delayed_data (delayedDataObject, model) --------------------------------
 setMethod(
   "load_delayed_data",
   signature(
-    data = "dataObject",
-    object = "familiarEnsemble"),
+    data = "delayedDataObject",
+    object = "familiarModel"
+  ),
   function(
     data,
     object,
-    stop_at = "clustering",
-    keep_novelty = FALSE) {
-    # Loads data from internal memory -- for familiarEnsemble objects
+    stop_at,
+    keep_novelty = FALSE,
+    ...
+  ) {
+    # Prevent notes.
+    data_id <- NULL
     
-    # Suppress NOTES due to non-standard evaluation in data.table
-    perturb_level <- NULL
-    
-    # Check if loading was actually delayed
-    if (!data@delay_loading) return(data)
-    
-    # Read project list
-    iteration_list <- get_project_list()$iter_list
-
-    # Read required features
+    # Read required features.
     required_features <- object@required_features
     
-    # Get columns in data frame which are not features, but identifiers and outcome instead
-    non_feature_cols <- get_non_feature_columns(x = object)
-    
-    # Join run tables to identify the runs that should be evaluated.
-    combined_run_table <- lapply(
-      object@run_table$run_table,
-      function(model_run_table, data_perturb_level) {
-        return(model_run_table[perturb_level == data_perturb_level])
-      },
-      data_perturb_level = data@perturb_level)
-    
-    # Merge to single table
-    combined_run_table <- data.table::rbindlist(combined_run_table)
-    
-    # Remove duplicate rows
-    combined_run_table <- unique(combined_run_table)
-    
-    # Check length and extract sample identifiers.
-    if (nrow(combined_run_table) == 1) {
-      sample_identifiers <- .get_sample_identifiers(
-        iteration_list = iteration_list,
-        data_id = combined_run_table$data_id,
-        run_id = combined_run_table$run_id,
-        train_or_validate = ifelse(data@load_validation, "valid", "train"))
-      
-    } else {
-      # Extract all sample identifiers. This happens if the the data is pooled.
-      sample_identifiers <- data.table::rbindlist(lapply(
-        seq_len(nrow(combined_run_table)),
-        function(ii, run_table, iteration_list, train_or_validate) {
-        
-          sample_identifiers <- .get_sample_identifiers(
-            iteration_list = iteration_list,
-            data_id = run_table$data_id[ii],
-            run_id = run_table$run_id[ii],
-            train_or_validate = train_or_validate)
-          
-          return(sample_identifiers)
-        },
-        run_table = combined_run_table,
-        iteration_list = iteration_list,
-        train_or_validate = ifelse(data@load_validation, "valid", "train")))
-      
-      # Select only unique sample identifiers.
-      sample_identifiers <- unique(sample_identifiers)
+    if (is.na(data@run_id)) {
+      data@run_id <- object@run_table[data_id == data@data_id, ]$run_id[1L]
     }
     
-    # Currently select only unique samples from the backend.
-    if (!is_empty(sample_identifiers)) {
-      unique_sample_identifiers <- unique(sample_identifiers)
-      
-    } else {
-      # Return an updated data object, but without data
-      return(methods::new(
-        "dataObject",
-        data = NULL,
-        preprocessing_level = "none",
-        outcome_type = data@outcome_type,
-        aggregate_on_load = data@aggregate_on_load))
-    }
+    # Get columns in data frame which are not features, but identifiers and
+    # outcome instead.
+    non_feature_columns <- get_non_feature_columns(x = object)
     
-    # Prepare a new data object
-    new_data <- methods::new(
-      "dataObject",
-      data = get_data_from_backend(
-        sample_identifiers = unique_sample_identifiers,
-        column_names = c(non_feature_cols, required_features)),
-      preprocessing_level = "none",
-      outcome_type = data@outcome_type,
-      delay_loading = FALSE,
-      perturb_level = NA_integer_,
-      load_validation = data@load_validation,
-      aggregate_on_load = data@aggregate_on_load,
-      sample_set_on_load = data@sample_set_on_load)
+    # Explicitly refer to the method for object = NULL.
+    new_data <- load_delayed_data(
+      data = data,
+      object = NULL,
+      column_names = c(non_feature_columns, required_features)
+    )
     
-    # Preprocess data
+    # Pre-process data, if needed.
     new_data <- preprocess_data(
       data = new_data,
       object = object,
       stop_at = stop_at,
-      keep_novelty = keep_novelty)
+      keep_novelty = keep_novelty
+    )
     
-    # Recreate iteration. Note that we here also use duplicate samples
-    # to recreate e.g. bootstraps.
-    new_data <- select_data_from_samples(
-      data = new_data,
-      samples = sample_identifiers)
-    
-    # Aggregate data if required
-    if (new_data@aggregate_on_load) {
-      
-      # Aggregate
+    # Aggregate data, if needed.
+    if (data@aggregate_on_load) {
       new_data <- aggregate_data(data = new_data)
-      
-      # Reset flag to FALSE, as data has been loaded
-      new_data@aggregate_on_load <- FALSE
     }
     
     return(new_data)
@@ -782,26 +772,243 @@ setMethod(
 
 
 
+## load_delayed_data (delayedDataObject, novelty detector) ---------------------
+setMethod(
+  "load_delayed_data",
+  signature(
+    data = "delayedDataObject",
+    object = "familiarNoveltyDetector"
+  ),
+  function(
+    data,
+    object,
+    stop_at,
+    ...
+  ) {
+    # Prevent notes.
+    data_id <- NULL
+    
+    # Read required features.
+    required_features <- object@required_features
+    
+    if (is.na(data@run_id)) {
+      data@run_id <- object@run_table[data_id == data@data_id, ]$run_id[1L]
+    }
+    
+    # Get columns in data frame which are not features, but identifiers instead.
+    non_feature_columns <- get_non_feature_columns(x = object)
+    
+    # Explicitly refer to the method for object = NULL.
+    new_data <- load_delayed_data(
+      data = data,
+      object = NULL,
+      column_names = c(non_feature_columns, required_features)
+    )
+    
+    # Pre-process data, if needed.
+    new_data <- preprocess_data(
+      data = new_data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = TRUE
+    )
+    
+    # Aggregate data, if needed.
+    if (data@aggregate_on_load) {
+      new_data <- aggregate_data(data = new_data)
+    }
+    
+    return(new_data)
+  }
+)
+
+
+
+## load_delayed_data (delayedDataObject, vimp method) --------------------------
+setMethod(
+  "load_delayed_data",
+  signature(
+    data = "delayedDataObject",
+    object = "familiarVimpMethod"
+  ),
+  function(
+    data,
+    object,
+    stop_at,
+    keep_novelty = FALSE,
+    ...
+  ) {
+    # Prevent notes.
+    data_id <- NULL
+    
+    # Read required features.
+    required_features <- object@required_features
+    
+    if (is.na(data@run_id)) {
+      data@run_id <- object@run_table[data_id == data@data_id, ]$run_id[1L]
+    }
+    
+    # Get columns in data frame which are not features, but identifiers and
+    # outcome instead.
+    non_feature_columns <- get_non_feature_columns(x = object)
+    
+    # Explicitly refer to the method for object = NULL.
+    new_data <- load_delayed_data(
+      data = data,
+      object = NULL,
+      column_names = c(non_feature_columns, required_features)
+    )
+    
+    # Pre-process data, if needed.
+    new_data <- preprocess_data(
+      data = new_data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = keep_novelty
+    )
+    
+    # Aggregate data, if needed.
+    if (data@aggregate_on_load) {
+      new_data <- aggregate_data(data = new_data)
+    }
+    
+    return(new_data)
+  }
+)
+
+
+
+## load_delayed_data (delayedDataObject, ensemble) -----------------------------
+setMethod(
+  "load_delayed_data",
+  signature(
+    data = "delayedDataObject",
+    object = "familiarEnsemble"
+  ),
+  function(
+    data,
+    object,
+    stop_at,
+    keep_novelty = FALSE,
+    ...
+  ) {
+    # Prevent notes.
+    data_id <- NULL
+    
+    # Read required features.
+    required_features <- object@required_features
+    
+    # Leaving the run id NA signals that the run_id is determined by the data_id
+    # of the data. For ensembles, this data_id may not actually be contained
+    # in the run table (which is a composite of the underlying models).
+    if (is.na(data@run_id)) {
+      run_table <- tail(object@run_table[data_id <= data@data_id, ], n = 1L)
+      
+      if (run_table$data_id == data@data_id) {
+        data@run_id <- run_table$run_id
+        
+      } else {
+        # In this case, we are considering a higher subset of data, and
+        # we should only consider the training set, because the actually 
+        # requested subset is contained in the training set at that level --
+        # but not within the validation subset.
+        data@data_id <- run_table$data_id
+        data@run_id <- run_table$run_id
+        data@validation <- FALSE
+      }
+    }
+    
+    # Get columns in data frame which are not features, but identifiers and
+    # outcome instead.
+    non_feature_columns <- get_non_feature_columns(x = object)
+    
+    # Explicitly refer to the method for object = NULL.
+    new_data <- load_delayed_data(
+      data = data,
+      object = NULL,
+      column_names = c(non_feature_columns, required_features)
+    )
+    
+    # Pre-process data, if needed.
+    new_data <- preprocess_data(
+      data = new_data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = keep_novelty
+    )
+    
+    # Aggregate data, if needed.
+    if (data@aggregate_on_load) {
+      new_data <- aggregate_data(data = new_data)
+    }
+    
+    return(new_data)
+  }
+)
+
+
 # preprocess_data methods ------------------------------------------------------
+
+## preprocess_data (delayedDataObject, ANY) ------------------------------------
+setMethod(
+  "preprocess_data",
+  signature(
+    data = "delayedDataObject",
+    object = "ANY"
+  ),
+  function(
+    data,
+    object,
+    stop_at = "clustering",
+    keep_novelty = FALSE,
+    ...
+  ) {
+    
+    # Load data. This automatically pre-processes the data.
+    data <- load_delayed_data(
+      data = data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = keep_novelty,
+      ...
+    )
+    
+    # Perform any object-specific processing.
+    data <- preprocess_data(
+      data = data,
+      object = object,
+      stop_at = stop_at,
+      keep_novelty = keep_novelty,
+      ...
+    )
+    
+    return(data)
+  }
+)
+
+
 
 ## preprocess_data (vimp method) -----------------------------------------------
 setMethod(
   "preprocess_data",
   signature(
     data = "dataObject",
-    object = "familiarVimpMethod"),
+    object = "familiarVimpMethod"
+  ),
   function(
     data,
     object,
     stop_at = "clustering",
-    keep_novelty = FALSE, ...) {
+    keep_novelty = FALSE, ...
+  ) {
     
     # Pre-process the data.
     data <-  .preprocess_data(
       data = data,
       object = object,
       stop_at = stop_at,
-      keep_novelty = keep_novelty)
+      keep_novelty = keep_novelty
+    )
     
     return(data)
   }
@@ -814,20 +1021,23 @@ setMethod(
   "preprocess_data",
   signature(
     data = "dataObject",
-    object = "familiarModel"),
+    object = "familiarModel"
+  ),
   function(
     data,
     object,
     stop_at = "clustering",
     keep_novelty = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Pre-process the data.
     data <- .preprocess_data(
       data = data,
       object = object,
       stop_at = stop_at,
-      keep_novelty = keep_novelty)
+      keep_novelty = keep_novelty
+    )
     
     # Post-process the data to select the correct feature and identifier set.
     data <- postprocess_data(
@@ -835,7 +1045,8 @@ setMethod(
       object = object,
       stop_at = stop_at,
       keep_novelty = keep_novelty,
-      ...)
+      ...
+    )
     
     return(data)
   }
@@ -848,18 +1059,21 @@ setMethod(
   "preprocess_data",
   signature(
     data = "dataObject",
-    object = "familiarNaiveModel"),
+    object = "familiarNaiveModel"
+  ),
   function(
     data,
     object,
     stop_at = "clustering",
     keep_novelty = FALSE,
-    ...) {
+    ...
+  ) {
     
     if (.as_preprocessing_level(data@preprocessing_level) > .as_preprocessing_level(stop_at)) {
       ..error_reached_unreachable_code(paste0(
         "preprocess_data,dataObject,familiarNaiveModel: data were preprocessed ",
-        "at a higher level than required by stop_at."))
+        "at a higher level than required by stop_at."
+      ))
     }
     
     # familiarNaiveModels do not have any features, so we remove them.
@@ -879,12 +1093,14 @@ setMethod(
   "preprocess_data",
   signature(
     data = "dataObject",
-    object = "familiarNoveltyDetector"),
+    object = "familiarNoveltyDetector"
+  ),
   function(
     data,
     object,
     stop_at = "clustering",
-    ...) {
+    ...
+  ) {
     
     # Note that keep_novelty is always false to prevent reading novelty_features
     # slot. Novelty features are stored in the model_features slot of
@@ -899,14 +1115,16 @@ setMethod(
       data = data,
       object = object,
       stop_at = stop_at,
-      keep_novelty = FALSE)
+      keep_novelty = FALSE
+    )
     
     # Post-process the data to select the correct feature and identifier set.
     data <- postprocess_data(
       data = data,
       object = object,
       stop_at = stop_at,
-      ...)
+      ...
+    )
     
     return(data)
   }
@@ -918,20 +1136,23 @@ setMethod(
   "preprocess_data",
   signature(
     data = "dataObject",
-    object = "familiarEnsemble"),
+    object = "familiarEnsemble"
+  ),
   function(
     data,
     object,
     stop_at = "clustering",
     keep_novelty = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Pre-process the data.
     data <- .preprocess_data(
       data = data,
       object = object,
       stop_at = stop_at,
-      keep_novelty = keep_novelty)
+      keep_novelty = keep_novelty
+    )
     
     return(data)
   }
@@ -943,8 +1164,8 @@ setMethod(
     data,
     object,
     stop_at,
-    keep_novelty = FALSE) {
-  
+    keep_novelty = FALSE
+) {
   # Convert the preprocessing_level attained and the requested stopping level to
   # ordinals.
   preprocessing_level_attained <- .as_preprocessing_level(data@preprocessing_level)
@@ -952,20 +1173,18 @@ setMethod(
   
   # Check whether pre-processing is required
   if (preprocessing_level_attained == stop_at) {
-    
     return(data)
     
   } else if (preprocessing_level_attained > stop_at) {
     ..error_reached_unreachable_code(paste0(
       "preprocess_data,dataObject,ANY: data were preprocessed at a higher level", 
-      " than required by stop_at."))
+      " than required by stop_at."
+    ))
   }
   
   if (preprocessing_level_attained < "signature" && stop_at >= "signature") { 
     # Apply the signature.
-    data <- select_features(
-      data = data,
-      features = object@required_features)
+    data <- select_features(data = data, features = object@required_features)
     
     # Update pre-processing level externally as it is not limited to
     # pre-processing per sé.
@@ -977,22 +1196,19 @@ setMethod(
     selected_features <- object@model_features
     if (keep_novelty) selected_features <- union(selected_features, object@novelty_features)
     
-    if (length(required_features) > 0 && length(selected_features) > 0 && has_feature_data(data)) {
+    if (length(required_features) > 0L && length(selected_features) > 0L && has_feature_data(data)) {
       
       # Select available features specific to the object.
       if (all(required_features %in% get_feature_columns(data))) {
-        data <- select_features(
-          data = data,
-          features = required_features)
+        data <- select_features(data = data, features = required_features)
         
       } else if (all(selected_features %in% get_feature_columns(data))) {
-        data <- select_features(
-          data = data,
-          features = selected_features)
+        data <- select_features(data = data, features = selected_features)
         
       } else {
         ..error_reached_unreachable_code(
-          ".preprocess_data: could not identify overlapping features")
+          ".preprocess_data: could not identify overlapping features"
+        )
       }
     }
   }
@@ -1001,35 +1217,40 @@ setMethod(
     # Transform the features.
     data <- transform_features(
       data = data,
-      feature_info_list = object@feature_info)
+      feature_info_list = object@feature_info
+    )
   }
   
   if (preprocessing_level_attained < "normalisation" && stop_at >= "normalisation") {
     # Normalise feature values.
     data <- normalise_features(
       data = data,
-      feature_info_list = object@feature_info)
+      feature_info_list = object@feature_info
+    )
   }
   
   if (preprocessing_level_attained < "batch_normalisation" && stop_at >= "batch_normalisation") {
     # Batch-normalise feature values
     data <- batch_normalise_features(
       data = data,
-      feature_info_list = object@feature_info)
+      feature_info_list = object@feature_info
+    )
   }
   
   if (preprocessing_level_attained < "imputation" && stop_at >= "imputation") {
     # Impute missing values
     data  <- impute_features(
       data = data,
-      feature_info_list = object@feature_info)
+      feature_info_list = object@feature_info
+    )
   }
   
   if (preprocessing_level_attained < "clustering" && stop_at >= "clustering") {
     # Cluster features
     data <- cluster_features(
       data = data,
-      feature_info_list = object@feature_info)
+      feature_info_list = object@feature_info
+    )
   }
   
   return(data)
@@ -1043,14 +1264,16 @@ setMethod(
   "postprocess_data",
   signature(
     data = "dataObject",
-    object = "familiarModel"),
+    object = "familiarModel"
+  ),
   function(
     data,
     object,
     stop_at = "clustering",
     keep_novelty = FALSE,
     force_check = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Convert the preprocessing_level attained and the requested stopping level
     # to ordinals.
@@ -1064,17 +1287,19 @@ setMethod(
     if (keep_novelty) features <- union(features, object@novelty_features)
     
     # Return data if there are no features.
-    if (length(features) == 0 && !force_check) return(data)
+    if (length(features) == 0L && !force_check) return(data)
     
     # Determine the features after clustering.
     features <- features_after_clustering(
       features = features,
-      feature_info_list = object@feature_info)
+      feature_info_list = object@feature_info
+    )
     
     # Create a slice of the data for the feature set.
     data <- select_features(
       data = data,
-      features = features)
+      features = features
+    )
     
     return(data)
   }
@@ -1087,13 +1312,15 @@ setMethod(
   "postprocess_data",
   signature(
     data = "dataObject",
-    object = "familiarNoveltyDetector"),
+    object = "familiarNoveltyDetector"
+  ),
   function(
     data,
     object,
     stop_at = "clustering",
     force_check = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Convert the preprocessing_level attained and the requested stopping level
     # to ordinals.
@@ -1106,17 +1333,19 @@ setMethod(
     features <- object@model_features
     
     # Return data if there are no features.
-    if (length(features) == 0 && !force_check) return(data)
+    if (length(features) == 0L && !force_check) return(data)
     
     # Determine the features after clustering.
     features <- features_after_clustering(
       features = features,
-      feature_info_list = object@feature_info)
+      feature_info_list = object@feature_info
+    )
     
     # Create a slice of the data for the feature set.
     data <- select_features(
       data = data,
-      features = features)
+      features = features
+    )
     
     return(data)
   }
@@ -1129,14 +1358,16 @@ setMethod(
   "process_input_data",
   signature(
     object = "familiarVimpMethod",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
     is_pre_processed = FALSE,
     stop_at = "clustering",
     keep_novelty = FALSE,
-    ...) {
+    ...
+  ) {
     
     data <- .process_input_data(
       object = object,
@@ -1144,7 +1375,8 @@ setMethod(
       is_pre_processed = is_pre_processed,
       stop_at = stop_at,
       keep_novelty = keep_novelty,
-      ...)
+      ...
+    )
     
     return(data)
   }
@@ -1155,13 +1387,15 @@ setMethod(
   "process_input_data",
   signature(
     object = "familiarNoveltyDetector",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
     is_pre_processed = FALSE, 
     stop_at = "clustering",
-    ...) {
+    ...
+  ) {
     
     # Ensure that the outcome_type of data is changed to "unsupervised". We
     # don't need any outcome columns.
@@ -1174,7 +1408,8 @@ setMethod(
       is_pre_processed = is_pre_processed,
       stop_at = stop_at,
       keep_novelty = FALSE,
-      ...)
+      ...
+    )
     
     return(data)
   }
@@ -1187,14 +1422,16 @@ setMethod(
   "process_input_data",
   signature(
     object = "familiarModel",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
     is_pre_processed = FALSE,
     stop_at = "clustering",
     keep_novelty = FALSE,
-    ...) {
+    ...
+  ) {
     
     data <- .process_input_data(
       object = object,
@@ -1202,7 +1439,8 @@ setMethod(
       is_pre_processed = is_pre_processed,
       stop_at = stop_at,
       keep_novelty = keep_novelty,
-      ...)
+      ...
+    )
     
     return(data)
   }
@@ -1215,21 +1453,43 @@ setMethod(
   "process_input_data",
   signature(
     object = "familiarEnsemble",
-    data = "ANY"),
+    data = "ANY"
+  ),
   function(
     object,
     data,
     is_pre_processed = FALSE,
     stop_at = "clustering",
-    keep_novelty = FALSE) {
+    keep_novelty = FALSE
+  ) {
     
     data <- .process_input_data(
       object = object,
       data = data,
       is_pre_processed = is_pre_processed,
       stop_at = stop_at,
-      keep_novelty = keep_novelty)
+      keep_novelty = keep_novelty
+    )
     
+    return(data)
+  }
+)
+
+
+## process_input_data (dataObject) -----------------------------------------------
+setMethod(
+  "process_input_data",
+  signature(
+    object = "dataObject",
+    data = "ANY"
+  ),
+  function(
+    object,
+    data,
+    is_pre_processed = FALSE,
+    stop_at = "clustering",
+    keep_novelty = FALSE
+  ) {
     return(data)
   }
 )
@@ -1242,25 +1502,27 @@ setMethod(
     is_pre_processed,
     stop_at,
     keep_novelty = FALSE,
-    ...) {
+    ...
+) {
   
   # Check whether data is a dataObject, and create one otherwise
-  if (!is(data, "dataObject")) {
-    data <- as_data_object(
-      data = data,
-      object = object)
-    
-    # Set pre-processing level.
-    data@preprocessing_level <- ifelse(is_pre_processed, "clustering", "none")
-  }
-  
-  # Load data from internal memory, if not provided otherwise
-  if (data@delay_loading) {
+  if (is(data, "delayedDataObject")) {
     data <- load_delayed_data(
       data = data,
       object = object,
       stop_at = stop_at,
-      keep_novelty = keep_novelty)
+      keep_novelty = keep_novelty,
+      ...
+    )
+    
+  } else if (!is(data, "dataObject")) {
+    data <- as_data_object(
+      data = data,
+      object = object
+    )
+    
+    # Set pre-processing level.
+    data@preprocessing_level <- ifelse(is_pre_processed, "clustering", "none")
   }
   
   # Pre-process data in case it has not been pre-processed
@@ -1269,7 +1531,8 @@ setMethod(
     object = object,
     stop_at = stop_at,
     keep_novelty = keep_novelty,
-    ...)
+    ...
+  )
   
   # Return data
   return(data)
@@ -1277,92 +1540,62 @@ setMethod(
 
 
 
-# select_data_from_samples -----------------------------------------------------
+# select_data_from_samples (dataObject) ----------------------------------------
 setMethod(
   "select_data_from_samples",
   signature(
     data = "dataObject",
-    samples = "ANY"),
+    samples = "ANY"
+  ),
   function(data, samples = NULL) {
     
-    # Check if data is loaded
-    if (data@delay_loading) {
-      
-      # Store samples until the data is loaded.
-      data@sample_set_on_load <- samples
+    # Determine the names of the id-columns, up to the series level.
+    id_columns <- get_id_columns(id_depth = "series")
+    
+    if (is_empty(samples)) {
+      # Return an empty data set if no samples are provided
+      data@data <- head(data@data, n = 0L)
       
     } else {
-      
-      # Determine the names of the id-columns, up to the series level.
-      id_columns <- get_id_columns(id_depth = "series")
-      
-      if (is_empty(samples) && is.null(data@sample_set_on_load)) {
-        # Return an empty data set if no samples are provided
-        data@data <- head(data@data, n = 0)
-        
-      } else if (is_empty(samples) && !is.null(data@sample_set_on_load)) {
-        # Use samples in the sample_set_on_load attribute.
+      # Use samples from the samples function argument. allow.cartesian is set
+      # to true to allow use with repeated measurements.
+      if (all(id_columns %in% colnames(samples))) {
         data@data <- merge(
-          x = data@sample_set_on_load,
+          x = samples,
           y = data@data,
           by = id_columns,
           all = FALSE,
-          allow.cartesian = TRUE)
-        
-      } else if (!is_empty(samples) & is.null(data@sample_set_on_load)) {
-        # Use samples from the samples function argument. allow.cartesian is set
-        # to true to allow use with repeated measurements.
-        if (all(id_columns %in% colnames(samples))) {
-          data@data <- merge(
-            x = samples,
-            y = data@data,
-            by = id_columns,
-            all = FALSE,
-            allow.cartesian = TRUE)
-          
-        } else {
-          data@data <- merge(
-            x = samples,
-            y = data@data,
-            by = get_id_columns(id_depth = "sample"),
-            all = FALSE,
-            allow.cartesian = TRUE)
-        }
+          allow.cartesian = TRUE
+        )
         
       } else {
-        # Use samples that appear both as function argument and within the
-        # sample_set_on_load attribute. The sample_set_on_load attribute is used
-        # as a filter. allow.cartesian is set to true to allow use with repeated
-        # measurements.
-        samples <- data.table::fintersect(samples, data@sample_set_on_load)
-        
-        if (is_empty(samples)) {
-          # Return an empty data set if no samples are left.
-          data@data <- head(data@data, n = 0)
-          
-        } else {
-          # Check if series identifiers are present. They may be absent if
-          # samples were generated using fam_sample
-          
-          if (all(id_columns %in% colnames(sample))) {
-            data@data <- merge(
-              x = samples,
-              y = data@data,
-              by = id_columns,
-              all = FALSE,
-              allow.cartesian = TRUE)
-            
-          } else {
-            data@data <- merge(
-              x = samples,
-              y = data@data,
-              by = get_id_columns(id_depth = "sample"),
-              all = FALSE,
-              allow.cartesian = TRUE)
-          }
-        }
+        data@data <- merge(
+          x = samples,
+          y = data@data,
+          by = get_id_columns(id_depth = "sample"),
+          all = FALSE,
+          allow.cartesian = TRUE
+        )
       }
-    }
+    } 
+
+    return(data)
+  }
+)
+
+
+
+# select_data_from_samples (delayedDataObject) ---------------------------------
+setMethod(
+  "select_data_from_samples",
+  signature(
+    data = "delayedDataObject",
+    samples = "ANY"
+  ),
+  function(data, samples = NULL) {
+    
+    # Set the sample set that should be loaded.
+    data@sample_set_on_load <- samples
     
     return(data)
   }
@@ -1370,22 +1603,12 @@ setMethod(
 
 
 
-# aggregate_data ---------------------------------------------------------------
+
+# aggregate_data (dataObject) --------------------------------------------------
 setMethod(
   "aggregate_data",
   signature(data = "dataObject"),
   function(data) {
-    
-    # Check if loading of the data object was delayed
-    if (data@delay_loading) {
-      # Mark for future aggregation after loading the data
-      data@aggregate_on_load <- TRUE
-      return(data)
-      
-    } else {
-      # Set aggregation flag to FALSE and continue
-      data@aggregate_on_load <- FALSE
-    }
     
     # Check if the data is empty
     if (is_empty(data)) return(data)
@@ -1396,31 +1619,31 @@ setMethod(
     # Identify the columns containing outcome, series, sample, and batch
     # identifiers.
     id_cols <- get_non_feature_columns(x = data, id_depth = "series")
+    if (all(data@data$repetition_id == 1L)) return(data)
     
-    # Determine the number of different entries
-    
-    if (all(data@data$repetition_id == 1)) return(data)
-
     # Identify feature columns for repeated measurement data.
     feature_columns <- get_feature_columns(x = data)
     
     # Identify class of features
     column_class <- lapply(
       feature_columns,
-      function(ii, data) (class(data[[ii]])[1]),
-      data = data@data)
+      function(ii, data) (class(data[[ii]])[1L]),
+      data = data@data
+    )
     
     # Determine numerical features
     numeric_features <- sapply(
       column_class,
-      function(selected_column_class) (any(selected_column_class %in% c("numeric", "integer"))))
+      function(selected_column_class) (any(selected_column_class %in% c("numeric", "integer")))
+    )
     
     numeric_features <- feature_columns[numeric_features]
     
     # Determine categorical features
     categorical_features <- sapply(
       column_class,
-      function(selected_column_class) (any(selected_column_class %in% c("logical", "character", "factor"))))
+      function(selected_column_class) (any(selected_column_class %in% c("logical", "character", "factor")))
+    )
     
     categorical_features <- feature_columns[categorical_features]
     
@@ -1428,44 +1651,81 @@ setMethod(
     aggregated_data <- unique(data@data[, mget(id_cols)])
     
     # Add aggregated numeric columns
-    if (length(numeric_features) > 0) {
-      numeric_data <- data@data[, lapply(
-        .SD, stats::median),
+    if (length(numeric_features) > 0L) {
+      numeric_data <- data@data[
+        , lapply(.SD, stats::median),
         by = id_cols,
-        .SDcols = numeric_features]
+        .SDcols = numeric_features
+      ]
       
       aggregated_data <- merge(
         x = aggregated_data,
         y = numeric_data,
-        by = id_cols)
+        by = id_cols
+      )
     }
     
     # Add aggregated factor columns
-    if (length(categorical_features) > 0) {
-      categorical_data <- data@data[, lapply(
-        .SD, get_mode),
+    if (length(categorical_features) > 0L) {
+      categorical_data <- data@data[
+        ,
+        lapply(.SD, get_mode),
         by = id_cols,
-        .SDcols = categorical_features]
+        .SDcols = categorical_features
+      ]
       
       aggregated_data <- merge(
         x = aggregated_data,
         y = categorical_data,
-        by = id_cols)
+        by = id_cols
+      )
     }
     
     # Add in repetition_id column again
-    aggregated_data[, "repetition_id" := -1]
+    aggregated_data[, "repetition_id" := -1L]
     
     # Reorder columns so that it matches the input
     data.table::setcolorder(
       aggregated_data,
-      neworder = colnames(data@data))
+      neworder = colnames(data@data)
+    )
     
     data@data <- aggregated_data
     
     return(data)
   }
 )
+
+
+
+# aggregate_data (delayedDataObject) -------------------------------------------
+setMethod(
+  "aggregate_data",
+  signature(data = "delayedDataObject"),
+  function(data) {
+    # Mark for future aggregation after loading the data.
+    data@aggregate_on_load <- TRUE
+    return(data)
+  }
+)
+
+
+
+# select_unique_data (dataObject) ----------------------------------------------
+setMethod(
+  "select_unique_data",
+  signature(data = "dataObject"),
+  function(data) {
+    # Check if the data is empty
+    if (is_empty(data)) return(data)
+    
+    # Drop any duplicates (e.g. from bootstraps).
+    data@data <- unique(data@data)
+    
+    return(data)
+  }
+)
+
 
 
 # filter_features --------------------------------------------------------------
@@ -1475,7 +1735,8 @@ setMethod(
   function(
     data,
     remove_features = NULL,
-    available_features = NULL) {
+    available_features = NULL
+  ) {
     # Removes features from a data set
     
     # If both are provided, use remove_features
@@ -1495,10 +1756,6 @@ setMethod(
       
       # Based on available_features input
     } else if (!is.null(available_features)) {
-      
-      # Skip if length equals 0
-      if (length(available_features) == 0) return(data)
-      
       # Determine which features should be removed
       remove_features <- setdiff(get_feature_columns(x = data), available_features)
       
@@ -1507,20 +1764,22 @@ setMethod(
       
     } else {
       ..error_reached_unreachable_code(
-        "This point should never be reachable. Check for inconsistencies if it does.")
+        "This point should never be reachable. Check for inconsistencies if it does."
+      )
     }
     
     # Make a copy to prevent updating by reference.
     data@data <- data.table::copy(data@data)
     
     # Remove features from data if there is 1 or more feature to remove
-    if (length(remove_features) > 0) data@data[, (remove_features) := NULL]
+    if (length(remove_features) > 0L) data@data[, (remove_features) := NULL]
     
     # Make sure that the column order is the same as available_features
     if (!is.null(available_features)) {
       data.table::setcolorder(
         x = data@data,
-        neworder = c(get_non_feature_columns(x = data), available_features))
+        neworder = c(get_non_feature_columns(x = data), available_features)
+      )
     }
     
     return(data)
@@ -1528,34 +1787,62 @@ setMethod(
 )
 
 
-# filter_missing_outcome ------------------------------------------------------
+# filter_missing_outcome (dataObject) ------------------------------------------
 setMethod(
   "filter_missing_outcome",
   signature(data = "dataObject"),
-  function(data, is_validation = FALSE) {
+  function(data, is_validation = FALSE, ...) {
     
     # Check if data is empty
     if (is_empty(data)) return(data)
     
-    # Change behaviour by outcome_type
-    if (data@outcome_type == "survival") {
-      outcome_is_valid <- is_valid_data(data@data[["outcome_time"]]) & is_valid_data(data@data[["outcome_event"]])
+    # Pass to method for data.table.
+    data@data <- filter_missing_outcome(
+      data = data@data,
+      outcome_type = data@outcome_type,
+      is_validation = is_validation,
+      ...
+    )
+    
+    return(data)
+  }
+)
+
+
+# filter_missing_outcome (data.table) ------------------------------------------
+setMethod(
+  "filter_missing_outcome",
+  signature(data = "data.table"),
+  function(
+    data, 
+    outcome_type, 
+    is_validation = FALSE, 
+    ...
+  ) {
+    if (is_empty(data)) return(data)
+    
+    # Check predicted outcome columns.
+    if (outcome_type %in% c("survival", "competing_risk")) {
+      outcome_is_valid <- is_valid_data(data[["outcome_time"]]) & is_valid_data(data[["outcome_event"]])
       
-    } else if (data@outcome_type %in% c("binomial", "multinomial", "continuous", "count")) {
-      outcome_is_valid <- is_valid_data(data@data[["outcome"]])
+    } else if (outcome_type %in% c("continuous")) {
+      outcome_is_valid <- is_valid_data(data[["outcome"]])
+      
+    } else if (outcome_type %in% c("binomial", "multinomial")) {
+      outcome_is_valid <- is_valid_data(data[["outcome"]])
       
     } else {
-      stop(paste0("Implementation for outcome_type ", data@outcome_type, " is missing."))
+      ..error_no_known_outcome_type(outcome_type)
     }
     
     if (is_validation) {
       # Check whether all outcome information is missing for validation. It may
       # be a prospective study. In that case, keep all data.
-      if (all(!outcome_is_valid)) outcome_is_valid <- !outcome_is_valid
+      if (!any(outcome_is_valid)) outcome_is_valid <- !outcome_is_valid
     }
     
     # Keep only data for which the outcome exists
-    data@data <- data@data[(outcome_is_valid), ]
+    data <- data[(outcome_is_valid), ]
     
     return(data)
   }
@@ -1601,12 +1888,14 @@ setMethod(
   function(
     data,
     feature_info_list,
-    invert = FALSE) {
+    invert = FALSE
+  ) {
     
     # Check if transformation was already performed.
     if (!invert && .as_preprocessing_level(data) >= "transformation") {
       ..error_reached_unreachable_code(
-        "transform_features,dataObject: attempting to transform data that are already transformed.")
+        "transform_features,dataObject: attempting to transform data that are already transformed."
+      )
     }
     
     # Update the preprocessing level.
@@ -1624,7 +1913,8 @@ setMethod(
       data = data@data,
       feature_info_list = feature_info_list,
       features = feature_columns,
-      invert = invert)
+      invert = invert
+    )
     
     return(data)
   }
@@ -1639,7 +1929,8 @@ setMethod(
     data,
     feature_info_list,
     features,
-    invert = FALSE) {
+    invert = FALSE
+  ) {
     
     # Check if data is empty
     if (is_empty(data)) return(data)
@@ -1648,17 +1939,18 @@ setMethod(
     transformed_list <- lapply(
       features,
       function(ii, data, feature_info_list, invert) {
-        
         x <- apply_feature_info_parameters(
           object = feature_info_list[[ii]]@transformation_parameters,
           data = data[[ii]],
-          invert = invert)
+          invert = invert
+        )
         
         return(x)
       },
       data = data,
       feature_info_list = feature_info_list,
-      invert = invert)
+      invert = invert
+    )
     
     # Update name of data in columns
     names(transformed_list) <- features
@@ -1666,7 +1958,8 @@ setMethod(
     # Update with replacement in the data object
     data <- update_with_replacement(
       data = data,
-      replacement_list = transformed_list)
+      replacement_list = transformed_list
+    )
     
     return(data)
   }
@@ -1682,18 +1975,21 @@ setMethod(
   function(
     data,
     feature_info_list,
-    invert = FALSE) {
+    invert = FALSE
+  ) {
     
     # Check if normalisation was already performed.
-    if (!invert & .as_preprocessing_level(data) >= "normalisation") {
+    if (!invert && .as_preprocessing_level(data) >= "normalisation") {
       ..error_reached_unreachable_code(
-        "normalise_features,dataObject: attempting to normalise data that are already normalised.")
+        "normalise_features,dataObject: attempting to normalise data that are already normalised."
+      )
     }
     
     # Check if the previous step (transformation) was conducted.
-    if (!invert & .as_preprocessing_level(data) < "transformation") {
+    if (!invert && .as_preprocessing_level(data) < "transformation") {
       ..error_reached_unreachable_code(
-        "normalise_features,dataObject: data should be transformed prior to normalisation.")
+        "normalise_features,dataObject: data should be transformed prior to normalisation."
+      )
     }
     
     # Update the preprocessing_level.
@@ -1711,7 +2007,8 @@ setMethod(
       data = data@data,
       feature_info_list = feature_info_list,
       features = feature_columns,
-      invert = invert)
+      invert = invert
+    )
     
     return(data)
   }
@@ -1726,7 +2023,8 @@ setMethod(
     data,
     feature_info_list,
     features,
-    invert = FALSE) {
+    invert = FALSE
+  ) {
     
     # Check if data is empty.
     if (is_empty(data)) return(data)
@@ -1735,17 +2033,18 @@ setMethod(
     normalised_list <- lapply(
       features,
       function(ii, data, feature_info_list, invert) {
-        
         x <- apply_feature_info_parameters(
           object = feature_info_list[[ii]]@normalisation_parameters,
           data = data[[ii]],
-          invert = invert)
+          invert = invert
+        )
         
         return(x)
       },
       data = data,
       feature_info_list = feature_info_list,
-      invert = invert)
+      invert = invert
+    )
     
     # Update name of data in columns.
     names(normalised_list) <- features
@@ -1753,7 +2052,8 @@ setMethod(
     # Update with replacement in the data object.
     data <- update_with_replacement(
       data = data,
-      replacement_list = normalised_list)
+      replacement_list = normalised_list
+    )
     
     return(data)
   }
@@ -1761,6 +2061,8 @@ setMethod(
 
 
 # batch_normalise_features -----------------------------------------------------
+
+## batch_normalise_features (dataObject) ---------------------------------------
 setMethod(
   "batch_normalise_features",
   signature(data = "dataObject"),
@@ -1768,20 +2070,23 @@ setMethod(
     data,
     feature_info_list,
     cl = NULL,
-    invert = FALSE) {
+    invert = FALSE
+  ) {
     
     # Check if batch normalisation was already performed.
     if (!invert && .as_preprocessing_level(data) >= "batch_normalisation") {
       ..error_reached_unreachable_code(paste0(
         "batch_normalise_features,dataObject: attempting to batch normalise data ",
-        "that are already batch normalised."))
+        "that are already batch normalised."
+      ))
     }
     
     # Check if the previous step (normalisation) was conducted.
     if (!invert && .as_preprocessing_level(data) < "normalisation") {
       ..error_reached_unreachable_code(paste0(
         "batch_normalise_features,dataObject: data should be normalised globally ",
-        "prior to batch normalisation."))
+        "prior to batch normalisation."
+      ))
     }
     
     # Update the preprocessing_level.
@@ -1792,42 +2097,73 @@ setMethod(
     if (is_empty(data)) return(data)
     
     # Find the columns containing features
-    feature_columns <- get_feature_columns(x = data)
+    features <- get_feature_columns(x = data)
     
     # Update feature_info_list by adding info for missing batches
     feature_info_list <- add_batch_normalisation_parameters(
-      feature_info_list = feature_info_list[feature_columns],
-      data = data)
+      feature_info_list = feature_info_list[features],
+      data = data
+    )
     
-    # Apply batch-normalisation
-    batch_normalised_list <- lapply(
-      feature_columns,
-      function(ii, data, feature_info_list, invert) {
-        
-        # Dispatch to apply-method.
-        x <- apply_feature_info_parameters(
-          object = feature_info_list[[ii]]@batch_normalisation_parameters,
-          data = data@data[, mget(c(ii, get_id_columns("batch")))],
-          invert = invert)
-        
-        return(x)
-      },
-      data = data,
+    # Apply normalisation
+    data@data <- batch_normalise_features(
+      data = data@data,
       feature_info_list = feature_info_list,
-      invert = invert)
-    
-    # Update name of data in columns
-    names(batch_normalised_list) <- feature_columns
-    
-    # Update with replacement in the data object
-    data <- update_with_replacement(
-      data = data,
-      replacement_list = batch_normalised_list)
+      features = features,
+      invert = invert
+    )
     
     return(data)
   }
 )
 
+
+
+## batch_normalise_features (data.table) ---------------------------------------
+setMethod(
+  "batch_normalise_features",
+  signature(data = "data.table"),
+  function(
+    data,
+    feature_info_list,
+    features,
+    invert = FALSE
+  ) {
+    
+    # Check if data is empty.
+    if (is_empty(data)) return(data)
+    
+    # Apply batch normalisation.
+    batch_normalised_list <- lapply(
+      features,
+      function(ii, data, batch_data, feature_info_list, invert) {
+        x <- apply_feature_info_parameters(
+          object = feature_info_list[[ii]]@batch_normalisation_parameters,
+          data = data[[ii]],
+          batch_data = batch_data,
+          invert = invert
+        )
+        
+        return(x)
+      },
+      data = data,
+      batch_data = data[[get_id_columns("batch")]],
+      feature_info_list = feature_info_list,
+      invert = invert
+    )
+    
+    # Update name of data in columns.
+    names(batch_normalised_list) <- features
+    
+    # Update with replacement in the data object.
+    data <- update_with_replacement(
+      data = data,
+      replacement_list = batch_normalised_list
+    )
+    
+    return(data)
+  }
+)
 
 
 # impute_features --------------------------------------------------------------
@@ -1837,18 +2173,21 @@ setMethod(
   function(
     data,
     feature_info_list,
-    cl = NULL) {
+    cl = NULL
+  ) {
     
     # Check if imputation was already performed.
     if (.as_preprocessing_level(data) >= "imputation") {
       ..error_reached_unreachable_code(
-        "impute_features,dataObject: attempting to impute data that already have been imputed.")
+        "impute_features,dataObject: attempting to impute data that already have been imputed."
+      )
     }
     
     # Check if the previous step (batch normalisation) was conducted.
     if (.as_preprocessing_level(data) < "batch_normalisation") {
       ..error_reached_unreachable_code(
-        "impute_features,dataObject: data should be batch normalised prior to imputation.")
+        "impute_features,dataObject: data should be batch normalised prior to imputation."
+      )
     }
     
     # Update the attained processing level.
@@ -1864,14 +2203,16 @@ setMethod(
     imputed_data <- .impute_features(
       data = data,
       feature_info_list = feature_info_list,
-      initial_imputation = TRUE)
+      initial_imputation = TRUE
+    )
     
     # Apply multivariate model to the dataset.
     data <- .impute_features(
       data = imputed_data,
       feature_info_list = feature_info_list,
       initial_imputation = FALSE,
-      mask_data = data)
+      mask_data = data
+    )
     
     return(data)
   }
@@ -1889,13 +2230,15 @@ setMethod(
     
     if (.as_preprocessing_level(data) >= "clustering") {
       ..error_reached_unreachable_code(
-        "cluster_features,dataObject: attempting to cluster data that already have been clustered.")
+        "cluster_features,dataObject: attempting to cluster data that already have been clustered."
+      )
     }
     
     # Check if the previous step (imputation) was conducted.
     if (.as_preprocessing_level(data) < "imputation") {
       ..error_reached_unreachable_code(
-        "cluster_features,dataObject: data should be imputed prior to clustering.")
+        "cluster_features,dataObject: data should be imputed prior to clustering."
+      )
     }
     
     # Update the attained processing level.
@@ -1913,22 +2256,26 @@ setMethod(
     # Derive clustering table.
     cluster_table <- .create_clustering_table(
       feature_info_list = feature_info_list,
-      selected_features = feature_columns)
+      selected_features = feature_columns
+    )
     
     # Update data using the clustering table. Note that only features
     # that are both required and present are processed.
     clustered_data <- lapply(
       split(
         cluster_table[feature_required == TRUE & feature_name %in% feature_columns],
-        by = "cluster_name"),
+        by = "cluster_name"
+      ),
       set_clustered_data,
       data = data,
-      feature_info_list = feature_info_list)
+      feature_info_list = feature_info_list
+    )
     
     # Attach the clustered data.
     data@data <- cbind(
       data@data[, mget(get_non_feature_columns(data))],
-      data.table::setDT(clustered_data))
+      data.table::setDT(clustered_data)
+    )
     
     return(data)
   }
@@ -1947,7 +2294,8 @@ setMethod(
     # Replace data by passing to the data.table method.
     data@data <- update_with_replacement(
       data = data@data,
-      replacement_list = replacement_list)
+      replacement_list = replacement_list
+    )
     
     return(data)
   }
@@ -1973,7 +2321,8 @@ setMethod(
     }
     
     return(replacement_table)
-  })
+  }
+)
 
 
 # select_features --------------------------------------------------------------
@@ -1987,7 +2336,7 @@ setMethod(
     non_feature_columns <- get_non_feature_columns(x = data)
     
     # Check if features are present as column name
-    if (length(features) > 0) {
+    if (length(features) > 0L) {
       if (!all(features %in% colnames(data@data))) {
         logger_stop("Not all features were found in the data set.")
       }
@@ -2021,20 +2370,13 @@ setMethod(
     features = NULL,
     exclude_signature = FALSE,
     exclude_novelty = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Check if features are provided externally.
     is_external <- !is.null(features)
     
-    # Create features from columns in the dataset, if unset.
-    if (!is_external && x@delay_loading) {
-      # Get features from the feature info list.
-      features <- get_available_features(
-        feature_info_list = feature_info_list,
-        exclude_signature = exclude_signature,
-        exclude_novelty = exclude_novelty)
-      
-    } else if (!is_external) {
+    if (!is_external) {
       # Get features directly.
       features <- get_feature_columns(x)
     }
@@ -2046,7 +2388,45 @@ setMethod(
       is_clustered = .as_preprocessing_level(x@preprocessing_level) == "clustering",
       is_external = is_external,
       exclude_signature = exclude_signature,
-      exclude_novelty = exclude_novelty))
+      exclude_novelty = exclude_novelty
+    ))
+  }
+)
+
+
+## get_required_features (delayedDataObject) -----------------------------------
+setMethod(
+  "get_required_features",
+  signature(x = "delayedDataObject"),
+  function(
+    x,
+    feature_info_list,
+    features = NULL,
+    exclude_signature = FALSE,
+    exclude_novelty = FALSE,
+    ...
+  ) {
+    # Check if features are provided externally.
+    is_external <- !is.null(features)
+
+    if (is_external) {
+      ..error_reached_unreachable_code("features should remain unset (NULL).")
+    }
+    
+    features <- get_available_features(
+      feature_info_list = feature_info_list,
+      exclude_signature = exclude_signature,
+      exclude_novelty = exclude_novelty
+    )
+    
+    return(.get_required_features(
+      features = features,
+      feature_info_list,
+      is_clustered = .as_preprocessing_level(x@preprocessing_level) == "clustering",
+      is_external = is_external,
+      exclude_signature = exclude_signature,
+      exclude_novelty = exclude_novelty
+    ))
   }
 )
 
@@ -2062,10 +2442,11 @@ setMethod(
     is_clustered,
     exclude_signature = FALSE,
     exclude_novelty = FALSE,
-    ...) {
+    ...
+  ) {
     # Method intended for directly providing features.
     
-    if (length(x) == 0) return(NULL)
+    if (length(x) == 0L) return(NULL)
     
     return(.get_required_features(
       features = x,
@@ -2073,7 +2454,8 @@ setMethod(
       is_clustered = is_clustered,
       is_external = TRUE,
       exclude_signature = exclude_signature,
-      exclude_novelty = exclude_novelty))
+      exclude_novelty = exclude_novelty
+    ))
   }
 )
 
@@ -2087,22 +2469,24 @@ setMethod(
     x,
     exclude_signature = FALSE,
     exclude_novelty = FALSE,
-    ...) {
+    ...
+  ) {
     # Method intended for directly providing a list of featureInfo objects.
-    
     if (is_empty(x)) return(NULL)
     
     # Sanity check. x should be a list of 
     if (!all(sapply(x, is, "featureInfo"))) {
       ..error_reached_unreachable_code(
-        "get_required_features,list: expected a list of featureInfo objects.")
+        "get_required_features,list: expected a list of featureInfo objects."
+      )
     }
     
     # Get features from the featureInfo objects.
     features <- get_available_features(
       feature_info_list = x,
       exclude_signature = exclude_signature,
-      exclude_novelty = exclude_novelty)
+      exclude_novelty = exclude_novelty
+    )
     
     return(.get_required_features(
       features = features,
@@ -2110,7 +2494,8 @@ setMethod(
       is_clustered = FALSE,
       is_external = FALSE,
       exclude_signature = exclude_signature,
-      exclude_novelty = exclude_novelty))
+      exclude_novelty = exclude_novelty
+    ))
   }
 )
 
@@ -2135,7 +2520,8 @@ setMethod(
     exclude_signature = FALSE,
     exclude_novelty = FALSE,
     exclude_imputation = FALSE,
-    ...) {
+    ...
+) {
   # What are required features? Required features are features that are:
   #
   # 1. Directly used for clustering (representative features).
@@ -2155,7 +2541,8 @@ setMethod(
   if (is_clustered) {
     # Data are clustered.
     required_features <- cluster_table[
-      cluster_name %in% features & feature_required == TRUE]$feature_name
+      cluster_name %in% features & feature_required == TRUE
+    ]$feature_name
     
     # Sanity check. All externally provided features should be present
     # in the cluster table.
@@ -2163,14 +2550,16 @@ setMethod(
       if (!all(features %in% cluster_table$cluster_name)) {
         ..error_reached_unreachable_code(paste0(
           ".get_required_features: some features do not appear in the ",
-          " cluster table. Potentially, an incomplete feature_info_list was passed."))
+          " cluster table. Potentially, an incomplete feature_info_list was passed."
+        ))
       }
     }
     
   } else {
     # Data are not yet clustered.
     required_features <- cluster_table[
-      feature_name %in% features & feature_required == TRUE]$feature_name
+      feature_name %in% features & feature_required == TRUE
+    ]$feature_name
     
     # Sanity check. All externally provided features should be present
     # in the cluster table.
@@ -2178,7 +2567,8 @@ setMethod(
       if (!all(features %in% cluster_table$feature_name)) {
         ..error_reached_unreachable_code(paste0(
           ".get_required_features: some features do not appear in the ",
-          " cluster table. Potentially, an incomplete feature_info_list was passed."))
+          " cluster table. Potentially, an incomplete feature_info_list was passed."
+        ))
       }
     }
   }
@@ -2187,21 +2577,24 @@ setMethod(
   available_features <- get_available_features(
     feature_info_list = feature_info_list,
     exclude_signature = exclude_signature,
-    exclude_novelty = exclude_novelty)
+    exclude_novelty = exclude_novelty
+  )
   
   # Sanity check. All features that we provide externally should be
   # present in the available features.
   if (is_external) {
-    if (length(required_features) == 0) {
+    if (length(required_features) == 0L) {
       ..error_reached_unreachable_code(paste0(
         "get_required_features,dataObject: there are no required features, ",
-        "whereas at least one is expected."))
+        "whereas at least one is expected."
+      ))
     }
     
     if (!all(required_features %in% available_features)) {
       ..error_reached_unreachable_code(paste0(
         "get_required_features,dataObject: there are required features for clustering ",
-        "that are not available."))
+        "that are not available."
+      ))
     }
   }
   
@@ -2209,17 +2602,20 @@ setMethod(
   required_features <- intersect(available_features, required_features)
   
   # Return NULL if no features are required.
-  if (length(required_features) == 0) return(NULL)
+  if (length(required_features) == 0L) return(NULL)
   
   if (!exclude_imputation) {
     # Now, additionally select which features are required for imputation.
     required_features <- unique(unlist(lapply(
       feature_info_list[required_features],
-      function(x) x@required_features)))
+      function(x) x@required_features
+    )))
   }
   
   return(required_features)
 }
+
+
 
 # get_model_features methods ---------------------------------------------------
 
@@ -2233,20 +2629,13 @@ setMethod(
     features = NULL,
     exclude_signature = FALSE,
     exclude_novelty = FALSE,
-    ...) {
+    ...
+  ) {
     
     # Check if features are provided externally.
     is_external <- !is.null(features)
     
-    # Create features from columns in the dataset, if unset.
-    if (!is_external && x@delay_loading) {
-      # Get features from the feature info list.
-      features <- get_available_features(
-        feature_info_list = x,
-        exclude_signature = exclude_signature,
-        exclude_novelty = exclude_novelty)
-      
-    } else if (!is_external) {
+    if (!is_external) {
       # Get features directly.
       features <- get_feature_columns(x)
     }
@@ -2260,9 +2649,51 @@ setMethod(
       exclude_signature = exclude_signature,
       exclude_novelty = exclude_novelty,
       exclude_imputation = TRUE,
-      ...))
+      ...
+    ))
   }
 )
+
+
+
+## get_model_features (delayedDataObject) --------------------------------------
+setMethod(
+  "get_model_features",
+  signature(x = "delayedDataObject"),
+  function(
+    x,
+    feature_info_list,
+    features = NULL,
+    exclude_signature = FALSE,
+    exclude_novelty = FALSE,
+    ...
+  ) {
+    # Check if features are provided externally.
+    is_external <- !is.null(features)
+    
+    if (is_external) {
+      ..error_reached_unreachable_code("features should remain unset (NULL).")
+    }
+    
+    features <- get_available_features(
+      feature_info_list = feature_info_list,
+      exclude_signature = exclude_signature,
+      exclude_novelty = exclude_novelty
+    )
+    
+    return(.get_required_features(
+      features = features,
+      feature_info_list,
+      is_clustered = .as_preprocessing_level(x@preprocessing_level) == "clustering",
+      is_external = is_external,
+      exclude_signature = exclude_signature,
+      exclude_novelty = exclude_novelty,
+      exclude_imputation = TRUE,
+      ...
+    ))
+  }
+)
+
 
 
 
@@ -2276,8 +2707,8 @@ setMethod(
     is_clustered,
     exclude_signature = FALSE,
     exclude_novelty = FALSE,
-    ...) {
-    
+    ...
+  ) {
     return(.get_required_features(
       features = x,
       feature_info_list = feature_info_list,
@@ -2286,7 +2717,8 @@ setMethod(
       exclude_signature = exclude_signature,
       exclude_novelty = exclude_novelty,
       exclude_imputation = TRUE,
-      ...))
+      ...
+    ))
   }
 )
 
@@ -2301,6 +2733,27 @@ setMethod(
   }
 )
 
+
+
+## get_model_features (familiarEnsemble) ---------------------------------------
+setMethod(
+  "get_model_features",
+  signature(x = "familiarEnsemble"),
+  function(x, ...) {
+    return(x@model_features)
+  }
+)
+
+
+
+## get_model_features (familiarModel) ------------------------------------------
+setMethod(
+  "get_model_features",
+  signature(x = "familiarModel"),
+  function(x, ...) {
+    return(x@model_features)
+  }
+)
 
 
 create_data_column_info <- function(settings) {
@@ -2324,14 +2777,16 @@ create_data_column_info <- function(settings) {
       "batch_id_column",
       "sample_id_column",
       "series_id_column",
-      "repetition_id_column"),
-    "internal" = 
-      get_id_columns(),
+      "repetition_id_column"
+    ),
+    "internal" = get_id_columns(),
     "external" = c(
       batch_id_column,
       sample_id_column,
       series_id_column,
-      repetition_id_column))
+      repetition_id_column
+    )
+  )
   
   if (settings$data$outcome_type %in% c("survival", "competing_risk")) {
     
@@ -2347,9 +2802,10 @@ create_data_column_info <- function(settings) {
     outcome_info_table <- data.table::data.table(
       "type" = c("outcome_column", "outcome_column"),
       "internal" = internal_outcome_columns,
-      "external" = external_outcome_columns)
+      "external" = external_outcome_columns
+    )
     
-  } else if (settings$data$outcome_type %in% c("binomial", "multinomial", "continuous", "count")) {
+  } else if (settings$data$outcome_type %in% c("binomial", "multinomial", "continuous")) {
     
     # Find internal and external outcome column names.
     internal_outcome_columns <- get_outcome_columns(settings$data$outcome_type)
@@ -2363,7 +2819,8 @@ create_data_column_info <- function(settings) {
     outcome_info_table <- data.table::data.table(
       "type" = "outcome_column",
       "internal" = internal_outcome_columns,
-      "external" = external_outcome_columns)
+      "external" = external_outcome_columns
+    )
     
   } else if (settings$data$outcome_type %in% c("unsupervised")) {
     
@@ -2377,3 +2834,23 @@ create_data_column_info <- function(settings) {
   # Combine into one table and add to object
   return(rbind(data_info_table, outcome_info_table))
 }
+
+
+
+# add_model_name (familiarDataElement, dataObject)------------------------
+setMethod(
+  "add_model_name",
+  signature(
+    data = "familiarDataElement",
+    object = "dataObject"
+  ),
+  function(data, object) {
+    
+    data <- add_data_element_identifier(
+      x = data,
+      model_name = "custom_data"
+    )[[1L]]
+    
+    return(data)
+  }
+)

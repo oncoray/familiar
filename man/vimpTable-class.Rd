@@ -6,7 +6,8 @@
 \title{Variable importance table}
 \description{
 A vimpTable object contains information concerning variable importance of one
-or more features. These objects are created during feature selection.
+or more features. These objects are created during variable importance
+computation..
 }
 \details{
 vimpTable objects exists in various states. These states are
@@ -24,6 +25,12 @@ versions prior to familiar 1.2.0.
 
 \item{\code{vimp_method}}{Method used to compute variable importance scores for each
 feature.}
+
+\item{\code{data_id}}{Internal identifier for the dataset used to derive the variable
+importance table.}
+
+\item{\code{run_id}}{Internal identifier for the specific subset of the dataset used
+to derive the variable importance table.}
 
 \item{\code{run_table}}{Run table for the data used to compute variable importances
 from. Used internally.}

@@ -1,18 +1,14 @@
 Package: familiar
 Title: End-to-End Automated Machine Learning and Model Evaluation
-Version: 1.5.0
+Version: 2.0.0
 Authors@R: c(
     person("Alex", "Zwanenburg",
            email = "alexander.zwanenburg@nct-dresden.de",
            role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0342-9545")),
     person("Steffen", "Löck", role="aut"),
-    person("Stefan", "Leger", role="ctb"),
-    person("Iram", "Shahzadi", role="ctb"),
-    person("Asier", "Rabasco Meneghetti", role="ctb"),
-    person("Sebastian", "Starke", role="ctb"),
-    person("Technische Universität Dresden", role="cph"),
-    person("German Cancer Research Center (DKFZ)", role="cph"))
+    person("German Cancer Research Center (DKFZ)", role="cph"),
+    person("Technische Universität Dresden", role="cph"))
 Description: Single unified interface for end-to-end modelling of regression, 
     categorical and time-to-event (survival) outcomes. Models created using
     familiar are self-containing, and their use does not require additional
@@ -24,19 +20,19 @@ Description: Single unified interface for end-to-end modelling of regression,
     tabular format and plotted, and may also be computed manually using export
     and plot functions. Where possible, metrics and values obtained during the
     evaluation process come with confidence intervals.
-URL: https://github.com/alexzwanenburg/familiar
-BugReports: https://github.com/alexzwanenburg/familiar/issues
+URL: https://github.com/oncoray/familiar
+BugReports: https://github.com/oncoray/familiar/issues
 Depends: R (>= 4.0.0)
 License: EUPL
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Imports:
     data.table,
     methods,
-    rlang (>= 0.3.4),
+    rlang (>= 1.0.0),
     rstream,
     survival
 Suggests:
@@ -47,35 +43,30 @@ Suggests:
     coro,
     dynamicTreeCut,
     e1071 (>= 1.7.5),
-    Ecdat,
     fastcluster,
     fastglm,
-    ggplot2 (>= 3.0.0),
+    ggplot2 (>= 4.0.0),
     glmnet,
     gtable,
     harmonicmeanp,
-    isotree (>= 0.3.0),
+    isotree (>= 0.6.0),
     knitr,
     labeling,
     laGP,
-    MASS,
     maxstat,
-    mboost (>= 2.9.0),
     microbenchmark,
     nnet,
-    partykit,
+    paletteer,
     power.transform,
     praznik,
     proxy,
-    qvalue,
     randomForestSRC,
     ranger,
     rmarkdown,
     scales,
     testthat (>= 3.0.0),
     xml2,
-    VGAM,
-    xgboost
+    xgboost (>= 3.0.0)
 Collate: 
     'FamiliarS4Classes.R'
     'FamiliarS4Generics.R'
@@ -97,7 +88,6 @@ Collate:
     'DataProcessing.R'
     'DataServerBackend.R'
     'ErrorMessages.R'
-    'Evaluation.R'
     'ExperimentData.R'
     'ExperimentSetup.R'
     'Familiar.R'
@@ -105,6 +95,8 @@ Collate:
     'FamiliarCollectionExport.R'
     'FamiliarData.R'
     'FamiliarDataComputation.R'
+    'FamiliarDataComputationPredictionData.R'
+    'PredictionTable.R'
     'FamiliarDataComputationAUCCurves.R'
     'FamiliarDataComputationCalibrationData.R'
     'FamiliarDataComputationCalibrationInfo.R'
@@ -116,11 +108,12 @@ Collate:
     'FamiliarDataComputationICE.R'
     'FamiliarDataComputationModelPerformance.R'
     'FamiliarDataComputationPermutationVimp.R'
-    'FamiliarDataComputationPredictionData.R'
     'FamiliarDataComputationRiskStratificationData.R'
     'FamiliarDataComputationRiskStratificationInfo.R'
+    'FamiliarDataComputationSHAP.R'
     'FamiliarDataComputationSampleSimilarity.R'
     'FamiliarDataComputationUnivariateAnalysis.R'
+    'FamiliarDataComputationUtilities.R'
     'FamiliarDataComputationVimp.R'
     'FamiliarDataElement.R'
     'FamiliarEnsemble.R'
@@ -134,7 +127,6 @@ Collate:
     'FamiliarVimpMethod.R'
     'FeatureInfo.R'
     'FeatureInfoParameters.R'
-    'FeatureSelection.R'
     'FunctionWrapperUtilities.R'
     'HyperparameterOptimisation.R'
     'HyperparameterOptimisationMetaLearners.R'
@@ -147,6 +139,7 @@ Collate:
     'Iterations.R'
     'LearnerMain.R'
     'LearnerRecalibration.R'
+    'LearnerRiskStratification.R'
     'LearnerS4Cox.R'
     'LearnerS4GLM.R'
     'LearnerS4GLMnet.R'
@@ -158,7 +151,6 @@ Collate:
     'LearnerS4SVM.R'
     'LearnerS4SurvivalRegression.R'
     'LearnerS4XGBoost.R'
-    'LearnerSurvivalGrouping.R'
     'LearnerSurvivalProbability.R'
     'Logger.R'
     'MetricS4.R'
@@ -167,9 +159,8 @@ Collate:
     'MetricS4ConcordanceIndex.R'
     'MetricS4ConfusionMatrixMetrics.R'
     'MetricS4Regression.R'
-    'ModelBuilding.R'
-    'NoveltyDetectorS4IsolationTree.R'
     'NoveltyDetectorMain.R'
+    'NoveltyDetectorS4IsolationTree.R'
     'NoveltyDetectorS4NoneNoveltyDetector.R'
     'OutcomeInfo.R'
     'PairwiseSimilarity.R'
@@ -182,6 +173,7 @@ Collate:
     'PlotColours.R'
     'PlotConfusionMatrix.R'
     'PlotDecisionCurves.R'
+    'PlotFamiliarPlot.R'
     'PlotFeatureRanking.R'
     'PlotFeatureSimilarity.R'
     'PlotGTable.R'
@@ -191,21 +183,36 @@ Collate:
     'PlotModelPerformance.R'
     'PlotPermutationVariableImportance.R'
     'PlotSampleClustering.R'
+    'PlotShapDependence.R'
+    'PlotShapForce.R'
+    'PlotShapSummary.R'
+    'PlotShapWaterfall.R'
     'PlotUnivariateImportance.R'
     'PlotUtilities.R'
     'PredictS4Methods.R'
     'ProcessTimeUtilities.R'
     'Random.R'
-    'RandomGrouping.R'
     'RankBordaAggregation.R'
     'RankMain.R'
     'RankSimpleAggregation.R'
     'RankStabilityAggregation.R'
     'SocketServer.R'
     'StringUtilities.R'
+    'TaskEvaluate.R'
+    'TaskFeatureInfo.R'
+    'TaskLearn.R'
+    'TaskLearnerHyperparameters.R'
+    'TaskMain.R'
+    'TaskNoveltyDetector.R'
+    'TaskNoveltyDetectorHyperparameters.R'
+    'TaskVimp.R'
+    'TaskVimpHyperparameters.R'
     'TestDataCreators.R'
+    'TestFeatureInfo.R'
     'TestFunctions.R'
-    'TrainS4Methods.R'
+    'TestTrain.R'
+    'TestTrainNovelty.R'
+    'TestVimp.R'
     'TrimUtilities.R'
     'Utilities.R'
     'UtilitiesS4.R'

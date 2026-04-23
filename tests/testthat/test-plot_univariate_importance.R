@@ -11,11 +11,11 @@ familiar:::test_plots(
   plot_function = familiar::plot_univariate_importance,
   data_element = "univariate_analysis",
   not_available_all_prospective = TRUE,
-  not_available_any_prospective = TRUE,
+  not_available_mostly_prospective = TRUE,
   not_available_single_sample = TRUE,
   not_available_all_predictions_fail = FALSE,
   not_available_some_predictions_fail = FALSE,
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list("verbose" = FALSE),
   debug = debug_flag
 )
@@ -25,11 +25,11 @@ familiar:::test_plots(
   plot_function = familiar::plot_univariate_importance,
   data_element = "univariate_analysis",
   not_available_all_prospective = TRUE,
-  not_available_any_prospective = TRUE,
+  not_available_mostly_prospective = TRUE,
   not_available_single_sample = TRUE,
   not_available_all_predictions_fail = FALSE,
   not_available_some_predictions_fail = FALSE,
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "verbose" = FALSE,
     "p_adjustment_method" = "p_value"),
@@ -39,22 +39,32 @@ familiar:::test_plots(
 familiar:::test_plot_ordering(
   plot_function = familiar::plot_univariate_importance,
   data_element = "univariate_analysis",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "verbose" = FALSE,
     "p_adjustment_method" = "holm",
-    "facet_by" = c("data_set", "learner", "fs_method")),
+    "facet_by" = c("data_set", "learner", "vimp_method")),
   debug = debug_flag
 )
 
 familiar:::test_plot_ordering(
   plot_function = familiar::plot_univariate_importance,
   data_element = "univariate_analysis",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   plot_args = list(
     "verbose" = FALSE,
     "p_adjustment_method" = "BY",
-    "facet_by" = c("data_set", "fs_method"),
+    "facet_by" = c("data_set", "vimp_method"),
     "color_by" = "learner"),
+  debug = debug_flag
+)
+
+
+# With a limit to the number of features shown.
+familiar:::test_plots(
+  plot_function = familiar::plot_univariate_importance,
+  data_element = "univariate_analysis",
+  test_config = "normal",
+  plot_args = list("limit_n_features" = 2L),
   debug = debug_flag
 )

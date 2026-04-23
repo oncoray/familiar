@@ -19,6 +19,7 @@
   plot_title,
   plot_sub_title,
   caption,
+  limit_n_features,
   x_range,
   x_breaks,
   significance_level_shown
@@ -44,14 +45,27 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{show_cluster}{(\emph{optional}) Show which features were clustered together.}
 
-\item{discrete_palette}{(\emph{optional}) Palette used to fill the bars in case a
-non-singular variable was provided to the \code{color_by} argument.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring the plot elements
+according to the groupings indicated by the \code{color_by} argument (if any).
+\code{familiar} has a default palette. Other palettes are supported by
+\code{paletteer}, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette}{(\emph{optional}) Palette to use for filling the bars in
 case the \code{color_by} argument is not set. The bars are then coloured
 according to their importance. By default, no gradient is used, and the
 bars are not filled according to importance. Use \code{NULL} to fill the bars
-using the default palette in \code{familiar}.}
+using the default palette in \code{familiar}. Other palettes are supported by
+the \code{paletteer} package, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -70,6 +84,10 @@ NULL, no subtitle is shown.}
 
 \item{caption}{(\emph{optional}) Label to provide as figure caption. If NULL, no
 caption is shown.}
+
+\item{limit_n_features}{(\emph{optional}) The number of features that should be
+included in the plot. Only the most important features are shown. By
+default, the number of features is not limited.}
 
 \item{x_range}{(\emph{optional}) Value range for the x-axis.}
 

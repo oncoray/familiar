@@ -21,20 +21,20 @@ plot_ice(
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   novelty_range = NULL,
   value_scales = waiver(),
   novelty_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
-  conf_int_alpha = 0.4,
+  conf_int_alpha = 0.2,
   ice_default_alpha = 0.6,
   n_max_samples_shown = 50L,
   show_ice = TRUE,
@@ -63,20 +63,20 @@ plot_ice(
   x_label = waiver(),
   y_label = waiver(),
   legend_label = waiver(),
-  plot_title = NULL,
-  plot_sub_title = NULL,
+  plot_title = waiver(),
+  plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   novelty_range = NULL,
   value_scales = waiver(),
   novelty_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
-  conf_int_alpha = 0.4,
+  conf_int_alpha = 0.2,
   ice_default_alpha = 0.6,
   n_max_samples_shown = 50L,
   show_ice = TRUE,
@@ -109,16 +109,16 @@ plot_ice(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = NULL,
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   novelty_range = NULL,
   value_scales = waiver(),
   novelty_scales = waiver(),
   conf_int_style = c("ribbon", "step", "none"),
-  conf_int_alpha = 0.4,
+  conf_int_alpha = 0.2,
   ice_default_alpha = 0.6,
   n_max_samples_shown = 50L,
   show_ice = TRUE,
@@ -137,7 +137,12 @@ plot_ice(
 objects, that will be internally converted to a \code{familiarCollection}
 object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
-prior to export. Paths to such files can also be provided.}
+prior to export. Paths to such files can also be provided.
+
+Additionally, some \code{familiarData} objects can be created from prediction
+tables (\code{familiarDataElementPredictionTable}). Other \code{familiarData} objects
+can be created from data (\code{dataObject}, or \code{data.table}). Please
+check \emph{details} for more information.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
@@ -167,14 +172,28 @@ wrapping. If NULL, a facet grid is produced instead.}
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to colour the different
-plot elements in case a value was provided to the \code{color_by} argument. For
-2D individual conditional expectation plots without novelty, the initial
-colour determines the colour of the points indicating sample values.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring plot elements
+indicated by the \code{color_by} argument (if any). For 2D individual
+conditional expectation plots without novelty, the initial colour
+determines the colour of the points indicating sample values. \code{familiar}
+has a default palette. Other palettes are supported by the \code{paletteer}
+package, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{gradient_palette}{(\emph{optional}) Sequential or divergent palette used to
 colour the raster in 2D individual conditional expectation or partial
-dependence plots. This argument is not used for 1D plots.}
+dependence plots. This argument is not used for 1D plots. \code{familiar} has a
+default palette. Other palettes are supported by the \code{paletteer} package,
+\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
+(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
+\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
+name in \code{grDevices}. You may also specify your own palette by providing a
+vector of colour names listed by \code{grDevices::colors()} or through
+hexadecimal RGB strings.}
 
 \item{gradient_palette_range}{(\emph{optional}) Numerical range used to span the
 gradient for 2D plots. This should be a range of two values, e.g. \code{c(0, 1)}. By default, values are determined from the data, dependent on the
@@ -301,7 +320,8 @@ aggregated for export.}
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
-"print" (300), or "screen" (72). Applies only to raster output types.}
+"print" (300), or "screen" (72). Only applies when converting pixel units,
+as is typical for raster output types.}
     \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
@@ -330,8 +350,8 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
     \item{\code{cl}}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallellisation.}
-    \item{\code{evaluation_times}}{One or more time points that are used for in analysis of
-survival problems when data has to be assessed at a set time, e.g.
+    \item{\code{evaluation_times}}{One or more time points that are used for in analysis
+of survival problems when data has to be assessed at a set time, e.g.
 calibration. If not provided explicitly, this parameter is read from
 settings used at creation of the underlying \code{familiarModel} objects. Only
 used for \code{survival} outcomes.}
@@ -348,14 +368,23 @@ computation and extraction of various data elements.}
     \item{\code{message_indent}}{Number of indentation steps for messages shown during
 computation and extraction of various data elements.}
     \item{\code{sample_limit}}{(\emph{optional}) Set the upper limit of the number of samples
-that are used during evaluation steps. Cannot be less than 20.
+that are used during evaluation steps. Cannot be fewer than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.
 \code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
 
 This parameter can be set for the following data elements:
-\code{sample_similarity} and \code{ice_data}.}
+\code{sample_similarity}, \code{shap}, \code{permutation_vimp}, and \code{ice_data}.}
+    \item{\code{n_important_features}}{(\emph{optional}) Set the number of features that are
+evaluated in evaluation steps. Cannot be 0 or fewer.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("ice_data"=10, "permutation_vimp"=5)}.
+
+This parameter can be set for the following data elements:
+\code{ice_data}, \code{permutation_vimp}, and \code{shap}.}
     \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{
@@ -399,7 +428,11 @@ evaluation steps by providing a parameter value in a named list with data
 elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
-\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.
+
+If results are computed from 10 samples or fewer, \code{ensemble} is
+automatically used. This prevents issues where evaluation steps do not have
+a required minimum number of samples for \code{hybrid} or \code{model}.}
     \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
 \itemize{
@@ -453,28 +486,17 @@ predicted value as function of a single feature, whereas 2D plots show the
 predicted value as a function of two features.
 
 Available splitting variables are: \code{feature_x}, \code{feature_y} (2D only),
-\code{fs_method}, \code{learner}, \code{data_set} and \code{positive_class} (categorical
+\code{vimp_method}, \code{learner}, \code{data_set} and \code{positive_class} (categorical
 outcomes) or \code{evaluation_time} (survival outcomes). By default, for 1D ICE
-plots the data are split by \code{feature_x}, \code{fs_method} and \code{learner}, with
+plots the data are split by \code{feature_x}, \code{vimp_method} and \code{learner}, with
 faceting by \code{data_set}, \code{positive_class} or \code{evaluation_time}. If only
 partial dependence is shown, \code{positive_class} and \code{evaluation_time} are
 used to set colours instead. For 2D plots, by default the data are split by
-\code{feature_x}, \code{fs_method} and \code{learner}, with faceting by \code{data_set},
+\code{feature_x}, \code{vimp_method} and \code{learner}, with faceting by \code{data_set},
 \code{positive_class} or \code{evaluation_time}. The \code{color_by} argument cannot be
 used with 2D plots, and attempting to do so causes an error. Attempting to
 specify \code{feature_x} or \code{feature_y} for \code{color_by} will likewise result in
 an error, as multiple features cannot be shown in the same facet.
-
-The splitting variables indicated by \code{color_by} are coloured according to
-the \code{discrete_palette} parameter. This parameter is therefore only used for
-1D plots. Available palettes for \code{discrete_palette} and \code{gradient_palette}
-are those listed by \code{grDevices::palette.pals()} (requires R >= 4.0.0),
-\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
-\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
-palettes of the same name in \code{grDevices}. If not specified, a default
-palette based on palettes in Tableau are used. You may also specify your
-own palette by using colour names listed by \code{grDevices::colors()} or
-through hexadecimal RGB strings.
 
 Bootstrap confidence intervals of the partial dependence plots can be shown
 using various styles set by \code{conf_int_style}:
@@ -493,7 +515,7 @@ computed for individual samples in individual conditional expectation
 plots. To avoid clutter, only point estimates for individual samples are
 shown.
 
-Labelling methods such as \code{set_fs_method_names} or \code{set_data_set_names} can
+Labelling methods such as \code{set_vimp_method_names} or \code{set_data_set_names} can
 be applied to the \code{familiarCollection} object to update labels, and order
 the output in the figure.
 }

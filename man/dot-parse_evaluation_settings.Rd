@@ -19,15 +19,20 @@
   prep_cluster_similarity_threshold,
   prep_cluster_similarity_metric,
   evaluate_top_level_only = waiver(),
+  evaluation_elements = waiver(),
   skip_evaluation_elements = waiver(),
   ensemble_method = waiver(),
   evaluation_metric = waiver(),
   sample_limit = waiver(),
+  n_important_features = waiver(),
   detail_level = waiver(),
   estimation_type = waiver(),
   aggregate_results = waiver(),
   confidence_level = waiver(),
   bootstrap_ci_method = waiver(),
+  shap_tolerance = waiver(),
+  shap_max_iterations = waiver(),
+  shap_phi_0 = waiver(),
   feature_cluster_method = waiver(),
   feature_cluster_cut_method = waiver(),
   feature_linkage_method = waiver(),
@@ -65,11 +70,10 @@ These identifiers are used to determine the cohorts used to determine a
 setting for \code{time_max}, if the \code{outcome_type} is \code{survival}, and both
 \code{time_max} and \code{evaluation_times} are not provided.}
 
-\item{vimp_aggregation_method}{Method for variable importance aggregation that
-was used for feature selection.}
+\item{vimp_aggregation_method}{Variable importance aggregation method.}
 
-\item{vimp_aggregation_rank_threshold}{Rank threshold for variable importance
-aggregation used during feature selection.}
+\item{vimp_aggregation_rank_threshold}{Rank threshold used for variable
+importance aggregation.}
 
 \item{prep_cluster_method}{Cluster method used during pre-processing.}
 
@@ -99,48 +103,64 @@ from both the global layer and the next lower level.
 
 Setting the flag to \code{true} saves computation time.}
 
+\item{evaluation_elements}{(\emph{optional}) Specifies which evaluation steps
+should be performed during the evaluation process. Defaults to \code{all},
+indicating that all evaluation steps should be performed. It can have one or
+more of the following values:
+\itemize{
+\item \code{all}, \code{true}: all evaluation steps are performed.
+\item \code{none}, \code{false}: no evaluation is performed.
+\item \code{auc_data}: data for assessing and plotting the area under the receiver
+operating characteristic curve are computed.
+\item \code{calibration_data}: data for assessing and plotting model calibration are
+computed.
+\item \code{calibration_info}: data required to assess calibration, such as baseline
+survival curves, are collected. These data will still be present in the
+models.
+\item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
+collected.
+\item \code{decision_curve_analyis}: data for performing a decision curve analysis
+are computed.
+\item \code{feature_expressions}: data for assessing and plotting sample clustering
+are computed.
+\item \code{feature_similarity}: data for assessing and plotting feature clusters
+not computed.
+\item \code{fs_vimp}: data for assessing and plotting feature selection-based
+variable importance are collected.
+\item \code{hyperparameters}: data for assessing model hyperparameters are
+collected. These data will still be present in the models.
+\item \code{ice_data}: data for individual conditional expectation and partial
+dependence plots are created.
+\item \code{model_performance}: data for assessing and visualising model performance
+are created.
+\item \code{model_vimp}: data for assessing and plotting model-based variable
+importance are collected.
+\item \code{permutation_vimp}: data for assessing and plotting model-agnostic
+permutation variable importance are computed.
+\item \code{prediction_data}: predictions for each sample are made and exported.
+\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier
+survival curves are collected.
+\item \code{risk_stratification_info}: data for assessing stratification into risk
+groups are computed.
+\item \code{sample_similarity}: data for assessing sample similarity are computed.
+\item \code{shap}: data for assessing marginal contributions of feature values in
+a SHAP analysis.
+\item \code{univariate_analysis}: data for assessing and plotting univariate feature
+importance are computed.
+}
+
+The logical intersect of the evaluation elements specified by
+\code{evaluation_elements} and \code{skip_evaluation_elements} is used to define which
+evaluation steps are performed.}
+
 \item{skip_evaluation_elements}{(\emph{optional}) Specifies which evaluation steps,
 if any, should be skipped as part of the evaluation process. Defaults to
 \code{none}, which means that all relevant evaluation steps are performed. It can
-have one or more of the following values:
-\itemize{
-\item \code{none}, \code{false}: no steps are skipped.
-\item \code{all}, \code{true}: all steps are skipped.
-\item \code{auc_data}: data for assessing and plotting the area under the receiver
-operating characteristic curve are not computed.
-\item \code{calibration_data}: data for assessing and plotting model calibration are
-not computed.
-\item \code{calibration_info}: data required to assess calibration, such as baseline
-survival curves, are not collected. These data will still be present in the
-models.
-\item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
-not collected.
-\item \code{decision_curve_analyis}: data for performing a decision curve analysis
-are not computed.
-\item \code{feature_expressions}: data for assessing and plotting sample clustering
-are not computed.
-\item \code{feature_similarity}: data for assessing and plotting feature clusters are
-not computed.
-\item \code{fs_vimp}: data for assessing and plotting feature selection-based
-variable importance are not collected.
-\item \code{hyperparameters}: data for assessing model hyperparameters are not
-collected. These data will still be present in the models.
-\item \code{ice_data}: data for individual conditional expectation and partial
-dependence plots are not created.
-\item \code{model_performance}: data for assessing and visualising model performance
-are not created.
-\item \code{model_vimp}: data for assessing and plotting model-based variable
-importance are not collected.
-\item \code{permutation_vimp}: data for assessing and plotting model-agnostic
-permutation variable importance are not computed.
-\item \code{prediction_data}: predictions for each sample are not made and exported.
-\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier
-survival curves are not collected.
-\item \code{risk_stratification_info}: data for assessing stratification into risk
-groups are not computed.
-\item \code{univariate_analysis}: data for assessing and plotting univariate feature
-importance are not computed.
-}}
+have one or more of the same values as \code{evaluation_elements}.
+
+The logical intersect of the evaluation elements specified by
+\code{evaluation_elements} and \code{skip_evaluation_elements} is used to define which
+evaluation steps are performed.}
 
 \item{ensemble_method}{(\emph{optional}) Method for ensembling predictions from
 models for the same sample. Available methods are:
@@ -164,14 +184,24 @@ depends on the value of \code{confidence_level} (Davison and Hinkley, 1997).
 If unset, the metric in the \code{optimisation_metric} variable is used.}
 
 \item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
-that are used during evaluation steps. Cannot be less than 20.
+that are used during evaluation steps. Cannot be fewer than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.
 \code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
 
 This parameter can be set for the following data elements:
-\code{sample_similarity} and \code{ice_data}.}
+\code{sample_similarity}, \code{shap}, \code{permutation_vimp}, and \code{ice_data}.}
+
+\item{n_important_features}{(\emph{optional}) Set the number of features that are
+evaluated in evaluation steps. Cannot be 0 or fewer.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("ice_data"=10, "permutation_vimp"=5)}.
+
+This parameter can be set for the following data elements:
+\code{ice_data}, \code{permutation_vimp}, and \code{shap}.}
 
 \item{detail_level}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
@@ -216,7 +246,11 @@ evaluation steps by providing a parameter value in a named list with data
 elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
-\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.
+
+If results are computed from 10 samples or fewer, \code{ensemble} is
+automatically used. This prevents issues where evaluation steps do not have
+a required minimum number of samples for \code{hybrid} or \code{model}.}
 
 \item{estimation_type}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
@@ -274,6 +308,22 @@ method.
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
+
+\item{shap_tolerance}{(\emph{optional}) Relative tolerance for convergence of SHAP
+values. The tolerance is scaled with the range in SHAP values.
+
+The default value is \code{0.05}.}
+
+\item{shap_max_iterations}{(\emph{optional}) Maximum iterations for convergence of
+SHAP values.
+
+The default value is \code{1000} iterations.}
+
+\item{shap_phi_0}{(\emph{optional}) Value(s) to use for computing marginal
+contributions. By default, the average predicted value in the population is
+used. For \code{multinomial} and \code{survival} outcomes, this parameter requires a
+value for each class and evaluation time (\code{evaluation_times}),
+respectively.}
 
 \item{feature_cluster_method}{(\emph{optional}) Method used to perform clustering
 of features. The same methods as for the \code{cluster_method} configuration
@@ -368,9 +418,9 @@ and 1 if they do not.}
 
 \item{eval_aggregation_method}{(\emph{optional}) Method for aggregating variable
 importances for the purpose of evaluation. Variable importances are
-determined during feature selection steps and after training the model. Both
-types are evaluated, but feature selection variable importance is only
-evaluated at run-time.
+determined both during initial variable importance computation steps and
+after training the model. Both types are evaluated after training the
+model, but only the initial variable importances are evaluated at run-time.
 
 See the documentation for the \code{vimp_aggregation_method} argument for
 information concerning the different methods available.}

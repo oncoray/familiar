@@ -25,8 +25,8 @@ regarding identifier column names and outcome column names.}
 
 \item{\code{learner}}{Learning algorithm used to create the models in the ensemble.}
 
-\item{\code{fs_method}}{Feature selection method used to determine variable
-importance for the models in the ensemble.}
+\item{\code{vimp_method}}{Method used to determine variable importance for the models
+in the ensemble.}
 
 \item{\code{feature_info}}{List of objects containing feature information, e.g.,
 name, class levels, transformation, normalisation and clustering
@@ -40,6 +40,12 @@ models in the ensemble,}
 
 \item{\code{novelty_features}}{The combined set of features that is used to train all
 novelty detectors in the ensemble.}
+
+\item{\code{data_id}}{Internal identifier for the dataset used to train or
+evaluate the ensemble.}
+
+\item{\code{run_id}}{Internal identifier for the specific subset of the dataset used
+used to train or evaluate the ensemble.}
 
 \item{\code{run_table}}{Run table for the data used to train the ensemble. Used
 internally.}

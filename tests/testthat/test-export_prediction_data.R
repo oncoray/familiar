@@ -9,7 +9,7 @@ familiar:::test_export(
   not_available_all_predictions_fail = FALSE,
   not_available_some_predictions_fail = FALSE,
   data_element = "prediction_data",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   detail_level = "ensemble",
   create_novelty_detector = TRUE,
   debug = debug_flag
@@ -20,14 +20,14 @@ familiar:::test_export(
   not_available_all_predictions_fail = FALSE,
   not_available_some_predictions_fail = FALSE,
   data_element = "prediction_data",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   detail_level = "hybrid",
   estimation_type = "bci",
   confidence_level = 0.80,
   aggregate_results = TRUE,
   create_novelty_detector = TRUE,
   n_models = 100,
-  test_specific_config = TRUE,
+  test_config = "normal",
   debug = debug_flag
 )
 
@@ -36,13 +36,13 @@ familiar:::test_export(
   not_available_all_predictions_fail = FALSE,
   not_available_some_predictions_fail = FALSE,
   data_element = "prediction_data",
-  outcome_type_available = c("count", "continuous", "binomial", "multinomial", "survival"),
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
   detail_level = "hybrid",
   estimation_type = "bias_correction",
   confidence_level = 0.80,
   aggregate_results = TRUE,
   create_novelty_detector = TRUE,
   n_models = 20,
-  test_specific_config = TRUE,
+  test_config = "normal",
   debug = debug_flag
 )

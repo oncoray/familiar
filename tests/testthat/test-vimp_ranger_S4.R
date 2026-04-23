@@ -10,14 +10,6 @@ testthat::skip_on_ci()
 familiar:::test_all_vimp_methods(
   familiar:::.get_available_ranger_vimp_methods(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list(
-      "n_tree" = 4,
-      "sample_size" = 1.00,
-      "m_try" = 0.3,
-      "node_size" = 5,
-      "tree_depth" = 5,
-      "alpha" = 0.1
-    ),
     "continuous" = list(
       "n_tree" = 4,
       "sample_size" = 1.00,
@@ -60,14 +52,6 @@ familiar:::test_all_vimp_methods(
 familiar:::test_all_vimp_methods_parallel(
   familiar:::.get_available_ranger_vimp_methods(show_general = FALSE),
   hyperparameter_list = list(
-    "count" = list(
-      "n_tree" = 4,
-      "sample_size" = 1.00,
-      "m_try" = 0.3,
-      "node_size" = 5,
-      "tree_depth" = 5,
-      "alpha" = 0.1
-    ),
     "continuous" = list(
       "n_tree" = 4,
       "sample_size" = 1.00,
@@ -103,96 +87,11 @@ familiar:::test_all_vimp_methods_parallel(
   )
 )
 
-# Count outcome ----------------------------------------------------------------
-data <- familiar:::test_create_good_data("count")
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_ranger_impurity",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 1.00,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "alpha" = 0.1),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0("The ranger random forest impurity method correctly ranks count data."),
-  {
-    vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-      familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-      "per_capita_crime", "lower_status_percentage",
-      "residence_before_1940_proportion", "avg_rooms", "industry")))
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_ranger_permutation",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 1.00,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "alpha" = 0.1),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple"
-)
-
-testthat::test_that(
-  paste0("The ranger random forest permutation method correctly ranks count data."),
-  {
-    vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-      familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-      "per_capita_crime", "lower_status_percentage",
-      "residence_before_1940_proportion", "avg_rooms")))
-  }
-)
-
-# Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
-  data = data,
-  vimp_method = "random_forest_ranger_holdout_permutation",
-  vimp_method_parameter_list = list(
-    "n_tree" = 4,
-    "sample_size" = 1.00,
-    "m_try" = 0.3,
-    "node_size" = 5,
-    "tree_depth" = 5,
-    "alpha" = 0.1),
-  outcome_type = "count",
-  cluster_method = "none",
-  imputation_method = "simple")
-
-testthat::test_that(
-  paste0("The ranger random forest hold-out permutation method correctly ranks count data."),
-  {
-    vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-      familiar:::.vimp(vimp_object, data)))
-    
-    testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-      "per_capita_crime", "lower_status_percentage",
-      "residence_before_1940_proportion", "avg_rooms")))
-  }
-)
-
 # Continuous outcome -----------------------------------------------------------
 data <- familiar:::test_create_good_data("continuous")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_impurity",
   vimp_method_parameter_list = list(
@@ -212,13 +111,20 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-      "enrltot", "avginc", "calwpct")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_permutation",
   vimp_method_parameter_list = list(
@@ -239,13 +145,20 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-      "enrltot", "avginc", "calwpct")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_holdout_permutation",
   vimp_method_parameter_list = list(
@@ -265,8 +178,15 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-      "enrltot", "avginc", "calwpct")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -274,7 +194,7 @@ testthat::test_that(
 data <- familiar:::test_create_good_data("binomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_impurity",
   vimp_method_parameter_list = list(
@@ -294,14 +214,20 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-      "cell_shape_uniformity", "clump_thickness",
-      "epithelial_cell_size", "bare_nuclei")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_permutation",
   vimp_method_parameter_list = list(
@@ -320,14 +246,20 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-      "cell_shape_uniformity", "clump_thickness",
-      "epithelial_cell_size", "bare_nuclei")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_holdout_permutation",
   vimp_method_parameter_list = list(
@@ -344,12 +276,18 @@ vimp_object <- familiar:::prepare_vimp_object(
 testthat::test_that(
   paste0("The ranger random forest hold-out permutation method correctly ranks binomial data."),
   {
-  vimp_table <- suppressWarnings(familiar:::get_vimp_table(
-    familiar:::.vimp(vimp_object, data)))
-  
-  testthat::expect_true(any(vimp_table[rank <= 2]$name %in% c(
-    "cell_shape_uniformity", "clump_thickness",
-    "epithelial_cell_size", "bare_nuclei")))
+    vimp_table <- suppressWarnings(familiar:::get_vimp_table(
+      familiar:::.vimp(vimp_object, data)))
+    
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -357,7 +295,7 @@ testthat::test_that(
 data <- familiar:::test_create_good_data("multinomial")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_impurity",
   vimp_method_parameter_list = list(
@@ -376,13 +314,20 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-      "Petal_Length", "Petal_Width")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_permutation",
   vimp_method_parameter_list = list(
@@ -403,13 +348,20 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-      "Petal_Length", "Petal_Width")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_holdout_permutation",
   vimp_method_parameter_list = list(
@@ -432,8 +384,15 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c(
-      "Petal_Length", "Petal_Width")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
@@ -441,7 +400,7 @@ testthat::test_that(
 data <- familiar:::test_create_good_data("survival")
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_impurity",
   vimp_method_parameter_list = list(
@@ -461,12 +420,20 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_permutation",
   vimp_method_parameter_list = list(
@@ -486,12 +453,20 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
 
 # Process dataset.
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "random_forest_ranger_holdout_permutation",
   vimp_method_parameter_list = list(
@@ -513,9 +488,27 @@ testthat::test_that(
     vimp_table <- suppressWarnings(familiar:::get_vimp_table(
       familiar:::.vimp(vimp_object, data)))
     
-    testthat::expect_true(all(vimp_table[rank <= 2]$name %in% c("nodes", "rx", "adhere")))
+    # Expect that the vimp table has at most six rows.
+    testthat::expect_lte(nrow(vimp_table), 6L)
+    
+    # Expect that the names are the same as that of the features.
+    testthat::expect_true(
+      all(vimp_table$name %in% familiar:::get_feature_columns(data)))
+    
+    # Feature 1 is most important.
+    testthat::expect_equal(vimp_table[rank == 1, ]$name, "feature_1")
   }
 )
+
+
+familiar:::test_hyperparameter_optimisation(
+  vimp_methods = "random_forest_ranger_impurity",
+  debug = FALSE,
+  parallel = FALSE,
+  test_specific_config = TRUE
+)
+
+
 
 testthat::skip("Skip hyperparameter optimisation, unless manual.")
 

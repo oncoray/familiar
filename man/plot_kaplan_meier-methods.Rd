@@ -27,14 +27,14 @@ plot_kaplan_meier(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = c(0, 1),
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   confidence_level = NULL,
   conf_int_style = c("ribbon", "step", "none"),
-  conf_int_alpha = 0.4,
+  conf_int_alpha = 0.2,
   censoring = TRUE,
   censor_shape = "plus",
   show_logrank = TRUE,
@@ -67,14 +67,14 @@ plot_kaplan_meier(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = c(0, 1),
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   confidence_level = NULL,
   conf_int_style = c("ribbon", "step", "none"),
-  conf_int_alpha = 0.4,
+  conf_int_alpha = 0.2,
   censoring = TRUE,
   censor_shape = "plus",
   show_logrank = TRUE,
@@ -107,14 +107,14 @@ plot_kaplan_meier(
   plot_sub_title = waiver(),
   caption = NULL,
   x_range = NULL,
-  x_n_breaks = 5,
+  x_n_breaks = 5L,
   x_breaks = NULL,
   y_range = c(0, 1),
-  y_n_breaks = 5,
+  y_n_breaks = 5L,
   y_breaks = NULL,
   confidence_level = NULL,
   conf_int_style = c("ribbon", "step", "none"),
-  conf_int_alpha = 0.4,
+  conf_int_alpha = 0.2,
   censoring = TRUE,
   censor_shape = "plus",
   show_logrank = TRUE,
@@ -131,7 +131,12 @@ plot_kaplan_meier(
 objects, that will be internally converted to a \code{familiarCollection}
 object. It is also possible to provide a \code{familiarEnsemble} or one or more
 \code{familiarModel} objects together with the data from which data is computed
-prior to export. Paths to such files can also be provided.}
+prior to export. Paths to such files can also be provided.
+
+Additionally, some \code{familiarData} objects can be created from prediction
+tables (\code{familiarDataElementPredictionTable}). Other \code{familiarData} objects
+can be created from data (\code{dataObject}, or \code{data.table}). Please
+check \emph{details} for more information.}
 
 \item{draw}{(\emph{optional}) Draws the plot if TRUE.}
 
@@ -169,9 +174,15 @@ is to be shared by multiple aesthetics, such as those specified by
 
 \item{ggtheme}{(\emph{optional}) \code{ggplot} theme to use for plotting.}
 
-\item{discrete_palette}{(\emph{optional}) Palette to use to color the different
-risk strata in case a non-singular variable was provided to the \code{color_by}
-argument.}
+\item{discrete_palette}{(\emph{optional}) Palette for colouring the plot elements
+according to the groupings indicated by the \code{color_by} argument (if any).
+\code{familiar} has a default palette. Other palettes are supported by
+\code{paletteer}, \code{grDevices::palette.pals()} (requires R >= 4.0.0),
+\code{grDevices::hcl.pals()} (requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors},
+\code{terrain.colors}, \code{topo.colors} and \code{cm.colors}, which correspond to the
+palettes of the same name in \code{grDevices}. You may also specify your own
+palette by providing a vector of colour names listed by
+\code{grDevices::colors()} or through hexadecimal RGB strings.}
 
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
@@ -250,7 +261,7 @@ vignette \emph{Aesthetic specifications}. By default a plus shape is used.}
 \item{show_logrank}{(\emph{optional}) Specifies whether the results of a logrank
 test to assess differences between the risk strata is annotated in the
 plot. A log-rank test can only be shown when \code{color_by} and \code{linestyle_by}
-are either unset, or only contain \code{risk_group}.}
+are either unset, or only contain \code{group}.}
 
 \item{show_survival_table}{(\emph{optional}) Specifies whether a survival table is
 shown below the Kaplan-Meier survival curves. Survival in the risk strata
@@ -279,7 +290,8 @@ parameter is one or more \code{familiarData} objects.}
 \code{NULL} (default), the device is guessed based on the \code{filename} extension.}
     \item{\code{scale}}{Multiplicative scaling factor.}
     \item{\code{dpi}}{Plot resolution. Also accepts a string input: "retina" (320),
-"print" (300), or "screen" (72). Applies only to raster output types.}
+"print" (300), or "screen" (72). Only applies when converting pixel units,
+as is typical for raster output types.}
     \item{\code{limitsize}}{When \code{TRUE} (the default), \code{ggsave()} will not
 save images larger than 50x50 inches, to prevent the common error of
 specifying dimensions in pixels.}
@@ -351,7 +363,11 @@ evaluation steps by providing a parameter value in a named list with data
 elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
-\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.
+
+If results are computed from 10 samples or fewer, \code{ensemble} is
+automatically used. This prevents issues where evaluation steps do not have
+a required minimum number of samples for \code{hybrid} or \code{model}.}
   }}
 }
 \value{
@@ -369,19 +385,11 @@ group stratification by the learners.
 survival the y-axis represents. It is therefore recommended to provide
 \code{x_label} and \code{y_label} arguments.
 
-Available splitting variables are: \code{fs_method}, \code{learner}, \code{data_set},
-\code{risk_group} and \code{stratification_method}. By default, separate figures are
-created for each combination of \code{fs_method} and \code{learner}, with faceting by
+Available splitting variables are: \code{vimp_method}, \code{learner}, \code{data_set},
+\code{group} and \code{stratification_method}. By default, separate figures are
+created for each combination of \code{vimp_method} and \code{learner}, with faceting by
 \code{data_set}, colouring of the strata in each individual plot by
-\code{risk_group}.
-
-Available palettes for \code{discrete_palette} are those listed by
-\code{grDevices::palette.pals()} (requires R >= 4.0.0), \code{grDevices::hcl.pals()}
-(requires R >= 3.6.0) and \code{rainbow}, \code{heat.colors}, \code{terrain.colors},
-\code{topo.colors} and \code{cm.colors}, which correspond to the palettes of the same
-name in \code{grDevices}. If not specified, a default palette based on palettes
-in Tableau are used. You may also specify your own palette by using colour
-names listed by \code{grDevices::colors()} or through hexadecimal RGB strings.
+\code{group}.
 
 Greenwood confidence intervals of the Kaplan-Meier curve can be shown using
 various styles set by \code{conf_int_style}:

@@ -12,7 +12,8 @@ summon_familiar(
   config = NULL,
   config_id = 1L,
   verbose = TRUE,
-  .stop_after = "evaluation",
+  .stop_after = "export",
+  .force_output = FALSE,
   ...
 )
 }
@@ -37,7 +38,9 @@ In case paths are provided, the data should be stored as \code{csv}, \code{rds} 
 \code{RData} files. See documentation for the \code{data_files} argument for more
 information.}
 
-\item{experiment_data}{Experimental data may provided in the form of}
+\item{experiment_data}{Experimental data may provided in the form of the
+output of \code{precompute_data_assignment}, \code{precompute_feature_info} or
+\code{precompute_vimp}. This allows for warm-starting experiments.}
 
 \item{cl}{Cluster created using the \code{parallel} package. This cluster is then
 used to speed up computation through parallelisation. When a cluster is not
@@ -61,8 +64,11 @@ messages and warnings are returned.}
 
 \item{.stop_after}{Variable for internal use.}
 
+\item{.force_output}{Generates output even if results have been written to
+the file system.}
+
 \item{...}{
-  Arguments passed on to \code{\link[=.parse_file_paths]{.parse_file_paths}}, \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_feature_selection_settings]{.parse_feature_selection_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}
+  Arguments passed on to \code{\link[=.parse_file_paths]{.parse_file_paths}}, \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_variable_importance_settings]{.parse_variable_importance_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}
   \describe{
     \item{\code{project_dir}}{(\emph{optional}) Path to the project directory. \code{familiar}
 checks if the directory indicated by \code{experiment_dir} and data files in
@@ -131,7 +137,7 @@ sample or subject identifiers. See \code{batch_id_column} above for more
 details.
 
 If unset, every row will be identified as a single sample.}
-    \item{\code{series_id_column}}{(\strong{optional}) Name of the column containing series
+    \item{\code{series_id_column}}{(\emph{optional}) Name of the column containing series
 identifiers, which distinguish between measurements that are part of a
 series for a single sample. See \code{batch_id_column} above for more details.
 
@@ -151,8 +157,8 @@ provided.}
 be used in figures created by \code{familiar}.
 
 If not set, the column name in \code{outcome_column} will be used for
-\code{binomial}, \code{multinomial}, \code{count} and \code{continuous} outcomes. For other
-outcomes (\code{survival} and \code{competing_risk}) no default is used.}
+\code{binomial}, \code{multinomial}, and \code{continuous} outcomes. For other outcomes
+(\code{survival} and \code{competing_risk}) no default is used.}
     \item{\code{outcome_column}}{(\strong{recommended}) Name of the column containing the
 outcome of interest. May be identified from a formula, if a formula is
 provided as an argument. Otherwise an error is raised. Note that \code{survival}
@@ -161,13 +167,12 @@ indicate the time-to-event or the time of last follow-up and the event
 status.}
     \item{\code{outcome_type}}{(\strong{recommended}) Type of outcome found in the outcome
 column. The outcome type determines many aspects of the overall process,
-e.g. the available feature selection methods and learners, but also the
+e.g. the available variable importance methods and learners, but also the
 type of assessments that can be conducted to evaluate the resulting models.
 Implemented outcome types are:
 \itemize{
 \item \code{binomial}: categorical outcome with 2 levels.
 \item \code{multinomial}: categorical outcome with 2 or more levels.
-\item \code{count}: Poisson-distributed numeric outcomes.
 \item \code{continuous}: general continuous numeric outcomes.
 \item \code{survival}: survival outcome for time-to-event data.
 }
@@ -177,7 +182,8 @@ contents of the outcome column. This may lead to unexpected results, and we
 therefore advise to provide this information manually.
 
 Note that \code{competing_risk} survival analysis are not fully supported, and
-is currently not a valid choice for \code{outcome_type}.}
+is currently not a valid choice for \code{outcome_type}. The \code{count} outcome
+type was deprecated in version 2.0.0, and superseded by \code{continuous}.}
     \item{\code{class_levels}}{(\emph{optional}) Class levels for \code{binomial} or \code{multinomial}
 outcomes. This argument can be used to specify the ordering of levels for
 categorical outcomes. These class levels must exactly match the levels
@@ -198,7 +204,7 @@ unset, all values other than those specified by the \code{event_indicator} and
 risks.}
     \item{\code{signature}}{(\emph{optional}) One or more names of feature columns that are
 considered part of a specific signature. Features specified here will
-always be used for modelling. Ranking from feature selection has no effect
+always be used for modelling. Ranking of variable importances has no effect
 for these features.}
     \item{\code{novelty_features}}{(\emph{optional}) One or more names of feature columns
 that should be included for the purpose of novelty detection.}
@@ -228,10 +234,13 @@ prior to familiar version 1.3.0.
 }}
     \item{\code{experimental_design}}{(\strong{required}) Defines what the experiment looks
 like, e.g. \code{cv(bt(fs,20)+mb,3,2)+ev} for 2 times repeated 3-fold
-cross-validation with nested feature selection on 20 bootstraps and
-model-building, and external validation. The basic workflow components are:
+cross-validation with nested variable importance computation on 20
+bootstraps and model-building, and external validation. The basic workflow
+components are:
 \itemize{
-\item \code{fs}: (required) feature selection step.
+\item \code{fs}: (optional) variable importance computation step. If not explicitly
+declared, feature selection will be done just in time for hyperparameter
+optimisation.
 \item \code{mb}: (required) model building step.
 \item \code{ev}: (optional) external validation. Note that internal validation due
 to subsampling will always be conducted if the subsampling methods create
@@ -294,6 +303,10 @@ that defines the design.}
     \item{\code{imbalance_n_partitions}}{(\emph{optional}) Number of times random
 undersampling should be repeated. 10 undersampled subsets with balanced
 classes are formed by default.}
+    \item{\code{iteration_seed}}{(\emph{optional}) Integer seed used in sampling algorithms
+specified by the \code{experimental_design} argument. This allows for creating
+the same sample assignments across different experiments -- of course
+provided that the same dataset is used. By default a random seed is used.}
     \item{\code{parallel}}{(\emph{optional}) Enable parallel processing. Defaults to \code{TRUE}.
 When set to \code{FALSE}, this disables all parallel processing, regardless of
 specific parameters such as \code{parallel_preprocessing}. However, when
@@ -348,7 +361,7 @@ Several method are available:
 filter, for example, genes that are not differentially expressed.
 \item \code{univariate_test}: Features undergo a univariate regression using an
 outcome-appropriate regression model. The p-value of the model coefficient
-is collected. Features with coefficient p or q-value above the
+is collected. Features with coefficient p-value above the
 \code{univariate_test_threshold} are subsequently filtered.
 \item \code{robustness}: Features that are not sufficiently robust according to the
 intraclass correlation coefficient are filtered. Use of this method
@@ -360,18 +373,15 @@ More than one method can be used simultaneously. Features with singular
 values are always filtered, as these do not contain information.}
     \item{\code{univariate_test_threshold}}{(\emph{optional}) Numeric value between \code{1.0} and
 \code{0.0} that determines which features are irrelevant and will be filtered by
-the \code{univariate_test}. The p or q-values are compared to this threshold.
+the \code{univariate_test}. p-values are compared to this threshold.
 All features with values above the threshold are filtered. The default
 value is \code{0.20}.}
     \item{\code{univariate_test_threshold_metric}}{(\emph{optional}) Metric used with the to
-compare the \code{univariate_test_threshold} against. The following metrics can
+compare the \code{univariate_test_threshold} against. The following metric can
 be chosen:
 \itemize{
 \item \code{p_value} (default): The unadjusted p-value of each feature is used for
 to filter features.
-\item \code{q_value}: The q-value (Story, 2002), is used to filter features. Some
-data sets may have insufficient samples to compute the q-value. The
-\code{qvalue} package must be installed from Bioconductor to use this method.
 }}
     \item{\code{univariate_test_max_feature_set_size}}{(\emph{optional}) Maximum size of the
 feature set after the univariate test. P or q values of features are
@@ -422,7 +432,7 @@ methods are available:
 \item \code{none}: This disables transformation of features.
 \item \code{yeo_johnson}: Transformation using the location and scale invariant
 version of the Yeo-Johnson transformation (Yeo and Johnson, 2000;
-Zwanenburg and Löck, 2023).
+Zwanenburg and Löck, 2026).
 \item \code{yeo_johnson_robust} (default): A robust version of \code{yeo_johnson}.
 This method is less sensitive to outliers.
 \item \code{yeo_johnson_conventional}: As \code{yeo_johnson}, but without optimisation of
@@ -430,7 +440,7 @@ location and scale parameters. This method is equivalent to the original
 transformation proposed by Yeo and Johnson (2001).
 \item \code{box_cox}: Transformation using the location and scale invariant version
 of the Box-Cox transformation (Box and Cox, 1964; Zwanenburg and Löck,
-2023).
+2026).
 \item \code{box_cox_robust}: A robust version of \code{yeo_johnson}. This method is less
 sensitive to outliers.
 \item \code{box_cox_conventional}: As \code{box_cox}, but without optimisation of
@@ -450,12 +460,12 @@ optimisation criteria, of which the following are available:
 \itemize{
 \item \code{mle} (default): Optimisation using maximum likelihood estimation.
 \item \code{cramer_von_mises}: Optimisation using the Cramér-von Mises
-criterion. Zwanenburg and Löck (2023) found that this criterion was
+criterion. Zwanenburg and Löck (2026) found that this criterion was
 relatively robust against outliers.
 }}
     \item{\code{transformation_gof_test_p_value}}{(\emph{optional}) Not all transformations
 will lead to features that are roughly normally distributed. Zwanenburg and
-Löck (2023) established a empirical goodness-of-fit test for central
+Löck (2026) established a empirical goodness-of-fit test for central
 normality. This parameter sets the significance for rejecting the
 null-hypothesis that a feature distribution is centrally normal. When the
 null-hypothesis is rejected, no transformation is performed. The default
@@ -703,18 +713,17 @@ preprocessing workflow. Defaults to \code{TRUE}. When set to \code{FALSE}, this 
 disable the use of parallel processing while preprocessing, regardless of
 the settings of the \code{parallel} parameter. \code{parallel_preprocessing} is
 ignored if \code{parallel=FALSE}.}
-    \item{\code{fs_method}}{(\strong{required}) Feature selection method to be used for
-determining variable importance. \code{familiar} implements various feature
-selection methods. Please refer to the vignette on feature selection
-methods for more details.
+    \item{\code{vimp_method}}{(\strong{required}) Variable importance method. \code{familiar}
+implements various variable importance methods. Please refer to the
+vignette on variable importance methods for more details.
 
-More than one feature selection method can be chosen. The experiment will
+More than one variable importance method can be chosen. The experiment will
 then repeated for each feature selection method.
 
-Feature selection methods determines the ranking of features. Actual
+Variable importance methods determine the ranking of features. Actual
 selection of features is done by optimising the signature size model
 hyperparameter during the hyperparameter optimisation step.}
-    \item{\code{fs_method_parameter}}{(\emph{optional}) List of lists containing parameters
+    \item{\code{vimp_method_parameter}}{(\emph{optional}) List of lists containing parameters
 for feature selection methods. Each sublist should have the name of the
 feature selection method it corresponds to.
 
@@ -756,17 +765,17 @@ feature rank.
 
 The \emph{feature selection methods} vignette provides additional information.}
     \item{\code{vimp_aggregation_rank_threshold}}{(\emph{optional}) The threshold used to
-define the subset of highly important features. If not set, this threshold
-is determined by maximising the variance in the occurrence value over all
-features over the subset size.
+define the subset of highly important features. If set to \code{NULL}, this
+threshold is determined by maximising the variance in the occurrence value
+over all features over the subset size. The default value is \code{5}.
 
 This parameter is only relevant for \code{stability}, \code{exponential},
 \code{enhanced_borda}, \code{truncated_borda} and \code{enhanced_truncated_borda} methods.}
-    \item{\code{parallel_feature_selection}}{(\emph{optional}) Enable parallel processing for
-the feature selection workflow. Defaults to \code{TRUE}. When set to \code{FALSE},
+    \item{\code{parallel_vimp}}{(\emph{optional}) Enable parallel processing for
+variable importance tasks. Defaults to \code{TRUE}. When set to \code{FALSE},
 this will disable the use of parallel processing while performing feature
 selection, regardless of the settings of the \code{parallel} parameter.
-\code{parallel_feature_selection} is ignored if \code{parallel=FALSE}.}
+\code{parallel_vimp} is ignored if \code{parallel = FALSE}.}
     \item{\code{learner}}{(\strong{required}) One or more algorithms used for model
 development. A sizeable number learners is supported in \code{familiar}. Please
 see the vignette on learners for more information concerning the available
@@ -805,16 +814,17 @@ finish before exhausting the set of bootstraps.}
     \item{\code{optimisation_determine_vimp}}{(\emph{optional}) Logical value that indicates
 whether variable importance is determined separately for each of the
 bootstraps created during the optimisation process (\code{TRUE}) or the
-applicable results from the feature selection step are used (\code{FALSE}).
+applicable results from the variable importance computation step are used
+(\code{FALSE}).
 
 Determining variable importance increases the initial computational
 overhead. However, it prevents positive biases for the out-of-bag data due
 to overlap of these data with the development data set used for the feature
 selection step. In this case, any hyperparameters of the variable
 importance method are not determined separately for each bootstrap, but
-those obtained during the feature selection step are used instead. In case
-multiple of such hyperparameter sets could be applicable, the set that will
-be used is randomly selected for each bootstrap.
+those obtained during the variable importance computation step are used
+instead. In case multiple of such hyperparameter sets could be applicable,
+the set that will be used is randomly selected for each bootstrap.
 
 This parameter only affects hyperparameter optimisation of learners. The
 default is \code{TRUE}.}
@@ -898,7 +908,6 @@ If unset, the following metrics are used by default:
 \itemize{
 \item \code{auc_roc}: For \code{binomial} and \code{multinomial} models.
 \item \code{mse}: Mean squared error for \code{continuous} models.
-\item \code{msle}: Mean squared logarithmic error for \code{count} models.
 \item \code{concordance_index}: For \code{survival} models.
 }
 
@@ -1042,48 +1051,63 @@ are not computed and shown. When the flag is \code{false}, results are computed
 from both the global layer and the next lower level.
 
 Setting the flag to \code{true} saves computation time.}
+    \item{\code{evaluation_elements}}{(\emph{optional}) Specifies which evaluation steps
+should be performed during the evaluation process. Defaults to \code{all},
+indicating that all evaluation steps should be performed. It can have one or
+more of the following values:
+\itemize{
+\item \code{all}, \code{true}: all evaluation steps are performed.
+\item \code{none}, \code{false}: no evaluation is performed.
+\item \code{auc_data}: data for assessing and plotting the area under the receiver
+operating characteristic curve are computed.
+\item \code{calibration_data}: data for assessing and plotting model calibration are
+computed.
+\item \code{calibration_info}: data required to assess calibration, such as baseline
+survival curves, are collected. These data will still be present in the
+models.
+\item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
+collected.
+\item \code{decision_curve_analyis}: data for performing a decision curve analysis
+are computed.
+\item \code{feature_expressions}: data for assessing and plotting sample clustering
+are computed.
+\item \code{feature_similarity}: data for assessing and plotting feature clusters
+not computed.
+\item \code{fs_vimp}: data for assessing and plotting feature selection-based
+variable importance are collected.
+\item \code{hyperparameters}: data for assessing model hyperparameters are
+collected. These data will still be present in the models.
+\item \code{ice_data}: data for individual conditional expectation and partial
+dependence plots are created.
+\item \code{model_performance}: data for assessing and visualising model performance
+are created.
+\item \code{model_vimp}: data for assessing and plotting model-based variable
+importance are collected.
+\item \code{permutation_vimp}: data for assessing and plotting model-agnostic
+permutation variable importance are computed.
+\item \code{prediction_data}: predictions for each sample are made and exported.
+\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier
+survival curves are collected.
+\item \code{risk_stratification_info}: data for assessing stratification into risk
+groups are computed.
+\item \code{sample_similarity}: data for assessing sample similarity are computed.
+\item \code{shap}: data for assessing marginal contributions of feature values in
+a SHAP analysis.
+\item \code{univariate_analysis}: data for assessing and plotting univariate feature
+importance are computed.
+}
+
+The logical intersect of the evaluation elements specified by
+\code{evaluation_elements} and \code{skip_evaluation_elements} is used to define which
+evaluation steps are performed.}
     \item{\code{skip_evaluation_elements}}{(\emph{optional}) Specifies which evaluation steps,
 if any, should be skipped as part of the evaluation process. Defaults to
 \code{none}, which means that all relevant evaluation steps are performed. It can
-have one or more of the following values:
-\itemize{
-\item \code{none}, \code{false}: no steps are skipped.
-\item \code{all}, \code{true}: all steps are skipped.
-\item \code{auc_data}: data for assessing and plotting the area under the receiver
-operating characteristic curve are not computed.
-\item \code{calibration_data}: data for assessing and plotting model calibration are
-not computed.
-\item \code{calibration_info}: data required to assess calibration, such as baseline
-survival curves, are not collected. These data will still be present in the
-models.
-\item \code{confusion_matrix}: data for assessing and plotting a confusion matrix are
-not collected.
-\item \code{decision_curve_analyis}: data for performing a decision curve analysis
-are not computed.
-\item \code{feature_expressions}: data for assessing and plotting sample clustering
-are not computed.
-\item \code{feature_similarity}: data for assessing and plotting feature clusters are
-not computed.
-\item \code{fs_vimp}: data for assessing and plotting feature selection-based
-variable importance are not collected.
-\item \code{hyperparameters}: data for assessing model hyperparameters are not
-collected. These data will still be present in the models.
-\item \code{ice_data}: data for individual conditional expectation and partial
-dependence plots are not created.
-\item \code{model_performance}: data for assessing and visualising model performance
-are not created.
-\item \code{model_vimp}: data for assessing and plotting model-based variable
-importance are not collected.
-\item \code{permutation_vimp}: data for assessing and plotting model-agnostic
-permutation variable importance are not computed.
-\item \code{prediction_data}: predictions for each sample are not made and exported.
-\item \code{risk_stratification_data}: data for assessing and plotting Kaplan-Meier
-survival curves are not collected.
-\item \code{risk_stratification_info}: data for assessing stratification into risk
-groups are not computed.
-\item \code{univariate_analysis}: data for assessing and plotting univariate feature
-importance are not computed.
-}}
+have one or more of the same values as \code{evaluation_elements}.
+
+The logical intersect of the evaluation elements specified by
+\code{evaluation_elements} and \code{skip_evaluation_elements} is used to define which
+evaluation steps are performed.}
     \item{\code{ensemble_method}}{(\emph{optional}) Method for ensembling predictions from
 models for the same sample. Available methods are:
 \itemize{
@@ -1104,14 +1128,23 @@ depends on the value of \code{confidence_level} (Davison and Hinkley, 1997).
 
 If unset, the metric in the \code{optimisation_metric} variable is used.}
     \item{\code{sample_limit}}{(\emph{optional}) Set the upper limit of the number of samples
-that are used during evaluation steps. Cannot be less than 20.
+that are used during evaluation steps. Cannot be fewer than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.
 \code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
 
 This parameter can be set for the following data elements:
-\code{sample_similarity} and \code{ice_data}.}
+\code{sample_similarity}, \code{shap}, \code{permutation_vimp}, and \code{ice_data}.}
+    \item{\code{n_important_features}}{(\emph{optional}) Set the number of features that are
+evaluated in evaluation steps. Cannot be 0 or fewer.
+
+This setting can be specified per data element by providing a parameter
+value in a named list with data elements, e.g.
+\code{list("ice_data"=10, "permutation_vimp"=5)}.
+
+This parameter can be set for the following data elements:
+\code{ice_data}, \code{permutation_vimp}, and \code{shap}.}
     \item{\code{detail_level}}{(\emph{optional}) Sets the level at which results are computed
 and aggregated.
 \itemize{
@@ -1155,7 +1188,11 @@ evaluation steps by providing a parameter value in a named list with data
 elements, e.g. \code{list("auc_data"="ensemble", "model_performance"="hybrid")}.
 This parameter can be set for the following data elements: \code{auc_data},
 \code{decision_curve_analyis}, \code{model_performance}, \code{permutation_vimp},
-\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.}
+\code{ice_data}, \code{prediction_data} and \code{confusion_matrix}.
+
+If results are computed from 10 samples or fewer, \code{ensemble} is
+automatically used. This prevents issues where evaluation steps do not have
+a required minimum number of samples for \code{hybrid} or \code{model}.}
     \item{\code{estimation_type}}{(\emph{optional}) Sets the type of estimation that should be
 possible. This has the following options:
 \itemize{
@@ -1209,6 +1246,19 @@ method.
 Note that the standard method is not implemented because this method is
 often not suitable due to non-normal distributions. The bias-corrected and
 accelerated (BCa) method is not implemented yet.}
+    \item{\code{shap_tolerance}}{(\emph{optional}) Relative tolerance for convergence of SHAP
+values. The tolerance is scaled with the range in SHAP values.
+
+The default value is \code{0.05}.}
+    \item{\code{shap_max_iterations}}{(\emph{optional}) Maximum iterations for convergence of
+SHAP values.
+
+The default value is \code{1000} iterations.}
+    \item{\code{shap_phi_0}}{(\emph{optional}) Value(s) to use for computing marginal
+contributions. By default, the average predicted value in the population is
+used. For \code{multinomial} and \code{survival} outcomes, this parameter requires a
+value for each class and evaluation time (\code{evaluation_times}),
+respectively.}
     \item{\code{feature_cluster_method}}{(\emph{optional}) Method used to perform clustering
 of features. The same methods as for the \code{cluster_method} configuration
 parameter are available: \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.
@@ -1294,9 +1344,9 @@ Gower's distance: distance is 0 if the values in a pair of samples match,
 and 1 if they do not.}
     \item{\code{eval_aggregation_method}}{(\emph{optional}) Method for aggregating variable
 importances for the purpose of evaluation. Variable importances are
-determined during feature selection steps and after training the model. Both
-types are evaluated, but feature selection variable importance is only
-evaluated at run-time.
+determined both during initial variable importance computation steps and
+after training the model. Both types are evaluated after training the
+model, but only the initial variable importances are evaluated at run-time.
 
 See the documentation for the \code{vimp_aggregation_method} argument for
 information concerning the different methods available.}
@@ -1395,8 +1445,6 @@ Perform end-to-end machine learning and data analysis
 }
 \references{
 \enumerate{
-\item Storey, J. D. A direct approach to false discovery rates. J.
-R. Stat. Soc. Series B Stat. Methodol. 64, 479–498 (2002).
 \item Shrout, P. E. & Fleiss, J. L. Intraclass correlations: uses in assessing
 rater reliability. Psychol. Bull. 86, 420–428 (1979).
 \item Koo, T. K. & Li, M. Y. A guideline of selecting and reporting intraclass
@@ -1408,6 +1456,9 @@ improve normality or symmetry. Biometrika 87, 954–959 (2000).
 Soc. Series B Stat. Methodol. 26, 211–252 (1964).
 \item Raymaekers, J., Rousseeuw,  P. J. Transforming variables to central
 normality. Mach Learn. (2021).
+\item Zwanenburg, A., & Löck, S. (2026). Location and scale-invariant power
+transformations for transforming data to normality. Machine Learning,
+115(3), 34.
 \item Park, M. Y., Hastie, T. & Tibshirani, R. Averaged gene expressions for
 regression. Biostatistics 8, 212–227 (2007).
 \item Tolosi, L. & Lengauer, T. Classification with correlated features:

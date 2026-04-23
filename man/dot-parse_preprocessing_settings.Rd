@@ -70,7 +70,7 @@ Several method are available:
 filter, for example, genes that are not differentially expressed.
 \item \code{univariate_test}: Features undergo a univariate regression using an
 outcome-appropriate regression model. The p-value of the model coefficient
-is collected. Features with coefficient p or q-value above the
+is collected. Features with coefficient p-value above the
 \code{univariate_test_threshold} are subsequently filtered.
 \item \code{robustness}: Features that are not sufficiently robust according to the
 intraclass correlation coefficient are filtered. Use of this method
@@ -83,19 +83,16 @@ values are always filtered, as these do not contain information.}
 
 \item{univariate_test_threshold}{(\emph{optional}) Numeric value between \code{1.0} and
 \code{0.0} that determines which features are irrelevant and will be filtered by
-the \code{univariate_test}. The p or q-values are compared to this threshold.
+the \code{univariate_test}. p-values are compared to this threshold.
 All features with values above the threshold are filtered. The default
 value is \code{0.20}.}
 
 \item{univariate_test_threshold_metric}{(\emph{optional}) Metric used with the to
-compare the \code{univariate_test_threshold} against. The following metrics can
+compare the \code{univariate_test_threshold} against. The following metric can
 be chosen:
 \itemize{
 \item \code{p_value} (default): The unadjusted p-value of each feature is used for
 to filter features.
-\item \code{q_value}: The q-value (Story, 2002), is used to filter features. Some
-data sets may have insufficient samples to compute the q-value. The
-\code{qvalue} package must be installed from Bioconductor to use this method.
 }}
 
 \item{univariate_test_max_feature_set_size}{(\emph{optional}) Maximum size of the
@@ -153,7 +150,7 @@ methods are available:
 \item \code{none}: This disables transformation of features.
 \item \code{yeo_johnson}: Transformation using the location and scale invariant
 version of the Yeo-Johnson transformation (Yeo and Johnson, 2000;
-Zwanenburg and Löck, 2023).
+Zwanenburg and Löck, 2026).
 \item \code{yeo_johnson_robust} (default): A robust version of \code{yeo_johnson}.
 This method is less sensitive to outliers.
 \item \code{yeo_johnson_conventional}: As \code{yeo_johnson}, but without optimisation of
@@ -161,7 +158,7 @@ location and scale parameters. This method is equivalent to the original
 transformation proposed by Yeo and Johnson (2001).
 \item \code{box_cox}: Transformation using the location and scale invariant version
 of the Box-Cox transformation (Box and Cox, 1964; Zwanenburg and Löck,
-2023).
+2026).
 \item \code{box_cox_robust}: A robust version of \code{yeo_johnson}. This method is less
 sensitive to outliers.
 \item \code{box_cox_conventional}: As \code{box_cox}, but without optimisation of
@@ -182,13 +179,13 @@ optimisation criteria, of which the following are available:
 \itemize{
 \item \code{mle} (default): Optimisation using maximum likelihood estimation.
 \item \code{cramer_von_mises}: Optimisation using the Cramér-von Mises
-criterion. Zwanenburg and Löck (2023) found that this criterion was
+criterion. Zwanenburg and Löck (2026) found that this criterion was
 relatively robust against outliers.
 }}
 
 \item{transformation_gof_test_p_value}{(\emph{optional}) Not all transformations
 will lead to features that are roughly normally distributed. Zwanenburg and
-Löck (2023) established a empirical goodness-of-fit test for central
+Löck (2026) established a empirical goodness-of-fit test for central
 normality. This parameter sets the significance for rejecting the
 null-hypothesis that a feature distribution is centrally normal. When the
 null-hypothesis is rejected, no transformation is performed. The default
@@ -457,8 +454,6 @@ Internal function for parsing settings related to preprocessing
 }
 \references{
 \enumerate{
-\item Storey, J. D. A direct approach to false discovery rates. J.
-R. Stat. Soc. Series B Stat. Methodol. 64, 479–498 (2002).
 \item Shrout, P. E. & Fleiss, J. L. Intraclass correlations: uses in assessing
 rater reliability. Psychol. Bull. 86, 420–428 (1979).
 \item Koo, T. K. & Li, M. Y. A guideline of selecting and reporting intraclass
@@ -470,6 +465,9 @@ improve normality or symmetry. Biometrika 87, 954–959 (2000).
 Soc. Series B Stat. Methodol. 26, 211–252 (1964).
 \item Raymaekers, J., Rousseeuw,  P. J. Transforming variables to central
 normality. Mach Learn. (2021).
+\item Zwanenburg, A., & Löck, S. (2026). Location and scale-invariant power
+transformations for transforming data to normality. Machine Learning,
+115(3), 34.
 \item Park, M. Y., Hastie, T. & Tibshirani, R. Averaged gene expressions for
 regression. Biostatistics 8, 212–227 (2007).
 \item Tolosi, L. & Lengauer, T. Classification with correlated features:

@@ -1,4 +1,5 @@
 testthat::skip_on_cran()
+
 # power.transform is also required for transformation_method = "none".
 if (!rlang::is_installed("power.transform")) testthat::skip()
 
@@ -9,7 +10,7 @@ data <- familiar:::test_create_synthetic_correlated_data(
   n_numeric = 2,
   cluster_size = c(1, 1, 2, 3))
 
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "pearson",
   outcome_type = "continuous",
@@ -157,7 +158,7 @@ data_2 <- familiar:::test_create_synthetic_correlated_data(
   n_numeric = 2,
   cluster_size = c(1, 1, 4, 2))
 
-vimp_object_2 <- familiar:::prepare_vimp_object(
+vimp_object_2 <- familiar:::test_create_vimp_method(
   data = data_2,
   vimp_method = "pearson",
   outcome_type = "continuous",
@@ -236,7 +237,7 @@ data.table::setnames(
   old = c("feature_1", "feature_2", "feature_3", "feature_4"),
   new = c("feature_A", "feature_B", "feature_C", "feature_D"))
 
-vimp_object_3 <- familiar:::prepare_vimp_object(
+vimp_object_3 <- familiar:::test_create_vimp_method(
   data = data_3,
   vimp_method = "pearson",
   outcome_type = "continuous",
@@ -308,7 +309,7 @@ data <- familiar:::test_create_synthetic_correlated_data(
   n_numeric = 2,
   cluster_size = c(1, 1, 1, 1))
 
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "pearson",
   outcome_type = "continuous",
@@ -347,7 +348,7 @@ testthat::test_that("A signature feature does not appear in the variable importa
 
 # Test with all signature features ---------------------------------------------
 
-vimp_object <- familiar:::prepare_vimp_object(
+vimp_object <- familiar:::test_create_vimp_method(
   data = data,
   vimp_method = "pearson",
   outcome_type = "continuous",

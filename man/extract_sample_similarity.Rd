@@ -19,8 +19,9 @@ extract_sample_similarity(
 )
 }
 \arguments{
-\item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
-\code{familiarModel} objects.}
+\item{object}{A \code{familiarEnsemble}, which is an ensemble of one or more
+\code{familiarModel} objects, or a \code{familiarDataElementPredictionTable} object
+that contains prediction data.}
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are assessed.}
@@ -33,14 +34,14 @@ pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
 
 \item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
-that are used during evaluation steps. Cannot be less than 20.
+that are used during evaluation steps. Cannot be fewer than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.
 \code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
 
 This parameter can be set for the following data elements:
-\code{sample_similarity} and \code{ice_data}.}
+\code{sample_similarity}, \code{shap}, \code{permutation_vimp}, and \code{ice_data}.}
 
 \item{sample_cluster_method}{The method used to perform clustering based on
 distance between samples. These are the same methods as for the
@@ -85,7 +86,7 @@ computation and extraction of various data elements.}
 \item{...}{Unused arguments.}
 }
 \value{
-A data.table containing pairwise distance between samples. This data
+An object containing pairwise distance between samples. This data
 is only the upper triangular of the complete matrix (i.e. the sparse
 unitriangular representation). Diagonals will always be 0.0 and the lower
 triangular is mirrored.

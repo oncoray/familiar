@@ -5,15 +5,7 @@ bibentry(
     person("Alex", "Zwanenburg"),
     person("Steffen", "Löck")
   ),
-  year     = 2021,
-  url      = "https://github.com/alexzwanenburg/familiar"
-)
-
-bibentry(
-  bibtype = "Manual",
-  header  = "If you cite the manual, vignettes or other part of the documentation, please use:",
-  title   = "familiar: Vignettes and Documentation",
-  author  = c(person("Alex", "Zwanenburg")),
-  year    = 2021,
-  url     = "https://github.com/alexzwanenburg/familiar",
+  year     = 2025,
+  url      = "https://github.com/oncoray/familiar",
+  doi      = "10.32614/CRAN.package.familiar"
 )

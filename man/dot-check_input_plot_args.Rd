@@ -15,6 +15,7 @@
   conf_int_alpha = waiver(),
   conf_int_style = waiver(),
   conf_int_default = c("step", "ribbon", "none"),
+  limit_n_features = waiver(),
   facet_wrap_cols = waiver(),
   x_label = waiver(),
   y_label = waiver(),
@@ -57,6 +58,10 @@ and 1.0 (fully opaque) are allowed.}
 allowed styles.}
 
 \item{conf_int_default}{Sets the default options for the confidence interval.}
+
+\item{limit_n_features}{(\emph{optional}) The number of features that should be
+included in the plot. Only the most important features are shown. By
+default, the number of features is not limited.}
 
 \item{facet_wrap_cols}{(\emph{optional}) Number of columns to generate when facet
 wrapping. If NULL, a facet grid is produced instead.}

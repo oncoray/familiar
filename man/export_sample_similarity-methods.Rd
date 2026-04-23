@@ -53,14 +53,14 @@ will allow export as a structured list of data.tables.}
 aggregated for export.}
 
 \item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
-that are used during evaluation steps. Cannot be less than 20.
+that are used during evaluation steps. Cannot be fewer than 20.
 
 This setting can be specified per data element by providing a parameter
 value in a named list with data elements, e.g.
 \code{list("sample_similarity"=100, "permutation_vimp"=1000)}.
 
 This parameter can be set for the following data elements:
-\code{sample_similarity} and \code{ice_data}.}
+\code{sample_similarity}, \code{shap}, \code{permutation_vimp}, and \code{ice_data}.}
 
 \item{sample_cluster_method}{The method used to perform clustering based on
 distance between samples. These are the same methods as for the
@@ -85,11 +85,14 @@ creation of the underlying \code{familiarModel} objects.}
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}
+  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[=as_data_object]{as_data_object}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
 parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
+    \item{\code{data}}{A \code{data.frame} or \code{data.table}, a path to such tables on a local
+or network drive, or a path to tabular data that may be converted to these
+formats.}
   }}
 }
 \value{
@@ -101,13 +104,9 @@ Extract and export mutual correlation between features in a
 familiarCollection.
 }
 \details{
-Data is usually collected from a \code{familiarCollection} object.
-However, you can also provide one or more \code{familiarData} objects, that will
-be internally converted to a \code{familiarCollection} object. It is also
-possible to provide a \code{familiarEnsemble} or one or more \code{familiarModel}
-objects together with the data from which data is computed prior to export.
-Paths to the previous files can also be provided.
-
 All parameters aside from \code{object} and \code{dir_path} are only used if \code{object}
 is not a \code{familiarCollection} object, or a path to one.
+
+Sample similarity data can be created from \code{dataObject}, or \code{data.table} objects.
+For \code{data.table}, see \code{\link{as_data_object}} for additional arguments.
 }

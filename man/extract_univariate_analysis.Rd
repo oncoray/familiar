@@ -21,8 +21,9 @@ extract_univariate_analysis(
 )
 }
 \arguments{
-\item{object}{A \code{familiarEnsemble} object, which is an ensemble of one or more
-\code{familiarModel} objects.}
+\item{object}{A \code{familiarEnsemble}, which is an ensemble of one or more
+\code{familiarModel} objects, or a \code{familiarDataElementPredictionTable} object
+that contains prediction data.}
 
 \item{data}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are assessed.}
@@ -99,6 +100,6 @@ univariate analysis of important features.
 \description{
 Computes and extracts univariate analysis for the features used
 in a \code{familiarEnsemble} object. This assessment includes the computation of
-p and q-values, as well as robustness (in case of repeated measurements).
+p-values, as well as robustness (in case of repeated measurements).
 }
 \keyword{internal}
