@@ -1463,8 +1463,8 @@ setMethod(
   if (is.numeric(plot_data$feature_x_value)) {
     if (is.null(x_range)) {
       x_range <- c(
-        min(plot_data$feature_x_value),
-        max(plot_data$feature_x_value)
+        min(plot_data$feature_x_value, na.rm = TRUE),
+        max(plot_data$feature_x_value, na.rm = TRUE)
       )
     }
 
@@ -1497,6 +1497,7 @@ setMethod(
   value_range <- value_range[feature_x == as.character(plot_data$feature_x[1L])]
   if (is_empty(value_range)) {
     y_range <- c(NA_real_, NA_real_)
+    
   } else {
     y_range <- c(value_range$min_value, value_range$max_value)
 

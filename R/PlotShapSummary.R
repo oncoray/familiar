@@ -620,10 +620,10 @@ setMethod(
   # Check x-range.
   if (is.null(x_range)) {
     if (value_representation == "raw") {
-      x_range <- c(min(x$shap_value), max(x$shap_value))
+      x_range <- c(min(x$shap_value, na.rm = TRUE), max(x$shap_value, na.rm = TRUE))
       
     } else {
-      x_range <- c(0.0, max(x$shap_value))
+      x_range <- c(0.0, max(x$shap_value, na.rm = TRUE))
     }
     
   } else {

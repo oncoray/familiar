@@ -857,11 +857,11 @@ setMethod(
   if (is_empty(x)) return(NULL)
   
   # Define the range along the x-axis.
-  x_range <- range(x$x_1)
+  x_range <- range(x$x_1, na.rm = TRUE)
   x_range <- c(x_range[1L] - 0.5, x_range[2L] + 0.5)
 
   # y_range
-  if (is.null(y_range)) y_range <- range(c(x$y_1, x$y_2))
+  if (is.null(y_range)) y_range <- range(c(x$y_1, x$y_2), na.rm = TRUE)
 
   # y_breaks
   if (is.null(y_breaks)) {

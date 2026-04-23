@@ -515,7 +515,7 @@ setMethod(
       ),
       by = c("sample_id", facet_by)
     ]
-    y_range <- c(min(y_range_data$y_min), max(y_range_data$y_max))
+    y_range <- c(min(y_range_data$y_min, na.rm = TRUE), max(y_range_data$y_max, na.rm = TRUE))
     if (y_range[1L] == y_range[2L]) y_range <- y_range + c(-0.1, 0.1)
   }
 
