@@ -13,6 +13,7 @@ extract_feature_similarity(
   confidence_level = waiver(),
   bootstrap_ci_method = waiver(),
   is_pre_processed = FALSE,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -94,6 +95,8 @@ accelerated (BCa) method is not implemented yet.}
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
+
+\item{features}{(\emph{optional}) Features for which feature similarity is computed.}
 
 \item{feature_cluster_method}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:

@@ -202,6 +202,10 @@ setMethod(
 #'  vignette on performance metrics for the available metrics. If not provided
 #'  explicitly, this parameter is read from settings used at creation of the
 #'  underlying `familiarModel` objects.
+#'
+#'@param features Features that should be considered for extracting information
+#'  from.
+#'
 #'@param feature_cluster_method The method used to perform clustering. These are
 #'  the same methods as for the `cluster_method` configuration parameter:
 #'  `none`, `hclust`, `agnes`, `diana` and `pam`.
@@ -319,6 +323,7 @@ setMethod(
     stratification_method = waiver(),
     evaluation_times = waiver(),
     metric = waiver(),
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_cluster_cut_method = waiver(),
     feature_linkage_method = waiver(),
@@ -346,7 +351,7 @@ setMethod(
             "feature_expressions", "permutation_vimp") %in% data_element)) {
     # Not for the fs_vimp data elements. This is because the subset of
     # features in the ensemble is generally smaller than that assessed within
-    # feature selection..
+    # feature selection.
     
     # Compute a table containing the pairwise distance between features.
     feature_similarity <- extract_feature_similarity(
@@ -358,6 +363,7 @@ setMethod(
       confidence_level = confidence_level,
       bootstrap_ci_method = bootstrap_ci_method,
       is_pre_processed = is_pre_processed,
+      features = features,
       feature_cluster_method = feature_cluster_method,
       feature_linkage_method = feature_linkage_method,
       feature_cluster_cut_method = feature_cluster_cut_method,

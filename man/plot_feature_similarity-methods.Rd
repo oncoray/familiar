@@ -8,6 +8,7 @@
 \usage{
 plot_feature_similarity(
   object,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -32,6 +33,7 @@ plot_feature_similarity(
   y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
+  remove_feature_labels = FALSE,
   show_dendrogram = c("top", "right"),
   dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
@@ -43,6 +45,7 @@ plot_feature_similarity(
 
 \S4method{plot_feature_similarity}{ANY}(
   object,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -67,6 +70,7 @@ plot_feature_similarity(
   y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
+  remove_feature_labels = FALSE,
   show_dendrogram = c("top", "right"),
   dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
@@ -78,6 +82,7 @@ plot_feature_similarity(
 
 \S4method{plot_feature_similarity}{familiarCollection}(
   object,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -102,6 +107,7 @@ plot_feature_similarity(
   y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
+  remove_feature_labels = FALSE,
   show_dendrogram = c("top", "right"),
   dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
@@ -242,6 +248,9 @@ is unset.}
 90 degrees. Defaults to \code{TRUE}. Rotation of x-axis tick labels may also be
 controlled through the \code{ggtheme}. In this case, \code{FALSE} should be provided
 explicitly.}
+
+\item{remove_feature_labels}{(\emph{optional}) If \code{TRUE}, feature labels are not
+shown. By default, feature labels are shown.}
 
 \item{show_dendrogram}{(\emph{optional}) Show dendrogram around the main panel.
 Can be \code{TRUE}, \code{FALSE}, \code{NULL}, or a position, i.e. \code{top}, \code{bottom}, \code{left}

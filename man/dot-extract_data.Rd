@@ -17,6 +17,7 @@
   stratification_method = waiver(),
   evaluation_times = waiver(),
   metric = waiver(),
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_cluster_cut_method = waiver(),
   feature_linkage_method = waiver(),
@@ -135,6 +136,9 @@ used for \code{survival} outcomes.}
 vignette on performance metrics for the available metrics. If not provided
 explicitly, this parameter is read from settings used at creation of the
 underlying \code{familiarModel} objects.}
+
+\item{features}{Features that should be considered for extracting information
+from.}
 
 \item{feature_cluster_method}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:
