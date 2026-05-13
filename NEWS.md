@@ -1,3 +1,10 @@
+# Version 2.0.1 (Brilliant Bat)
+
+## Fixes
+
+- `plot_pd` is now correctly exported and can be called externally.
+
+
 # Version 2.0.0 (Astonishing Anteater)
 
 ## Breaking changes
