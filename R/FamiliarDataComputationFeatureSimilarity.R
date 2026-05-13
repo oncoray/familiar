@@ -756,6 +756,7 @@ setMethod(
     object,
     dir_path = NULL,
     aggregate_results = TRUE,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
