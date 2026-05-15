@@ -10,6 +10,7 @@ export_feature_similarity(
   object,
   dir_path = NULL,
   aggregate_results = TRUE,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -41,6 +42,7 @@ export_feature_similarity(
   object,
   dir_path = NULL,
   aggregate_results = TRUE,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -61,6 +63,9 @@ will allow export as a structured list of data.tables.}
 
 \item{aggregate_results}{Flag that signifies whether results should be
 aggregated for export.}
+
+\item{features}{Features that should be considered for extracting information
+from.}
 
 \item{feature_cluster_method}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:
@@ -119,9 +124,6 @@ parameter is one or more \code{familiarData} objects.}
 or network drive, or a path to tabular data that may be converted to these
 formats.}
   }}
-
-\item{features}{Features that should be considered for extracting information
-from.}
 }
 \value{
 A list containing a data.table (if \code{dir_path} is not provided), or

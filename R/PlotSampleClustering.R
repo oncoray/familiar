@@ -38,6 +38,10 @@ NULL
 #'   outcome data. If NULL, the legend will not have a name. By default,
 #'   `class`, `value` and `event` are used for `binomial` and `multinomial`,
 #'   `continuous`, and `survival` outcome types, respectively.
+#' @param remove_feature_labels (*optional*) If `TRUE`, feature labels are not
+#'   shown. By default, feature labels are shown.
+#' @param remove_sample_labels (*optional*) If `TRUE`, sample labels are not
+#'   shown. By default, feature labels are shown.
 #' @param show_feature_dendrogram (*optional*) Show feature dendrogram around
 #'   the main panel. Can be `TRUE`, `FALSE`, `NULL`, or a position, i.e. `top`,
 #'   `bottom`, `left` and `right`.
@@ -143,6 +147,7 @@ setGeneric(
   "plot_sample_clustering",
   function(
     object,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     sample_cluster_method = waiver(),
@@ -176,6 +181,8 @@ setGeneric(
     y_n_breaks = 3L,
     y_breaks = NULL,
     rotate_x_tick_labels = waiver(),
+    remove_feature_labels = FALSE,
+    remove_sample_labels = FALSE,
     show_feature_dendrogram = TRUE,
     show_sample_dendrogram = TRUE,
     show_normalised_data = TRUE,
@@ -204,6 +211,7 @@ setMethod(
   signature(object = "ANY"),
   function(
     object,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     sample_cluster_method = waiver(),
@@ -237,6 +245,8 @@ setMethod(
     y_n_breaks = 3L,
     y_breaks = NULL,
     rotate_x_tick_labels = waiver(),
+    remove_feature_labels = FALSE,
+    remove_sample_labels = FALSE,
     show_feature_dendrogram = TRUE,
     show_sample_dendrogram = TRUE,
     show_normalised_data = TRUE,
@@ -259,6 +269,7 @@ setMethod(
           "object" = object,
           "data_element" = "feature_expressions",
           "sample_limit" = sample_limit,
+          "features" = features,
           "feature_cluster_method" = feature_cluster_method,
           "feature_linkage_method" = feature_linkage_method,
           "sample_cluster_method" = sample_cluster_method,
@@ -272,6 +283,7 @@ setMethod(
       plot_sample_clustering,
       args = list(
         "object" = object,
+        "features" = features,
         "feature_cluster_method" = feature_cluster_method,
         "feature_linkage_method" = feature_linkage_method,
         "sample_cluster_method" = sample_cluster_method,
@@ -304,6 +316,8 @@ setMethod(
         "y_n_breaks" = y_n_breaks,
         "y_breaks" = y_breaks,
         "rotate_x_tick_labels" = rotate_x_tick_labels,
+        "remove_feature_labels" = remove_feature_labels,
+        "remove_sample_labels" = remove_sample_labels,
         "show_feature_dendrogram" = show_feature_dendrogram,
         "show_sample_dendrogram" = show_sample_dendrogram,
         "show_normalised_data" = show_normalised_data,
@@ -331,6 +345,7 @@ setMethod(
   signature(object = "familiarCollection"),
   function(
     object,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     sample_cluster_method = waiver(),
@@ -364,6 +379,8 @@ setMethod(
     y_n_breaks = 3L,
     y_breaks = NULL,
     rotate_x_tick_labels = waiver(),
+    remove_feature_labels = FALSE,
+    remove_sample_labels = FALSE,
     show_feature_dendrogram = TRUE,
     show_sample_dendrogram = TRUE,
     show_normalised_data = TRUE,
@@ -387,12 +404,14 @@ setMethod(
     # Get feature expression data
     feature_expression <- export_feature_expressions(
       object = object,
+      features = features,
       evaluation_time = evaluation_times
     )
     
     # Get feature similarity data.
     feature_similarity <- export_feature_similarity(
       object = object,
+      features = features,
       feature_cluster_method = feature_cluster_method,
       feature_linkage_method = feature_linkage_method,
       export_dendrogram = FALSE,
@@ -846,6 +865,8 @@ setMethod(
         y_n_breaks = y_n_breaks,
         y_breaks = y_breaks,
         rotate_x_tick_labels = rotate_x_tick_labels,
+        remove_feature_labels = remove_feature_labels,
+        remove_sample_labels = remove_sample_labels,
         show_feature_dendrogram = show_feature_dendrogram,
         show_sample_dendrogram = show_sample_dendrogram,
         show_normalised_data = show_normalised_data,
@@ -952,6 +973,8 @@ setMethod(
     y_n_breaks,
     y_breaks,
     rotate_x_tick_labels,
+    remove_feature_labels,
+    remove_sample_labels,
     show_feature_dendrogram,
     show_sample_dendrogram,
     show_normalised_data,
@@ -1300,6 +1323,8 @@ setMethod(
       plot_sub_title = plot_sub_title,
       caption = caption,
       rotate_x_tick_labels = rotate_x_tick_labels,
+      remove_feature_labels = remove_feature_labels,
+      remove_sample_labels = remove_sample_labels,
       show_feature_dendrogram = show_feature_dendrogram,
       show_sample_dendrogram = show_sample_dendrogram
     )
@@ -1585,6 +1610,8 @@ setMethod(
     plot_sub_title,
     caption,
     rotate_x_tick_labels,
+    remove_feature_labels,
+    remove_sample_labels,
     show_feature_dendrogram,
     show_sample_dendrogram
 ) {
@@ -1696,6 +1723,24 @@ setMethod(
         angle = 90.0
       )
     )
+  }
+  
+  if (remove_feature_labels) {
+    if (x_axis_by == "feature") {
+      p <- p + ggplot2::theme(axis.text.x = ggplot2::element_blank())
+      
+    } else {
+      p <- p + ggplot2::theme(axis.text.y = ggplot2::element_blank())
+    }
+  }
+  
+  if (remove_sample_labels) {
+    if (x_axis_by == "sample") {
+      p <- p + ggplot2::theme(axis.text.x = ggplot2::element_blank())
+      
+    } else {
+      p <- p + ggplot2::theme(axis.text.y = ggplot2::element_blank())
+    }
   }
 
   return(p)

@@ -2,11 +2,15 @@
 
 ## Minor changes
 
-- `plot_feature_similarity` now has the `features` argument, which selects the
-  features that appear in the heatmap.
+- `plot_feature_similarity` and `plot_sample_clustering` now have the `features` 
+  argument, which selects the features that appear in the heatmap.
 
-- `plot_feature_similarity` now has the `remove_feature_labels` argument, which
-  suppresses rendering of feature names as tick labels for the heatmap.
+- `plot_feature_similarity` and `plot_sample_clustering` now have the 
+  `remove_feature_labels` argument, which suppresses rendering of feature 
+  names as tick labels for the heatmap.
+  
+- `plot_sample_clustering` now has the `remove_sample_labels` argument, which
+  suppresses rendering of sample names as tick labels for the heatmap.
 
 ## Fixes
 

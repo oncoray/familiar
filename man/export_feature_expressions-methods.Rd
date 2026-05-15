@@ -8,6 +8,7 @@
 \usage{
 export_feature_expressions(
   object,
+  features = waiver(),
   dir_path = NULL,
   evaluation_time = waiver(),
   export_collection = FALSE,
@@ -16,6 +17,7 @@ export_feature_expressions(
 
 \S4method{export_feature_expressions}{familiarCollection}(
   object,
+  features = waiver(),
   dir_path = NULL,
   evaluation_time = waiver(),
   export_collection = FALSE,
@@ -24,6 +26,7 @@ export_feature_expressions(
 
 \S4method{export_feature_expressions}{ANY}(
   object,
+  features = waiver(),
   dir_path = NULL,
   evaluation_time = waiver(),
   export_collection = FALSE,

@@ -8,6 +8,7 @@
 \usage{
 plot_sample_clustering(
   object,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   sample_cluster_method = waiver(),
@@ -41,6 +42,8 @@ plot_sample_clustering(
   y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
+  remove_feature_labels = FALSE,
+  remove_sample_labels = FALSE,
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
   show_normalised_data = TRUE,
@@ -58,6 +61,7 @@ plot_sample_clustering(
 
 \S4method{plot_sample_clustering}{ANY}(
   object,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   sample_cluster_method = waiver(),
@@ -91,6 +95,8 @@ plot_sample_clustering(
   y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
+  remove_feature_labels = FALSE,
+  remove_sample_labels = FALSE,
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
   show_normalised_data = TRUE,
@@ -108,6 +114,7 @@ plot_sample_clustering(
 
 \S4method{plot_sample_clustering}{familiarCollection}(
   object,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   sample_cluster_method = waiver(),
@@ -141,6 +148,8 @@ plot_sample_clustering(
   y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
+  remove_feature_labels = FALSE,
+  remove_sample_labels = FALSE,
   show_feature_dendrogram = TRUE,
   show_sample_dendrogram = TRUE,
   show_normalised_data = TRUE,
@@ -159,6 +168,9 @@ plot_sample_clustering(
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
 a \code{familiarCollection} can be extracted. See details for more information.}
+
+\item{features}{Features that should be considered for extracting information
+from.}
 
 \item{feature_cluster_method}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:
@@ -328,6 +340,12 @@ is unset.}
 90 degrees. Defaults to \code{TRUE}. Rotation of x-axis tick labels may also be
 controlled through the \code{ggtheme}. In this case, \code{FALSE} should be provided
 explicitly.}
+
+\item{remove_feature_labels}{(\emph{optional}) If \code{TRUE}, feature labels are not
+shown. By default, feature labels are shown.}
+
+\item{remove_sample_labels}{(\emph{optional}) If \code{TRUE}, sample labels are not
+shown. By default, feature labels are shown.}
 
 \item{show_feature_dendrogram}{(\emph{optional}) Show feature dendrogram around
 the main panel. Can be \code{TRUE}, \code{FALSE}, \code{NULL}, or a position, i.e. \code{top},
