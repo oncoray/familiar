@@ -5,6 +5,9 @@
 - `plot_feature_similarity` now has the `features` argument, which selects the
   features that appear in the heatmap.
 
+- `plot_feature_similarity` now has the `remove_feature_labels` argument, which
+  suppresses rendering of feature names as tick labels for the heatmap.
+
 ## Fixes
 
 - `plot_pd` is now correctly exported and can be called externally.

@@ -65,6 +65,30 @@ familiar:::test_plots(
 )
 
 
+# Plots with selection of features.
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_feature_similarity,
+  data_element = "feature_similarity",
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  plot_args = list(
+    "features" = c("feature_1", "feature_2a", "feature_2b")
+    ),
+  debug = debug_flag
+)
+
+# Plots without tick labels on x and y-axes.
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_feature_similarity,
+  data_element = "feature_similarity",
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  plot_args = list(
+    "remove_feature_labels" = TRUE
+  ),
+  debug = debug_flag
+)
+
+
+
 # Test plotting from dataObject.
 data <- familiar:::test_create_good_data(outcome_type = "continuous")
 p <- familiar::plot_feature_similarity(object = data, feature_similarity_metric = "spearman")

@@ -602,6 +602,7 @@ setMethod(
       plot_sub_title = plot_sub_title,
       caption = caption,
       rotate_x_tick_labels = rotate_x_tick_labels,
+      remove_feature_labels = remove_feature_labels,
       show_dendrogram = show_dendrogram,
       similarity_metric = x_split@similarity_metric
     )
@@ -631,8 +632,7 @@ setMethod(
           y_n_breaks = y_n_breaks,
           y_breaks = y_breaks,
           plot_height = dendrogram_height,
-          rotate_x_tick_labels = rotate_x_tick_labels,
-          remove_feature_labels = remove_feature_labels
+          rotate_x_tick_labels = rotate_x_tick_labels
         )
         
         dendro_extension <- paste0("dendro-", position)
