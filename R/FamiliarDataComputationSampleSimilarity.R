@@ -57,6 +57,7 @@ setGeneric(
     data,
     cl = NULL,
     is_pre_processed = FALSE,
+    features = waiver(),
     sample_limit = waiver(),
     sample_cluster_method = waiver(),
     sample_linkage_method = waiver(),
@@ -80,6 +81,7 @@ setMethod(
     data,
     cl = NULL,
     is_pre_processed = FALSE,
+    features = waiver(),
     sample_limit = waiver(),
     sample_cluster_method = waiver(),
     sample_linkage_method = waiver(),
@@ -88,7 +90,7 @@ setMethod(
     message_indent = 0L,
     ...
   ) {
-    
+    # TODO: pass-through features.
     # Message extraction start
     logger_message(
       paste0("Computing pairwise similarity between samples."),

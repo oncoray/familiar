@@ -384,6 +384,7 @@ setMethod(
       data = data,
       cl = cl,
       is_pre_processed = is_pre_processed,
+      features = features,
       sample_limit = sample_limit,
       sample_similarity_metric = sample_similarity_metric,
       sample_cluster_method = sample_cluster_method,
