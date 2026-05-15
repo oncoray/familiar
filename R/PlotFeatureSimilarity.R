@@ -263,6 +263,7 @@ setMethod(
     # Get input data
     x <- export_feature_similarity(
       object = object,
+      features = features,
       feature_cluster_method = feature_cluster_method,
       feature_linkage_method = feature_linkage_method,
       feature_cluster_cut_method = feature_cluster_cut_method,
@@ -447,6 +448,7 @@ setMethod(
         y_n_breaks = y_n_breaks,
         y_breaks = y_breaks,
         rotate_x_tick_labels = rotate_x_tick_labels,
+        remove_feature_labels = remove_feature_labels,
         show_dendrogram = show_dendrogram,
         dendrogram_height = dendrogram_height
       )
@@ -530,6 +532,7 @@ setMethod(
     y_n_breaks,
     y_breaks,
     rotate_x_tick_labels,
+    remove_feature_labels = FALSE,
     show_dendrogram,
     dendrogram_height
 ) {
@@ -628,7 +631,8 @@ setMethod(
           y_n_breaks = y_n_breaks,
           y_breaks = y_breaks,
           plot_height = dendrogram_height,
-          rotate_x_tick_labels = rotate_x_tick_labels
+          rotate_x_tick_labels = rotate_x_tick_labels,
+          remove_feature_labels = remove_feature_labels
         )
         
         dendro_extension <- paste0("dendro-", position)
@@ -718,6 +722,7 @@ setMethod(
     plot_sub_title,
     caption,
     rotate_x_tick_labels,
+    remove_feature_labels,
     show_dendrogram,
     similarity_metric
 ) {
@@ -846,6 +851,14 @@ setMethod(
         hjust = 1.0, 
         angle = 90.0
       )
+    )
+  }
+  
+  # Remove tick labels
+  if (remove_feature_labels) {
+    p <- p + ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank()
     )
   }
 

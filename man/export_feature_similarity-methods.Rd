@@ -25,6 +25,7 @@ export_feature_similarity(
   object,
   dir_path = NULL,
   aggregate_results = TRUE,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -118,6 +119,9 @@ parameter is one or more \code{familiarData} objects.}
 or network drive, or a path to tabular data that may be converted to these
 formats.}
   }}
+
+\item{features}{Features that should be considered for extracting information
+from.}
 }
 \value{
 A list containing a data.table (if \code{dir_path} is not provided), or

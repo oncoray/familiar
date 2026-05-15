@@ -121,6 +121,9 @@ plot_feature_similarity(
 \item{object}{A \code{familiarCollection} object, or other other objects from which
 a \code{familiarCollection} can be extracted. See details for more information.}
 
+\item{features}{Features that should be considered for extracting information
+from.}
+
 \item{feature_cluster_method}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:
 \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.

@@ -532,6 +532,21 @@ setMethod(
 
 
 
+.feature_similarity_remove_feature <- function(x, features) {
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  feature_name_1 <- feature_name_2 <- NULL 
+  
+  if (is_empty(x)) return(x)
+  
+  # Filter all features.
+  x@data <- x@data[feature_name_1 %in% features & feature_name_2 %in% features]
+  
+  return(x)
+}
+
+
+
 .append_feature_similarity_dendrogram <- function(x) {
   
   if (is_empty(x)) return(x)
@@ -852,8 +867,10 @@ setMethod(
     ) {
       x <- .compute_data_element_estimates(x)
       
-      browser()
-      # Filter features.
+      if (!is.waive(features) && !is.null(features)) {
+        # Filter features.
+        x <- lapply(x, .feature_similarity_remove_feature, features)
+      }
       
       if (export_dendrogram || export_ordered_data || export_clustering) {
         # Add dendrogram and other cluster objects.
