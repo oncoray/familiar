@@ -134,6 +134,17 @@ testthat::test_that("Plotting sample similarity using dataObject works (continuo
   testthat::expect_true(is(p[[1L]], "gtable"))
 })
 
+# Test plotting from dataObject with selection of features.
+data <- familiar:::test_create_good_data(outcome_type = "continuous")
+p <- familiar::plot_sample_clustering(
+  object = data, 
+  feature_similarity_metric = "spearman",
+  features = c("feature_1", "feature_2a", "feature_2b")
+)
+testthat::test_that("Plotting sample similarity using dataObject works (continuous).", {
+  testthat::expect_true(is(p[[1L]], "gtable"))
+})
+
 
 # Test plotting from dataObject with two groups.
 data <- familiar:::test_create_good_data(outcome_type = "continuous", two_groups = TRUE)
