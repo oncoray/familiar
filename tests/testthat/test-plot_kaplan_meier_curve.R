@@ -109,7 +109,6 @@ testthat::test_that("Plotting kaplan-meier curves for two groups works.", {
 data <- familiar:::test_create_good_data(outcome_type = "survival", to_data_object = FALSE)
 p <- familiar::plot_kaplan_meier(
   object = data,
-  feature_similarity_metric = "spearman",
   batch_id_column = "batch_id",
   sample_id_column = "sample_id",
   series_id_column = "series_id",
@@ -125,7 +124,6 @@ testthat::test_that("Plotting kaplan-meier curves using data.table works (surviv
 data <- familiar:::test_create_data_without_feature(outcome_type = "survival", to_data_object = FALSE)
 p <- familiar::plot_kaplan_meier(
   object = data,
-  feature_similarity_metric = "spearman",
   batch_id_column = "batch_id",
   sample_id_column = "sample_id",
   series_id_column = "series_id",
@@ -141,7 +139,10 @@ testthat::test_that("Plotting kaplan-meier curves using data.table without any f
 data <- familiar:::test_create_good_data(outcome_type = "survival")
 data@data[, "risk_group" := "risk-group A"]
 data@data[51L:100L, "risk_group" := "risk-group B"]
-p <- familiar::plot_kaplan_meier(object = data, risk_group_column = "risk_group")
+p <- familiar::plot_kaplan_meier(
+  object = data,
+  risk_group_column = "risk_group"
+)
 testthat::test_that("Plotting kaplan-meier curves using data.table without a risk_group_column works (survival).", {
   testthat::expect_true(is(p[[1L]], "gtable"))
 })

@@ -275,7 +275,7 @@ setMethod(
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
-
+    
     # Get input data
     x <- export_risk_stratification_data(
       object = object,
@@ -463,7 +463,7 @@ setMethod(
       plot_sub_title = plot_sub_title,
       caption = caption
     )
-
+    
     # Create plots -------------------------------------------------------------
 
     # Determine if subtitle should be generated.

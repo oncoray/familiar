@@ -253,6 +253,9 @@ setMethod(
     # This mostly follows the same routines as extract_prediction_data. In
     # addition, tests are created during export.
     
+    # Suppress NOTES due to non-standard evaluation in data.table
+    group <- NULL
+    
     # Only assess stratification for survival outcomes.
     if (!object@outcome_type %in% c("survival")) return(NULL)
     
@@ -298,6 +301,11 @@ setMethod(
     )
     prediction_data <- .merge_slots_into_data(prediction_data)
     
+    # Remove instances where the assigned group is NA.
+    if (!is_empty(prediction_data@data)) {
+      prediction_data@data <- prediction_data@data[!is.na(group), ]
+    }
+
     # Manually set attributes for this dataElement.
     prediction_data@detail_level <- "ensemble"
     prediction_data@estimation_type <- "point"

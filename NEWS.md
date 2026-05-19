@@ -16,6 +16,9 @@
 
 - `plot_pd` is now correctly exported and can be called externally.
 
+- `plot_kaplan_meier` now works correctly if the column indicated by `risk_group_column`
+  contains `NA` values.
+
 
 # Version 2.0.0 (Astonishing Anteater)
 
