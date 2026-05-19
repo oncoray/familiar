@@ -2338,7 +2338,10 @@ setMethod(
     # Check if features are present as column name
     if (length(features) > 0L) {
       if (!all(features %in% colnames(data@data))) {
-        logger_stop("Not all features were found in the data set.")
+        missing_features <- setdiff(features, colnames(data@data))
+        logger_stop(
+          paste0("Not all features were found in the data set: ", paste_s(missing_features))
+        )
       }
     }
     
