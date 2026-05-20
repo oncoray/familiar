@@ -309,6 +309,9 @@
   
   # Set-up fallback vimp-table
   if (use_fallback) {
+    browser()
+    # TODO: SPAWN TASK FOR EACH MODEL>>>>
+    
     # Spawn task to obtain variable importance tables.
     vimp_task <- methods::new(
       "familiarTaskVimp",
