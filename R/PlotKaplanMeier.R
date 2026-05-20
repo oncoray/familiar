@@ -676,6 +676,9 @@ setMethod(
     # Skip if the split doesn't contain any information.
     if (is_empty(x_split@data) || all(is.na(x_split@data$outcome_time))) next
     
+    # Update groups attribute to reflect groups present in the current split.
+    x_split@groups <- unique(as.character(x_split@data$group))
+    
     # Compute strata for the current split.
     strata <- .compute_risk_stratification_curves(
       x = x_split,
@@ -691,7 +694,7 @@ setMethod(
     } else {
       test_data <- NULL
     }
-
+    
     # Kaplan-Meier plots
     p_kaplan_meier <- .create_km_subplot(
       x = strata,
