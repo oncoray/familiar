@@ -15,6 +15,9 @@
 - `plot_kaplan_meier` now plots strata in one facet if the risk group is equal
   to the data set.
 
+- `plot_kaplan_meier` now correctly shows the results of the log-rank test for
+  strata in each facet.
+
 ## Fixes
 
 - `plot_pd` is now correctly exported and can be called externally.
