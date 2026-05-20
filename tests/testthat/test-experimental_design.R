@@ -12,6 +12,7 @@ for (ii in seq_along(vimp_methods)) {
     vimp_method = vimp_methods[ii],
     parallel = FALSE,
     estimation_type = "point",
+    n_important_features = 2L,
     outcome_type_available = "binomial",
     debug = debug_flag
   )
@@ -25,11 +26,13 @@ for (ii in seq_along(vimp_methods)) {
     experimental_design = experimental_designs[ii],
     vimp_method = vimp_methods[ii],
     parallel = FALSE,
-    skip_evaluation_elements = "all",
+    estimation_type = "point",
+    n_important_features = 2L,
     outcome_type_available = "binomial",
     debug = debug_flag
   )
 }
+
 
 # Bootstrap (with pre-processing and optimisation within bootstraps)
 experimental_designs <- c("bs(fs+mb, 3)", "bs(fs+mb, 3)", "bs(mb, 3)")
@@ -38,7 +41,8 @@ for (ii in seq_along(vimp_methods)) {
     experimental_design = experimental_designs[ii],
     vimp_method = vimp_methods[ii],
     parallel = FALSE,
-    skip_evaluation_elements = "all",
+    estimation_type = "point",
+    n_important_features = 2L,
     outcome_type_available = "binomial",
     debug = debug_flag
   )
@@ -52,7 +56,8 @@ for (ii in seq_along(vimp_methods)) {
     experimental_design = experimental_designs[ii],
     vimp_method = vimp_methods[ii],
     parallel = FALSE,
-    skip_evaluation_elements = "all",
+    estimation_type = "point",
+    n_important_features = 2L,
     outcome_type_available = "binomial",
     debug = debug_flag
   )
@@ -66,7 +71,8 @@ for (ii in seq_along(vimp_methods)) {
     experimental_design = experimental_designs[ii],
     vimp_method = vimp_methods[ii],
     parallel = FALSE,
-    skip_evaluation_elements = "all",
+    estimation_type = "point",
+    n_important_features = 2L,
     outcome_type_available = "binomial",
     debug = debug_flag
   )
@@ -80,7 +86,8 @@ for (ii in seq_along(vimp_methods)) {
     imbalance_correction_method = "full_undersampling",
     vimp_method = vimp_methods[ii],
     parallel = FALSE,
-    skip_evaluation_elements = "all",
+    estimation_type = "point",
+    n_important_features = 2L,
     outcome_type_available = "binomial",
     debug = debug_flag
   )
