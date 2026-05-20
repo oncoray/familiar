@@ -11,6 +11,9 @@
   
 - `plot_sample_clustering` now has the `remove_sample_labels` argument, which
   suppresses rendering of sample names as tick labels for the heatmap.
+  
+- `plot_kaplan_meier` now plots strata in one figure if the risk group is equal
+  to the data set.
 
 ## Fixes
 

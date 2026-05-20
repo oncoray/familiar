@@ -277,8 +277,10 @@ setMethod(
       range = c(0.0, 1.0),
       closed = c(FALSE, FALSE)
     )
-
-    if (is.waive(risk_group_column)) risk_group_column <- get_id_columns("batch")
+    
+    # Set default risk group (batch).
+    batch_id_column <- get_id_columns(single_column = "batch")
+    if (is.waive(risk_group_column)) risk_group_column <- batch_id_column
     
     # Check if only one column is provided as risk_group_column.
     .check_argument_length(

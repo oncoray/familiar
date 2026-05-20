@@ -146,3 +146,18 @@ p <- familiar::plot_kaplan_meier(
 testthat::test_that("Plotting kaplan-meier curves using data.table without a risk_group_column works (survival).", {
   testthat::expect_true(is(p[[1L]], "gtable"))
 })
+
+
+# Test plotting from data.table, but with batch_id as risk group.
+data <- familiar:::test_create_good_data(outcome_type = "survival", to_data_object = FALSE)
+data[, "batch_id" := "batch A"]
+data[51L:100L, "batch_id" := "batch B"]
+p <- familiar::plot_kaplan_meier(
+  object = data,
+  risk_group_column = "batch_id",
+  outcome_type = "survival",
+  outcome_column = c("outcome_time", "outcome_event")
+)
+testthat::test_that("Plotting kaplan-meier curves using data.table works (survival).", {
+  testthat::expect_true(is(p[[1L]], "gtable"))
+})

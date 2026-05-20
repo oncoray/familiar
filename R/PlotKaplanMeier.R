@@ -402,7 +402,7 @@ setMethod(
 
     # Store plots to list in case no dir_path is provided
     if (is.null(dir_path)) plot_list <- list()
-
+    
     # Add default splitting variables.
     if (is.null(split_by) &&
         is.null(color_by) &&
@@ -411,6 +411,13 @@ setMethod(
       split_by <- c("vimp_method", "learner", "stratification_method")
       color_by <- c("group")
       facet_by <- c("data_set")
+      
+      # The grouping variable may be identical to the data_set. In that case,
+      # do not facet by data_set.
+      if (all(x@data$group == x@data$data_set)) {
+        facet_by <- NULL
+        x@data$data_set <- factor(x = rep_len("placeholder", nrow(x@data)))
+      }
     }
 
     # Check splitting variables and generate sanitised output

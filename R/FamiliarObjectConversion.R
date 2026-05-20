@@ -336,6 +336,7 @@ setMethod(
     
     # Parse dataObject.
     if (all(sapply(object, is, "dataObject"))) {
+      
       # Split by batch-id.
       object <- lapply(object, .split_data_by_batch_id)
       
