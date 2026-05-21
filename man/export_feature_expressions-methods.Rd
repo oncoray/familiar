@@ -37,6 +37,9 @@ export_feature_expressions(
 \item{object}{A \code{familiarCollection} object, or other other objects from which
 a \code{familiarCollection} can be extracted. See details for more information.}
 
+\item{features}{Features that should be exported. If \code{NULL} or \code{waiver()}, all
+features exported (default).}
+
 \item{dir_path}{Path to folder where extracted data should be saved. \code{NULL}
 will allow export as a structured list of data.tables.}
 

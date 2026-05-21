@@ -307,6 +307,9 @@ setMethod(
 #'@description Extract and export feature expressions for the features in a
 #'  familiarCollection.
 #'
+#'@param features Features that should be exported. If `NULL` or `waiver()`, all
+#'  features exported (default).
+#'
 #'@param evaluation_time One or more time points that are used to create the
 #'  outcome columns in expression plots. If not provided explicitly, this
 #'  parameter is read from settings used at creation of the underlying
