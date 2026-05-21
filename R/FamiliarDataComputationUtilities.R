@@ -318,10 +318,10 @@
     } else {
       model_list <- list(object)
     }
-    browser()
+   
     for (ii in seq_along(model_list)) {
       # Get model.
-      model <- model_list[ii]
+      model <- model_list[[ii]]
       
       # Fill details required to get the data, in case the data is delayed.
       # Note that training data is used for obtaining variable importance.
@@ -350,9 +350,6 @@
         data = data
       )
     }
-    
-    
-    
   }
   
   # For signature-only, return all signature features, with no preference.

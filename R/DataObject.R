@@ -645,7 +645,7 @@ setMethod(
     if (is.na(data@validation) && is_empty(data@sample_set_on_load)) {
       ..error_reached_unreachable_code("validation attribute was not set")
     }
-    browser()
+    
     # Determine which samples are required.
     if (is_empty(data@sample_set_on_load)) {
       # Check if data_id and run_id were set.
@@ -858,7 +858,7 @@ setMethod(
       object = NULL,
       column_names = c(non_feature_columns, required_features)
     )
-    browser()
+    
     # Pre-process data, if needed.
     new_data <- preprocess_data(
       data = new_data,

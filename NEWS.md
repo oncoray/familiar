@@ -20,6 +20,10 @@
 
 ## Fixes
 
+- Prevents an error when evaluating models in bootstrap or cross-validation
+  experiments without variable importances and a number features in the model
+  that exceeds `n_important_features`.
+
 - `plot_pd` is now correctly exported and can be called externally.
 
 - `plot_kaplan_meier` now works correctly if the column indicated by `risk_group_column`
