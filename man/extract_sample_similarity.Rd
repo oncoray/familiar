@@ -9,6 +9,7 @@ extract_sample_similarity(
   data,
   cl = NULL,
   is_pre_processed = FALSE,
+  features = waiver(),
   sample_limit = waiver(),
   sample_cluster_method = waiver(),
   sample_linkage_method = waiver(),
@@ -32,6 +33,10 @@ used to speed up computation through parallellisation.}
 \item{is_pre_processed}{Flag that indicates whether the data was already
 pre-processed externally, e.g. normalised and clustered. Only used if the
 \code{data} argument is a \code{data.table} or \code{data.frame}.}
+
+\item{features}{Features that should be considered for extracting information
+from. Typically called in external workflows, e.g. for plotting. Internally,
+i.e. from summon_familiar, this variable is not used.}
 
 \item{sample_limit}{(\emph{optional}) Set the upper limit of the number of samples
 that are used during evaluation steps. Cannot be fewer than 20.

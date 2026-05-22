@@ -57,6 +57,7 @@ setGeneric(
     data,
     cl = NULL,
     is_pre_processed = FALSE,
+    features = waiver(),
     sample_limit = waiver(),
     sample_cluster_method = waiver(),
     sample_linkage_method = waiver(),
@@ -80,6 +81,7 @@ setMethod(
     data,
     cl = NULL,
     is_pre_processed = FALSE,
+    features = waiver(),
     sample_limit = waiver(),
     sample_cluster_method = waiver(),
     sample_linkage_method = waiver(),
@@ -88,7 +90,7 @@ setMethod(
     message_indent = 0L,
     ...
   ) {
-    
+    # TODO: pass-through features.
     # Message extraction start
     logger_message(
       paste0("Computing pairwise similarity between samples."),
@@ -147,6 +149,7 @@ setMethod(
       object = object,
       data = data,
       sample_limit = sample_limit,
+      features = features,
       proto_data_element = proto_data_element,
       is_pre_processed = is_pre_processed,
       aggregate_results = TRUE,
@@ -182,6 +185,7 @@ setMethod(
     data,
     cl = NULL,
     is_pre_processed = FALSE,
+    features = waiver(),
     sample_limit = waiver(),
     sample_cluster_method = waiver(),
     sample_linkage_method = waiver(),
@@ -258,6 +262,7 @@ setMethod(
       object = object,
       data = object,
       sample_limit = sample_limit,
+      features = features,
       proto_data_element = proto_data_element,
       is_pre_processed = is_pre_processed,
       aggregate_results = TRUE,
@@ -274,6 +279,7 @@ setMethod(
 .extract_sample_similarity <- function(
     object,
     data,
+    features = NULL,
     proto_data_element,
     cl = NULL,
     sample_limit,
@@ -312,12 +318,23 @@ setMethod(
     seed = 0L
   )
   
-  if (is(object, "familiarEnsemble")){
-    # Maintain only important features when assessing data from the perspective
-    # of an ensemble. The current set is based on the required features.
+  # Check if specific features need to be processed.
+  if (is.waive(features)) features <- NULL
+  if (!is.null(features)) {
     data <- filter_features(
       data = data,
-      available_features = object@model_features
+      available_features = features
+    )
+    
+    # Aggregate features.
+    data <- aggregate_data(data = data)
+    
+  } else if (is(object, "familiarEnsemble")) {
+    # Maintain only important features. The current set is based on the required
+    # features.
+    data <- filter_features(
+      data = data,
+      available_features = get_model_features(object)
     )
     
     # Aggregate features.
@@ -326,6 +343,8 @@ setMethod(
   
   # Identify eligible columns.
   feature_columns <- get_feature_columns(x = data)
+  
+  if (length(feature_columns) == 0L) return(NULL)
   
   # Compute the similarity table
   data_element@data <- set_similarity_table(

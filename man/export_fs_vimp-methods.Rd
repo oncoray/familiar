@@ -86,7 +86,7 @@ This parameter is only relevant for \code{stability}, \code{exponential},
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}
+  Arguments passed on to \code{\link{as_familiar_collection}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
 parameter is one or more \code{familiarData} objects.}

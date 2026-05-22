@@ -100,6 +100,8 @@ setMethod(
     ...
   ) {
     
+    if (is.waive(features)) features <- NULL
+    
     # Message extraction start
     if (is.null(features)) {
       logger_message(

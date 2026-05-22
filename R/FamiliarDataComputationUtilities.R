@@ -307,33 +307,49 @@
   # If signature is used, don't use fall-back option.
   if (object@vimp_method %in% .get_available_signature_only_vimp_methods()) use_fallback <- FALSE
   
-  # Set-up fallback vimp-table
+  # Set-up fallback vimp-table.
   if (use_fallback) {
-    # Spawn task to obtain variable importance tables.
-    vimp_task <- methods::new(
-      "familiarTaskVimp",
-      project_id = object@project_id,
-      vimp_method = fallback_vimp_method,
-      data_id = object@data_id,
-      run_id = object@run_id,
-      file = NA_character_
-    )
+    # VIMP-tables are created per model, so that we use 
     
-    # Fill details required to get the data, in case the data is delayed.
-    # Note that training data is used for obtaining variable importance.
-    if (is(data, "delayedDataObject")) {
-      data@data_id <- object@data_id
-      data@run_id <- object@run_id
+    vimp_table <- list()
+    
+    if (is(object, "familiarEnsemble")) {
+      model_list <- object@model_list
+    } else {
+      model_list <- list(object)
     }
-    
-    # Create variable importance table.
-    vimp_table <- .perform_task(
-      object = vimp_task,
-      feature_info_list = object@feature_info,
-      vimp_aggregation_method = vimp_aggregation_method,
-      vimp_rank_threshold = vimp_rank_threshold,
-      data = data
-    )
+   
+    for (ii in seq_along(model_list)) {
+      # Get model.
+      model <- model_list[[ii]]
+      
+      # Fill details required to get the data, in case the data is delayed.
+      # Note that training data is used for obtaining variable importance.
+      if (is(data, "delayedDataObject")) {
+        data@data_id <- model@data_id
+        data@run_id <- model@run_id
+        data@validation <- FALSE
+      }
+      
+      # Spawn task to obtain variable importance tables.
+      vimp_task <- methods::new(
+        "familiarTaskVimp",
+        project_id = object@project_id,
+        vimp_method = fallback_vimp_method,
+        data_id = model@data_id,
+        run_id = model@run_id,
+        file = NA_character_
+      )
+      
+      # Create variable importance table.
+      vimp_table[[ii]] <- .perform_task(
+        object = vimp_task,
+        feature_info_list = object@feature_info,
+        vimp_aggregation_method = vimp_aggregation_method,
+        vimp_rank_threshold = vimp_rank_threshold,
+        data = data
+      )
+    }
   }
   
   # For signature-only, return all signature features, with no preference.

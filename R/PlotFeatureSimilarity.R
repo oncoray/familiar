@@ -26,6 +26,8 @@ NULL
 #'   gradient. This should be a range of two values, e.g. `c(0, 1)`. Lower or
 #'   upper boundary can be unset by using `NA`. If not set, the full
 #'   metric-specific range is used.
+#' @param remove_feature_labels (*optional*) If `TRUE`, feature labels are not
+#'   shown. By default, feature labels are shown.
 #' @param show_dendrogram (*optional*) Show dendrogram around the main panel.
 #'   Can be `TRUE`, `FALSE`, `NULL`, or a position, i.e. `top`, `bottom`, `left`
 #'   and `right`. Up to two positions may be provided, but only as long as the
@@ -47,7 +49,7 @@ NULL
 #' @inheritParams .check_plot_splitting_variables
 #' @inheritDotParams as_familiar_collection -object
 #' @inheritDotParams ggplot2::ggsave -height -width -units -path -filename -plot
-#' @inheritDotParams extract_feature_similarity -object -feature_cluster_method -feature_linkage_method -feature_cluster_cut_method -feature_similarity_threshold
+#' @inheritDotParams extract_feature_similarity -object -feature_cluster_method -feature_linkage_method -feature_cluster_cut_method -feature_similarity_threshold -features
 #'
 #' @details This function generates area under the ROC curve plots.
 #'
@@ -75,6 +77,7 @@ setGeneric(
   "plot_feature_similarity",
   function(
     object,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
@@ -99,6 +102,7 @@ setGeneric(
     y_n_breaks = 3L,
     y_breaks = NULL,
     rotate_x_tick_labels = waiver(),
+    remove_feature_labels = FALSE,
     show_dendrogram = c("top", "right"),
     dendrogram_height = grid::unit(1.5, "cm"),
     width = waiver(),
@@ -121,6 +125,7 @@ setMethod(
   signature(object = "ANY"),
   function(
     object,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
@@ -145,6 +150,7 @@ setMethod(
     y_n_breaks = 3L,
     y_breaks = NULL,
     rotate_x_tick_labels = waiver(),
+    remove_feature_labels = FALSE,
     show_dendrogram = c("top", "right"),
     dendrogram_height = grid::unit(1.5, "cm"),
     width = waiver(),
@@ -160,6 +166,7 @@ setMethod(
         list(
           "object" = object,
           "data_element" = "feature_similarity",
+          "features" = features,
           "feature_cluster_method" = feature_cluster_method,
           "feature_linkage_method" = feature_linkage_method,
           "feature_cluster_cut_method" = feature_cluster_cut_method,
@@ -173,6 +180,7 @@ setMethod(
       plot_feature_similarity,
       args = list(
         "object" = object,
+        "features" = features,
         "draw" = draw,
         "dir_path" = dir_path,
         "split_by" = split_by,
@@ -193,6 +201,7 @@ setMethod(
         "y_n_breaks" = y_n_breaks,
         "y_breaks" = y_breaks,
         "rotate_x_tick_labels" = rotate_x_tick_labels,
+        "remove_feature_labels" = remove_feature_labels,
         "show_dendrogram" = show_dendrogram,
         "dendrogram_height" = dendrogram_height,
         "width" = width,
@@ -214,6 +223,7 @@ setMethod(
   signature(object = "familiarCollection"),
   function(
     object,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
@@ -238,6 +248,7 @@ setMethod(
     y_n_breaks = 3L,
     y_breaks = NULL,
     rotate_x_tick_labels = waiver(),
+    remove_feature_labels = FALSE,
     show_dendrogram = c("top", "right"),
     dendrogram_height = grid::unit(1.5, "cm"),
     width = waiver(),
@@ -252,6 +263,7 @@ setMethod(
     # Get input data
     x <- export_feature_similarity(
       object = object,
+      features = features,
       feature_cluster_method = feature_cluster_method,
       feature_linkage_method = feature_linkage_method,
       feature_cluster_cut_method = feature_cluster_cut_method,
@@ -436,6 +448,7 @@ setMethod(
         y_n_breaks = y_n_breaks,
         y_breaks = y_breaks,
         rotate_x_tick_labels = rotate_x_tick_labels,
+        remove_feature_labels = remove_feature_labels,
         show_dendrogram = show_dendrogram,
         dendrogram_height = dendrogram_height
       )
@@ -519,6 +532,7 @@ setMethod(
     y_n_breaks,
     y_breaks,
     rotate_x_tick_labels,
+    remove_feature_labels = FALSE,
     show_dendrogram,
     dendrogram_height
 ) {
@@ -588,6 +602,7 @@ setMethod(
       plot_sub_title = plot_sub_title,
       caption = caption,
       rotate_x_tick_labels = rotate_x_tick_labels,
+      remove_feature_labels = remove_feature_labels,
       show_dendrogram = show_dendrogram,
       similarity_metric = x_split@similarity_metric
     )
@@ -707,6 +722,7 @@ setMethod(
     plot_sub_title,
     caption,
     rotate_x_tick_labels,
+    remove_feature_labels,
     show_dendrogram,
     similarity_metric
 ) {
@@ -835,6 +851,14 @@ setMethod(
         hjust = 1.0, 
         angle = 90.0
       )
+    )
+  }
+  
+  # Remove tick labels
+  if (remove_feature_labels) {
+    p <- p + ggplot2::theme(
+      axis.text.x = ggplot2::element_blank(),
+      axis.text.y = ggplot2::element_blank()
     )
   }
 

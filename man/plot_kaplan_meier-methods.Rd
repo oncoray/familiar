@@ -279,7 +279,7 @@ from number of facets and the inclusion of survival tables.}
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_risk_stratification_data]{extract_risk_stratification_data}}
+  Arguments passed on to \code{\link{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link{extract_risk_stratification_data}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
 parameter is one or more \code{familiarData} objects.}

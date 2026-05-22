@@ -310,7 +310,7 @@ from the number of features and the number of facets.}
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=export_ice_data]{export_ice_data}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_ice]{extract_ice}}
+  Arguments passed on to \code{\link{export_ice_data}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link{extract_ice}}
   \describe{
     \item{\code{aggregate_results}}{Flag that signifies whether results should be
 aggregated for export.}

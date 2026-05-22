@@ -109,7 +109,7 @@ parameter is one or more \code{familiarData} objects.}
 \item{collection_name}{Name of the collection.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=.extract_data]{.extract_data}}
+  Arguments passed on to \code{\link{.extract_data}}
   \describe{
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are assessed.}
@@ -159,6 +159,9 @@ sample.
 vignette on performance metrics for the available metrics. If not provided
 explicitly, this parameter is read from settings used at creation of the
 underlying \code{familiarModel} objects.}
+    \item{\code{features}}{Features that should be considered for extracting information
+from. Typically called in external workflows, e.g. for plotting. Internally,
+i.e. from summon_familiar, this variable is not used.}
     \item{\code{feature_cluster_method}}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:
 \code{none}, \code{hclust}, \code{agnes}, \code{diana} and \code{pam}.

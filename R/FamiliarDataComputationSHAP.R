@@ -138,6 +138,8 @@ setMethod(
   ) {
     # Compute SHAP values.
     
+    if (is.waive(features)) features <- NULL
+    
     # Message extraction start
     logger_message(
       paste0("Extracting SHAP values for the ensemble."),

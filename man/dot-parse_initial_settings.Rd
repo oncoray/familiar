@@ -11,7 +11,7 @@ define the experiment}
 \item{config}{A list of settings, e.g. from an xml file.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}
+  Arguments passed on to \code{\link{.parse_experiment_settings}}, \code{\link{.parse_setup_settings}}
   \describe{
     \item{\code{batch_id_column}}{(\strong{recommended}) Name of the column containing batch
 or cohort identifiers. This parameter is required if more than one dataset

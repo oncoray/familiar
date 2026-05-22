@@ -8,6 +8,7 @@
 \usage{
 plot_feature_similarity(
   object,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -32,6 +33,7 @@ plot_feature_similarity(
   y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
+  remove_feature_labels = FALSE,
   show_dendrogram = c("top", "right"),
   dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
@@ -43,6 +45,7 @@ plot_feature_similarity(
 
 \S4method{plot_feature_similarity}{ANY}(
   object,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -67,6 +70,7 @@ plot_feature_similarity(
   y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
+  remove_feature_labels = FALSE,
   show_dendrogram = c("top", "right"),
   dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
@@ -78,6 +82,7 @@ plot_feature_similarity(
 
 \S4method{plot_feature_similarity}{familiarCollection}(
   object,
+  features = waiver(),
   feature_cluster_method = waiver(),
   feature_linkage_method = waiver(),
   feature_cluster_cut_method = waiver(),
@@ -102,6 +107,7 @@ plot_feature_similarity(
   y_n_breaks = 3L,
   y_breaks = NULL,
   rotate_x_tick_labels = waiver(),
+  remove_feature_labels = FALSE,
   show_dendrogram = c("top", "right"),
   dendrogram_height = grid::unit(1.5, "cm"),
   width = waiver(),
@@ -114,6 +120,10 @@ plot_feature_similarity(
 \arguments{
 \item{object}{A \code{familiarCollection} object, or other other objects from which
 a \code{familiarCollection} can be extracted. See details for more information.}
+
+\item{features}{Features that should be considered for extracting information
+from. Typically called in external workflows, e.g. for plotting. Internally,
+i.e. from summon_familiar, this variable is not used.}
 
 \item{feature_cluster_method}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:
@@ -243,6 +253,9 @@ is unset.}
 controlled through the \code{ggtheme}. In this case, \code{FALSE} should be provided
 explicitly.}
 
+\item{remove_feature_labels}{(\emph{optional}) If \code{TRUE}, feature labels are not
+shown. By default, feature labels are shown.}
+
 \item{show_dendrogram}{(\emph{optional}) Show dendrogram around the main panel.
 Can be \code{TRUE}, \code{FALSE}, \code{NULL}, or a position, i.e. \code{top}, \code{bottom}, \code{left}
 and \code{right}. Up to two positions may be provided, but only as long as the
@@ -271,7 +284,7 @@ from the number of features and the number of facets.}
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_feature_similarity]{extract_feature_similarity}}
+  Arguments passed on to \code{\link{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link{extract_feature_similarity}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
 parameter is one or more \code{familiarData} objects.}

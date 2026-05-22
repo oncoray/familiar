@@ -253,6 +253,9 @@ setMethod(
     # This mostly follows the same routines as extract_prediction_data. In
     # addition, tests are created during export.
     
+    # Suppress NOTES due to non-standard evaluation in data.table
+    group <- NULL
+    
     # Only assess stratification for survival outcomes.
     if (!object@outcome_type %in% c("survival")) return(NULL)
     
@@ -274,8 +277,10 @@ setMethod(
       range = c(0.0, 1.0),
       closed = c(FALSE, FALSE)
     )
-
-    if (is.waive(risk_group_column)) risk_group_column <- get_id_columns("batch")
+    
+    # Set default risk group (batch).
+    batch_id_column <- get_id_columns(single_column = "batch")
+    if (is.waive(risk_group_column)) risk_group_column <- batch_id_column
     
     # Check if only one column is provided as risk_group_column.
     .check_argument_length(
@@ -298,6 +303,11 @@ setMethod(
     )
     prediction_data <- .merge_slots_into_data(prediction_data)
     
+    # Remove instances where the assigned group is NA.
+    if (!is_empty(prediction_data@data)) {
+      prediction_data@data <- prediction_data@data[!is.na(group), ]
+    }
+
     # Manually set attributes for this dataElement.
     prediction_data@detail_level <- "ensemble"
     prediction_data@estimation_type <- "point"

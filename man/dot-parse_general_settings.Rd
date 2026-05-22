@@ -16,7 +16,7 @@ worklow}
 \item{data}{Data set as loaded using the \code{.load_data} function.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_variable_importance_settings]{.parse_variable_importance_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}
+  Arguments passed on to \code{\link{.parse_setup_settings}}, \code{\link{.parse_preprocessing_settings}}, \code{\link{.parse_variable_importance_settings}}, \code{\link{.parse_model_development_settings}}, \code{\link{.parse_hyperparameter_optimisation_settings}}, \code{\link{.parse_evaluation_settings}}
   \describe{
     \item{\code{parallel}}{(\emph{optional}) Enable parallel processing. Defaults to \code{TRUE}.
 When set to \code{FALSE}, this disables all parallel processing, regardless of

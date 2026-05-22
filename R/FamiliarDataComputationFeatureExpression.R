@@ -279,12 +279,36 @@ setMethod(
 
 
 
+
+.feature_expression_remove_feature <- function(x, features) {
+  if (is_empty(x)) return(x)
+  
+  all_features <- names(x@feature_info)
+  available_features <- intersect(all_features, features)
+  
+  if (length(available_features) == 0L) return(NULL)
+  
+  # Filter features.
+  x@feature_info <- x@feature_info[available_features]
+  x@data <- x@data[, mget(c(setdiff(colnames(x@data), all_features), available_features))]
+  x@value_column <- available_features
+  
+  return(x)
+}
+
+
+
+
+
 # export_feature_expressions (generic) -----------------------------------------
 
 #'@title Extract and export feature expressions.
 #'
 #'@description Extract and export feature expressions for the features in a
 #'  familiarCollection.
+#'
+#'@param features Features that should be exported. If `NULL` or `waiver()`, all
+#'  features exported (default).
 #'
 #'@param evaluation_time One or more time points that are used to create the
 #'  outcome columns in expression plots. If not provided explicitly, this
@@ -314,6 +338,7 @@ setGeneric(
   "export_feature_expressions",
   function(
     object,
+    features = waiver(),
     dir_path = NULL,
     evaluation_time = waiver(),
     export_collection = FALSE,
@@ -333,6 +358,7 @@ setMethod(
   signature(object = "familiarCollection"),
   function(
     object,
+    features = waiver(),
     dir_path = NULL,
     evaluation_time = waiver(),
     export_collection = FALSE,
@@ -347,6 +373,11 @@ setMethod(
     
     # Check that the data are not empty.
     if (is_empty(x)) return(NULL)
+    
+    if (!is.waive(features) && !is.null(features)) {
+      # Filter features.
+      x <- lapply(x, .feature_expression_remove_feature, features = features)
+    }
     
     if (!is.waive(evaluation_time)) {
       
@@ -391,6 +422,7 @@ setMethod(
   signature(object = "ANY"),
   function(
     object,
+    features = waiver(),
     dir_path = NULL,
     evaluation_time = waiver(),
     export_collection = FALSE,
@@ -403,6 +435,7 @@ setMethod(
       args = c(
         list(
           "object" = object,
+          "features" = features,
           "data_element" = "feature_expressions",
           "evaluation_times" = evaluation_time
         ),
@@ -415,6 +448,7 @@ setMethod(
       args = c(
         list(
           "object" = object,
+          "features" = features,
           "dir_path" = dir_path,
           "evaluation_time" = evaluation_time,
           "export_collection" = export_collection

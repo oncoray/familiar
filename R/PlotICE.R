@@ -359,7 +359,7 @@ setMethod(
 #'   the output in the figure.
 #'
 #' @return `NULL` or list of plot objects, if `dir_path` is `NULL`.
-#' @exportMethod plot_ice
+#' @exportMethod plot_pd
 #' @md
 #' @rdname plot_pd-methods
 setGeneric(

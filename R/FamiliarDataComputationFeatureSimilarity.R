@@ -36,6 +36,8 @@ setClass(
 #'  used in a `familiarEnsemble` object. This table can be used to cluster
 #'  features, and is exported directly by `export_feature_similarity`.
 #'
+#'@param features (*optional*) Features for which feature similarity is computed.
+#'  
 #'@inheritParams .extract_data
 #'
 #'@return A data.table containing pairwise distance between features. This data
@@ -55,6 +57,7 @@ setGeneric(
     confidence_level = waiver(),
     bootstrap_ci_method = waiver(),
     is_pre_processed = FALSE,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
@@ -82,6 +85,7 @@ setMethod(
     confidence_level = waiver(),
     bootstrap_ci_method = waiver(),
     is_pre_processed = FALSE,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
@@ -201,6 +205,7 @@ setMethod(
       cl = cl,
       object = object,
       data = data,
+      features = features,
       proto_data_element = proto_data_element,
       is_pre_processed = is_pre_processed,
       aggregate_results = aggregate_results,
@@ -239,6 +244,7 @@ setMethod(
     confidence_level = waiver(),
     bootstrap_ci_method = waiver(),
     is_pre_processed = FALSE,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
@@ -359,6 +365,7 @@ setMethod(
       cl = cl,
       object = object,
       data = object,
+      features = features,
       proto_data_element = proto_data_element,
       is_pre_processed = is_pre_processed,
       aggregate_results = aggregate_results,
@@ -375,6 +382,7 @@ setMethod(
 .extract_feature_similarity <- function(
     object,
     data,
+    features = NULL,
     proto_data_element,
     cl = NULL,
     is_pre_processed,
@@ -404,7 +412,15 @@ setMethod(
   # if not.
   if (get_n_samples(data, "series") <= 5L) return(NULL)
   
-  if (is(object, "familiarEnsemble")) {
+  # Check if specific features need to be processed.
+  if (is.waive(features)) features <- NULL
+  if (!is.null(features)) {
+    data <- filter_features(
+      data = data,
+      available_features = features
+    )
+    
+  } else if (is(object, "familiarEnsemble")) {
     # Maintain only important features. The current set is based on the required
     # features.
     data <- filter_features(
@@ -513,6 +529,21 @@ setMethod(
   
   return(data_element)
 }            
+
+
+
+.feature_similarity_remove_feature <- function(x, features) {
+  
+  # Suppress NOTES due to non-standard evaluation in data.table
+  feature_name_1 <- feature_name_2 <- NULL 
+  
+  if (is_empty(x)) return(x)
+  
+  # Filter all features.
+  x@data <- x@data[feature_name_1 %in% features & feature_name_2 %in% features]
+  
+  return(x)
+}
 
 
 
@@ -716,6 +747,7 @@ setGeneric(
     object,
     dir_path = NULL,
     aggregate_results = TRUE,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
@@ -740,6 +772,7 @@ setMethod(
     object,
     dir_path = NULL,
     aggregate_results = TRUE,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
@@ -835,6 +868,11 @@ setMethod(
     ) {
       x <- .compute_data_element_estimates(x)
       
+      if (!is.waive(features) && !is.null(features)) {
+        # Filter features.
+        x <- lapply(x, .feature_similarity_remove_feature, features)
+      }
+      
       if (export_dendrogram || export_ordered_data || export_clustering) {
         # Add dendrogram and other cluster objects.
         x <- lapply(x, .append_feature_similarity_dendrogram)
@@ -876,6 +914,7 @@ setMethod(
     object,
     dir_path = NULL,
     aggregate_results = TRUE,
+    features = waiver(),
     feature_cluster_method = waiver(),
     feature_linkage_method = waiver(),
     feature_cluster_cut_method = waiver(),
@@ -892,6 +931,7 @@ setMethod(
           "object" = object,
           "data_element" = "feature_similarity",
           "aggregate_results" = aggregate_results,
+          "features" = features,
           "feature_cluster_method" = feature_cluster_method,
           "feature_linkage_method" = feature_linkage_method,
           "feature_cluster_cut_method" = feature_cluster_cut_method,
@@ -908,6 +948,7 @@ setMethod(
           "object" = object,
           "dir_path" = dir_path,
           "aggregate_results" = aggregate_results,
+          "features" = features,
           "feature_cluster_method" = feature_cluster_method,
           "feature_linkage_method" = feature_linkage_method,
           "feature_cluster_cut_method" = feature_cluster_cut_method,

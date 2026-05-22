@@ -1,3 +1,35 @@
+# Version 2.0.1 (Brilliant Bat)
+
+## Minor changes
+
+- `plot_feature_similarity` and `plot_sample_clustering` now have the `features` 
+  argument, which selects the features that appear in the heatmap.
+
+- `plot_feature_similarity` and `plot_sample_clustering` now have the 
+  `remove_feature_labels` argument, which suppresses rendering of feature 
+  names as tick labels for the heatmap.
+  
+- `plot_sample_clustering` now has the `remove_sample_labels` argument, which
+  suppresses rendering of sample names as tick labels for the heatmap.
+  
+- `plot_kaplan_meier` now plots strata in one facet if the risk group is equal
+  to the data set.
+
+- `plot_kaplan_meier` now correctly shows the results of the log-rank test for
+  strata in each facet.
+
+## Fixes
+
+- Prevents an error when evaluating models in bootstrap or cross-validation
+  experiments without variable importances and a number features in the model
+  that exceeds `n_important_features`.
+
+- `plot_pd` is now correctly exported and can be called externally.
+
+- `plot_kaplan_meier` now works correctly if the column indicated by `risk_group_column`
+  contains `NA` values.
+
+
 # Version 2.0.0 (Astonishing Anteater)
 
 ## Breaking changes

@@ -275,7 +275,7 @@ setMethod(
     
     # Make sure the collection object is updated.
     object <- update_object(object = object)
-
+    
     # Get input data
     x <- export_risk_stratification_data(
       object = object,
@@ -402,7 +402,7 @@ setMethod(
 
     # Store plots to list in case no dir_path is provided
     if (is.null(dir_path)) plot_list <- list()
-
+    
     # Add default splitting variables.
     if (is.null(split_by) &&
         is.null(color_by) &&
@@ -411,6 +411,13 @@ setMethod(
       split_by <- c("vimp_method", "learner", "stratification_method")
       color_by <- c("group")
       facet_by <- c("data_set")
+      
+      # The grouping variable may be identical to the data_set. In that case,
+      # do not facet by data_set.
+      if (identical(x@data$group, x@data$data_set)) {
+        facet_by <- NULL
+        x@data$data_set <- factor(x = rep_len("placeholder", nrow(x@data)))
+      }
     }
 
     # Check splitting variables and generate sanitised output
@@ -463,7 +470,7 @@ setMethod(
       plot_sub_title = plot_sub_title,
       caption = caption
     )
-
+    
     # Create plots -------------------------------------------------------------
 
     # Determine if subtitle should be generated.
@@ -669,6 +676,9 @@ setMethod(
     # Skip if the split doesn't contain any information.
     if (is_empty(x_split@data) || all(is.na(x_split@data$outcome_time))) next
     
+    # Update groups attribute to reflect groups present in the current split.
+    x_split@groups <- unique(as.character(x_split@data$group))
+    
     # Compute strata for the current split.
     strata <- .compute_risk_stratification_curves(
       x = x_split,
@@ -684,7 +694,7 @@ setMethod(
     } else {
       test_data <- NULL
     }
-
+    
     # Kaplan-Meier plots
     p_kaplan_meier <- .create_km_subplot(
       x = strata,

@@ -73,6 +73,11 @@
     ) {
       settings$data$sample_col <- get_id_columns(single_column = "sample")
     }
+    
+  } else if (is.null(settings$data$sample_col)) {
+    if (get_id_columns(single_column = "sample") %in% colnames(data)) {
+      settings$data$sample_col <- get_id_columns(single_column = "sample")
+    }
   }
   
   if (!is.null(settings$data$batch_col) && check_stringency != "strict") {
@@ -83,6 +88,11 @@
     ) {
       settings$data$batch_col <- get_id_columns(single_column = "batch")
     }
+    
+  } else if (is.null(settings$data$batch_col)) {
+    if (get_id_columns(single_column = "batch") %in% colnames(data)) {
+      settings$data$batch_col <- get_id_columns(single_column = "batch")
+    }
   }
   
   if (!is.null(settings$data$series_col) && check_stringency != "strict") {
@@ -91,6 +101,11 @@
       !any(settings$data$series_col %in% colnames(data)) &&
       get_id_columns(single_column = "series") %in% colnames(data)
     ) {
+      settings$data$series_col <- get_id_columns(single_column = "series")
+    }
+    
+  } else if (is.null(settings$data$series_col)) {
+    if (get_id_columns(single_column = "series") %in% colnames(data)) {
       settings$data$series_col <- get_id_columns(single_column = "series")
     }
   }

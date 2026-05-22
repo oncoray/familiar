@@ -34,6 +34,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Alex Zwanenburg \email{alexander.zwanenburg@nct-dresden.de} (\href{https://orcid.org/0000-0002-0342-9545}{ORCID})
   \item Steffen Löck
 }
 

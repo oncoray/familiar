@@ -84,6 +84,42 @@ familiar:::test_plot_ordering(
 )
 
 
+# Plots without feature tick labels.
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_sample_clustering,
+  data_element = "feature_expressions",
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  plot_args = list(
+    "remove_feature_labels" = TRUE
+  ),
+  debug = debug_flag
+)
+
+
+# Plots without sample tick labels.
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_sample_clustering,
+  data_element = "feature_expressions",
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  plot_args = list(
+    "remove_sample_labels" = TRUE
+  ),
+  debug = debug_flag
+)
+
+
+# Plots with feature subset.
+familiar:::test_plot_ordering(
+  plot_function = familiar:::plot_sample_clustering,
+  data_element = "feature_expressions",
+  outcome_type_available = c("continuous", "binomial", "multinomial", "survival"),
+  plot_args = list(
+    "features" = c("feature_1", "feature_2a", "feature_2b")
+  ),
+  debug = debug_flag
+)
+
+
 
 # Test plotting from dataObject.
 data <- familiar:::test_create_good_data(outcome_type = "survival")
@@ -94,6 +130,17 @@ testthat::test_that("Plotting sample similarity using dataObject works (survival
 
 data <- familiar:::test_create_good_data(outcome_type = "continuous")
 p <- familiar::plot_sample_clustering(object = data, feature_similarity_metric = "spearman")
+testthat::test_that("Plotting sample similarity using dataObject works (continuous).", {
+  testthat::expect_true(is(p[[1L]], "gtable"))
+})
+
+# Test plotting from dataObject with selection of features.
+data <- familiar:::test_create_good_data(outcome_type = "continuous")
+p <- familiar::plot_sample_clustering(
+  object = data, 
+  feature_similarity_metric = "spearman",
+  features = c("feature_1", "feature_2a", "feature_2b")
+)
 testthat::test_that("Plotting sample similarity using dataObject works (continuous).", {
   testthat::expect_true(is(p[[1L]], "gtable"))
 })
