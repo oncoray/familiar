@@ -14,6 +14,7 @@ test_run_archive_experiment <- function(parameters) {
     args = c(
       list(
         "data" = data,
+        "estimation_type" = "point",
         "parallel" = FALSE,
         ".force_output" = TRUE
       ),
