@@ -51,7 +51,7 @@ parameter is read from settings used at creation of the underlying
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=extract_feature_expression]{extract_feature_expression}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[=as_data_object]{as_data_object}}
+  Arguments passed on to \code{\link{extract_feature_expression}}, \code{\link{as_familiar_collection}}, \code{\link{as_data_object}}
   \describe{
     \item{\code{feature_similarity}}{Table containing pairwise distance between
 sample. This is used to determine cluster information, and indicate which
@@ -126,6 +126,135 @@ computation and extraction of various data elements.}
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
 parameter is one or more \code{familiarData} objects.}
     \item{\code{collection_name}}{Name of the collection.}
+    \item{\code{check_stringency}}{Specifies stringency of various checks. This is mostly:
+\itemize{
+\item \code{strict}: default value used for \code{summon_familiar}. Thoroughly checks
+input data. Used internally for checking development data.
+\item \code{external_warn}: value used for \code{extract_data} and related methods. Less
+stringent checks, but will warn for possible issues. Used internally for
+checking data for evaluation and explanation.
+\item \code{external}: value used for external methods such as \code{predict}. Less
+stringent checks, particularly for identifier and outcome columns, which may
+be completely absent. Used internally for \code{predict}.
+}}
+    \item{\code{.no_features_required}}{Internal flag to signify that data without
+features is allowed. Default: FALSE (most processing steps require features).}
+    \item{\code{batch_id_column}}{(\strong{recommended}) Name of the column containing batch
+or cohort identifiers. This parameter is required if more than one dataset
+is provided, or if external validation is performed.
+
+In familiar any row of data is organised by four identifiers:
+\itemize{
+\item The batch identifier \code{batch_id_column}: This denotes the group to which a
+set of samples belongs, e.g. patients from a single study, samples measured
+in a batch, etc. The batch identifier is used for batch normalisation, as
+well as selection of development and validation datasets.
+\item The sample identifier \code{sample_id_column}: This denotes the sample level,
+e.g. data from a single individual. Subsets of data, e.g. bootstraps or
+cross-validation folds, are created at this level.
+\item The series identifier \code{series_id_column}: Indicates measurements on a
+single sample that may not share the same outcome value, e.g. a time
+series, or the number of cells in a view.
+\item The repetition identifier: Indicates repeated measurements in a single
+series where any feature values may differ, but the outcome does not.
+Repetition identifiers are always implicitly set when multiple entries for
+the same series of the same sample in the same batch that share the same
+outcome are encountered.
+}}
+    \item{\code{sample_id_column}}{(\strong{recommended}) Name of the column containing
+sample or subject identifiers. See \code{batch_id_column} above for more
+details.
+
+If unset, every row will be identified as a single sample.}
+    \item{\code{series_id_column}}{(\emph{optional}) Name of the column containing series
+identifiers, which distinguish between measurements that are part of a
+series for a single sample. See \code{batch_id_column} above for more details.
+
+If unset, rows which share the same batch and sample identifiers but have a
+different outcome are assigned unique series identifiers.}
+    \item{\code{development_batch_id}}{(\emph{optional}) One or more batch or cohort
+identifiers to constitute data sets for development. Defaults to all, or
+all minus the identifiers in \code{validation_batch_id} for external validation.
+Required if external validation is performed and \code{validation_batch_id} is
+not provided.}
+    \item{\code{validation_batch_id}}{(\emph{optional}) One or more batch or cohort
+identifiers to constitute data sets for external validation. Defaults to
+all data sets except those in \code{development_batch_id} for external
+validation, or none if not. Required if \code{development_batch_id} is not
+provided.}
+    \item{\code{outcome_name}}{(\emph{optional}) Name of the modelled outcome. This name will
+be used in figures created by \code{familiar}.
+
+If not set, the column name in \code{outcome_column} will be used for
+\code{binomial}, \code{multinomial}, and \code{continuous} outcomes. For other outcomes
+(\code{survival} and \code{competing_risk}) no default is used.}
+    \item{\code{outcome_column}}{(\strong{recommended}) Name of the column containing the
+outcome of interest. May be identified from a formula, if a formula is
+provided as an argument. Otherwise an error is raised. Note that \code{survival}
+and \code{competing_risk} outcome type outcomes require two columns that
+indicate the time-to-event or the time of last follow-up and the event
+status.}
+    \item{\code{outcome_type}}{(\strong{recommended}) Type of outcome found in the outcome
+column. The outcome type determines many aspects of the overall process,
+e.g. the available variable importance methods and learners, but also the
+type of assessments that can be conducted to evaluate the resulting models.
+Implemented outcome types are:
+\itemize{
+\item \code{binomial}: categorical outcome with 2 levels.
+\item \code{multinomial}: categorical outcome with 2 or more levels.
+\item \code{continuous}: general continuous numeric outcomes.
+\item \code{survival}: survival outcome for time-to-event data.
+}
+
+If not provided, the algorithm will attempt to obtain outcome_type from
+contents of the outcome column. This may lead to unexpected results, and we
+therefore advise to provide this information manually.
+
+Note that \code{competing_risk} survival analysis are not fully supported, and
+is currently not a valid choice for \code{outcome_type}. The \code{count} outcome
+type was deprecated in version 2.0.0, and superseded by \code{continuous}.}
+    \item{\code{class_levels}}{(\emph{optional}) Class levels for \code{binomial} or \code{multinomial}
+outcomes. This argument can be used to specify the ordering of levels for
+categorical outcomes. These class levels must exactly match the levels
+present in the outcome column.}
+    \item{\code{event_indicator}}{(\strong{recommended}) Indicator for events in \code{survival}
+and \code{competing_risk} analyses. \code{familiar} will automatically recognise \code{1},
+\code{true}, \code{t}, \code{y} and \code{yes} as event indicators, including different
+capitalisations. If this parameter is set, it replaces the default values.}
+    \item{\code{censoring_indicator}}{(\strong{recommended}) Indicator for right-censoring in
+\code{survival} and \code{competing_risk} analyses. \code{familiar} will automatically
+recognise \code{0}, \code{false}, \code{f}, \code{n}, \code{no} as censoring indicators, including
+different capitalisations. If this parameter is set, it replaces the
+default values.}
+    \item{\code{competing_risk_indicator}}{(\strong{recommended}) Indicator for competing
+risks in \code{competing_risk} analyses. There are no default values, and if
+unset, all values other than those specified by the \code{event_indicator} and
+\code{censoring_indicator} parameters are considered to indicate competing
+risks.}
+    \item{\code{exclude_features}}{(\emph{optional}) Feature columns that will be removed
+from the data set. Cannot overlap with features in \code{signature},
+\code{novelty_features} or \code{include_features}.}
+    \item{\code{include_features}}{(\emph{optional}) Feature columns that are specifically
+included in the data set. By default all features are included. Cannot
+overlap with \code{exclude_features}, but may overlap \code{signature}. Features in
+\code{signature} and \code{novelty_features} are always included. If both
+\code{exclude_features} and \code{include_features} are provided, \code{include_features}
+takes precedence, provided that there is no overlap between the two.}
+    \item{\code{reference_method}}{(\emph{optional}) Method used to set reference levels for
+categorical features. There are several options:
+\itemize{
+\item \code{auto} (default): Categorical features that are not explicitly set by the
+user, i.e. columns containing boolean values or characters, use the most
+frequent level as reference. Categorical features that are explicitly set,
+i.e. as factors, are used as is.
+\item \code{always}: Both automatically detected and user-specified categorical
+features have the reference level set to the most frequent level. Ordinal
+features are not altered, but are used as is.
+\item \code{never}: User-specified categorical features are used as is.
+Automatically detected categorical features are simply sorted, and the
+first level is then used as the reference level. This was the behaviour
+prior to familiar version 1.3.0.
+}}
   }}
 }
 \value{

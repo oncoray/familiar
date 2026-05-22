@@ -609,8 +609,7 @@ summon_familiar <- function(
 #' @inheritParams .parse_variable_importance_settings
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
-#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
-#'   -outcome_type
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
 #'
 #' @details This is a thin wrapper around `summon_familiar`, and functions like
 #'   it, but automatically skips computation of variable importance, learning
@@ -729,8 +728,7 @@ precompute_data_assignment <- function(
 #' @inheritParams .parse_variable_importance_settings
 #' @inheritDotParams .parse_experiment_settings -config
 #' @inheritDotParams .parse_setup_settings -config
-#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel
-#'   -outcome_type
+#' @inheritDotParams .parse_preprocessing_settings -config -data -parallel -outcome_type
 #'
 #' @details This is a thin wrapper around `summon_familiar`, and functions like
 #'   it, but automatically skips computation of variable importance, learning

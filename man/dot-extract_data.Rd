@@ -138,7 +138,8 @@ explicitly, this parameter is read from settings used at creation of the
 underlying \code{familiarModel} objects.}
 
 \item{features}{Features that should be considered for extracting information
-from.}
+from. Typically called in external workflows, e.g. for plotting. Internally,
+i.e. from summon_familiar, this variable is not used.}
 
 \item{feature_cluster_method}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:

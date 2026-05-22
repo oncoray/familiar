@@ -68,7 +68,7 @@ messages and warnings are returned.}
 the file system.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=.parse_file_paths]{.parse_file_paths}}, \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_variable_importance_settings]{.parse_variable_importance_settings}}, \code{\link[=.parse_model_development_settings]{.parse_model_development_settings}}, \code{\link[=.parse_hyperparameter_optimisation_settings]{.parse_hyperparameter_optimisation_settings}}, \code{\link[=.parse_evaluation_settings]{.parse_evaluation_settings}}
+  Arguments passed on to \code{\link{.parse_file_paths}}, \code{\link{.parse_experiment_settings}}, \code{\link{.parse_setup_settings}}, \code{\link{.parse_preprocessing_settings}}, \code{\link{.parse_variable_importance_settings}}, \code{\link{.parse_model_development_settings}}, \code{\link{.parse_hyperparameter_optimisation_settings}}, \code{\link{.parse_evaluation_settings}}
   \describe{
     \item{\code{project_dir}}{(\emph{optional}) Path to the project directory. \code{familiar}
 checks if the directory indicated by \code{experiment_dir} and data files in

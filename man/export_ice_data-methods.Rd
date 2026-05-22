@@ -43,7 +43,7 @@ aggregated for export.}
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=extract_ice]{extract_ice}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
+  Arguments passed on to \code{\link{extract_ice}}, \code{\link{as_familiar_collection}}
   \describe{
     \item{\code{features}}{Names of the feature or features (2) assessed simultaneously.
 By default \code{NULL}, which means that all features are assessed one-by-one.}

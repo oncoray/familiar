@@ -223,7 +223,7 @@ from the number of features and the number of facets.}
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=extract_performance]{extract_performance}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
+  Arguments passed on to \code{\link{extract_performance}}, \code{\link{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}
   \describe{
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are assessed.}

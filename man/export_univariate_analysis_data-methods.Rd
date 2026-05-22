@@ -45,7 +45,7 @@ p-values}
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=extract_univariate_analysis]{extract_univariate_analysis}}, \code{\link[=as_familiar_collection]{as_familiar_collection}}
+  Arguments passed on to \code{\link{extract_univariate_analysis}}, \code{\link{as_familiar_collection}}
   \describe{
     \item{\code{data}}{A \code{dataObject} object, \code{data.table} or \code{data.frame} that
 constitutes the data that are assessed.}

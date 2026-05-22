@@ -122,7 +122,8 @@ plot_feature_similarity(
 a \code{familiarCollection} can be extracted. See details for more information.}
 
 \item{features}{Features that should be considered for extracting information
-from.}
+from. Typically called in external workflows, e.g. for plotting. Internally,
+i.e. from summon_familiar, this variable is not used.}
 
 \item{feature_cluster_method}{The method used to perform clustering. These are
 the same methods as for the \code{cluster_method} configuration parameter:
@@ -283,7 +284,7 @@ from the number of features and the number of facets.}
 \item{export_collection}{(\emph{optional}) Exports the collection if TRUE.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=as_familiar_collection]{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link[=extract_feature_similarity]{extract_feature_similarity}}
+  Arguments passed on to \code{\link{as_familiar_collection}}, \code{\link[ggplot2:ggsave]{ggplot2::ggsave}}, \code{\link{extract_feature_similarity}}
   \describe{
     \item{\code{familiar_data_names}}{Names of the dataset(s). Only used if the \code{object}
 parameter is one or more \code{familiarData} objects.}

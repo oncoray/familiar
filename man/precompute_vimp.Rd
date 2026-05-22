@@ -120,7 +120,7 @@ assessing variable importance.}
 messages and warnings are returned.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=.parse_experiment_settings]{.parse_experiment_settings}}, \code{\link[=.parse_setup_settings]{.parse_setup_settings}}, \code{\link[=.parse_preprocessing_settings]{.parse_preprocessing_settings}}, \code{\link[=.parse_variable_importance_settings]{.parse_variable_importance_settings}}
+  Arguments passed on to \code{\link{.parse_experiment_settings}}, \code{\link{.parse_setup_settings}}, \code{\link{.parse_preprocessing_settings}}, \code{\link{.parse_variable_importance_settings}}
   \describe{
     \item{\code{batch_id_column}}{(\strong{recommended}) Name of the column containing batch
 or cohort identifiers. This parameter is required if more than one dataset
