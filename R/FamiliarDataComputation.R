@@ -204,7 +204,8 @@ setMethod(
 #'  underlying `familiarModel` objects.
 #'
 #'@param features Features that should be considered for extracting information
-#'  from.
+#'  from. Typically called in external workflows, e.g. for plotting. Internally,
+#'  i.e. from summon_familiar, this variable is not used.
 #'
 #'@param feature_cluster_method The method used to perform clustering. These are
 #'  the same methods as for the `cluster_method` configuration parameter:
@@ -646,6 +647,7 @@ setMethod(
       data = data,
       cl = cl,
       ensemble_method = ensemble_method,
+      features = features,
       evaluation_times = evaluation_times,
       sample_limit = sample_limit,
       n_important_features = n_important_features,
@@ -670,6 +672,7 @@ setMethod(
       data = data,
       cl = cl,
       ensemble_method = ensemble_method,
+      features = features,
       evaluation_times = evaluation_times,
       sample_limit = sample_limit,
       detail_level = detail_level,
