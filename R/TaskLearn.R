@@ -262,6 +262,11 @@ setMethod(
       ...
     )
     
+    # Override novelty detector. Otherwise it is possible that a novelty
+    # detector is trained on data that are not used by the model, due
+    # to selected_features = NULL in .perform_task.
+    if (is_empty(model_object@novelty_detector)) novelty_detector <- "none"
+    
     # Set up task to train novelty detector
     detector_task <- methods::new(
       "familiarTaskTrainNovelty",
