@@ -500,6 +500,49 @@ test_create_wide_data <- function(outcome_type) {
 }
 
 
+test_create_random_data <- function(
+    outcome_type,
+    to_data_object = TRUE,
+    seed = 1844L,
+    rstream_object = NULL
+) {
+  # Create a dataset with randomised features.
+  
+  
+  # Create random stream object so that the same numbers are produced every
+  # time.
+  if (is.null(rstream_object)) {
+    r <- .start_random_number_stream(seed = seed)
+  } else {
+    r <- rstream_object
+  }
+  
+  # Start with a good dataset first.
+  data <- test_create_good_data(
+    outcome_type = outcome_type,
+    to_data_object = TRUE,
+    rstream_object = r
+  )
+  
+  # Identify the feature columns.
+  feature_columns <- get_feature_columns(data)
+  
+  for (feature in get_feature_columns(data)) {
+    data@data[, (feature) := fam_sample(
+      data@data[[feature]],
+      size = nrow(data@data),
+      rstream_object = r,
+      replace = FALSE
+    )]
+  }
+  
+  if (!to_data_object) {
+    data <- data@data
+  }
+  
+  return(data)
+}
+
 
 test_create_bad_data <- function(outcome_type, add_na_data = FALSE) {
   # add_na_data argument is intended for integration tests, where we have to
