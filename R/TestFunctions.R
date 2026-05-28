@@ -264,14 +264,22 @@ test_all_learners_train_predict_vimp <- function(
           learner, " for a dataset where the outcome is prospective."
         ),
         {
-          prediction_table_prospective <- .predict(
+          # Normal predictions with known outcome.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = full_data
+          ))
+          
+          # Predictions without known outcome.
+          prediction_table_prospective <- suppressWarnings(.predict(
             model,
             data = fully_prospective_data
-          )
+          ))
           
+          # Expect that the predicted values are identical.
           testthat::expect_equal(
-            prediction_table,
-            prediction_table_prospective,
+            prediction_table@prediction_data,
+            prediction_table_prospective@prediction_data,
             ignore_attr = TRUE
           )
         }
