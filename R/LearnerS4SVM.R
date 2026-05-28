@@ -384,7 +384,7 @@ setMethod(
       model_predictions <- tryCatch(
         predict(
           object = object@model,
-          newdata = data@data,
+          newdata = data@data[, mget(get_feature_columns(data))],
           probability = object@outcome_type %in% c("binomial", "multinomial")
         ),
         error = identity
