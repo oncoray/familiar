@@ -2,6 +2,9 @@
 
 ## Fixes
 
+- Fixed an (external) error that was caused by attempting to predict values using
+  `random_forest_rfsrc` for prospective data without known outcome.
+
 - Fixed an issue that could occur due to training novelty detectors for naive 
   models. This could cause a mismatch availability of features in the dataset 
   for predicting novelty. For naive models, novelty predictors are now no 
