@@ -1,6 +1,6 @@
-Update familiar to version 2.0.1
+Update familiar to version 2.0.2
 
-Version 2.0.1 primarily fixes a few bugs present in version 2.0.0.
+Version 2.0.2 fixes bugs present in version 2.0.1.
 
 Vignettes are pre-compiled to avoid long compilation times on build 
 (several minutes).
