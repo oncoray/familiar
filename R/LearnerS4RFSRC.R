@@ -516,9 +516,11 @@ setMethod(
       # Default method ---------------------------------------------------------
 
       # Make predictions using the model.
+      # The random forest implementation in randomForestSRC misbehaves if the
+      # data is prospective: pass _only_ features to the model.
       model_predictions <- predict(
         object = object@model,
-        newdata = data@data
+        newdata = data@data[, mget(get_feature_columns(data))]
       )
 
       if (object@outcome_type %in% c("binomial", "multinomial")) {

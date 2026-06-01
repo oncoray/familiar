@@ -257,7 +257,35 @@ test_all_learners_train_predict_vimp <- function(
         }
       )
       
-      # Test that models can be used to predict the outcome.
+      # Test that models can predict for datasets where outcome is NA.
+      test_fun(
+        paste0(
+          "Sample predictions for ", outcome_type, " can be made using ",
+          learner, " for a dataset where the outcome is prospective."
+        ),
+        {
+          # Normal predictions with known outcome.
+          prediction_table <- suppressWarnings(.predict(
+            model,
+            data = full_data
+          ))
+          
+          # Predictions without known outcome.
+          prediction_table_prospective <- suppressWarnings(.predict(
+            model,
+            data = fully_prospective_data
+          ))
+          
+          # Expect that the predicted values are identical.
+          testthat::expect_equal(
+            prediction_table@prediction_data,
+            prediction_table_prospective@prediction_data,
+            ignore_attr = TRUE
+          )
+        }
+      )
+      
+      # Test that models can be used to predict the outcome for a single sample.
       test_fun(
         paste0(
           "Sample predictions for ", outcome_type, " can be made using ",
