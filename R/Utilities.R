@@ -1406,6 +1406,29 @@ approximately <- function(x, y, tol = sqrt(.Machine$double.eps)) {
 
 
 
+identicalish <- function(x, y) {
+  # Determines whether x and y are essentially the same.
+  if (identical(x = x, y = y)) return(TRUE)
+  
+  # This will fail if x or y has no length, or lengths are not equal.
+  if (isFALSE(all.equal(length(x), length(y)))) return(FALSE)
+  
+  # If both x and y are numeric, check whether they are equivalent. Note that
+  # this casts integers to doubles for comparison, i.e. 2.0 == 2L.
+  if (is.numeric(x) && is.numeric(x)) {
+    if (isTRUE(all(x == y))) return(TRUE)
+    return(FALSE)
+  }
+  
+  if (is.factor(x) && is.factor(y)) {
+    if (isTRUE(all(x == y))) return(TRUE)
+    return(FALSE)
+  }
+  
+  return(FALSE)
+}
+
+
 huber_estimate <- function(x, k = 1.28, tol = 1E-4) {
   
   # Huber M-estimates require the power.transform package.
