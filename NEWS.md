@@ -1,3 +1,18 @@
+# Version 2.0.3 (Dapper Donkey)
+
+## Minor changes
+
+- `ggplot2` requires that `ragg` is installed for `ggplot2::ggplotGrob`. This
+  function is used by `familiar` in composite plots, such as Kaplan Meier plots.
+  The user is know warned if this package is missing.
+  
+## Fixes
+
+- Fixed an overly strict check that would prevent strata in Kaplan Meier plots
+  from being plotted together in one plot if these strata were formed by the batch identifier,
+  but the order of levels internally differed between batch identifier and the
+  identifier of the strata.
+
 # Version 2.0.2 (Cackling Caribou)
 
 ## Fixes
