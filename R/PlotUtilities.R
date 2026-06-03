@@ -1,7 +1,7 @@
 ..required_plotting_packages <- function(extended = FALSE) {
   plot_packages <- c("ggplot2", "labeling", "scales", "rlang")
 
-  if (extended) plot_packages <- c(plot_packages, "gtable")
+  if (extended) plot_packages <- c(plot_packages, "gtable", "ragg")
 
   return(plot_packages)
 }
