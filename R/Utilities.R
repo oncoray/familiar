@@ -1421,7 +1421,7 @@ identicalish <- function(x, y) {
   }
   
   if (is.factor(x) && is.factor(y)) {
-    if (isTRUE(all(x == y))) return(TRUE)
+    if (isTRUE(all(as.character(x) == as.character(y)))) return(TRUE)
     return(FALSE)
   }
   
