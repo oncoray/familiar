@@ -982,7 +982,8 @@ setMethod(
           x = km_fit$time,
           y = km_fit$surv,
           xout = time,
-          method = "linear",
+          yleft = 1.0,
+          method = "constant",
           rule = 2L
         )$y
         
@@ -997,7 +998,7 @@ setMethod(
           x = km_fit$time,
           y = km_fit$std.err,
           xout = time,
-          method = "linear",
+          method = "constant",
           rule = 2L
         )$y^2.0
         
