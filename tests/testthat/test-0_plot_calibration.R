@@ -161,3 +161,18 @@ familiar:::test_plot_ordering(
     "color_by" = "positive_class"),
   debug = debug_flag
 )
+
+
+# Random forest survival data
+data <- familiar:::test_create_good_data(outcome_type = "survival")
+model <- familiar:::train_familiar(
+  data = data,
+  learner = "random_forest_ranger",
+  vimp_method = "none",
+  evaluation_times = c(0.5, 1.0, 2.0),
+  verbose = debug_flag
+)
+p <- familiar::plot_calibration_data(
+  object = model,
+  data = data
+)
