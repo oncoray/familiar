@@ -706,6 +706,10 @@ setMethod(
     # Check again if a stratification threshold is now set.
     if (is.null(stratification_threshold)) return(NULL)
 
+    # Determine if time is specified, otherwise use the default (see
+    # .find_survival_grouping_thresholds function).
+    if (is.null(time)) time <- object@settings$time_max
+
     # Predict for the instances in data.
     predictions <- .predict(
       object = object,
