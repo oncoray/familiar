@@ -12,6 +12,9 @@
   from being plotted together in one plot if these strata were formed by the batch identifier,
   but the order of levels internally differed between batch identifier and the
   identifier of the strata.
+  
+- If `time` is not provided for predicting stratification into a risk group, the
+  default time (`time_max`) will be used.
 
 # Version 2.0.2 (Cackling Caribou)
 
