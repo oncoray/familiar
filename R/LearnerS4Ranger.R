@@ -916,109 +916,48 @@ setMethod(
     )
   }
   
-  # Combine with identifiers and cast to table.
-  event_table <- cbind(
-    data@data[, mget(id_columns)],
-    data.table::as.data.table(event_matrix)
-  )
+  # Identify left and right column in event matrix.
+  left_col <- tail(which(event_times <= time), n = 1L)
+  right_col <- head(which(event_times >= time), n = 1L)
   
-  # Remove duplicate entries
-  event_table <- unique(event_table, by = id_columns)
-  
-  # Melt to a long format.
-  event_table <- data.table::melt(
-    event_table,
-    id.vars = id_columns,
-    variable.name = "time_variable",
-    value.name = "value"
-  )
-  
-  # Create conversion table to convert temporary variables into the event times.
-  conversion_table <- data.table::data.table(
-    "time_variable" = paste0("V", seq_along(event_times)),
-    "event_time" = event_times
-  )
-  
-  # Add in event times
-  event_table <- merge(
-    x = event_table, 
-    y = conversion_table, 
-    by = "time_variable"
-  )
-  
-  # Drop the time_variable column
-  event_table[, "time_variable" := NULL]
-  
-  if (time %in% event_times) {
-    # Get the event time directly.
-    event_table <- event_table[event_time == time, ]
-    
-    # Remove event_time column and rename the value column to predicted_outcome.
-    event_table[, "event_time" := NULL]
-    data.table::setnames(x = event_table, old = "value", new = "predicted_outcome")
+  if (length(left_col) == 0L) {
+    # Special case: there are no event times smaller than the current time.
+    # Use 0.0 (cumulative hazard) or 1.0 (survival)
+    left_col_values <- numeric(nrow(event_matrix))
+    if (type == "survival") left_col_values <- left_col_values + 1.0
+    left_col_time <- 0.0
     
   } else {
-    # Add starting values.
-    if (!0.0 %in% event_times) {
-      # Create initial table
-      initial_event_table <- data.table::copy(event_table[event_time == event_times[1L]])
-      
-      # Update values
-      if (type == "cumulative_hazard") {
-        initial_event_table[, ":="("value" = 0.0, "event_time" = 0.0)]
-        
-      } else if (type == "survival") {
-        initial_event_table[, ":="("value" = 1.0, "event_time" = 0.0)]
-        
-      } else {
-        ..error_reached_unreachable_code(paste0(
-          ".random_forest_survival_predictions: type was not recognised: ",
-          type
-        ))
-      }
-      
-      # Combine with the event table.
-      event_table <- rbind(initial_event_table, event_table)
-    }
-    
-    # Now, interpolate at the given time point.
-    event_table <- lapply(
-      split(event_table, by = id_columns), 
-      function(sample_table, time, id_columns) {
-        # Interpolate values at the given time.
-        value <- stats::approx(
-          x = sample_table$event_time,
-          y = sample_table$value,
-          xout = time,
-          rule = 2L
-        )$y
-        
-        # Create an output table
-        output_table <- data.table::copy(sample_table[1L, mget(id_columns)])
-        output_table[, "predicted_outcome" := value]
-        
-        return(output_table)
-      },
-      time = time, 
-      id_columns = id_columns
-    )
-    
-    # Concatenate to single table.
-    event_table <- data.table::rbindlist(event_table)
+    # General case
+    left_col_values <- event_matrix[, left_col]
+    left_col_time <- event_times[left_col]
   }
   
-  # Sort as original data.
-  event_table <- merge(
-    x = data@data[, mget(id_columns)],
-    y = event_table, 
-    by = id_columns,
-    sort = FALSE
-  )
+  if (length(right_col) == 0L) {
+    # Special case: there are no event times larger than the current time.
+    # Use the most extreme time instead.
+    right_col_values <- event_matrix[, length(event_times)]
+    right_col_time <- time
+    
+  } else {
+    # General case.
+    right_col_values <- event_matrix[, right_col]
+    right_col_time <- event_times[right_col]
+  }
   
+  if (left_col_time == right_col_time) {
+    # Special case: the desired time is equal to an event time.
+    predicted_values <- left_col_values
+    
+  } else {
+    # Use linear interpolation.
+    predicted_values <- left_col_values + (time - left_col_time) / (right_col_time - left_col_time) * (right_col_values - left_col_values)
+  }
+
   # Convert to prediction table objects.
   if (type == "cumulative_hazard") {
     prediction_table <- as_prediction_table(
-      x = event_table$predicted_outcome,
+      x = predicted_values,
       type = "cumulative_hazard",
       data = data,
       time = time,
@@ -1027,13 +966,13 @@ setMethod(
     
   } else {
     prediction_table <- as_prediction_table(
-      x = event_table$predicted_outcome,
+      x = predicted_values,
       type = "survival_probability",
       data = data,
       time = time,
       model_object = object
     )
   }
-  
+
   return(prediction_table)
 }
