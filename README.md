@@ -28,12 +28,10 @@ The package vignettes contain additional information concerning familiar:
 
 * [Introducing familiar](https://cran.r-project.org/web/packages/familiar/vignettes/introduction_precompiled.html)
 
-* [Feature selection methods](https://cran.r-project.org/web/packages/familiar/vignettes/feature_selection_precompiled.html)
+* [Variable importance methods](https://cran.r-project.org/web/packages/familiar/vignettes/variable_importance_precompiled.html)
 
 * [Learners and hyperparameter optimisation](https://cran.r-project.org/web/packages/familiar/vignettes/learners_precompiled.html)
 
 * [Model performance metrics](https://cran.r-project.org/web/packages/familiar/vignettes/performance_metrics_precompiled.html)
 
-* [Using familiar to evaluate and explain models](https://cran.r-project.org/web/packages/familiar/vignettes/evaluation_and_explanation_precompiled.html)
-
-* [Using familiar prospectively](https://cran.r-project.org/web/packages/familiar/vignettes/prospective_use_precompiled.html)
+* [Evaluation and explanation](https://cran.r-project.org/web/packages/familiar/vignettes/evaluation_and_explanation_precompiled.html)
