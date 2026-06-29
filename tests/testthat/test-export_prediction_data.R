@@ -46,3 +46,31 @@ familiar:::test_export(
   test_config = "normal",
   debug = debug_flag
 )
+
+
+# Test that prediction data are correctly exported when multiple feature
+# selection methods and learners are present.
+results <- familiar::summon_familiar(
+  data = familiar:::test_create_good_data(outcome_type = "binomial"),
+  experimental_design = "mb",
+  vimp_method = c("mim", "univariate_regression"),
+  learner = c("glm_logistic", "lasso_binomial"),
+  evaluation_elements = c("prediction_data"),
+  verbose = debug_flag
+)
+
+predictions <- familiar::export_prediction_data(results$familiarCollection)
+testthat::test_that(
+  "All predictions are made.", {
+    # Two vimp methods with two learners with 150 samples = 600 predictions.
+    testthat::expect_equal(nrow(predictions$classification[[1L]]@data), 600L)
+    testthat::expect_setequal(
+      unique(predictions$classification[[1L]]@data$vimp_method),
+      c("mim", "univariate_regression")
+    )
+    testthat::expect_setequal(
+      unique(predictions$classification[[1L]]@data$learner),
+      c("glm_logistic", "lasso_binomial")
+    )
+  }
+)
