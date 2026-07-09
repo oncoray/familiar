@@ -25,6 +25,34 @@ setClass(
 
 
 
+# is_available -----------------------------------------------------------------
+setMethod(
+  "is_available",
+  signature(object = "familiarNaiveModel"),
+  function(object, ...) {
+    return(TRUE)
+  }
+)
+
+
+# get_default_hyperparameters --------------------------------------------------
+setMethod(
+  "get_default_hyperparameters",
+  signature(object = "familiarNaiveModel"),
+  function(object, data = NULL, user_list = NULL, ...) {
+    # Initialise list and declare hyperparameter entries. A naive model
+    # lacks hyperparameters
+    param <- list()
+    
+    # If data is not provided, return the list with hyperparameter names only.
+    if (is.null(data)) return(param)
+    
+    # Return hyperparameters
+    return(param)
+  }
+)
+
+
 # ..train (familiarNaiveModel) -------------------------------------------------
 setMethod(
   "..train",
@@ -71,6 +99,23 @@ setMethod(
     object <- set_package_version(object)
     
     return(object)
+  }
+)
+
+
+# ..train_naive ----------------------------------------------------------------
+setMethod(
+  "..train_naive",
+  signature(
+    object = "familiarNaiveModel",
+    data = "dataObject"
+  ),
+  function(object, data, ...) {
+    return(..train(
+      object = object,
+      data = data,
+      ...
+    ))
   }
 )
 
@@ -425,6 +470,10 @@ setMethod(
   }
 )
 
+
+.get_available_naive_learners <- function(show_general = TRUE) {
+  return("naive")
+}
 
 
 # show (familiarNaiveModel) ----------------------------------------------------
