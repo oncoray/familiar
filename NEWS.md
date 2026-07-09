@@ -15,6 +15,9 @@
   
 - If `time` is not provided for predicting stratification into a risk group, the
   default time (`time_max`) will be used.
+  
+- An overeager check would prevent missing (`NA`) outcome data from being removed
+  prior to training a naive model.
 
 # Version 2.0.2 (Cackling Caribou)
 

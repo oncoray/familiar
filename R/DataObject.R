@@ -1793,8 +1793,8 @@ setMethod(
   signature(data = "dataObject"),
   function(data, is_validation = FALSE, ...) {
     
-    # Check if data is empty
-    if (is_empty(data)) return(data)
+    # Check if data is empty. Features are allowed to be absent.
+    if (is_empty(data, allow_no_features = TRUE)) return(data)
     
     # Pass to method for data.table.
     data@data <- filter_missing_outcome(
