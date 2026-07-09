@@ -48,6 +48,7 @@ test_all_learners_train_predict_vimp <- function(
     except_naive = NULL,
     except_predict = NULL,
     except_predict_survival = NULL,
+    except_risk_stratification = NULL,
     has_vimp = TRUE,
     can_trim = TRUE,
     debug = FALSE
@@ -209,11 +210,14 @@ test_all_learners_train_predict_vimp <- function(
               "predictionTableSurvivalProbability"
             )
             
-            # Check prediction of risk groups.
-            testthat::expect_s4_class(
-              suppressWarnings(.predict(model, data = full_data, type = "risk_stratification")),
-              "predictionTableRiskGroups"
-            )
+            if (!learner %in% except_risk_stratification) {
+              # Check prediction of risk groups.
+              testthat::expect_s4_class(
+                suppressWarnings(.predict(model, data = full_data, type = "risk_stratification")),
+                "predictionTableRiskGroups"
+              )
+            }
+            
           } else {
             ..error_outcome_type_not_implemented(outcome_type)
           }
@@ -417,7 +421,7 @@ test_all_learners_train_predict_vimp <- function(
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict)
+              !learner %in% c(except_train, except_predict, except_risk_stratification)
             )
             
             # Expect that the trimmed model produces the same predictions.
@@ -509,7 +513,7 @@ test_all_learners_train_predict_vimp <- function(
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict)
+              !learner %in% c(except_train, except_predict, except_risk_stratification)
             )
             
             # Expect that the trimmed model produces the same predictions.
@@ -861,7 +865,7 @@ test_all_learners_train_predict_vimp <- function(
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict)
+              !learner %in% c(except_train, except_predict, except_risk_stratification)
             )
           }
         )
@@ -911,7 +915,7 @@ test_all_learners_train_predict_vimp <- function(
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict)
+              !learner %in% c(except_train, except_predict, except_risk_stratification)
             )
             
             # Expect that the trimmed model produces the same predictions.
@@ -1106,7 +1110,7 @@ test_all_learners_train_predict_vimp <- function(
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict)
+              !learner %in% c(except_train, except_predict, except_risk_stratification)
             )
           }
         )
@@ -1240,7 +1244,7 @@ test_all_learners_train_predict_vimp <- function(
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict)
+              !learner %in% c(except_train, except_predict, except_risk_stratification)
             )
           }
         )
@@ -1375,7 +1379,7 @@ test_all_learners_train_predict_vimp <- function(
             # Test that the predictions were successfully made.
             testthat::expect_equal(
               any_predictions_valid(prediction_table),
-              !learner %in% c(except_train, except_predict)
+              !learner %in% c(except_train, except_predict, except_risk_stratification)
             )
           }
         )

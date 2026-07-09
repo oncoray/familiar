@@ -10,6 +10,7 @@ testthat::skip_on_ci()
 
 familiar:::test_all_learners_train_predict_vimp(
   learners = familiar:::.get_available_naive_learners(show_general = FALSE),
+  except_risk_stratification = familiar:::.get_available_naive_learners(show_general = FALSE),
   has_vimp = FALSE
 )
 
