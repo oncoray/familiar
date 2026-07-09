@@ -471,6 +471,19 @@ setMethod(
 )
 
 
+# .trim_model-------------------------------------------------------------------
+setMethod(
+  ".trim_model",
+  signature(object = "familiarNaiveModel"),
+  function(object, ...) {
+    # Doesn't do anything as naive models themselves don't contain information.
+    object@is_trimmed <- TRUE
+    
+    return(object)
+  }
+)
+
+
 .get_available_naive_learners <- function(show_general = TRUE) {
   return("naive")
 }
