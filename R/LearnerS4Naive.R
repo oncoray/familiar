@@ -490,15 +490,14 @@ setMethod(
 
 
 
-# model_is_trained -------------------------------------------------------------
+# requires_naive_model ---------------------------------------------------------
 setMethod(
-  "model_is_trained",
+  "requires_naive_model",
   signature(object = "familiarNaiveModel"),
-  function(object) {
+  function(object, ...) {
     return(TRUE)
   }
 )
-
 
 
 # show (familiarNaiveModel) ----------------------------------------------------
