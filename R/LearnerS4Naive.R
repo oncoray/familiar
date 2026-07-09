@@ -489,6 +489,18 @@ setMethod(
 }
 
 
+
+# model_is_trained -------------------------------------------------------------
+setMethod(
+  "model_is_trained",
+  signature(object = "familiarNaiveModel"),
+  function(object) {
+    return(TRUE)
+  }
+)
+
+
+
 # show (familiarNaiveModel) ----------------------------------------------------
 setMethod(
   "show",
