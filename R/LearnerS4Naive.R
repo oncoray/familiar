@@ -60,22 +60,22 @@ setMethod(
     object = "familiarNaiveModel",
     data = "dataObject"
   ),
-  function(object, data, ...) {
+  function(object, data, check_hyperparameters = TRUE, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(
       object = object,
       data = data, 
       allow_no_features = TRUE
     )) {
-      
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
         reason = reason
       )))
     }
     
-    # Check if hyperparameters are set.
-    if (is.null(object@hyperparameters)) {
+    # Check if hyperparameters are set. If check_hyperparameters = FALSE, 
+    # training of the naive model was explicitly requested by the user.
+    if (is.null(object@hyperparameters) && check_hyperparameters) {
       return(callNextMethod(object = ..update_errors(
         object = object, 
         ..error_message_no_optimised_hyperparameters_available()
