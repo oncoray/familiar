@@ -942,6 +942,11 @@ geom_fam_force_shap <- function(
     inherit.aes = TRUE,
     ...
 ) {
+  if (is.null(GeomSHAPForce)) {
+    GeomSHAPForce <- ggplot2::GeomBlank
+    ..warning_geom_not_available("GeomSHAPForce")
+  }
+  
   ggplot2::layer(
     geom = GeomSHAPForce,
     mapping = mapping,

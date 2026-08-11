@@ -3,8 +3,8 @@
 ## Minor changes
 
 - `ggplot2` requires that `ragg` is installed for `ggplot2::ggplotGrob`. This
-  function is used by `familiar` in composite plots, such as Kaplan Meier plots.
-  The user is know warned if this package is missing.
+  function is used by `familiar` in composite plots, such as Kaplan-Meier plots.
+  The user is now warned if this package is missing.
   
 ## Fixes
 
@@ -18,6 +18,10 @@
   
 - An overeager check would prevent missing (`NA`) outcome data from being removed
   prior to training a naive model.
+  
+- If `ggplot2` is not installed or made visible on library paths prior to loading `familiar`,
+  several `Geom` objects, used for plotting SHAP waterfall and force plots, could not be created.
+  This now causes a warning instead of an error.
 
 # Version 2.0.2 (Cackling Caribou)
 

@@ -110,7 +110,29 @@
   rlang::warn(
     message = paste0(message_string, collapse = ""),
     class = c("familiar_warning", "package_missing"),
-    call = rlang::caller_env()
+    call = call
+  )
+  
+  return(invisible(TRUE))
+}
+
+
+
+..warning_geom_not_available <- function(
+  x,
+  call = rlang::caller_env()
+) {
+  message_string <- paste0(
+    "The following Geom object was not available: ", x, " ",
+    "This may occur if ggplot2 was not available when familiar was first loaded ",
+    "(e.g., library(familiar)), but subsequently installed or added to library search paths. ",
+    "To prevent this issue, ensure that ggplot2 is installed prior to loading familiar."
+  )
+  
+  rlang::warn(
+    message = message_string,
+    class = c("familiar_warning", "plot_warning"),
+    call = call
   )
   
   return(invisible(TRUE))

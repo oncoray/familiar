@@ -885,6 +885,11 @@ geom_waterfall_shap <- function(
     inherit.aes = TRUE,
     ...
 ) {
+  if (is.null(GeomSHAPWaterfall)) {
+    GeomSHAPWaterfall <- ggplot2::GeomBlank
+    ..warning_geom_not_available("GeomSHAPWaterfall")
+  }
+  
   ggplot2::layer(
     geom = GeomSHAPWaterfall,
     mapping = mapping,
