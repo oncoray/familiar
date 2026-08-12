@@ -87,4 +87,31 @@ testthat::test_that(
 
 
 # estimation_type --------------------------------------------------------------
+testthat::test_that(
+  "estimation_type is correctly parsed",
+  {
+    # Unset by default
+    settings <- familiar:::.create_test_settings()
+    testthat::expect_null(settings$eval$estimation_type)
+    
+    # Single value for all relevant data elements.
+    settings <- familiar:::.create_test_settings(estimation_type = "bias_correction")
+    for (x in familiar:::.get_available_data_elements(check_has_estimation_type = TRUE)) {
+      testthat::expect_equal(settings$eval$estimation_type[[x]], "bias_correction")
+    }
+    
+    # Different values for specifc data elements.
+    settings <- familiar:::.create_test_settings(
+      estimation_type = list(
+        "permutation_vimp" = "bias_correction",
+        "ice_data" = "point"
+      )
+    )
+    testthat::expect_equal(settings$eval$estimation_type$permutation_vimp, "bias_correction")
+    testthat::expect_equal(settings$eval$estimation_type$ice_data, "point")
+    testthat::expect_null(settings$eval$estimation_type$shap)
+  }
+)
+
+
 # aggregate_results ------------------------------------------------------------
