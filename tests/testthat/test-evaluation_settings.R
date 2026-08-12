@@ -115,3 +115,29 @@ testthat::test_that(
 
 
 # aggregate_results ------------------------------------------------------------
+testthat::test_that(
+  "aggregate_results is correctly parsed",
+  {
+    # Unset by default
+    settings <- familiar:::.create_test_settings()
+    testthat::expect_null(settings$eval$aggregate_results)
+    
+    # Single value for all relevant data elements. Note that all data elements
+    # that also have an estimation_type are considered relevant.
+    settings <- familiar:::.create_test_settings(aggregate_results = FALSE)
+    for (x in familiar:::.get_available_data_elements(check_has_estimation_type = TRUE)) {
+      testthat::expect_equal(settings$eval$aggregate_results[[x]], "false")
+    }
+    
+    # Different values for specifc data elements.
+    settings <- familiar:::.create_test_settings(
+      aggregate_results = list(
+        "permutation_vimp" = TRUE,
+        "ice_data" = FALSE
+      )
+    )
+    testthat::expect_equal(settings$eval$aggregate_results$permutation_vimp, "true")
+    testthat::expect_equal(settings$eval$aggregate_results$ice_data, "false")
+    testthat::expect_null(settings$eval$aggregate_results$shap)
+  }
+)

@@ -4331,6 +4331,12 @@
       },
       x = settings$aggregate_results
     )
+    
+    # Update aggregate_results values for consistency.
+    settings$aggregate_results <- lapply(
+      settings$aggregate_results,
+      tolower
+    )
   }
 
   # bootstrap_ci_method --------------------------------------------------------
