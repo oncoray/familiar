@@ -5362,6 +5362,32 @@ test_not_deprecated <- function(x, deprecation_string = c("deprec", "replac")) {
 }
 
 
+
+.create_test_settings <- function(
+    ...,
+    outcome_type = "binomial"
+) {
+  data <- test_create_good_data(outcome_type=outcome_type)
+  settings <- extract_settings_from_data(data)
+  
+  settings <- do.call(
+    .parse_general_settings,
+    args = c(
+      list(
+        "settings" = settings,
+        "data" = data@data,
+        "vimp_method" = "mim",
+        "learner" = "glm"
+      ),
+      list(...)
+    )
+  )
+  
+  return(settings)
+}
+
+
+
 get_test_collection_generation <- function(...) {
   # This is a thin wrapper around .generate_test_collection and returns the
   # generator. This is aimed at preventing issues when installing familiar even
