@@ -4126,8 +4126,8 @@
     sapply(
       names(settings$n_important_features),
       .check_parameter_value_is_valid,
-      var_name = "n_important_features (data element name)",
-      values = .get_available_data_elements(check_has_sample_limit = TRUE)
+      var_name = paste0("n_important_features"),
+      values = .get_available_data_elements(check_has_n_important_features = TRUE)
     )
     
     # Check that the list contents are correctly specified.
@@ -4140,7 +4140,7 @@
           range = c(1L, Inf)
         )
       },
-      x = settings$sample_limit
+      x = settings$n_important_features
     )
   }
 
