@@ -698,7 +698,7 @@ setMethod(
   # Set up basic force plot.
   p <- ggplot2::ggplot(data = x)
   p <- p + ggtheme
-  p <- p + geom_fam_force_shap(
+  p <- p + geom_force_shap(
     data = x,
     mapping = ggplot2::aes(
       x = !!sym("sample_order"),
@@ -843,11 +843,10 @@ setMethod(
   return(c(height, width))
 }
 
-# GeomSHAPForce ----------------------------------------------------------------
+# .create_geom_shap_force ------------------------------------------------------
 
-# Placeholder to prevent NOTES if ggplot2 is not installed.
-GeomSHAPForce <- NULL
-if (rlang::is_installed("ggplot2")) {
+.create_geom_shap_force <- function() {
+  
   GeomSHAPForce <- ggplot2::ggproto(
     "GeomPolygon",
     ggplot2::Geom,
@@ -861,16 +860,16 @@ if (rlang::is_installed("ggplot2")) {
     ),
     draw_key = ggplot2::draw_key_polygon,
     draw_panel = function(
-      data,
-      panel_params,
-      coord,
-      lineend = "butt",
-      linejoin = "round",
-      linemitre = 10
+    data,
+    panel_params,
+    coord,
+    lineend = "butt",
+    linejoin = "round",
+    linemitre = 10
     ) {
       # Compute coordinates based on data.
       coords <- coord$transform(data, panel_params)
-
+      
       # Instantiate parameters to feed to grid::polygonGrob. These vectors are 
       # sufficiently large to hold all polygons with taper.
       x <- y <- numeric(nrow(coords) * 6L)
@@ -928,11 +927,12 @@ if (rlang::is_installed("ggplot2")) {
       ))
     }
   )
+  
+  return(GeomSHAPForce)
 }
 
 
-
-geom_fam_force_shap <- function(
+geom_force_shap <- function(
     mapping = NULL,
     data = NULL,
     stat = "identity",
@@ -942,10 +942,7 @@ geom_fam_force_shap <- function(
     inherit.aes = TRUE,
     ...
 ) {
-  if (is.null(GeomSHAPForce)) {
-    GeomSHAPForce <- ggplot2::GeomBlank
-    ..warning_geom_not_available("GeomSHAPForce")
-  }
+  GeomSHAPForce <- .create_geom_shap_force()
   
   ggplot2::layer(
     geom = GeomSHAPForce,

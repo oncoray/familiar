@@ -21,7 +21,8 @@
   
 - If `ggplot2` is not installed or made visible on library paths prior to loading `familiar`,
   several `Geom` objects, used for plotting SHAP waterfall and force plots, could not be created.
-  This now causes a warning instead of an error.
+  This no longer causes an error, as the `Geom` objects are now created at run-time
+  instead of when `familiar` is first loaded.
   
 - Fixed an issue that occurred when parsing `n_important_features` when explicitly
   expressing the corresponding data elements.
