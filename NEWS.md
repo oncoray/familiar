@@ -6,6 +6,8 @@
   function is used by `familiar` in composite plots, such as Kaplan-Meier plots.
   The user is now warned if this package is missing.
   
+- Updated maintainer email.
+  
 ## Fixes
 
 - Fixed an overly strict check that would prevent strata in Kaplan Meier plots
