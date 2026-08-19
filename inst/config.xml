@@ -144,6 +144,8 @@
       <parallel_model_development></parallel_model_development>
     </model_development>
     <hyperparameter_optimisation>
+      <!-- Enable training of naive models when no suitable set of hyperparameters can be identified (optional, default: TRUE) -->
+      <allow_naive_models></allow_naive_models>
       <!-- Metric for assessing model performance (optional, default: depends on outcome type) -->
       <optimisation_metric></optimisation_metric>
       <!-- Function for a computing optimisation score based on model performance metrics (optional, default: validation) -->
