@@ -3078,7 +3078,7 @@
     optional = TRUE,
     default = TRUE
   )
-
+  
   # allow_naive_models ---------------------------------------------------------
   settings$hpo_allow_naive_models <- .parse_arg(
     x_config = config$allow_naive_models,

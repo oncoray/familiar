@@ -353,6 +353,7 @@ setMethod(
       "vimp_rank_threshold" = settings$vimp$aggr_rank_threshold,
       "metric" = settings$hpo$hpo_metric,
       "hyperparameters" = settings$mb$param,
+      "allow_naive_models" = settings$hpo$hpo_allow_naive_models,
       "optimisation_function" = settings$hpo$hpo_optimisation_function,
       "acquisition_function" = settings$hpo$hpo_acquisition_function,
       "grid_initialisation_method" = settings$hpo$hpo_grid_initialisation_method,

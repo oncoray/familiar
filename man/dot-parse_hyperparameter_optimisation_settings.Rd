@@ -8,6 +8,7 @@
   config = NULL,
   parallel,
   outcome_type,
+  allow_naive_models = waiver(),
   optimisation_bootstraps = waiver(),
   optimisation_determine_vimp = waiver(),
   smbo_random_initialisation = waiver(),
@@ -36,6 +37,16 @@
 \code{FALSE} it will override \code{parallel_hyperparameter_optimisation}.}
 
 \item{outcome_type}{Type of outcome found in the data set.}
+
+\item{allow_naive_models}{(\emph{optional}) Enables training of naive models in
+case none of the actual models perform better than random. Naive models
+predict the least informative value, e.g. the most common class for binomial
+and multinomial problems, or the median value for regression problems.
+
+If \code{FALSE}, the least worst set of hyperparameters is used to train the model.
+
+By default, naive models are trained when no better set of hyperparameters
+can be identified (\code{TRUE}).}
 
 \item{optimisation_bootstraps}{(\emph{optional}) Number of bootstraps that should
 be generated from the development data set. During the optimisation

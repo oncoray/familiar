@@ -50,3 +50,33 @@ testthat::test_that(
     testthat::expect_length(results$familiarModel@novelty_detector@required_features, 0L)
   }
 )
+
+
+# Test suppression of naive models.
+results <- familiar::summon_familiar(
+  data = data,
+  vimp_method = "mim",
+  learner = "glm_gaussian",
+  hyperparameter = list("glm_gaussian" = list("sign_size" = c(4, 5, 6))),
+  allow_naive_models = FALSE,
+  outcome_type = "continuous",
+  experimental_design = "fs+mb",
+  estimation_type = "point",
+  verbose = debug_flag
+)
+
+testthat::test_that(
+  "naive models are not trained", 
+  {
+    testthat::expect_s4_class(results$familiarModel, "familiarGLM")
+    testthat::expect_gte(length(results$familiarModel@required_features), 4L)
+    testthat::expect_gte(length(results$familiarModel@model_features), 4L)
+    testthat::expect_gte(length(results$familiarModel@novelty_features), 4L)
+    
+    # Internally, naive models are forced to resolve to not train novelty
+    # detectors.
+    testthat::expect_s4_class(results$familiarModel@novelty_detector, "familiarIsolationForest")
+    testthat::expect_gte(length(results$familiarModel@novelty_detector@model_features), 4L)
+    testthat::expect_gte(length(results$familiarModel@novelty_detector@required_features), 4L)
+  }
+)

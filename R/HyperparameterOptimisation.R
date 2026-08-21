@@ -1067,6 +1067,7 @@ setMethod(
     stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(
       set_data = incumbent_set,
       stop_data = NULL,
+      allow_naive_models = allow_naive_models,
       tolerance = convergence_tolerance
     )
     
@@ -1242,6 +1243,7 @@ setMethod(
       stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(
         set_data = incumbent_set,
         stop_data = stop_list,
+        allow_naive_models = allow_naive_models,
         tolerance = convergence_tolerance
       )
       
@@ -1367,7 +1369,8 @@ setMethod(
       
     } else if (
       incumbent_set$validation_score < 0.0 &&
-      !object@vimp_method %in% c("none", "signature_only")
+      !object@vimp_method %in% c("none", "signature_only") &&
+      allow_naive_models
     ) {
       # In this case, no set of hyperparameters found that led to a model that
       # was better than the naive model. We then train a naive model instead, by
