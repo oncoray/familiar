@@ -92,22 +92,30 @@ exportMethods(update_object)
 import(data.table)
 import(methods)
 importClassesFrom(rstream,rstream.runif)
-importFrom(rlang,"%<~%")
-importFrom(rlang,enquo)
-importFrom(rlang,enquos)
-importFrom(rlang,ensym)
-importFrom(rlang,ensyms)
-importFrom(rlang,parse_expr)
-importFrom(rlang,parse_exprs)
-importFrom(rlang,quo)
-importFrom(rlang,quos)
-importFrom(rlang,sym)
-importFrom(rlang,syms)
-importFrom(stats,coef)
-importFrom(stats,predict)
-importFrom(stats,vcov)
-importFrom(survival,Surv)
-importFrom(survival,coxph)
-importFrom(survival,survreg)
-importFrom(utils,head)
-importFrom(utils,tail)
+importFrom(rlang,
+  "%<~%",
+  enquo,
+  enquos,
+  ensym,
+  ensyms,
+  parse_expr,
+  parse_exprs,
+  quo,
+  quos,
+  sym,
+  syms
+)
+importFrom(stats,
+  coef,
+  predict,
+  vcov
+)
+importFrom(survival,
+  Surv,
+  coxph,
+  survreg
+)
+importFrom(utils,
+  head,
+  tail
+)

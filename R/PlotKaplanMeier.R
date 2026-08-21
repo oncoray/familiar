@@ -414,7 +414,7 @@ setMethod(
       
       # The grouping variable may be identical to the data_set. In that case,
       # do not facet by data_set.
-      if (identical(x@data$group, x@data$data_set)) {
+      if (identicalish(x@data$group, x@data$data_set)) {
         facet_by <- NULL
         x@data$data_set <- factor(x = rep_len("placeholder", nrow(x@data)))
       }

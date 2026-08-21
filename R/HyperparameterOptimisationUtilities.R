@@ -1153,6 +1153,7 @@ get_best_hyperparameter_set <- function(
 ..update_hyperparameter_optimisation_stopping_criteria <- function(
     set_data,
     stop_data = NULL,
+    allow_naive_models = TRUE,
     tolerance = 1E-2
 ) {
   
@@ -1215,10 +1216,14 @@ get_best_hyperparameter_set <- function(
   if (set_data$validation_score <= 0.0) {
     # The best known model does not predict better than a naive_model.
     no_naive_improvement_counter <- no_naive_improvement_counter + 1L
+    
   } else {
     # The best known model predicts better than a naive model.
     no_naive_improvement_counter <- 0L
   }
+  
+  # If naive models are not allowed, this counter is never incremented.
+  if (!allow_naive_models) no_naive_improvement_counter <- 0L
 
   # Return list with stopping parameters.
   return(list(

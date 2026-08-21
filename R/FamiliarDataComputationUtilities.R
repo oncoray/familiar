@@ -62,6 +62,10 @@
     all_data_elements <- intersect(all_data_elements, can_set_detail_level)
   }
   
+  if (check_has_n_important_features) {
+    all_data_elements <- intersect(all_data_elements, can_set_n_important_features)
+  }
+  
   if (check_from_prediction_table) {
     all_data_elements <- intersect(all_data_elements, can_use_prediction_table)
   }

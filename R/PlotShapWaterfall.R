@@ -788,10 +788,9 @@ setMethod(
 }
 
 
-# GeomSHAPWaterfall ------------------------------------------------------------
-# Placeholder to prevent NOTES if ggplot2 is not installed.
-GeomSHAPWaterfall <- NULL
-if (rlang::is_installed("ggplot2")) {
+# .create_geom_shap_waterfall --------------------------------------------------
+.create_geom_shap_waterfall <- function() {
+  
   GeomSHAPWaterfall <- ggplot2::ggproto(
     "GeomPolygon",
     ggplot2::Geom,
@@ -871,6 +870,8 @@ if (rlang::is_installed("ggplot2")) {
       ))
     }
   )
+  
+  return(GeomSHAPWaterfall)
 }
 
 
@@ -885,6 +886,8 @@ geom_waterfall_shap <- function(
     inherit.aes = TRUE,
     ...
 ) {
+  GeomSHAPWaterfall <- .create_geom_shap_waterfall()
+  
   ggplot2::layer(
     geom = GeomSHAPWaterfall,
     mapping = mapping,

@@ -92,11 +92,24 @@ setMethod(
       )
       
     } else if (can_train_naive) {
-      object <- ..train_naive(
-        object = object,
-        data = data,
-        ...
-      )
+      if (is(object, "familiarNaiveModel")) {
+        # Native familiar model (i.e. explicitly requested by the user.)
+        object <- ..train_naive(
+          object = object,
+          data = data,
+          check_hyperparameters = FALSE,
+          ...
+        )
+        
+      } else {
+        # Naive model created because this is the most informative model (
+        # which is generally bad news).
+        object <- ..train_naive(
+          object = object,
+          data = data,
+          ...
+        )
+      }
     }
 
     # Extract information required for assessing model performance, calibration

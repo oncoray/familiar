@@ -1,7 +1,7 @@
 ---
 title: "Evaluation and explanation"
 author: "Alex Zwanenburg"
-date: "2026-04-22"
+date: "2026-08-21"
 output:
   rmarkdown::html_vignette:
     includes:
@@ -285,8 +285,6 @@ predictions <- familiar::as_prediction_table(
   type = "classification",
   class_levels = c("no", "yes")
 )
-#> Error in `familiar::as_prediction_table()`:
-#> ! (converted from warning) The positive class cannot be directly inferred from names of the provided prediction data, and is assumed to be yes.
 
 # The prediction table object is then provided as object
 plots <- familiar::plot_model_performance(
@@ -294,8 +292,6 @@ plots <- familiar::plot_model_performance(
   metric = c("auc", "brier", "f1_score"),
   x_axis_by = "metric"
 )
-#> Error in `.local()`:
-#> ! data_element expects one of feature_expressions, risk_stratification_data, feature_similarity and sample_similarity as input. Found the following unknown values: model_performance
 ```
 
 <div class="figure" style="text-align: center">
@@ -321,9 +317,9 @@ results <- familiar::export_model_performance(
 results[[1L]]@data
 #>                       data_set vimp_method                      learner ensemble_model_name   metric     value    ci_low     ci_up
 #>                         <fctr>      <fctr>                       <fctr>              <fctr>   <fctr>     <num>     <num>     <num>
-#> 1: 173529_2wFvaYlrMM6XXSNOt9rE        none random_forest_ranger_default      ensemble.NA.NA      auc 0.7387626 0.5166193 0.9146674
-#> 2: 173529_2wFvaYlrMM6XXSNOt9rE        none random_forest_ranger_default      ensemble.NA.NA    brier 0.2041370 0.1639073 0.2492457
-#> 3: 173529_2wFvaYlrMM6XXSNOt9rE        none random_forest_ranger_default      ensemble.NA.NA f1_score 0.7407407 0.5152258 0.8967186
+#> 1: 160500_Iz4qsMafAmSfqv4Mm7ZA        none random_forest_ranger_default      ensemble.NA.NA      auc 0.7387626 0.5166193 0.9146674
+#> 2: 160500_Iz4qsMafAmSfqv4Mm7ZA        none random_forest_ranger_default      ensemble.NA.NA    brier 0.2041370 0.1639073 0.2492457
+#> 3: 160500_Iz4qsMafAmSfqv4Mm7ZA        none random_forest_ranger_default      ensemble.NA.NA f1_score 0.7407407 0.5152258 0.8967186
 ```
 In the above table, `data_set` is randomly generated because we call this method
 on a (technically) *new* dataset. `ensemble_model_name` contains a placeholder
@@ -705,14 +701,24 @@ plots <- familiar::plot_decision_curve(
   y_range = c(-0.2, 0.8)
 )
 ```
-
-```
-#> Error in `ggplot2::geom_line()`:
-#> ! Problem while converting geom to grob.
-#> ℹ Error occurred in the 1st layer.
-#> Caused by error:
-#> ! (converted from warning) Removed 33 rows containing missing values or values outside the scale range (`geom_line()`).
-```
+<div class="figure" style="text-align: center">
+<img src="eval_and_explain/decision-curve-bci-1.png" alt="Decision curve for the ischemic stroke model on hold-out
+ test data. Three lines are shown. The horizontal line intersecting the origin
+ corresponds to no (model-based) intervention, i.e. the status-quo. The
+ downward sloping curve corresponds to performing an intervention for everyone.
+ The final curve corresponds to model-based intervention, where every patient
+ with a predicted probability above the threshold receives the interventional
+ treatment. This curve is a bootstrap estimate, and is drawn with 95% 
+ confidence intervals. "  />
+<p class="caption">Decision curve for the ischemic stroke model on hold-out
+ test data. Three lines are shown. The horizontal line intersecting the origin
+ corresponds to no (model-based) intervention, i.e. the status-quo. The
+ downward sloping curve corresponds to performing an intervention for everyone.
+ The final curve corresponds to model-based intervention, where every patient
+ with a predicted probability above the threshold receives the interventional
+ treatment. This curve is a bootstrap estimate, and is drawn with 95% 
+ confidence intervals. </p>
+</div>
 
 The shaded curve is the decision curve produced by the model, with 95%
 confidence intervals. The declining curve represents the intervention for all
@@ -751,14 +757,20 @@ plots <- familiar::plot_model_signature_variable_importance(
   rotate_x_tick_labels = TRUE
 )
 ```
-
-```
-#> Error in `ggplot2::geom_bar()`:
-#> ! Problem while converting geom to grob.
-#> ℹ Error occurred in the 1st layer.
-#> Caused by error:
-#> ! (converted from warning) Removed 13 rows containing missing values or values outside the scale range (`geom_bar()`).
-```
+<div class="figure" style="text-align: center">
+<img src="eval_and_explain/model-variable-importance-1.png" alt="Variable importance plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest to least importance. Features 
+ with letters indicate features that are highly similar, and could be 
+ clustered together. Note that because of the permutation variable 
+ importance method used within the random forest, such features do not 
+ receive the same score."  />
+<p class="caption">Variable importance plot for the ischemic stroke model on hold-out
+ test data. Features are sorted from highest to least importance. Features 
+ with letters indicate features that are highly similar, and could be 
+ clustered together. Note that because of the permutation variable 
+ importance method used within the random forest, such features do not 
+ receive the same score.</p>
+</div>
 In such plots, we always order features so that the most important features are
 on the left, and the least important features on the right. Letters indicate
 features that are clustered together.

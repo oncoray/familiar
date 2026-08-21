@@ -179,6 +179,7 @@ run_hyperparameter_optimisation <- function(
       "cl" = cl_inner,
       "user_list" = NULL,
       "metric" = settings$hpo$hpo_metric,
+      "allow_naive_models" = settings$hpo$hpo_allow_naive_models,
       "optimisation_function" = settings$hpo$hpo_optimisation_function,
       "acquisition_function" = settings$hpo$hpo_acquisition_function,
       "grid_initialisation_method" = settings$hpo$hpo_grid_initialisation_method,
@@ -458,6 +459,7 @@ setMethod(
     experiment_info = NULL,
     user_list = NULL,
     metric = waiver(),
+    allow_naive_models = TRUE,
     optimisation_function = "validation",
     acquisition_function = "expected_improvement",
     grid_initialisation_method = "fixed_subsample",
@@ -1065,6 +1067,7 @@ setMethod(
     stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(
       set_data = incumbent_set,
       stop_data = NULL,
+      allow_naive_models = allow_naive_models,
       tolerance = convergence_tolerance
     )
     
@@ -1240,6 +1243,7 @@ setMethod(
       stop_list <- ..update_hyperparameter_optimisation_stopping_criteria(
         set_data = incumbent_set,
         stop_data = stop_list,
+        allow_naive_models = allow_naive_models,
         tolerance = convergence_tolerance
       )
       
@@ -1365,7 +1369,8 @@ setMethod(
       
     } else if (
       incumbent_set$validation_score < 0.0 &&
-      !object@vimp_method %in% c("none", "signature_only")
+      !object@vimp_method %in% c("none", "signature_only") &&
+      allow_naive_models
     ) {
       # In this case, no set of hyperparameters found that led to a model that
       # was better than the naive model. We then train a naive model instead, by

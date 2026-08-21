@@ -25,6 +25,34 @@ setClass(
 
 
 
+# is_available -----------------------------------------------------------------
+setMethod(
+  "is_available",
+  signature(object = "familiarNaiveModel"),
+  function(object, ...) {
+    return(TRUE)
+  }
+)
+
+
+# get_default_hyperparameters --------------------------------------------------
+setMethod(
+  "get_default_hyperparameters",
+  signature(object = "familiarNaiveModel"),
+  function(object, data = NULL, user_list = NULL, ...) {
+    # Initialise list and declare hyperparameter entries. A naive model
+    # lacks hyperparameters
+    param <- list()
+    
+    # If data is not provided, return the list with hyperparameter names only.
+    if (is.null(data)) return(param)
+    
+    # Return hyperparameters
+    return(param)
+  }
+)
+
+
 # ..train (familiarNaiveModel) -------------------------------------------------
 setMethod(
   "..train",
@@ -32,22 +60,22 @@ setMethod(
     object = "familiarNaiveModel",
     data = "dataObject"
   ),
-  function(object, data, ...) {
+  function(object, data, check_hyperparameters = TRUE, ...) {
     # Check if training data is ok.
     if (reason <- has_bad_training_data(
       object = object,
       data = data, 
       allow_no_features = TRUE
     )) {
-      
       return(callNextMethod(object = .why_bad_training_data(
         object = object,
         reason = reason
       )))
     }
     
-    # Check if hyperparameters are set.
-    if (is.null(object@hyperparameters)) {
+    # Check if hyperparameters are set. If check_hyperparameters = FALSE, 
+    # training of the naive model was explicitly requested by the user.
+    if (is.null(object@hyperparameters) && check_hyperparameters) {
       return(callNextMethod(object = ..update_errors(
         object = object, 
         ..error_message_no_optimised_hyperparameters_available()
@@ -71,6 +99,23 @@ setMethod(
     object <- set_package_version(object)
     
     return(object)
+  }
+)
+
+
+# ..train_naive ----------------------------------------------------------------
+setMethod(
+  "..train_naive",
+  signature(
+    object = "familiarNaiveModel",
+    data = "dataObject"
+  ),
+  function(object, data, ...) {
+    return(..train(
+      object = object,
+      data = data,
+      ...
+    ))
   }
 )
 
@@ -425,6 +470,34 @@ setMethod(
   }
 )
 
+
+# .trim_model-------------------------------------------------------------------
+setMethod(
+  ".trim_model",
+  signature(object = "familiarNaiveModel"),
+  function(object, ...) {
+    # Doesn't do anything as naive models themselves don't contain information.
+    object@is_trimmed <- TRUE
+    
+    return(object)
+  }
+)
+
+
+.get_available_naive_learners <- function(show_general = TRUE) {
+  return("naive")
+}
+
+
+
+# requires_naive_model ---------------------------------------------------------
+setMethod(
+  "requires_naive_model",
+  signature(object = "familiarNaiveModel"),
+  function(object, ...) {
+    return(TRUE)
+  }
+)
 
 
 # show (familiarNaiveModel) ----------------------------------------------------

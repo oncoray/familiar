@@ -1,3 +1,44 @@
+# Version 2.0.3 (Dapper Donkey)
+
+## Minor changes
+
+- `ggplot2` requires that `ragg` is installed for `ggplot2::ggplotGrob`. This
+  function is used by `familiar` in composite plots, such as Kaplan-Meier plots.
+  The user is now warned if this package is missing.
+
+- By default, `familiar` trains naive models when no hyperparameter sets can be
+  identified that produce better than random performance. Naive models predict the
+  same value for each sample, such as the majority class for classification
+  problems. The new `allow_naive_models` parameter can be set to `FALSE` to train
+  a model with the least worst hyperparameter set.
+
+- The `CORElearn` package was recently removed from CRAN because the maintainers
+  were not able to fix their issues. Variable importance methods that relied on
+  `CORElearn` are no longer available.
+
+- Updated maintainer email.
+  
+## Fixes
+
+- Fixed an overly strict check that would prevent strata in Kaplan Meier plots
+  from being plotted together in one plot if these strata were formed by the batch identifier,
+  but the order of levels internally differed between batch identifier and the
+  identifier of the strata.
+  
+- If `time` is not provided for predicting stratification into a risk group, the
+  default time (`time_max`) will be used.
+  
+- An overeager check would prevent missing (`NA`) outcome data from being removed
+  prior to training a naive model.
+  
+- If `ggplot2` is not installed or made visible on library paths prior to loading `familiar`,
+  several `Geom` objects, used for plotting SHAP waterfall and force plots, could not be created.
+  This no longer causes an error, as the `Geom` objects are now created at run-time
+  instead of when `familiar` is first loaded.
+  
+- Fixed an issue that occurred when parsing `n_important_features` when explicitly
+  expressing the corresponding data elements.
+
 # Version 2.0.2 (Cackling Caribou)
 
 ## Fixes

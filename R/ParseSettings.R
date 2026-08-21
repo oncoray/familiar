@@ -2706,6 +2706,15 @@
 #' @param parallel Logical value that whether familiar uses parallelisation. If
 #'   `FALSE` it will override `parallel_hyperparameter_optimisation`.
 #' @param outcome_type Type of outcome found in the data set.
+#' @param allow_naive_models (*optional*) Enables training of naive models in
+#'   case none of the actual models perform better than random. Naive models
+#'   predict the least informative value, e.g. the most common class for binomial
+#'   and multinomial problems, or the median value for regression problems.
+#'   
+#'   If `FALSE`, the least worst set of hyperparameters is used to train the model.
+#'   
+#'   By default, naive models are trained when no better set of hyperparameters 
+#'   can be identified (`TRUE`).
 #' @param optimisation_bootstraps (*optional*) Number of bootstraps that should
 #'   be generated from the development data set. During the optimisation
 #'   procedure one or more of these bootstraps (indicated by
@@ -3002,6 +3011,7 @@
     config = NULL,
     parallel,
     outcome_type,
+    allow_naive_models = waiver(),
     optimisation_bootstraps = waiver(),
     optimisation_determine_vimp = waiver(),
     smbo_random_initialisation = waiver(),
@@ -3068,7 +3078,17 @@
     optional = TRUE,
     default = TRUE
   )
-
+  
+  # allow_naive_models ---------------------------------------------------------
+  settings$hpo_allow_naive_models <- .parse_arg(
+    x_config = config$allow_naive_models,
+    x_var = allow_naive_models,
+    var_name = "allow_naive_models",
+    type = "logical",
+    optional = TRUE,
+    default = TRUE
+  )
+  
   # max_smbo_iterations --------------------------------------------------------
   # Maximum number of SMBO iterations before stopping
   settings$hpo_smbo_iter_max <- .parse_arg(
@@ -4126,8 +4146,8 @@
     sapply(
       names(settings$n_important_features),
       .check_parameter_value_is_valid,
-      var_name = "n_important_features (data element name)",
-      values = .get_available_data_elements(check_has_sample_limit = TRUE)
+      var_name = paste0("n_important_features"),
+      values = .get_available_data_elements(check_has_n_important_features = TRUE)
     )
     
     # Check that the list contents are correctly specified.
@@ -4140,7 +4160,7 @@
           range = c(1L, Inf)
         )
       },
-      x = settings$sample_limit
+      x = settings$n_important_features
     )
   }
 
@@ -4330,6 +4350,12 @@
         )
       },
       x = settings$aggregate_results
+    )
+    
+    # Update aggregate_results values for consistency.
+    settings$aggregate_results <- lapply(
+      settings$aggregate_results,
+      tolower
     )
   }
 

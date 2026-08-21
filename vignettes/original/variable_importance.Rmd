@@ -37,11 +37,6 @@ how many features should be included in the model.
 | Kendall's *τ* | `kendall`                                             |   |   | × | × |
 | **concordance** |
 | concordance^a^ | `concordance`                                        | × | × | × | × |
-| **CORElearn** |
-| information gain ratio | `gain_ratio`                                 | × | × |   |   |
-| gini-index | `gini`                                                   | × | × |   |   |
-| minimum description length | `mdl`                                    | × | × |   |   |
-| ReliefF with exponential weighting of distance ranks | `relieff_exp_rank`       | × | × | × |   |
 | **mutual information**|
 | mutual information maximisation | `mim`                               | × | × | × | × |
 | mutual information features selection | `mifs`                        | × | × | × | × |
@@ -160,14 +155,6 @@ method for continuous outcomes. For categorical outcomes, i.e. `binomial` and
 `multinomial`, concordance is assessed using the area under the receiver
 operating characteristic curve. For survival outcomes, concordance is measured
 using the `concordance_index`.
-
-## CORElearn methods
-
-Familiar provides an interface to several variable importance methods
-implemented in the `CORElearn` package. These methods are the *Information Gain Ratio* 
-(`gain_ratio`), the *Gini-index* (`gini`), *Minimum Description Length* (`mdl`) 
-and *ReliefF* and *rReliefF* with exponential distance rank weighting
-(`relieff_exp_rank`).
 
 ## Mutual information-based methods
 

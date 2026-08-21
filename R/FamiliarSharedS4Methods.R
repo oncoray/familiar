@@ -108,7 +108,6 @@ setMethod(
   ) {
     # Checks the data for consistency and usability. Any errors are passed as
     # attributes
-
     if (!(
       is(object, "familiarModel") ||
       is(object, "familiarVimpMethod") ||

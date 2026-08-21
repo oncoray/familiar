@@ -66,7 +66,8 @@ setMethod(
   "is_available",
   signature(object = "familiarCoreLearnGiniVimp"),
   function(object, ...) {
-    return(object@outcome_type %in% c("binomial", "multinomial"))
+    ..deprecation_corelearn()
+    return(FALSE)
   }
 )
 
@@ -75,7 +76,8 @@ setMethod(
   "is_available",
   signature(object = "familiarCoreLearnMDLVimp"),
   function(object, ...) {
-    return(object@outcome_type %in% c("binomial", "multinomial"))
+    ..deprecation_corelearn()
+    return(FALSE)
   }
 )
 
@@ -84,13 +86,8 @@ setMethod(
   "is_available",
   signature(object = "familiarCoreLearnRelieffExpRankVimp"),
   function(object, ...) {
-    
-    if (object@outcome_type == "count") {
-      ..deprecation_count()
-      return(FALSE)
-    }
-    
-    return(object@outcome_type %in% c("binomial", "multinomial", "continuous"))
+    ..deprecation_corelearn()
+    return(FALSE)
   }
 )
 
@@ -99,103 +96,7 @@ setMethod(
   "is_available", 
   signature(object = "familiarCoreLearnGainRatioVimp"),
   function(object, ...) {
-    return(object@outcome_type %in% c("binomial", "multinomial"))
-  }
-)
-
-
-
-# get_default_hyperparameters --------------------------------------------------
-setMethod(
-  "get_default_hyperparameters",
-  signature(object = "familiarCoreLearnVimp"),
-  function(object, data = NULL, ...) {
-    return(list())
-  }
-)
-
-
-
-# ..vimp -----------------------------------------------------------------------
-setMethod(
-  "..vimp",
-  signature(object = "familiarCoreLearnVimp"),
-  function(object, data, ...) {
-    # Suppress NOTES due to non-standard evaluation in data.table
-    score <- NULL
-
-    if (is_empty(data)) return(callNextMethod())
-
-    # Check that required packages are loaded and installed.
-    require_package(object, "vimp")
-
-    # Identify feature columns.
-    feature_columns <- get_feature_columns(data)
-
-    # Generate a formula.
-    formula <- stats::reformulate(feature_columns, response = quote(outcome))
-
-    if (is(object, "familiarCoreLearnGiniVimp")) {
-      # Gini measure.
-      score <- CORElearn::attrEval(
-        formula, 
-        data = data@data, 
-        estimator = "Gini"
-      )
-      
-    } else if (is(object, "familiarCoreLearnMDLVimp")) {
-      # MDL method.
-      score <- CORElearn::attrEval(
-        formula, 
-        data = data@data, 
-        estimator = "MDL"
-      )
-      
-    } else if (is(object, "familiarCoreLearnRelieffExpRankVimp")) {
-      if (object@outcome_type %in% c("continuous")) {
-        # RReliefFexpRank method.
-        score <- CORElearn::attrEval(
-          formula, 
-          data = data@data, 
-          estimator = "RReliefFexpRank"
-        )
-        
-      } else if (object@outcome_type %in% c("binomial", "multinomial")) {
-        # ReliefFexpRank method.
-        score <- CORElearn::attrEval(
-          formula, 
-          data = data@data, 
-          estimator = "ReliefFexpRank"
-        )
-        
-      } else {
-        ..error_outcome_type_not_implemented(object@outcome_type)
-      }
-    } else if (is(object, "familiarCoreLearnGainRatioVimp")) {
-      # Gain ration method.
-      score <- CORElearn::attrEval(
-        formula, 
-        data = data@data, 
-        estimator = "GainRatio"
-      )
-      
-    } else {
-      ..error_reached_unreachable_code(
-        "..vimp,familiarCoreLearnVimp: unknown class encountered."
-      )
-    }
-
-    # Create variable importance object.
-    vimp_object <- methods::new(
-      "vimpTable",
-      vimp_table = data.table::data.table(
-        "score" = score, 
-        "name" = names(score)
-      ),
-      score_aggregation = "max",
-      invert = TRUE
-    )
-
-    return(vimp_object)
+    ..deprecation_corelearn()
+    return(FALSE)
   }
 )

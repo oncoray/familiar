@@ -110,7 +110,7 @@
   rlang::warn(
     message = paste0(message_string, collapse = ""),
     class = c("familiar_warning", "package_missing"),
-    call = rlang::caller_env()
+    call = call
   )
   
   return(invisible(TRUE))
@@ -177,6 +177,20 @@
     )
   }
 }
+
+
+
+..deprecation_corelearn <- function() {
+  if (!.is_testing()) {
+    rlang::warn(
+      message = "The CORElearn package has been deprecated since familiar version 2.0.3 as it was removed from CRAN",
+      class = c("familiar_warning", "deprecation_warning"),
+      .frequency = "once",
+      .frequency_id = "deprecation_warning_corelearn"
+    )
+  }
+}
+
 
 
 

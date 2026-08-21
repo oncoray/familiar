@@ -513,6 +513,15 @@ the model development workflow. Defaults to \code{TRUE}. When set to \code{FALSE
 this will disable the use of parallel processing while developing models,
 regardless of the settings of the \code{parallel} parameter.
 \code{parallel_model_development} is ignored if \code{parallel=FALSE}.}
+    \item{\code{allow_naive_models}}{(\emph{optional}) Enables training of naive models in
+case none of the actual models perform better than random. Naive models
+predict the least informative value, e.g. the most common class for binomial
+and multinomial problems, or the median value for regression problems.
+
+If \code{FALSE}, the least worst set of hyperparameters is used to train the model.
+
+By default, naive models are trained when no better set of hyperparameters
+can be identified (\code{TRUE}).}
     \item{\code{optimisation_bootstraps}}{(\emph{optional}) Number of bootstraps that should
 be generated from the development data set. During the optimisation
 procedure one or more of these bootstraps (indicated by

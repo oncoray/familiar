@@ -69,6 +69,9 @@ setMethod(
     } else if (learner %in% .get_available_xgboost_dart_learners()) {
       # Extreme gradient boosted trees
       object <- methods::new("familiarXGBoostDart", object)
+    } else if (learner %in% .get_available_naive_learners()){
+      # Naive model
+      object <- methods::new("familiarNaiveModel", object)
     } else if (learner %in% .get_available_glmnet_lasso_learners_test_all_fail()) {
       # Lasso penalised regression models for testing purposes.
       object <- methods::new("familiarGLMnetLassoTestAllFail", object)
