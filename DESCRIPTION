@@ -215,6 +215,7 @@ Collate:
     'UtilitiesS4.R'
     'VimpMain.R'
     'VimpS4Concordance.R'
+    'VimpS4CoreLearn.R'
     'VimpS4Correlation.R'
     'VimpS4MutualInformation.R'
     'VimpS4OtherMethods.R'
