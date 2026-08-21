@@ -5,7 +5,13 @@
 - `ggplot2` requires that `ragg` is installed for `ggplot2::ggplotGrob`. This
   function is used by `familiar` in composite plots, such as Kaplan-Meier plots.
   The user is now warned if this package is missing.
-  
+
+- By default, `familiar` trains naive models when no hyperparameter sets can be
+  identified that produce better than random performance. Naive models predict the
+  same value for each sample, such as the majority class for classification
+  problems. The new `allow_naive_models` parameter can be set to `FALSE` to train
+  a model with the least worst hyperparameter set.
+
 - Updated maintainer email.
   
 ## Fixes
