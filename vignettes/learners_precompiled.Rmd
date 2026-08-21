@@ -1,7 +1,7 @@
 ---
 title: "Learning algorithms and hyperparameter optimisation"
 author: "Alex Zwanenburg"
-date: "2026-04-22"
+date: "2026-08-21"
 output:
   rmarkdown::html_vignette:
     includes:
@@ -764,8 +764,6 @@ The following learners currently undergo recalibration:
 |`xgboost_tree`, `xgboost_tree_logistic`| binomial, multinomial| `glm_logistic`|
 |`xgboost_lm_cox`| survival | `glm_cox`|
 |`xgboost_tree_cox`| survival | `glm_cox`|
-|`boosted_glm_cindex`, `boosted_glm_gehan`| survival | `glm_cox`|
-|`boosted_tree_cindex`, `boosted_tree_gehan`| survival | `glm_cox`|
 
 Familiar currently does not recalibrate models by inverting the model
 calibration curves, but may do so in the future.
