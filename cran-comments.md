@@ -1,6 +1,8 @@
-Update familiar to version 2.0.2
+Update familiar to version 2.0.3
 
-Version 2.0.2 fixes bugs present in version 2.0.1.
+Version 2.0.3 fixes bugs present in version 2.0.2 and removes functions related
+to CORElearn. Moreover, the maintainer email has changed from alexander.zwanenburg@nct-dresden.de
+to alex.zwanenburg@outlook.com.
 
 Vignettes are pre-compiled to avoid long compilation times on build 
 (several minutes).
