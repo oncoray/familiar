@@ -180,6 +180,20 @@
 
 
 
+..deprecation_corelearn <- function() {
+  if (!.is_testing()) {
+    rlang::warn(
+      message = "The CORElearn package has been deprecated since familiar version 2.0.3 as it was removed from CRAN",
+      class = c("familiar_warning", "deprecation_warning"),
+      .frequency = "once",
+      .frequency_id = "deprecation_warning_corelearn"
+    )
+  }
+}
+
+
+
+
 ..deprecation_rfsrc_variable_hunting <- function(as_error = FALSE) {
   
   message_string <- paste0(

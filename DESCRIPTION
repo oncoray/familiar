@@ -37,7 +37,6 @@ Suggests:
     BART,
     callr (>= 3.4.3),
     cluster,
-    CORElearn,
     coro,
     dynamicTreeCut,
     e1071 (>= 1.7.5),
@@ -216,7 +215,6 @@ Collate:
     'UtilitiesS4.R'
     'VimpMain.R'
     'VimpS4Concordance.R'
-    'VimpS4CoreLearn.R'
     'VimpS4Correlation.R'
     'VimpS4MutualInformation.R'
     'VimpS4OtherMethods.R'
@@ -225,4 +223,4 @@ Collate:
     'aaa.R'
 Config/testthat/parallel: true
 Config/testthat/edition: 3
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0

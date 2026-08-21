@@ -12,6 +12,10 @@
   problems. The new `allow_naive_models` parameter can be set to `FALSE` to train
   a model with the least worst hyperparameter set.
 
+- The `CORElearn` package was recently removed from CRAN because the maintainers
+  were not able to fix their issues. Variable importance methods that relied on
+  `CORElearn` are no longer available.
+
 - Updated maintainer email.
   
 ## Fixes
