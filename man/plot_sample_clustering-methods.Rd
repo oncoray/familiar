@@ -408,7 +408,7 @@ which also allows for specifying relative heights.}
 \item{outcome_height}{(\emph{optional}) Height of an outcome data column/row. The
 height is 0.3 cm by default. Height is expected to be a grid unit (see
 \code{grid::unit}), which also allows for specifying relative heights. In case
-of \code{survival} outcome data with multipe \code{evaluation_times}, this height is
+of \code{survival} outcome data with multiple \code{evaluation_times}, this height is
 multiplied by the number of time points.}
 
 \item{evaluation_times}{(\emph{optional}) Times at which the event status of

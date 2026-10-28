@@ -99,7 +99,7 @@ NULL
 #' @param outcome_height (*optional*) Height of an outcome data column/row. The
 #'   height is 0.3 cm by default. Height is expected to be a grid unit (see
 #'   `grid::unit`), which also allows for specifying relative heights. In case
-#'   of `survival` outcome data with multipe `evaluation_times`, this height is
+#'   of `survival` outcome data with multiple `evaluation_times`, this height is
 #'   multiplied by the number of time points.
 #' @param evaluation_times (*optional*) Times at which the event status of
 #'   time-to-event survival outcomes are determined. Only used for `survival`
