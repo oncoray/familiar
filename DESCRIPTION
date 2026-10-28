@@ -178,6 +178,7 @@ Collate:
     'PlotInputArguments.R'
     'PlotKaplanMeier.R'
     'PlotModelPerformance.R'
+    'PlotOrderedTarget.R'
     'PlotPermutationVariableImportance.R'
     'PlotSampleClustering.R'
     'PlotShapDependence.R'
