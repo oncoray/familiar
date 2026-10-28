@@ -2,7 +2,7 @@
 
 ![GitHub License](https://img.shields.io/github/license/alexzwanenburg/familiar)
 ![CRAN Version](https://img.shields.io/cran/v/familiar)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/alexzwanenburg/familiar/auto-test-package_time_trigger.yml)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/oncoray/familiar/auto-test-package_time_trigger.yml)
 
 # Familiar
 
