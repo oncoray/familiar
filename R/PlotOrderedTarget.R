@@ -95,9 +95,7 @@ setGeneric(
     outcome_palette = NULL,
     outcome_palette_range = waiver(),
     x_label = waiver(),
-    x_label_shared = "column",
     y_label = waiver(),
-    y_label_shared = "row",
     legend_label = waiver(),
     plot_title = waiver(),
     plot_sub_title = waiver(),
@@ -141,9 +139,7 @@ setMethod(
     outcome_palette = NULL,
     outcome_palette_range = waiver(),
     x_label = waiver(),
-    x_label_shared = "column",
     y_label = waiver(),
-    y_label_shared = "row",
     legend_label = waiver(),
     plot_title = waiver(),
     plot_sub_title = waiver(),
@@ -205,9 +201,7 @@ setMethod(
         "outcome_palette" = outcome_palette,
         "outcome_palette_range" = outcome_palette_range,
         "x_label" = x_label,
-        "x_label_shared" = x_label_shared,
         "y_label" = y_label,
-        "y_label_shared" = y_label_shared,
         "legend_label" = legend_label,
         "plot_title" = plot_title,
         "plot_sub_title" = plot_sub_title,
@@ -250,9 +244,7 @@ setMethod(
     outcome_palette = NULL,
     outcome_palette_range = waiver(),
     x_label = waiver(),
-    x_label_shared = "column",
     y_label = waiver(),
-    y_label_shared = "row",
     legend_label = waiver(),
     plot_title = waiver(),
     plot_sub_title = waiver(),
@@ -278,11 +270,12 @@ setMethod(
     # Make sure the collection object is updated.
     object <- update_object(object = object)
     
-    if (is.waive(features)) {
+    use_predictions <- is.waive(features)
+    if (use_predictions) {
       # Get predicted values.
       browser()
     } else {
-
+      
       # Get feature expression data
       feature_expression <- export_feature_expressions(
         object = object,
@@ -298,43 +291,25 @@ setMethod(
       
       # Add the outcome columns as grouping column, and melt the table to have
       # features as a grouping variable.
-      feature_expression <- lapply(
+      x <- lapply(
         feature_expression,
         function(x, outcome_columns) {
           
-          x@data <- data.table::melt(
+          return(data.table::melt(
             data = x@data,
             id.vars = c(x@grouping_column, outcome_columns),
             measure.vars = x@value_column,
             variable.name = "feature",
             value.name = "value"
-            )
-          x@value_column <- "value"
-          x@grouping_column <- c(x@grouping_column, "feature")
+          ))
+          
           return(x)
         },
         outcome_columns = get_outcome_columns(object@outcome_type)
       )
 
+      x <- data.table::rbindlist(x, use.names = TRUE)
       browser()
-      
-      # Build an identifier table.
-      identifier_table <- lapply(
-        feature_expression, 
-        function(x) {
-          return(unique(x@data[, mget(x@grouping_column)]))
-        }
-      )
-      
-      # Combine to table.
-      identifier_table <- data.table::rbindlist(
-        identifier_table, 
-        use.names = TRUE
-      )
-      
-      # Add row identifiers to make it easier to track the list elements for
-      # feature expression.
-      identifier_table[, "list_id" := .I]
     }
     
     
@@ -355,20 +330,6 @@ setMethod(
     # rotate_x_tick_labels
     if (is.waive(rotate_x_tick_labels)) {
       rotate_x_tick_labels <- FALSE
-    }
-    
-    # x_label_shared
-    if (!is.waive(x_label_shared)) {
-      .check_input_plot_args(x_label_shared = x_label_shared)
-    } else {
-      x_label_shared <- "column"
-    }
-    
-    # y_label_shared
-    if (!is.waive(y_label_shared)) {
-      .check_input_plot_args(y_label_shared = y_label_shared)
-    } else {
-      y_label_shared <- "row"
     }
     
     # x_label
@@ -402,21 +363,36 @@ setMethod(
       var_name = "legend_label"
     )
     
-    # Add default splitting variables
-    if (is.null(split_by) & is.null(facet_by)) {
-      # Split by variable importance method, learner and data set
-      split_by <- c("vimp_method", "learner", "data_set")
-      
-      # Do not use facets.
-      facet_by <- NULL
+    available_splitting_vars <- c("vimp_method", "learner", "data_set")
+    default_facet_vars <- NULL
+    if (!use_predictions) {
+      available_splitting_vars <- c(available_splitting_vars, "feature")
+    }
+    if (object@outcome_type == "multinomial") {
+      available_splitting_vars <- c(available_splitting_vars, "positive_class")
+      default_facet_vars <- "positive_class"
+    }
+    if (object@outcome_type %in% c("survival", "competing_risk")) {
+      available_splitting_vars <- c(available_splitting_vars, "evaluation_time")
+      default_facet_vars <- "evaluation_time"
     }
     
+    # Add default splitting variables
+    if (is.null(split_by) & is.null(facet_by)) {
+      # Split by variable importance method, learner and data set, plus feature
+      # if applicable.
+      split_by <- setdiff(available_splitting_vars, default_facet_vars)
+      
+      # Use facets for multinomial or survival outcomes..
+      facet_by <- default_facet_vars
+    }
+    browser()
     # Check splitting variables and generate sanitised output
     split_var_list <- .check_plot_splitting_variables(
-      x = identifier_table,
+      x = x,
       split_by = split_by,
       facet_by = facet_by,
-      available = c("data_set", "vimp_method", "learner")
+      available = available_splitting_vars
     )
     
     # Update splitting variables
@@ -443,13 +419,13 @@ setMethod(
     # Split data.
     if (!is.null(split_by)) {
       x_split <- split(
-        identifier_table,
+        x,
         by = split_by, 
         drop = FALSE
       )
       
     } else {
-      x_split <- list("null.name" = identifier_table)
+      x_split <- list("null.name" = x)
     }
     
     # Store plots to list in case dir_path is absent.
@@ -462,10 +438,7 @@ setMethod(
       # Declare subtitle components.
       additional_subtitle <- NULL
       
-      # Select relevant feature expressions from list.
-      feature_expression_split <- feature_expression[x_sub$list_id]
-      
-      if (is.waive(plot_title)) plot_title <- "Sample clustering"
+      if (is.waive(plot_title)) plot_title <- "Ordered target plot"
       
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
@@ -478,7 +451,6 @@ setMethod(
       # Generate plot
       p <- .plot_ordered_target_plot(
         x = x_sub,
-        data = feature_expression_split,
         outcome_type = object@outcome_type,
         facet_by = facet_by,
         facet_wrap_cols = facet_wrap_cols,
@@ -486,9 +458,7 @@ setMethod(
         outcome_palette = outcome_palette,
         outcome_palette_range = outcome_palette_range,
         x_label = x_label,
-        x_label_shared = x_label_shared,
         y_label = y_label,
-        y_label_shared = y_label_shared,
         legend_label = legend_label,
         plot_title = plot_title,
         plot_sub_title = plot_sub_title,
@@ -510,6 +480,7 @@ setMethod(
       
       # Save and export
       if (!is.null(dir_path)) {
+        browser()
         # Find unique features
         features <- lapply(feature_expression_split, function(x) (x@value_column))
         features <- unique(unlist(features))
@@ -567,7 +538,6 @@ setMethod(
 
 .plot_ordered_target_plot <- function(
     x,
-    data,
     outcome_type,
     facet_by,
     facet_wrap_cols,
@@ -575,9 +545,7 @@ setMethod(
     outcome_palette,
     outcome_palette_range,
     x_label,
-    x_label_shared,
     y_label,
-    y_label_shared,
     legend_label,
     plot_title,
     plot_sub_title,
@@ -592,156 +560,8 @@ setMethod(
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
   .NATURAL <- NULL
-  
-  # Define elements that need to be shared. Note that "guide" and "strip_y" may
-  # be absent.
-  elements <- c("guide", "strip_x", "strip_y")
-  if (x_label_shared == "overall") elements <- c(elements, "axis_title_x")
-  if (y_label_shared == "overall") elements <- c(elements, "axis_title_y")
-  
-  
-  # gradient_palette_range and expression_data ---------------------------------
-  
-  # Determine the range of the gradient palette.
-  if (is.waive(gradient_palette_range)) {
-    if (show_normalised_data == "none") {
-      # Default to an empty range.
-      gradient_palette_range <- c(NA, NA)
-      
-    } else if (show_normalised_data == "fixed") {
-      # Identify the normalisation method used to convert the data.
-      normalisation_method <- lapply(
-        data,
-        function(data) {
-          # Obtain the normalisation methods for each feature in the current
-          # dataset.
-          normalisation_method <- sapply(
-            data@feature_info,
-            function(feature) (.optional_from_slot(feature@normalisation_parameters, "method", alternative = "standardisation_winsor"))
-          )
-          
-          return(unname(normalisation_method))
-        }
-      )
-      
-      # Select the normalisation methods that we should consider.
-      normalisation_method <- unique(unlist(normalisation_method))
-      
-      if (all(normalisation_method == "none")) {
-        normalisation_method <- "none"
-      } else {
-        normalisation_method <- setdiff(normalisation_method, "none")
-      }
-      
-      # Find the default value.
-      gradient_palette_range <- .get_default_normalisation_range_for_plotting(
-        norm_method = normalisation_method
-      )
-      
-    } else if (show_normalised_data == "set_normalisation") {
-      # By default show range -3 to 3 standard deviations
-      gradient_palette_range <- .get_default_normalisation_range_for_plotting(
-        norm_method = "standardisation_winsor"
-      )
-      
-    } else {
-      ..error_reached_unreachable_code(paste0(
-        ".plot_ordered_target_plot: encountered unknown value for ",
-        "show_normalised_data: ",
-        show_normalised_data
-      ))
-    }
-    
-  } else if (is.null(gradient_palette_range)) {
-    # Default to an empty range.
-    gradient_palette_range <- c(NA, NA)
-  }
-  
-  # Normalise expression data
-  data <- lapply(
-    data,
-    .normalise_expression_data,
-    show_normalised_data = show_normalised_data
-  )
-  
-  # Ensure that a gradient palette range is set. This is required because the
-  # legend is shared between all facets and .
-  if (!all(is.finite(gradient_palette_range))) {
-    # Iterate over expression data to find minimum and maximum
-    feature_ranges <- lapply(
-      data, 
-      function(data) {
-        if (is_empty(data)) {
-          return(data.table::data.table(
-            "min_value" = numeric(0L),
-            "max_value" = numeric(0L)
-          ))
-        }
-        
-        # Find feature value ranges in the current expression data.
-        feature_ranges <- lapply(
-          data@feature_info, 
-          function(feature, x) {
-            # Only numeric features have a range.
-            if (feature@feature_type == "numeric") {
-              # Find feature values that are finite.
-              feature_data <- x[[feature@name]]
-              feature_data <- feature_data[is.finite(feature_data)]
-              
-              if (length(feature_data) == 0L) {
-                return(data.table::data.table(
-                  "min_value" = numeric(0L),
-                  "max_value" = numeric(0L)
-                ))
-                
-              } else {
-                return(data.table::data.table(
-                  "min_value" = as.double(min(feature_data, na.rm = FALSE)),
-                  "max_value" = as.double(max(feature_data, na.rm = FALSE))
-                ))
-              }
-            } else {
-              return(data.table::data.table(
-                "min_value" = numeric(0L),
-                "max_value" = numeric(0L)
-              ))
-            }
-          },
-          x = data@data
-        )
-        
-        # Combine ranges for all features.
-        feature_ranges <- data.table::rbindlist(
-          feature_ranges, 
-          use.names = TRUE
-        )
-        
-        return(feature_ranges)
-      }
-    )
-    
-    # Combine ranges
-    feature_ranges <- data.table::rbindlist(
-      feature_ranges, 
-      use.names = TRUE
-    )
-    
-    if (is_empty(feature_ranges)) {
-      # Set a default if all features are categorical.
-      gradient_palette_range <- c(-1.0, 0.0, 1.0)
-      
-    } else {
-      # Find a nice range for missing values of the palette range.
-      gradient_palette_range <- .format_plot_number_nice_range(
-        input_range = gradient_palette_range,
-        x = c(
-          min(feature_ranges$min_value),
-          max(feature_ranges$max_value)
-        )
-      )
-    }
-  }
-  
+  browser()
+
   # outcome_palette_range and outcome_plot_data --------------------------------
   
   # Set outcome_palette_range for continuous outcome types.
