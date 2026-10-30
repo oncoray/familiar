@@ -100,13 +100,10 @@ setGeneric(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_range = NULL,
     x_n_breaks = 3L,
-    x_breaks = NULL,
     y_range = NULL,
     y_n_breaks = 3L,
     y_breaks = NULL,
-    rotate_x_tick_labels = waiver(),
     evaluation_times = waiver(),
     width = waiver(),
     height = waiver(),
@@ -144,13 +141,10 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_range = NULL,
     x_n_breaks = 3L,
-    x_breaks = NULL,
     y_range = NULL,
     y_n_breaks = 3L,
     y_breaks = NULL,
-    rotate_x_tick_labels = waiver(),
     evaluation_times = waiver(),
     width = waiver(),
     height = waiver(),
@@ -206,13 +200,10 @@ setMethod(
         "plot_title" = plot_title,
         "plot_sub_title" = plot_sub_title,
         "caption" = caption,
-        "x_range" = x_range,
         "x_n_breaks" = x_n_breaks,
-        "x_breaks" = x_breaks,
         "y_range" = y_range,
         "y_n_breaks" = y_n_breaks,
         "y_breaks" = y_breaks,
-        "rotate_x_tick_labels" = rotate_x_tick_labels,
         "evaluation_times" = evaluation_times,
         "width" = width,
         "height" = height,
@@ -249,13 +240,10 @@ setMethod(
     plot_title = waiver(),
     plot_sub_title = waiver(),
     caption = NULL,
-    x_range = NULL,
     x_n_breaks = 3L,
-    x_breaks = NULL,
     y_range = NULL,
     y_n_breaks = 3L,
     y_breaks = NULL,
-    rotate_x_tick_labels = waiver(),
     evaluation_times = waiver(),
     width = waiver(),
     height = waiver(),
@@ -308,10 +296,9 @@ setMethod(
         outcome_columns = get_outcome_columns(object@outcome_type)
       )
 
+      # Flatten to single data.table.
       x <- data.table::rbindlist(x, use.names = TRUE)
-      browser()
     }
-    
     
     # Check package requirements for plotting.
     if (!require_package(
@@ -327,23 +314,15 @@ setMethod(
     # ggtheme
     ggtheme <- .check_ggtheme(ggtheme)
     
-    # rotate_x_tick_labels
-    if (is.waive(rotate_x_tick_labels)) {
-      rotate_x_tick_labels <- FALSE
-    }
-    
     # x_label
     if (is.waive(x_label)) x_label <- NULL
     
     # y_label
     if (is.waive(y_label)) y_label <- NULL
     
-    # rotate_x_tick_labels
-    if (is.waive(rotate_x_tick_labels)) rotate_x_tick_labels <- TRUE
-    
     # outcome_legend_label
     if (is.waive(legend_label)) {
-      # Assign default label to the
+      # Assign default label to the legend.
       if (object@outcome_type %in% c("binomial", "multinomial")) {
         legend_label <- "class"
       } else if (object@outcome_type %in% c("continuous")) {
@@ -386,7 +365,7 @@ setMethod(
       # Use facets for multinomial or survival outcomes..
       facet_by <- default_facet_vars
     }
-    browser()
+
     # Check splitting variables and generate sanitised output
     split_var_list <- .check_plot_splitting_variables(
       x = x,
@@ -407,8 +386,7 @@ setMethod(
       legend_label = legend_label,
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
-      caption = caption,
-      rotate_x_tick_labels = rotate_x_tick_labels
+      caption = caption
     )
     
     # Create plots -------------------------------------------------
@@ -456,20 +434,16 @@ setMethod(
         facet_wrap_cols = facet_wrap_cols,
         ggtheme = ggtheme,
         outcome_palette = outcome_palette,
-        outcome_palette_range = outcome_palette_range,
         x_label = x_label,
         y_label = y_label,
         legend_label = legend_label,
         plot_title = plot_title,
         plot_sub_title = plot_sub_title,
         caption = caption,
-        x_range = x_range,
         x_n_breaks = x_n_breaks,
-        x_breaks = x_breaks,
         y_range = y_range,
         y_n_breaks = y_n_breaks,
-        y_breaks = y_breaks,
-        rotate_x_tick_labels = rotate_x_tick_labels
+        y_breaks = y_breaks
       )
       
       # Check empty output
@@ -481,22 +455,12 @@ setMethod(
       # Save and export
       if (!is.null(dir_path)) {
         browser()
-        # Find unique features
-        features <- lapply(feature_expression_split, function(x) (x@value_column))
-        features <- unique(unlist(features))
-        
-        # Find unique samples
-        samples <- lapply(feature_expression_split, function(x) (x@data$sample_name))
-        samples <- unique(unlist(samples))
-        
+
         # Obtain decent default values for the plot.
-        def_plot_dims <- .determine_sample_clustering_plot_dimensions(
+        def_plot_dims <- .determine_ordered_target_plot_dimensions(
           x = x_sub,
           facet_by = facet_by,
-          facet_wrap_cols = facet_wrap_cols,
-          features = features,
-          samples = samples,
-          rotate_x_tick_labels = rotate_x_tick_labels
+          facet_wrap_cols = facet_wrap_cols
         )
         
         # Save to file.
@@ -507,7 +471,8 @@ setMethod(
               "plot_or_grob" = p,
               "object" = object,
               "dir_path" = dir_path,
-              "type" = "sample_clustering",
+              "type" = "calibration",
+              "subtype" = "ordered_target",
               "x" = x_sub,
               "split_by" = split_by,
               "height" = ifelse(is.waive(height), def_plot_dims[1L], height),
@@ -543,583 +508,174 @@ setMethod(
     facet_wrap_cols,
     ggtheme,
     outcome_palette,
-    outcome_palette_range,
     x_label,
     y_label,
     legend_label,
     plot_title,
     plot_sub_title,
     caption,
-    x_range,
     x_n_breaks,
-    x_breaks,
     y_range,
     y_n_breaks,
-    y_breaks,
-    rotate_x_tick_labels
+    y_breaks
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  .NATURAL <- NULL
-  browser()
+  .NATURAL <- value <- eval_time <- NULL
 
-  # outcome_palette_range and outcome_plot_data --------------------------------
-  
-  # Set outcome_palette_range for continuous outcome types.
-  if (is.waive(outcome_palette_range)) {
-    outcome_palette_range <- c(NA, NA)
-  }
-  
-  # Process outcome plot data for plotting.
-  if (!is.null(show_outcome)) {
-    # Iterate over data elements to create outcome plot data.
-    outcome_plot_data <- lapply(
-      data,
-      function(data, outcome_type) {
-        if (is_empty(data)) return(NULL)
-        
-        if (outcome_type %in% c("survival", "competing_risk")) {
-          evaluation_times <- data@evaluation_time
-          
-          outcome_plot_data <- .process_expression_survival_outcome(
-            x = data@data,
-            evaluation_times = evaluation_times
-          )
-        } else {
-          outcome_plot_data <- .process_expression_generic_outcome(x = data@data)
-        }
-        
-        return(outcome_plot_data)
-      },
-      outcome_type = outcome_type
-    )
+  # Set type of palette that is to be used for default palettes.
+  if (outcome_type %in% c("binomial", "multinomial")) {
+    palette_type <- "qualitative"
+    x[, "outcome_value" := outcome]
+    
+  } else if (outcome_type %in% c("continuous")) {
+    palette_type <- "sequential"
+    x[, "outcome_value" := outcome]
+    
+  } else if (outcome_type %in% c("survival", "competing_risk")) {
+    palette_type <- "qualitative"
+    browser()
+    # Mark all as no event initially.
+    x[, "outcome_value" := "no"]
+    
+    # Mark all data with missing outcome_time or outcome_event as missing.
+    x[!is.finite(outcome_time) | is.na(outcome_event), "outcome_value" := NA_character_]
+    
+    # All samples that have an event before or at the evaluation time.
+    x[outcome_time <= eval_time & outcome_event == 1L, "outcome_value" := "yes"]
+    
+    # All samples that were censored (lost to follow-up) at the evaluation time.
+    x[outcome_time <= eval_time & outcome_event == 0L, "outcome_value" := "cens."]
+    
+    # Set as factor
+    x$outcome_value <- factor(x$outcome_value, levels = c("no", "yes", "cens."))
+    
   } else {
-    outcome_plot_data <- NULL
+    ..error_outcome_type_not_implemented(outcome_type)
   }
   
-  # Update the outcome palette range based on data present.
-  if (
-    !all(is.finite(outcome_palette_range)) &&
-    outcome_type %in% c("continuous") &&
-    !is.null(show_outcome)
-  ) {
-    # Iterate over outcome_plot_data to find minimum and maximum values.
-    outcome_ranges <- lapply(
-      outcome_plot_data,
-      function(x) {
-        if (is_empty(x)) {
-          return(data.table::data.table(
-            "min_value" = numeric(0L),
-            "max_value" = numeric(0L)
-          ))
-          
-        } else if (!any(is.finite(x$value))) {
-          return(data.table::data.table(
-            "min_value" = numeric(0L),
-            "max_value" = numeric(0L)
-          ))
-          
-        } else {
-          return(data.table::data.table(
-            "min_value" = as.double(min(x$value, na.rm = TRUE)),
-            "max_value" = as.double(max(x$value, na.rm = TRUE))
-          ))
-        }
-      }
-    )
+  # y_range
+  if (is.null(y_range)) {
+    # Obtain default ranges for the metrics.
+    y_range <- c(min(x$value), max(x$value))
     
-    # Combine outcome ranges
-    outcome_ranges <- data.table::rbindlist(
-      outcome_ranges,
-      use.names = TRUE
-    )
-    
-    if (is_empty(outcome_ranges)) {
-      # Set a default if all features are categorical.
-      outcome_palette_range <- c(0.0, 1.0)
-    } else {
-      # Find a nice range for missing values of the palette range.
-      outcome_palette_range <- .format_plot_number_nice_range(
-        input_range = outcome_palette_range,
-        x = c(
-          min(outcome_ranges$min_value),
-          max(outcome_ranges$max_value)
-        )
-      )
-    }
+  } else {
+    .check_input_plot_args(y_range = y_range)
   }
   
-  # plot creation --------------------------------------------------------------
-  
-  # Update the list identifiers in x.
-  x <- data.table::copy(x)[, "list_id" := .I]
-  
-  # Split by facet. This generates a list of data splits with faceting
-  # information that allows for positioning.
-  plot_layout_table <- .get_plot_layout_table(
-    x = x,
-    facet_by = facet_by,
-    facet_wrap_cols = facet_wrap_cols
-  )
-  
-  # Define the split in data required for faceting.
-  layout_split <- split(
-    plot_layout_table,
-    by = c("col_id", "row_id"),
-    sorted = TRUE
-  )
-  
-  # Create plots to join
-  figure_list <- list()
-  extracted_element_list <- list()
-  
-  for (current_split in layout_split) {
-    # Get current split on the identifier table.
-    if (is.null(facet_by)) {
-      x_split <- x
-    } else {
-      x_split <- x[current_split, on = .NATURAL]
-    }
-    
-    # Get expression data split and outcome data split.
-    expression_data_split <- data[x_split$list_id]
-    outcome_plot_data_split <- outcome_plot_data[x_split$list_id]
-    
-    # Check data for a single facet is present.
-    if (
-      length(expression_data_split) > 1L ||
-      length(outcome_plot_data_split) > 1L
-    ) {
-      ..error_reached_unreachable_code(
-        ".plot_ordered_target_plot: cannot process data from multiple facets simultaneously."
-      )
-    }
-    
-    # Extract data elements from list.
-    expression_data_split <- expression_data_split[[1L]]
-    outcome_plot_data_split <- outcome_plot_data_split[[1L]]
-    
-    # Split feature similarity.
-    if (is.null(facet_by) || is_empty(feature_similarity)) {
-      feature_similarity_split <- feature_similarity
-      
-    } else {
-      feature_similarity_split <- methods::new(
-        "familiarDataElementFeatureSimilarity",
-        feature_similarity,
-        data = feature_similarity@data[current_split, on = .NATURAL, nomatch = NULL]
-      )
-    }
-    
-    # Split sample_similarity.
-    if (is.null(facet_by) || is_empty(sample_similarity)) {
-      sample_similarity_split <- sample_similarity
-      
-    } else {
-      sample_similarity_split <- methods::new(
-        "familiarDataElementSampleSimilarity",
-        sample_similarity,
-        data = sample_similarity@data[current_split, on = .NATURAL, nomatch = NULL]
-      )
-    }
-    
-    # Add cluster objects to feature and sample similarity data.
-    feature_similarity_split <- .append_feature_similarity_dendrogram(feature_similarity_split)
-    sample_similarity_split <- .append_sample_similarity_dendrogram(sample_similarity_split)
-    
-    # Complete the expression data
-    plot_data <- .complete_expression_table(
-      x = expression_data_split,
-      feature_similarity = feature_similarity_split,
-      sample_similarity = sample_similarity_split,
-      gradient_palette_range = gradient_palette_range
+  # y_breaks
+  if (is.null(y_breaks)) {
+    .check_input_plot_args(
+      y_range = y_range,
+      y_n_breaks = y_n_breaks
     )
     
-    # Create expression heatmap
-    p_heatmap <- .create_expression_heatmap(
-      x = plot_data,
-      x_axis_by = x_axis_by,
-      y_axis_by = y_axis_by,
-      facet_by = facet_by,
-      facet_wrap_cols = facet_wrap_cols,
-      ggtheme = ggtheme,
-      gradient_palette = gradient_palette,
-      gradient_palette_range = gradient_palette_range,
-      x_label = x_label,
-      y_label = y_label,
-      legend_label = legend_label,
-      plot_title = plot_title,
-      plot_sub_title = plot_sub_title,
-      caption = caption,
-      rotate_x_tick_labels = rotate_x_tick_labels,
-      remove_feature_labels = remove_feature_labels,
-      remove_sample_labels = remove_sample_labels,
-      show_feature_dendrogram = show_feature_dendrogram,
-      show_sample_dendrogram = show_sample_dendrogram
+    # Create breaks and update y_range
+    y_breaks <- labeling::extended(
+      m = y_n_breaks,
+      dmin = y_range[1L],
+      dmax = y_range[2L],
+      only.loose = FALSE
     )
     
-    # Convert to gtable and append "main" to grob names.
-    g_heatmap <- .rename_plot_grobs(
-      g = .convert_to_grob(p_heatmap),
-      extension = "main"
+    y_range <- c(
+      head(y_breaks, n = 1L),
+      tail(y_breaks, n = 1L)
     )
-    if (!gtable::is.gtable(g_heatmap)) next
     
-    # Add sample dendogram
-    if (!is.null(sample_similarity_split)) {
-      if (
-        !is.null(show_sample_dendrogram) &&
-        inherits(sample_similarity_split@dendrogram, "hclust")
-      ) {
-        # Obtain dendogram plotting data as line segments.
-        dendro_data <- .convert_dendrogram_to_table(
-          h = sample_similarity_split@dendrogram,
-          similarity_metric = sample_similarity_split@similarity_metric
-        )
-        
-        # Find the right axes settings.
-        if (show_sample_dendrogram %in% c("left", "right")) {
-          dist_range <- x_range
-          dist_n_breaks <- x_n_breaks
-          dist_breaks <- x_breaks
-        } else {
-          dist_range <- y_range
-          dist_n_breaks <- y_n_breaks
-          dist_breaks <- y_breaks
-        }
-        
-        # Plot dendrogram
-        p_dendro <- .create_expression_dendrogram_plot(
-          x = dendro_data,
-          position = show_sample_dendrogram,
-          ggtheme = ggtheme,
-          dist_range = dist_range,
-          dist_n_breaks = dist_n_breaks,
-          dist_breaks = dist_breaks,
-          plot_height = dendrogram_height,
-          rotate_x_tick_labels = rotate_x_tick_labels
-        )
-        
-        dendro_extension <- paste0("dendro-", show_sample_dendrogram)
-        panel_element_name <- paste0("panel-", dendro_extension)
-        axis_element_name <- ifelse(show_sample_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
-        axis_element_name <- paste0(axis_element_name, "-", dendro_extension)
-        
-        # Convert to gtable
-        g_dendro <- .rename_plot_grobs(
-          g = .convert_to_grob(p_dendro),
-          extension = dendro_extension
-        )
-        
-        where_panel <- switch(
-          show_sample_dendrogram,
-          "top" = c("above", "panel-main"),
-          "bottom" = c("below", "panel-main"),
-          "left" = c("left", "panel-main"),
-          "right" = c("right", "panel-main")
-        )
-        
-        # Insert panel-main next to panel-dendro.
-        g_heatmap <- .gtable_insert(
-          g = g_heatmap,
-          g_new = .gtable_extract_grob(g_dendro, element = panel_element_name),
-          where = where_panel,
-          grob_name = panel_element_name,
-          spacer = .get_plot_panel_spacing(
-            ggtheme = ggtheme, 
-            axis = ifelse(show_sample_dendrogram %in% c("top", "bottom"), "y", "x")
-          )
-        )
-        
-        where_axis_element <- switch(
-          show_sample_dendrogram,
-          "top" = c("intersect", "above", "axis-l-main", "left", panel_element_name),
-          "bottom" = c("intersect", "below", "axis-l-main", "left", panel_element_name),
-          "left" = c("intersect", "below", panel_element_name, "left", "axis-b-main"),
-          "right" = c("intersect", "below", panel_element_name, "right", "axis-b-main")
-        )
-        
-        # Insert the axis element at the intersect of dendro-panel and the
-        # corresponding axis element of the main plot.
-        g_heatmap <- .gtable_insert(
-          g = g_heatmap,
-          g_new = .gtable_extract_grob(g_dendro, element = axis_element_name),
-          where = where_axis_element,
-          grob_name = axis_element_name
-        )
-      }
-    }
-    
-    # Add feature dendrogram
-    if (!is.null(feature_similarity_split)) {
-      if (
-        !is.null(show_feature_dendrogram) &&
-        inherits(feature_similarity_split@dendrogram, "hclust")
-      ) {
-        # Obtain dendrogram plotting data as line segments.
-        dendro_data <- .convert_dendrogram_to_table(
-          h = feature_similarity_split@dendrogram,
-          similarity_metric = feature_similarity_split@similarity_metric
-        )
-        
-        # Find the right axes settings.
-        if (show_feature_dendrogram %in% c("left", "right")) {
-          dist_range <- x_range
-          dist_n_breaks <- x_n_breaks
-          dist_breaks <- x_breaks
-        } else {
-          dist_range <- y_range
-          dist_n_breaks <- y_n_breaks
-          dist_breaks <- y_breaks
-        }
-        
-        # Plot dendogram
-        p_dendro <- .create_expression_dendrogram_plot(
-          x = dendro_data,
-          position = show_feature_dendrogram,
-          ggtheme = ggtheme,
-          dist_range = dist_range,
-          dist_n_breaks = dist_n_breaks,
-          dist_breaks = dist_breaks,
-          plot_height = dendrogram_height,
-          rotate_x_tick_labels = rotate_x_tick_labels
-        )
-        
-        dendro_extension <- paste0("dendro-", show_feature_dendrogram)
-        panel_element_name <- paste0("panel-", dendro_extension)
-        axis_element_name <- ifelse(show_feature_dendrogram %in% c("top", "bottom"), "axis-l", "axis-b")
-        axis_element_name <- paste0(axis_element_name, "-", dendro_extension)
-        
-        # Convert to gtable
-        g_dendro <- .rename_plot_grobs(
-          g = .convert_to_grob(p_dendro),
-          extension = dendro_extension
-        )
-        
-        where_panel <- switch(
-          show_feature_dendrogram,
-          "top" = c("above", "panel-main"),
-          "bottom" = c("below", "panel-main"),
-          "left" = c("left", "panel-main"),
-          "right" = c("right", "panel-main")
-        )
-        
-        # Insert panel-main next to panel-dendro.
-        g_heatmap <- .gtable_insert(
-          g = g_heatmap,
-          g_new = .gtable_extract_grob(g_dendro, element = panel_element_name),
-          where = where_panel,
-          grob_name = panel_element_name,
-          spacer = .get_plot_panel_spacing(
-            ggtheme = ggtheme, 
-            axis = ifelse(show_feature_dendrogram %in% c("top", "bottom"), "y", "x")
-          )
-        )
-        
-        where_axis_element <- switch(
-          show_feature_dendrogram,
-          "top" = c("intersect", "above", "axis-l-main", "left", panel_element_name),
-          "bottom" = c("intersect", "below", "axis-l-main", "left", panel_element_name),
-          "left" = c("intersect", "below", panel_element_name, "left", "axis-b-main"),
-          "right" = c("intersect", "below", panel_element_name, "right", "axis-b-main")
-        )
-        
-        # Insert the axis element at the intersect of dendro-panel and the
-        # corresponding axis element of the main plot.
-        g_heatmap <- .gtable_insert(
-          g = g_heatmap,
-          g_new = .gtable_extract_grob(g_dendro, element = axis_element_name),
-          where = where_axis_element,
-          grob_name = axis_element_name
-        )
-      }
-    }
-    
-    if (!is.null(show_outcome) && gtable::is.gtable(g_heatmap)) {
-      # Create expression outcome plot.
-      p_outcome <- .create_expression_outcome_plot(
-        x = outcome_plot_data_split,
-        ggtheme = ggtheme,
-        position = show_outcome,
-        outcome_type = outcome_type,
-        outcome_palette = outcome_palette,
-        outcome_palette_range = outcome_palette_range,
-        outcome_legend_label = outcome_legend_label,
-        plot_height = outcome_height,
-        sample_similarity = sample_similarity_split,
-        rotate_x_tick_labels = rotate_x_tick_labels
-      )
-      
-      # Convert to gtable
-      g_outcome <- .rename_plot_grobs(
-        g = .convert_to_grob(p_outcome),
-        extension = "outcome"
-      )
-      axis_element_name <- ifelse(show_outcome %in% c("top", "bottom"), "axis-l-outcome", "axis-b-outcome")
-      
-      where_panel <- switch(
-        show_outcome,
-        "top" = c("above", "panel-main"),
-        "bottom" = c("below", "panel-main"),
-        "left" = c("left", "panel-main"),
-        "right" = c("right", "panel-main")
-      )
-      
-      # Insert panel-main next to panel-outcome.
-      g_heatmap <- .gtable_insert(
-        g = g_heatmap,
-        g_new = .gtable_extract_grob(g_outcome, element = "panel-outcome"),
-        where = where_panel,
-        grob_name = "panel-outcome"
-      )
-      
-      where_axis_element <- switch(
-        show_outcome,
-        "top" = c("intersect", "above", "axis-l-main", "left", "panel-outcome"),
-        "bottom" = c("intersect", "below", "axis-l-main", "left", "panel-outcome"),
-        "left" = c("intersect", "below", "panel-outcome", "left", "axis-b-main"),
-        "right" = c("intersect", "below", "panel-outcome", "right", "axis-b-main")
-      )
-      
-      # Insert the axis element at the intersect of panel-outcome and the
-      # corresponding axis element of the main plot.
-      g_heatmap <- .gtable_insert(
-        g = g_heatmap,
-        g_new = .gtable_extract_grob(g_outcome, element = axis_element_name),
-        where = where_axis_element,
-        grob_name = axis_element_name
-      )
-      
-      # Combine guides,
-      g_heatmap <- .combine_plot_elements(
-        g_main = g_heatmap,
-        g_new = g_outcome,
-        element_name = .all_gtable_guide_names(),
-        spacer = .get_plot_legend_spacing(ggtheme = ggtheme, axis = "y")
-      )
-    }
-    
-    # Attach to figure list.
-    figure_list[[paste0(current_split$row_id, ".", current_split$col_id)]] <- as_familiar_plot(
-      g = g_heatmap,
-      layout = current_split
-    )
+  } else {
+    .check_input_plot_args(y_breaks = y_breaks)
   }
   
-  # Compose the final figure. Magic.
-  g <- .compose_figure(
-    figure_list = figure_list,
-    plot_layout_table = plot_layout_table,
-    x_text_shared = FALSE,
-    x_label_shared = x_label_shared,
-    y_text_shared = FALSE,
-    y_label_shared = y_label_shared,
-    facet_wrap_cols = facet_wrap_cols,
-    ggtheme = ggtheme
+  # Set the x-range values
+  if (is.null(facet_by)) {
+    x[, "plot_index" := rank(value, ties.method = "random")]
+    
+  } else {
+    x[, "plot_index" := rank(value, ties.method = "random"), by = facet_by]
+  }
+
+  # x_range
+  x_range <- c(min(x$plot_index), max(x$plot_index))
+  
+  # x_breaks
+  x_breaks <- labeling::extended(
+    m = x_n_breaks,
+    dmin = x_range[1L],
+    dmax = x_range[2L],
+    only.loose = FALSE
   )
   
-  return(g)
-}
-
-
-
-.create_expression_heatmap <- function(
-    x,
-    x_axis_by,
-    y_axis_by,
-    facet_by,
-    facet_wrap_cols,
-    ggtheme,
-    gradient_palette,
-    gradient_palette_range,
-    x_label,
-    y_label,
-    legend_label,
-    plot_title,
-    plot_sub_title,
-    caption,
-    rotate_x_tick_labels,
-    remove_feature_labels,
-    remove_sample_labels,
-    show_feature_dendrogram,
-    show_sample_dendrogram
-) {
-  # Determine whether a sequential or divergent palette should be used by
-  # default.
-  palette_type <- ifelse(
-    length(gradient_palette_range) > 2L,
-    "divergent",
-    "sequential"
+  # Update x_range
+  x_range <- c(
+    head(x_breaks, n = 1L),
+    tail(x_breaks, n = 1L)
   )
   
-  # Create basic plot
   p <- ggplot2::ggplot(
     data = x,
     mapping = ggplot2::aes(
-      x = !!sym(x_axis_by),
-      y = !!sym(y_axis_by),
-      fill = !!sym("value")
+      x = !!sym("plot_index"),
+      y = !!sym("value"),
+      fill = !!sym("outcome_value")
     )
   )
+  # plot creation --------------------------------------------------------------
+  
+  # Add plot theme
   p <- p + ggtheme
   
-  if (!is_empty(x)) {
-    p <- p + ggplot2::geom_raster()
+  # Set bars.
+  p <- p + ggplot2::geom_bar(stat = "identity")
+  
+  if (palette_type == "qualitative") {
+    # Colours
+    outcome_colours <- .get_palette(
+      x = outcome_palette,
+      n = nlevels(x$outcome_value),
+      palette_type = palette_type
+    )
+    
+    # Set the qualitative scale
+    p <- p + ggplot2::scale_fill_manual(
+      name = legend_label,
+      values = outcome_colours[seq_along(levels(x$outcome_value))],
+      breaks = levels(x$outcome_value),
+      drop = FALSE
+    )
+    
   } else {
-    # Insert blank for empty datasets.
-    p <- p + ggplot2::geom_blank()
+    outcome_colours <- .get_palette(
+      x = outcome_palette,
+      palette_type = palette_type
+    )
+    
+    # Set the gradient
+    p <- p + ggplot2::scale_fill_gradientn(
+      name = legend_label,
+      colors = outcome_colours,
+      limits = range(labeling::extended(
+        dmin = min(x$outcome_value),
+        dmax = max(x$outcome_value),
+        m = 5L,
+        only.loose = FALSE
+      )),
+      oob = scales::squish
+    )
   }
   
-  # Colors
-  gradient_colours <- .get_palette(
-    x = gradient_palette,
-    palette_type = palette_type,
-    diverge_to_white = TRUE
+  p <- p + ggplot2::scale_x_continuous(
+    limits = x_range,
+    breaks = x_breaks
+  )
+  p <- p + ggplot2::scale_y_continuous(
+    limits = y_range,
+    breaks = y_breaks
   )
   
-  # Add gradient palette. If the legend is not shown, legend_label equals NULL.
-  p <- p + ggplot2::scale_fill_gradientn(
-    name = legend_label,
-    colors = gradient_colours,
-    limits = range(gradient_palette_range),
-    oob = scales::squish
-  )
-  
-  # Create show_dendrogram that combines show_feature_dendrogram and
-  # show_sample_dendrogram.
-  show_dendrogram <- c(show_feature_dendrogram, show_sample_dendrogram)
-  
-  # Show dendrogram determines where tick labels and axis labels are placed. By
-  # default axes are located at the bottom and right.
-  x_axis_position <- "bottom"
-  y_axis_position <- "left"
-  if (!is.null(show_dendrogram)) {
-    if ("bottom" %in% show_dendrogram) {
-      x_axis_position <- "top"
-    }
-    if ("left" %in% show_dendrogram) {
-      y_axis_position <- "right"
-    }
-  }
-  
-  # Specify both axes. Note that only the heatmap is shown, without additional
-  # space between the plot area and the axes.
-  p <- p + ggplot2::scale_x_discrete(position = x_axis_position, expand = c(0.0, 0.0))
-  p <- p + ggplot2::scale_y_discrete(position = y_axis_position, expand = c(0.0, 0.0))
-  
-  # Set labels.
-  p <- p + ggplot2::labs(
-    x = x_label,
-    y = y_label,
-    title = plot_title,
-    subtitle = plot_sub_title,
-    caption = caption
-  )
-  
-  # Determine how plots are faceted. The actual facets are created in the
-  # calling function, not here.
+  # Determine how things are facetted
   facet_by_list <- .parse_plot_facet_by(
-    x = x@data,
-    facet_by = facet_by,
+    x = x, 
+    facet_by = facet_by, 
     facet_wrap_cols = facet_wrap_cols
   )
   
@@ -1127,429 +683,38 @@ setMethod(
     if (is.null(facet_wrap_cols)) {
       # Use a grid
       p <- p + ggplot2::facet_grid(
-        rows = facet_by_list$facet_rows,
-        cols = facet_by_list$facet_cols,
-        labeller = "label_context",
-        drop = TRUE
+        rows = facet_by_list$facet_rows, 
+        cols = facet_by_list$facet_cols, 
+        labeller = "label_context"
       )
       
     } else {
       p <- p + ggplot2::facet_wrap(
-        facets = facet_by_list$facet_by,
-        labeller = "label_context",
-        drop = TRUE
+        facets = facet_by_list$facet_by, 
+        labeller = "label_context"
       )
     }
   }
   
-  # Rotate x-axis ticks
-  if (rotate_x_tick_labels) {
-    p <- p + ggplot2::theme(
-      axis.text.x = ggplot2::element_text(
-        vjust = 0.25, 
-        hjust = 1.0, 
-        angle = 90.0
-      )
-    )
-  }
-  
-  if (remove_feature_labels) {
-    if (x_axis_by == "feature") {
-      p <- p + ggplot2::theme(axis.text.x = ggplot2::element_blank())
-      
-    } else {
-      p <- p + ggplot2::theme(axis.text.y = ggplot2::element_blank())
-    }
-  }
-  
-  if (remove_sample_labels) {
-    if (x_axis_by == "sample") {
-      p <- p + ggplot2::theme(axis.text.x = ggplot2::element_blank())
-      
-    } else {
-      p <- p + ggplot2::theme(axis.text.y = ggplot2::element_blank())
-    }
-  }
+  # Update labels.
+  p <- p + ggplot2::labs(
+    x = x_label, 
+    y = y_label, 
+    title = plot_title, 
+    subtitle = plot_sub_title, 
+    caption = caption
+  )
   
   return(p)
 }
 
 
 
-.create_expression_dendrogram_plot <- function(
+
+.determine_ordered_target_plot_dimensions <- function(
     x,
-    position,
-    ggtheme,
-    dist_range,
-    dist_n_breaks,
-    dist_breaks,
-    plot_height,
-    rotate_x_tick_labels
-) {
-  # Check if there is any data to plot.
-  if (is_empty(x)) return(NULL)
-  
-  # Define the range along the x-axis.
-  x_range <- range(x$x_1, na.rm = TRUE)
-  x_range <- c(x_range[1L] - 0.5, x_range[2L] + 0.5)
-  
-  # y_range
-  if (is.null(dist_range)) {
-    dist_range <- range(c(x$y_1, x$y_2), na.rm = TRUE)
-  }
-  
-  # y_breaks
-  if (is.null(dist_breaks)) {
-    if (diff(dist_range) == 0.0) {
-      dist_range[1L] <- dist_range[1L] - 0.1
-      dist_range[2L] <- dist_range[2L] + 0.1
-    }
-    
-    .check_input_plot_args(
-      y_range = dist_range,
-      y_n_breaks = dist_n_breaks
-    )
-    
-    # Create breaks and update y_range
-    dist_breaks <- labeling::extended(
-      m = dist_n_breaks,
-      dmin = dist_range[1L],
-      dmax = dist_range[2L],
-      only.loose = TRUE
-    )
-    
-    dist_range <- c(
-      head(dist_breaks, n = 1L),
-      tail(dist_breaks, n = 1L)
-    )
-  }
-  
-  .check_input_plot_args(
-    y_range = dist_range,
-    y_breaks = dist_breaks
-  )
-  
-  # Create basic plot
-  p <- ggplot2::ggplot(
-    data = x, 
-    mapping = ggplot2::aes(
-      x = !!sym("x_1"),
-      y = !!sym("y_1"),
-      xend = !!sym("x_2"),
-      yend = !!sym("y_2")
-    )
-  )
-  p <- p + ggtheme
-  
-  # Plot line segments.
-  p <- p + ggplot2::geom_segment(lineend = "round")
-  
-  if (position == "right") {
-    p <- p + ggplot2::scale_x_continuous(
-      limits = x_range,
-      expand = c(0.0, 0.0)
-    )
-    p <- p + ggplot2::scale_y_continuous(
-      limits = dist_range,
-      breaks = dist_breaks
-    )
-    p <- p + ggplot2::coord_flip()
-    
-  } else if (position == "bottom") {
-    p <- p + ggplot2::scale_x_continuous(
-      limits = x_range, 
-      expand = c(0.0, 0.0)
-    )
-    p <- p + ggplot2::scale_y_reverse(
-      limits = rev(dist_range),
-      breaks = rev(dist_breaks)
-    )
-    
-  } else if (position == "left") {
-    p <- p + ggplot2::scale_x_continuous(
-      limits = x_range, 
-      expand = c(0.0, 0.0)
-    )
-    p <- p + ggplot2::scale_y_reverse(
-      limits = rev(dist_range),
-      breaks = rev(dist_breaks)
-    )
-    p <- p + ggplot2::coord_flip()
-    
-  } else if (position == "top") {
-    p <- p + ggplot2::scale_x_continuous(
-      limits = x_range, 
-      expand = c(0.0, 0.0)
-    )
-    p <- p + ggplot2::scale_y_continuous(
-      limits = dist_range, 
-      breaks = dist_breaks
-    )
-    
-  } else {
-    ..error_reached_unreachable_code(paste0(
-      ".create_expression_dendrogram_plot: unknown position encountered: ", position
-    ))
-  }
-  
-  # Remove some theme elements and reduce margins. The histogram height is left.
-  p <- p + ggplot2::theme(
-    panel.grid = ggplot2::element_blank(),
-    panel.background = ggplot2::element_blank(),
-    panel.border = ggplot2::element_blank(),
-    axis.title.x = ggplot2::element_blank(),
-    axis.title.y = ggplot2::element_blank()
-  )
-  
-  if (position %in% c("top", "bottom")) {
-    # Remove x-axis
-    p <- p + ggplot2::theme(
-      axis.line.x = ggplot2::element_blank(),
-      axis.ticks.x = ggplot2::element_blank(),
-      axis.text.x = ggplot2::element_blank()
-    )
-    
-  } else if (position %in% c("left", "right")) {
-    # Remove y-axis (rotated x-axis in plot)
-    p <- p + ggplot2::theme(
-      axis.line.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank()
-    )
-    
-    # Rotate x-labels
-    if (rotate_x_tick_labels) {
-      p <- p + ggplot2::theme(
-        axis.text.x = ggplot2::element_text(
-          vjust = 0.25,
-          hjust = 1.0, 
-          angle = 90.0
-        )
-      )
-    }
-  }
-  
-  # Ensure that panel heights/widths are set to the plot object.
-  if (position %in% c("top", "bottom")) {
-    p$custom_grob <- list("heights" = list(
-      "name" = "panel", 
-      "height" = plot_height
-    ))
-  } else if (position %in% c("left", "right")) {
-    p$custom_grob <- list("widths" = list(
-      "name" = "panel", 
-      "width" = plot_height
-    ))
-  }
-  
-  class(p) <- c("familiar_ggplot", class(p))
-  
-  return(p)
-}
-
-
-
-.create_expression_outcome_plot <- function(
-    x,
-    ggtheme,
-    position,
-    outcome_type,
-    outcome_palette,
-    outcome_palette_range,
-    outcome_legend_label,
-    plot_height,
-    sample_similarity,
-    rotate_x_tick_labels
-) {
-  # Set type of palette that is to be used for default palettes.
-  if (outcome_type %in% c("binomial", "multinomial")) {
-    palette_type <- "qualitative"
-  } else if (outcome_type %in% c("continuous")) {
-    palette_type <- "sequential"
-  } else if (outcome_type %in% c("survival", "competing_risk")) {
-    palette_type <- "qualitative"
-  } else {
-    ..error_outcome_type_not_implemented(outcome_type)
-  }
-  
-  # Determine sample order.
-  if (is.null(sample_similarity)) {
-    # Placeholder in case the sample_similarity object is NULL.
-    sample_order <- data.table::data.table("name" = unique(x$sample))
-    sample_order[, "label_order" := .I]
-  } else if (is.null(sample_similarity@dendrogram)) {
-    # Placeholder in case the dendrogram object is NULL.
-    sample_order <- data.table::data.table("name" = unique(x$sample))
-    sample_order[, "label_order" := .I]
-  } else {
-    # Default option.
-    sample_order <- .compute_sample_similarity_cluster_table(x = sample_similarity)
-  }
-  
-  # Correctly order the samples
-  x$sample <- factor(
-    x$sample,
-    levels = sample_order$name[order(sample_order$label_order)]
-  )
-  
-  if (position %in% c("left", "right")) {
-    p <- ggplot2::ggplot(
-      data = x,
-      mapping = ggplot2::aes(
-        x = !!sym("evaluation_point"),
-        y = !!sym("sample"),
-        fill = !!sym("value")
-      )
-    )
-    
-    # Limit margins along the axis with samples so it will fit one-to-one with
-    # the main heatmap.
-    p <- p + ggplot2::scale_y_discrete(expand = c(0.0, 0.0))
-    
-  } else {
-    p <- ggplot2::ggplot(
-      data = x,
-      mapping = ggplot2::aes(
-        x = !!sym("sample"),
-        y = !!sym("evaluation_point"),
-        fill = !!sym("value")
-      )
-    )
-    
-    # Limit margins along the axis with samples so it will fit one-to-one with
-    # the main heatmap.
-    p <- p + ggplot2::scale_x_discrete(expand = c(0.0, 0.0))
-  }
-  # Create basic plot
-  
-  # Add plot theme
-  p <- p + ggtheme
-  
-  # Plot heatmap
-  p <- p + ggplot2::geom_raster()
-  
-  # Specify the colours.
-  if (outcome_type %in% c("continuous")) {
-    # Colors
-    outcome_colours <- .get_palette(
-      x = outcome_palette,
-      palette_type = palette_type,
-      use_alternative = TRUE
-    )
-    
-    # Set the gradient
-    p <- p + ggplot2::scale_fill_gradientn(
-      name = outcome_legend_label,
-      colors = outcome_colours,
-      limits = range(outcome_palette_range),
-      oob = scales::squish
-    )
-    
-  } else {
-    # Colors
-    outcome_colours <- .get_palette(
-      x = outcome_palette,
-      n = nlevels(x$value),
-      palette_type = palette_type,
-      use_alternative = TRUE
-    )
-    
-    # Set the qualitative scale
-    p <- p + ggplot2::scale_fill_manual(
-      name = outcome_legend_label,
-      values = outcome_colours[seq_along(levels(x$value))],
-      breaks = levels(x$value),
-      drop = FALSE
-    )
-  }
-  
-  # Remove some theme elements and reduce margins. The histogram height is left.
-  p <- p + ggplot2::theme(
-    panel.grid = ggplot2::element_blank(),
-    panel.background = ggplot2::element_blank(),
-    panel.border = ggplot2::element_blank(),
-    axis.title.x = ggplot2::element_blank(),
-    axis.title.y = ggplot2::element_blank()
-  )
-  
-  if (outcome_type %in% c("survival", "competing_risk")) {
-    # Survival and competing risk outcomes leave the height axis intact
-    
-    if (position %in% c("top", "bottom")) {
-      # Remove x-axis
-      p <- p + ggplot2::theme(
-        axis.line.x = ggplot2::element_blank(),
-        axis.ticks.x = ggplot2::element_blank(),
-        axis.text.x = ggplot2::element_blank()
-      )
-      
-    } else if (position %in% c("left", "right")) {
-      # Remove y-axis (rotated x-axis in plot)
-      p <- p + ggplot2::theme(
-        axis.line.y = ggplot2::element_blank(),
-        axis.ticks.y = ggplot2::element_blank(),
-        axis.text.y = ggplot2::element_blank()
-      )
-      
-      # Rotate x-labels
-      if (rotate_x_tick_labels) {
-        p <- p + ggplot2::theme(
-          axis.text.x = ggplot2::element_text(
-            vjust = 0.25, 
-            hjust = 1.0, 
-            angle = 90.0
-          )
-        )
-      }
-    }
-  } else {
-    # For the remaining outcomes, remove all axes.
-    p <- p + ggplot2::theme(
-      axis.line.x = ggplot2::element_blank(),
-      axis.ticks.x = ggplot2::element_blank(),
-      axis.text.x = ggplot2::element_blank(),
-      axis.line.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank()
-    )
-  }
-  
-  # Adapt plot_height so that it scales with the number of evaluation points.
-  if (outcome_type %in% c("survival", "competing_risk")) {
-    plot_height <- nlevels(x$evaluation_point) * plot_height
-  }
-  
-  # Ensure that panel heights/widths are set to the plot object.
-  if (position %in% c("top", "bottom")) {
-    p$custom_grob <- list("heights" = list(
-      "name" = "panel",
-      "height" = plot_height
-    ))
-  } else if (position %in% c("left", "right")) {
-    p$custom_grob <- list("widths" = list(
-      "name" = "panel",
-      "width" = plot_height
-    ))
-  }
-  
-  class(p) <- c("familiar_ggplot", class(p))
-  
-  return(p)
-}
-
-
-
-.determine_sample_clustering_plot_dimensions <- function(
-    x,
-    x_axis_by,
-    y_axis_by,
     facet_by,
-    facet_wrap_cols,
-    features,
-    samples,
-    show_feature_dendrogram,
-    show_sample_dendrogram,
-    rotate_x_tick_labels
+    facet_wrap_cols
 ) {
   # Obtain facetting dimensions
   plot_dims <- .get_plot_layout_dims(
@@ -1603,257 +768,4 @@ setMethod(
   width <- min(c(5.0 + plot_dims[2L] * (default_width + y_tick_space + dendro_width), 19.0))
   
   return(c(height, width))
-}
-
-
-
-.normalise_expression_data <- function(x, show_normalised_data) {
-  # Check for empty data
-  if (is_empty(x)) return(NULL)
-  
-  # Make local copy of data element to avoid updating by reference.
-  x@data <- data.table::copy(x@data)
-  
-  # Apply normalisation
-  if (show_normalised_data == "fixed") {
-    # Fixed normalization applies normalisation and transformation parameters
-    # derived during model creation. Note that extract_feature_expression method
-    # already corrects batch differences (if present), and we do not apply batch
-    # normalisation as a consequence.
-    
-    # Transform features
-    x@data <- transform_features(
-      data = x@data,
-      feature_info_list = x@feature_info,
-      features = names(x@feature_info),
-      invert = FALSE
-    )
-    
-    # Normalise features
-    x@data <- normalise_features(
-      data = x@data,
-      feature_info_list = x@feature_info,
-      features = names(x@feature_info),
-      invert = FALSE
-    )
-    
-  } else if (show_normalised_data == "set_normalisation") {
-    # Normalise features within the current dataset.
-    for (curr_feat in names(x@feature_info)) {
-      x@data[
-        ,
-        (curr_feat) := .normalise(
-          get(curr_feat),
-          normalisation_method = "standardisation_winsor"
-        )
-      ]
-    }
-  }
-  
-  return(x)
-}
-
-
-
-.complete_expression_table <- function(
-    x,
-    feature_similarity,
-    sample_similarity,
-    gradient_palette_range
-) {
-  # Suppress NOTES due to non-standard evaluation in data.table
-  feature <- sample <- NULL
-  
-  if (is_empty(x)) return(NULL)
-  
-  # Replace categorical features by numerical values and scale to 0.05-.95 of
-  # the z-range.
-  categorical_features <- lapply(
-    x@feature_info, 
-    function(feature) {
-      if (feature@feature_type == "factor") {
-        return(feature@name)
-      } else {
-        return(NULL)
-      }
-    }
-  )
-  
-  # Identify categorical features
-  categorical_features <- unique(unlist(categorical_features))
-  
-  # Convert to numerical and rescale so that the categorical values lie within
-  # the range of the remaining numerical data.
-  if (length(categorical_features) > 0L) {
-    # Determine the output value range
-    output_value_range <- numeric(2L)
-    output_value_range[1L] <- head(gradient_palette_range, n = 1L) + 
-      0.05 * diff(range(gradient_palette_range))
-    output_value_range[2L] <- head(gradient_palette_range, n = 1L) + 
-      0.95 * diff(range(gradient_palette_range))
-    
-    # Make a local copy of x to prevent warnings raised by data.table.
-    x <- data.table::copy(x)
-    
-    for (feature in categorical_features) {
-      # Convert categorical data to numerical data.
-      numeric_data <- as.numeric(x@data[[feature]])
-      
-      # Determine the range of the input value range.
-      input_value_range <- c(1.0, length(x@feature_info[[feature]]@levels))
-      
-      # Convert numeric data to the output range.
-      numeric_data <- (numeric_data - input_value_range[1L]) / 
-        diff(input_value_range) * diff(output_value_range) + 
-        output_value_range[1L]
-      
-      # Update column
-      x@data[[feature]] <- numeric_data
-    }
-  }
-  
-  # Copy x and revert feature_name_1 and feature_name_2 so that all pairs are
-  # present.
-  data <- data.table::melt(
-    data = x@data,
-    measure.vars = names(x@feature_info),
-    variable.name = "feature",
-    value.name = "value",
-    variable.factor = TRUE,
-    value.factor = FALSE
-  )
-  
-  # Change sample_name to sample
-  data.table::setnames(
-    x = data, 
-    old = "sample_name",
-    new = "sample"
-  )
-  
-  # Determine feature order.
-  if (is.null(feature_similarity)) {
-    # Placeholder in case the feature_similarity object is NULL.
-    feature_order <- data.table::data.table("name" = unique(data$feature))
-    feature_order[, "label_order" := .I]
-  } else if (is.null(feature_similarity@dendrogram)) {
-    # Placeholder in case the dendrogram object is NULL.
-    feature_order <- data.table::data.table("name" = unique(data$feature))
-    feature_order[, "label_order" := .I]
-  } else {
-    # Default option.
-    feature_order <- .compute_feature_similarity_cluster_table(x = feature_similarity)
-  }
-  
-  # Determine sample order.
-  if (is.null(sample_similarity)) {
-    # Placeholder in case the sample_similarity object is NULL.
-    sample_order <- data.table::data.table("name" = x@data$sample_name)
-    sample_order[, "label_order" := .I]
-  } else if (is.null(sample_similarity@dendrogram)) {
-    # Placeholder in case the dendrogram object is NULL.
-    sample_order <- data.table::data.table("name" = x@data$sample_name)
-    sample_order[, "label_order" := .I]
-  } else {
-    # Default option.
-    sample_order <- .compute_sample_similarity_cluster_table(x = sample_similarity)
-  }
-  
-  # Keep only features and samples that are in feature order and sample order.
-  data <- data[feature %in% feature_order$name & sample %in% sample_order$name]
-  
-  # Set feature and sample order
-  data$feature <- factor(data$feature,
-                         levels = feature_order$name[order(feature_order$label_order)]
-  )
-  data$sample <- factor(data$sample,
-                        levels = sample_order$name[order(sample_order$label_order)]
-  )
-  
-  return(data)
-}
-
-
-
-.process_expression_generic_outcome <- function(x) {
-  # Keep only one copy for each sample.
-  x <- data.table::copy(x[, c("sample_name", "outcome")])
-  
-  # Rename columns
-  data.table::setnames(
-    x = x,
-    old = c("sample_name", "outcome"),
-    new = c("sample", "value")
-  )
-  
-  # Set evaluation point (which is on the y-axis)
-  x$evaluation_point <- factor("1", levels = "1")
-  
-  return(x)
-}
-
-
-
-.process_expression_survival_outcome <- function(x, evaluation_times) {
-  # Suppress NOTES due to non-standard evaluation in data.table
-  outcome_time <- outcome_event <- NULL
-  
-  # Check if evaluation_times fall in a valid range.
-  sapply(
-    evaluation_times, 
-    .check_number_in_valid_range, 
-    var_name = "evaluation_times",
-    range = c(0.0, Inf), 
-    closed = c(FALSE, TRUE)
-  )
-  
-  # Keep only one copy for each sample.
-  x <- data.table::copy(x[, c("sample_name", "outcome_time", "outcome_event")])
-  
-  plot_data <- lapply(
-    evaluation_times, 
-    function(eval_time, x) {
-      # Make a copy with the relevant data.
-      y <- data.table::copy(x)
-      
-      # Mark all as no event initially.
-      y[, "value" := "no"]
-      
-      # Mark all data with missing outcome_time or outcome_event as missing.
-      y[!is.finite(outcome_time) | is.na(outcome_event), "value" := NA_character_]
-      
-      # All samples that have an event before or at the evaluation time.
-      y[outcome_time <= eval_time & outcome_event == 1L, "value" := "yes"]
-      
-      # All samples that were censored (lost to follow-up) at the evaluation
-      # time.
-      y[outcome_time <= eval_time & outcome_event == 0L, "value" := "cens."]
-      
-      # Set as factor
-      y$value <- factor(y$value, levels = c("no", "yes", "cens."))
-      
-      # Set evaluation time point
-      y[, "evaluation_point" := eval_time]
-      
-      return(y)
-    }, 
-    x = x
-  )
-  
-  # Combine plot data
-  plot_data <- data.table::rbindlist(plot_data)
-  
-  # Set evaluation point as a factor
-  plot_data$evaluation_point <- factor(
-    x = plot_data$evaluation_point,
-    levels = evaluation_times
-  )
-  
-  # Change subject_id to sample
-  data.table::setnames(
-    x = plot_data, 
-    old = "sample_name",
-    new = "sample"
-  )
-  
-  return(plot_data)
 }

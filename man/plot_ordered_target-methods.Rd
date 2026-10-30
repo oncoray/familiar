@@ -18,20 +18,15 @@ plot_ordered_target(
   outcome_palette = NULL,
   outcome_palette_range = waiver(),
   x_label = waiver(),
-  x_label_shared = "column",
   y_label = waiver(),
-  y_label_shared = "row",
   legend_label = waiver(),
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
-  x_range = NULL,
   x_n_breaks = 3L,
-  x_breaks = NULL,
   y_range = NULL,
   y_n_breaks = 3L,
   y_breaks = NULL,
-  rotate_x_tick_labels = waiver(),
   evaluation_times = waiver(),
   width = waiver(),
   height = waiver(),
@@ -53,20 +48,15 @@ plot_ordered_target(
   outcome_palette = NULL,
   outcome_palette_range = waiver(),
   x_label = waiver(),
-  x_label_shared = "column",
   y_label = waiver(),
-  y_label_shared = "row",
   legend_label = waiver(),
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
-  x_range = NULL,
   x_n_breaks = 3L,
-  x_breaks = NULL,
   y_range = NULL,
   y_n_breaks = 3L,
   y_breaks = NULL,
-  rotate_x_tick_labels = waiver(),
   evaluation_times = waiver(),
   width = waiver(),
   height = waiver(),
@@ -88,20 +78,15 @@ plot_ordered_target(
   outcome_palette = NULL,
   outcome_palette_range = waiver(),
   x_label = waiver(),
-  x_label_shared = "column",
   y_label = waiver(),
-  y_label_shared = "row",
   legend_label = waiver(),
   plot_title = waiver(),
   plot_sub_title = waiver(),
   caption = NULL,
-  x_range = NULL,
   x_n_breaks = 3L,
-  x_breaks = NULL,
   y_range = NULL,
   y_n_breaks = 3L,
   y_breaks = NULL,
-  rotate_x_tick_labels = waiver(),
   evaluation_times = waiver(),
   width = waiver(),
   height = waiver(),
@@ -152,30 +137,8 @@ for other outcome types or if the outcome is not shown.}
 \item{x_label}{(\emph{optional}) Label to provide to the x-axis. If NULL, no label
 is shown.}
 
-\item{x_label_shared}{(\emph{optional}) Sharing of x-axis labels between facets.
-One of three values:
-\itemize{
-\item \code{overall}: A single label is placed at the bottom of the figure. Tick
-text (but not the ticks themselves) is removed for all but the bottom facet
-plot(s).
-\item \code{column}: A label is placed at the bottom of each column. Tick text (but
-not the ticks themselves) is removed for all but the bottom facet plot(s).
-\item \code{individual}: A label is placed below each facet plot. Tick text is kept.
-}}
-
 \item{y_label}{(\emph{optional}) Label to provide to the y-axis. If NULL, no label
 is shown.}
-
-\item{y_label_shared}{(\emph{optional}) Sharing of y-axis labels between facets.
-One of three values:
-\itemize{
-\item \code{overall}: A single label is placed to the left of the figure. Tick text
-(but not the ticks themselves) is removed for all but the left-most facet
-plot(s).
-\item \code{row}: A label is placed to the left of each row. Tick text (but not the
-ticks themselves) is removed for all but the left-most facet plot(s).
-\item \code{individual}: A label is placed below each facet plot. Tick text is kept.
-}}
 
 \item{legend_label}{(\emph{optional}) Label to provide to the legend. If NULL, the
 legend will not have a name.}
@@ -189,13 +152,9 @@ NULL, no subtitle is shown.}
 \item{caption}{(\emph{optional}) Label to provide as figure caption. If NULL, no
 caption is shown.}
 
-\item{x_range}{(\emph{optional}) Value range for the x-axis.}
-
 \item{x_n_breaks}{(\emph{optional}) Number of breaks to show on the x-axis of the
 plot. \code{x_n_breaks} is used to determine the \code{x_breaks} argument in case it
 is unset.}
-
-\item{x_breaks}{(\emph{optional}) Break points on the x-axis of the plot.}
 
 \item{y_range}{(\emph{optional}) Value range for the y-axis.}
 
@@ -204,11 +163,6 @@ plot. \code{y_n_breaks} is used to determine the \code{y_breaks} argument in cas
 is unset.}
 
 \item{y_breaks}{(\emph{optional}) Break points on the y-axis of the plot.}
-
-\item{rotate_x_tick_labels}{(\emph{optional}) Rotate tick labels on the x-axis by
-90 degrees. Defaults to \code{TRUE}. Rotation of x-axis tick labels may also be
-controlled through the \code{ggtheme}. In this case, \code{FALSE} should be provided
-explicitly.}
 
 \item{evaluation_times}{(\emph{optional}) Times at which the event status of
 time-to-event survival outcomes are determined. Only used for \code{survival}
