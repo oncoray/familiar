@@ -43,11 +43,11 @@ testthat::test_that(
     testthat::expect_true(is(p_surv_1[[1L]], "ggplot"))
     testthat::expect_true(is(p_surv_2[[1L]], "ggplot"))
     
-    testthat::expect_length(p_bin , 3L)
-    testthat::expect_length(p_mult , 3L)
-    testthat::expect_length(p_cont , 3L)
-    testthat::expect_length(p_surv_1 , 3L)
-    testthat::expect_length(p_surv_2 , 3L)
+    testthat::expect_length(p_bin, 3L)
+    testthat::expect_length(p_mult, 3L)
+    testthat::expect_length(p_cont, 3L)
+    testthat::expect_length(p_surv_1, 3L)
+    testthat::expect_length(p_surv_2, 3L)
   }
 )
 
@@ -55,7 +55,7 @@ testthat::test_that(
 # Test plotting from dataObject with selection of categorical features.
 data <- familiar:::test_create_good_data(outcome_type = "binomial")
 p_bin <- familiar::plot_ordered_target(
-  object = data, 
+  object = data,
   features = c("feature_3a", "feature_3b", "feature_4")
 )
 

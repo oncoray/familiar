@@ -269,7 +269,7 @@ setMethod(
         features = features,
         evaluation_time = evaluation_times
       )
-      
+      browser()
       # Check that the data are not empty.
       if (is_empty(feature_expression)) return(NULL)
       if (all(sapply(feature_expression, is_empty))) return(NULL)
@@ -525,8 +525,8 @@ setMethod(
     y_breaks
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  .NATURAL <- value <- evaluation_time <- NULL
-
+  value <- evaluation_time <- NULL
+browser()
   # Set type of palette that is to be used for default palettes.
   if (outcome_type %in% c("binomial", "multinomial")) {
     palette_type <- "qualitative"
@@ -557,6 +557,77 @@ setMethod(
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }
+  
+  if (is.factor(x$value)) {
+    p <- ..plot_ordered_target_plot_categorical(
+      x = x,
+      outcome_type = outcome_type,
+      facet_by = facet_by,
+      facet_wrap_cols = facet_wrap_cols,
+      ggtheme = ggtheme,
+      palette_type = palette_type,
+      outcome_palette = outcome_palette,
+      x_label = x_label,
+      y_label = y_label,
+      legend_label = legend_label,
+      plot_title = plot_title,
+      plot_sub_title = plot_sub_title,
+      caption = caption,
+      x_n_breaks = x_n_breaks,
+      y_range = y_range,
+      y_n_breaks = y_n_breaks,
+      y_breaks = y_breaks
+    )
+    
+  } else {
+    p <- ..plot_ordered_target_plot_continuous(
+      x = x,
+      outcome_type = outcome_type,
+      facet_by = facet_by,
+      facet_wrap_cols = facet_wrap_cols,
+      ggtheme = ggtheme,
+      palette_type = palette_type,
+      outcome_palette = outcome_palette,
+      x_label = x_label,
+      y_label = y_label,
+      legend_label = legend_label,
+      plot_title = plot_title,
+      plot_sub_title = plot_sub_title,
+      caption = caption,
+      x_n_breaks = x_n_breaks,
+      y_range = y_range,
+      y_n_breaks = y_n_breaks,
+      y_breaks = y_breaks
+    )
+  }
+
+  return(p)
+}
+
+
+..plot_ordered_target_plot_categorical <- function(
+    x,
+    outcome_type,
+    facet_by,
+    facet_wrap_cols,
+    ggtheme,
+    palette_type,
+    outcome_palette,
+    x_label,
+    y_label,
+    legend_label,
+    plot_title,
+    plot_sub_title,
+    caption,
+    x_n_breaks,
+    y_range,
+    y_n_breaks,
+    y_breaks
+) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+ browser() 
+  # plot metadata --------------------------------------------------------------
   
   # x_label
   if (is.waive(x_label)) x_label <- "ordered samples"
@@ -604,7 +675,7 @@ setMethod(
   } else {
     x[, "plot_index" := rank(value, ties.method = "random"), by = facet_by]
   }
-
+  
   # x_range
   x_range <- c(min(x$plot_index), max(x$plot_index))
   
@@ -632,6 +703,8 @@ setMethod(
     y_label = y_label
   )
   
+  # plot creation --------------------------------------------------------------
+  
   p <- ggplot2::ggplot(
     data = x,
     mapping = ggplot2::aes(
@@ -640,7 +713,6 @@ setMethod(
       fill = !!sym("outcome_value")
     )
   )
-  # plot creation --------------------------------------------------------------
   
   # Add plot theme
   p <- p + ggtheme
@@ -729,6 +801,203 @@ setMethod(
   return(p)
 }
 
+
+
+..plot_ordered_target_plot_continuous <- function(
+    x,
+    outcome_type,
+    facet_by,
+    facet_wrap_cols,
+    ggtheme,
+    palette_type,
+    outcome_palette,
+    x_label,
+    y_label,
+    legend_label,
+    plot_title,
+    plot_sub_title,
+    caption,
+    x_n_breaks,
+    y_range,
+    y_n_breaks,
+    y_breaks
+) {
+  # Suppress NOTES due to non-standard evaluation in data.table
+  value <- NULL
+  
+  # plot metadata --------------------------------------------------------------
+  
+  # x_label
+  if (is.waive(x_label)) x_label <- "ordered samples"
+  
+  # y_label
+  if (is.waive(y_label)) y_label <- "feature value"
+  
+  # y_range
+  if (is.null(y_range)) {
+    # Obtain default ranges for the metrics.
+    y_range <- c(min(x$value), max(x$value))
+    
+  } else {
+    .check_input_plot_args(y_range = y_range)
+  }
+  
+  # y_breaks
+  if (is.null(y_breaks)) {
+    .check_input_plot_args(
+      y_range = y_range,
+      y_n_breaks = y_n_breaks
+    )
+    
+    # Create breaks and update y_range
+    y_breaks <- labeling::extended(
+      m = y_n_breaks,
+      dmin = y_range[1L],
+      dmax = y_range[2L],
+      only.loose = FALSE
+    )
+    
+    y_range <- c(
+      head(y_breaks, n = 1L),
+      tail(y_breaks, n = 1L)
+    )
+    
+  } else {
+    .check_input_plot_args(y_breaks = y_breaks)
+  }
+  
+  # Set the x-range values
+  if (is.null(facet_by)) {
+    x[, "plot_index" := rank(value, ties.method = "random")]
+    
+  } else {
+    x[, "plot_index" := rank(value, ties.method = "random"), by = facet_by]
+  }
+  
+  # x_range
+  x_range <- c(min(x$plot_index), max(x$plot_index))
+  
+  # x_breaks
+  x_breaks <- labeling::extended(
+    m = x_n_breaks,
+    dmin = x_range[1L],
+    dmax = x_range[2L],
+    only.loose = FALSE
+  )
+  
+  # Update x_range
+  x_range <- c(
+    head(x_breaks, n = 1L),
+    tail(x_breaks, n = 1L)
+  )
+  
+  # Final checks
+  .check_input_plot_args(
+    x_range = x_range,
+    x_breaks = x_breaks,
+    x_label = x_label,
+    y_range = y_range,
+    y_breaks = y_breaks,
+    y_label = y_label
+  )
+  
+  # plot creation --------------------------------------------------------------
+  
+  p <- ggplot2::ggplot(
+    data = x,
+    mapping = ggplot2::aes(
+      x = !!sym("plot_index"),
+      y = !!sym("value"),
+      fill = !!sym("outcome_value")
+    )
+  )
+  
+  # Add plot theme
+  p <- p + ggtheme
+  
+  # Set bars.
+  p <- p + ggplot2::geom_bar(stat = "identity")
+  
+  if (palette_type == "qualitative") {
+    # Colours
+    outcome_colours <- .get_palette(
+      x = outcome_palette,
+      n = nlevels(x$outcome_value),
+      palette_type = palette_type
+    )
+    
+    # Set the qualitative scale
+    p <- p + ggplot2::scale_fill_manual(
+      name = legend_label,
+      values = outcome_colours[seq_along(levels(x$outcome_value))],
+      breaks = levels(x$outcome_value),
+      drop = FALSE
+    )
+    
+  } else {
+    outcome_colours <- .get_palette(
+      x = outcome_palette,
+      palette_type = palette_type
+    )
+    
+    # Set the gradient
+    p <- p + ggplot2::scale_fill_gradientn(
+      name = legend_label,
+      colors = outcome_colours,
+      limits = range(labeling::extended(
+        dmin = min(x$outcome_value),
+        dmax = max(x$outcome_value),
+        m = 5L,
+        only.loose = FALSE
+      )),
+      oob = scales::squish
+    )
+  }
+  
+  p <- p + ggplot2::scale_x_continuous(
+    limits = x_range,
+    breaks = x_breaks
+  )
+  p <- p + ggplot2::scale_y_continuous(
+    limits = y_range,
+    breaks = y_breaks
+  )
+  
+  # Determine how things are facetted
+  facet_by_list <- .parse_plot_facet_by(
+    x = x, 
+    facet_by = facet_by, 
+    facet_wrap_cols = facet_wrap_cols
+  )
+  
+  if (!is.null(facet_by)) {
+    if (is.null(facet_wrap_cols)) {
+      # Use a grid
+      p <- p + ggplot2::facet_grid(
+        rows = facet_by_list$facet_rows, 
+        cols = facet_by_list$facet_cols, 
+        labeller = "label_context"
+      )
+      
+    } else {
+      p <- p + ggplot2::facet_wrap(
+        facets = facet_by_list$facet_by, 
+        labeller = "label_context"
+      )
+    }
+  }
+  
+  # Update labels.
+  p <- p + ggplot2::labs(
+    x = x_label, 
+    y = y_label, 
+    title = plot_title, 
+    subtitle = plot_sub_title, 
+    caption = caption
+  )
+  
+  return(p)
+}
 
 
 
