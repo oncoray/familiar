@@ -263,7 +263,6 @@ setMethod(
       # Get predicted values.
       browser()
     } else {
-      
       # Get feature expression data
       feature_expression <- export_feature_expressions(
         object = object,
@@ -298,6 +297,21 @@ setMethod(
 
       # Flatten to single data.table.
       x <- data.table::rbindlist(x, use.names = TRUE)
+      
+      # Add evaluation time.
+      if (any(sapply(feature_expression, function(x) (!is.null(x@evaluation_time))))) {
+        evaluation_times <- unique(sapply(feature_expression, function(x) (x@evaluation_time)))
+        x <- lapply(
+          evaluation_times,
+          function(evaluation_time, x) {
+            y <- data.table::copy(x)
+            y[, "evaluation_time" := evaluation_time]
+            return(y)
+          },
+          x = x
+        )
+        x <- data.table::rbindlist(x, use.names = TRUE)
+      }
     }
     
     # Check package requirements for plotting.
@@ -313,12 +327,6 @@ setMethod(
     
     # ggtheme
     ggtheme <- .check_ggtheme(ggtheme)
-    
-    # x_label
-    if (is.waive(x_label)) x_label <- NULL
-    
-    # y_label
-    if (is.waive(y_label)) y_label <- NULL
     
     # outcome_legend_label
     if (is.waive(legend_label)) {
@@ -381,8 +389,6 @@ setMethod(
     # Check input arguments
     .check_input_plot_args(
       facet_wrap_cols = facet_wrap_cols,
-      x_label = x_label,
-      y_label = y_label,
       legend_label = legend_label,
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
@@ -455,7 +461,6 @@ setMethod(
       # Save and export
       if (!is.null(dir_path)) {
         browser()
-
         # Obtain decent default values for the plot.
         def_plot_dims <- .determine_ordered_target_plot_dimensions(
           x = x_sub,
@@ -520,7 +525,7 @@ setMethod(
     y_breaks
 ) {
   # Suppress NOTES due to non-standard evaluation in data.table
-  .NATURAL <- value <- eval_time <- NULL
+  .NATURAL <- value <- evaluation_time <- NULL
 
   # Set type of palette that is to be used for default palettes.
   if (outcome_type %in% c("binomial", "multinomial")) {
@@ -533,7 +538,7 @@ setMethod(
     
   } else if (outcome_type %in% c("survival", "competing_risk")) {
     palette_type <- "qualitative"
-    browser()
+
     # Mark all as no event initially.
     x[, "outcome_value" := "no"]
     
@@ -541,10 +546,10 @@ setMethod(
     x[!is.finite(outcome_time) | is.na(outcome_event), "outcome_value" := NA_character_]
     
     # All samples that have an event before or at the evaluation time.
-    x[outcome_time <= eval_time & outcome_event == 1L, "outcome_value" := "yes"]
+    x[outcome_time <= evaluation_time & outcome_event == 1L, "outcome_value" := "yes"]
     
     # All samples that were censored (lost to follow-up) at the evaluation time.
-    x[outcome_time <= eval_time & outcome_event == 0L, "outcome_value" := "cens."]
+    x[outcome_time <= evaluation_time & outcome_event == 0L, "outcome_value" := "cens."]
     
     # Set as factor
     x$outcome_value <- factor(x$outcome_value, levels = c("no", "yes", "cens."))
@@ -552,6 +557,12 @@ setMethod(
   } else {
     ..error_outcome_type_not_implemented(outcome_type)
   }
+  
+  # x_label
+  if (is.waive(x_label)) x_label <- "ordered samples"
+  
+  # y_label
+  if (is.waive(y_label)) y_label <- "feature value"
   
   # y_range
   if (is.null(y_range)) {
@@ -609,6 +620,16 @@ setMethod(
   x_range <- c(
     head(x_breaks, n = 1L),
     tail(x_breaks, n = 1L)
+  )
+  
+  # Final checks
+  .check_input_plot_args(
+    x_range = x_range,
+    x_breaks = x_breaks,
+    x_label = x_label,
+    y_range = y_range,
+    y_breaks = y_breaks,
+    y_label = y_label
   )
   
   p <- ggplot2::ggplot(
@@ -723,49 +744,15 @@ setMethod(
     facet_wrap_cols = facet_wrap_cols
   )
   
-  # Determine the number of elements along the x-axis.
-  if (x_axis_by == "feature") {
-    x_n_elements <- length(features)
-    x_longest_element <- max(sapply(features, nchar))
-    y_n_elements <- length(samples)
-    y_longest_element <- max(sapply(samples, nchar))
-  } else {
-    x_n_elements <- length(samples)
-    x_longest_element <- max(sapply(samples, nchar))
-    y_n_elements <- length(features)
-    y_longest_element <- max(sapply(features, nchar))
-  }
-  
-  # Assume each x-axis element takes up about 0.5 cm. Then add some room for
-  # other plot elements.
-  default_width <- x_n_elements * 0.5 + 1.0
-  
-  # Assume each y-axis element takes up about 0.5 cm as well.
-  default_height <- y_n_elements * 0.5 + 1.0
-  
-  # Reserve space for y-axis and x-axis tick labels. Assume that the typical
-  # width of a character is about 5 points (1.8 mm). For the x-axis we only
-  # reserve extra space in case the ticks are rotated, otherwise we just
-  # assume a typical height of 10 points (3.6 mm).
-  y_tick_space <- y_longest_element * 0.18
-  x_tick_space <- ifelse(rotate_x_tick_labels, x_longest_element * 0.18, 0.36)
-  
-  # Reserve space for the dendrograms (1.5 cm)
-  dendro_height <- ifelse(
-    any(c("top", "bottom") %in% c(show_feature_dendrogram, show_sample_dendrogram)),
-    1.5, 0.0
-  )
-  dendro_width <- ifelse(
-    any(c("left", "right") %in% c(show_feature_dendrogram, show_sample_dendrogram)),
-    1.5, 0.0
-  )
+  # Set a default height and width.
+  default_width <- 6.0
+  default_height <- 4.0
   
   # Set overall plot height, but limit to small-margin A4 (27.7 cm)
-  height <- min(c(2.0 + plot_dims[1L] * (default_height + x_tick_space + dendro_height), 27.7))
+  height <- min(c(2.0 + plot_dims[1L] * default_height, 27.7))
   
-  # Set overall plot width, but limit to small-margin A4 (19 cm). We leave some
-  # room for the legend on the right.
-  width <- min(c(5.0 + plot_dims[2L] * (default_width + y_tick_space + dendro_width), 19.0))
+  # Set overall plot width, but limit to small-margin A4 (19 cm)
+  width <- min(c(2.0 + plot_dims[2L] * default_width, 19.0))
   
   return(c(height, width))
 }
