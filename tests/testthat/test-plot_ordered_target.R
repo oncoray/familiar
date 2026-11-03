@@ -58,6 +58,17 @@ p_bin <- familiar::plot_ordered_target(
   object = data,
   features = c("feature_3a", "feature_3b", "feature_4")
 )
+data <- familiar:::test_create_good_data(outcome_type = "multinomial")
+p_mult <- familiar::plot_ordered_target(
+  object = data,
+  features = c("feature_3a", "feature_3b", "feature_4")
+)
+data <- familiar:::test_create_good_data(outcome_type = "continuous")
+p_cont <- familiar::plot_ordered_target(
+  object = data,
+  features = c("feature_3a", "feature_3b", "feature_4")
+)
+
 
 
 # Test plotting from dataObject with features contain NA values.
