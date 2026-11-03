@@ -1,3 +1,10 @@
+# Version 2.0.4
+
+## Fixes
+
+- Default palette with sequential or divergent scales now returns the requested 
+  number of colours by interpolating the palette.
+
 # Version 2.0.3 (Dapper Donkey)
 
 ## Minor changes

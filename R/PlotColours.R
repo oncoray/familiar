@@ -348,6 +348,17 @@
 
     if (invert) colours <- rev(colours)
   }
+  
+  # Interpolate sequential and divergent pallettes when n is provided.
+  if (palette_type %in% c("sequential", "divergent") && !is.null(n)) {
+    ramp <- scales::colour_ramp(colours, alpha = FALSE)
+    if (n == 1L) {
+      p <- 1.0  # use max colour if n = 1.0
+    } else {
+      p <- seq(0.0, 1.0, length = n)
+    }
+    colours <- ramp(p)
+  }
 
   return(colours)
 }
