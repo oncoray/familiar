@@ -729,6 +729,11 @@ setMethod(
       only.loose = TRUE
     )
     
+    y_range <- c(
+      head(y_breaks, n = 1L),
+      tail(y_breaks, n = 1L)
+    )
+ 
   } else {
     .check_input_plot_args(y_breaks = y_breaks)
   }
