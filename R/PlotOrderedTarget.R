@@ -154,7 +154,21 @@ setMethod(
     ...
   ) {
     # Attempt conversion to familiarCollection object.
-    if (is.waive(features)) {
+    if (is(object, "dataObject") || data.table::is.data.table(object)) {
+      if (is.waive(features)) features <- NULL
+      object <- do.call(
+        as_familiar_collection,
+        args = c(
+          list(
+            "object" = object,
+            "data_element" = "feature_expressions",
+            "features" = features
+          ),
+          list(...)
+        )
+      )
+      
+    } else if (is.waive(features)) {
       object <- do.call(
         as_familiar_collection,
         args = c(
@@ -597,7 +611,6 @@ setMethod(
       plot_title = plot_title,
       plot_sub_title = plot_sub_title,
       caption = caption,
-      x_n_breaks = x_n_breaks,
       y_range = y_range,
       y_n_breaks = y_n_breaks,
       y_breaks = y_breaks
@@ -643,7 +656,6 @@ setMethod(
     plot_title,
     plot_sub_title,
     caption,
-    x_n_breaks,
     y_range,
     y_n_breaks,
     y_breaks
