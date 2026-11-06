@@ -903,11 +903,15 @@ setMethod(
     only.loose = TRUE
   )
   
-  # Update x_range
+  # Update x_range, leaving space for the bars.
   x_range <- c(
     head(x_breaks, n = 1L),
     tail(x_breaks, n = 1L)
   )
+  
+  # Ensure that the bars fit on the plot by extending the range, if necessary.
+  if (x_range[1L] == min(x$plot_index)) x_range[1L] <- x_range[1L] - 0.5
+  if (x_range[2L] == max(x$plot_index)) x_range[2L] <- x_range[2L] + 0.5
   
   # Final checks
   .check_input_plot_args(
