@@ -102,10 +102,22 @@ data <- familiar:::test_create_good_data(outcome_type = "binomial")
 p_bin <- familiar::plot_ordered_target(
   object = data
 )
+testthat::test_that(
+  "Ordered target plot for mixed features works correctly.",
+  {
+    testthat::expect_length(p_bin, 6L)
+  }
+)
 
 
 # Test plotting from dataObject with features contain NA values.
 data <- familiar:::test_create_good_data_random_missing(outcome_type = "binomial")
 p_bin <- familiar::plot_ordered_target(
   object = data
+)
+testthat::test_that(
+  "Ordered target plot for features with NA values works correctly.",
+  {
+    testthat::expect_length(p_bin, 6L)
+  }
 )

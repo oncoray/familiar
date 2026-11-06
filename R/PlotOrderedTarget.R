@@ -596,6 +596,10 @@ setMethod(
     ..error_outcome_type_not_implemented(outcome_type)
   }
   
+  # Filter on non-NA value.
+  x <- x[!is.na(value), ]
+  if (is_empty(x)) return(NULL)
+  
   if (is.factor(x$value)) {
     p <- ..plot_ordered_target_plot_categorical(
       x = x,
