@@ -5,6 +5,16 @@ testthat::skip_on_ci()
 
 debug_flag <- FALSE
 
+# Generic test.
+familiar:::test_plots(
+  plot_function = familiar::plot_ordered_target,
+  data_element = "prediction_data",
+  debug_config ="normal",
+  debug_outcome_type = "multinomial",
+  debug = debug_flag
+)
+
+
 # Test plotting from dataObject with selection of numeric features.
 data <- familiar:::test_create_good_data(outcome_type = "binomial")
 p_bin <- familiar::plot_ordered_target(

@@ -284,6 +284,70 @@ setMethod(
     use_predictions <- is.waive(features)
     if (use_predictions) {
       # Get predicted values.
+      prediction_data <- export_prediction_data(object = object)
+      browser()
+      # Check that the data are not empty.
+      if (is_empty(prediction_data)) return(NULL)
+      grouping_column <- c("data_set", "vimp_method", "learner")
+      addition_grouping_column <- NULL
+      
+      if (object@outcome_type %in% c("binomial", "multinomial")) {
+        prediction_data <- prediction_data$classification
+        addition_grouping_column <- "positive_class"
+        
+      } else if (object@outcome_type %in% c("continuous")) {
+        browser()
+      } else if (object@outcome_type %in% c("survival", "competing_risk")) {
+        browser()
+      } else if (object@outcome_type %in% c("unsupervised")) {
+        browser()
+      } else {
+        ..error_outcome_type_not_implemented(object@outcome_type)
+      }
+      
+      if (all(sapply(prediction_data, is_empty))) return(NULL)
+      prediction_data <- prediction_data[!sapply(prediction_data, is_empty)]
+      
+      data <- list()
+      ii <- 1L
+      # Ensure that features are properly separated.
+      for (prediction_data_obj in prediction_data) {
+        value_cols <- prediction_data_obj@value_column
+        for (split_data in split(prediction_data_obj@data, by = grouping_column)) {
+          for (value_col in value_cols) {
+            cols <- c(prediction_data_obj@grouping_column, value_col)
+            x <- data.table::copy(split_data[, mget(cols)])
+            data.table::setnames(x, old = value_col, new = "value")
+            if (object@outcome_type %in% c("binomial", "multinomial")) {
+              x[, "positive_class" := value_col]
+            } else {
+              browser()
+            }
+          }
+        }
+        
+        data[[ii]] <- x
+        ii <- ii + 1L
+      }
+      
+      browser()
+      
+      # Build an identifier table.
+      identifier_cols <- c(grouping_column, addition_grouping_column)
+      identifier_table <- data.table::rbindlist(
+        lapply(
+          data,
+          function(x, cols) {
+            return(unique(x[, mget(cols)]))
+          },
+          cols = identifier_cols
+        ),
+        use.names = TRUE
+      )
+      
+      # Add row identifiers to make it easier to track the list elements for
+      # feature expression.
+      identifier_table[, "list_id" := .I]
       browser()
     } else {
       # Get feature expression data
@@ -302,7 +366,7 @@ setMethod(
 
       data <- list()
       ii <- 1L
-      # Ensure that 
+      # Ensure that features are properly separated.
       for (feature_expression_obj in feature_expression) {
         features <- names(feature_expression_obj@feature_info)
         for (feature in features) {
