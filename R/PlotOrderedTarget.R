@@ -285,7 +285,7 @@ setMethod(
     if (use_predictions) {
       # Get predicted values.
       prediction_data <- export_prediction_data(object = object)
-      browser()
+      
       # Check that the data are not empty.
       if (is_empty(prediction_data)) return(NULL)
       grouping_column <- c("data_set", "vimp_method", "learner")
@@ -296,7 +296,8 @@ setMethod(
         addition_grouping_column <- "positive_class"
         
       } else if (object@outcome_type %in% c("continuous")) {
-        browser()
+        prediction_data <- prediction_data$regression
+
       } else if (object@outcome_type %in% c("survival", "competing_risk")) {
         browser()
       } else if (object@outcome_type %in% c("unsupervised")) {
@@ -320,17 +321,20 @@ setMethod(
             data.table::setnames(x, old = value_col, new = "value")
             if (object@outcome_type %in% c("binomial", "multinomial")) {
               x[, "positive_class" := value_col]
+            } else if(object@outcome_type %in% c("survival", "competing_risk")) {
+              browser()
+              x[, "evaluation_time" := value_col]
             } else {
               browser()
             }
+            
+            x[, "feature" := "outcome"]
+            
+            data[[ii]] <- x
+            ii <- ii + 1L
           }
         }
-        
-        data[[ii]] <- x
-        ii <- ii + 1L
       }
-      
-      browser()
       
       # Build an identifier table.
       identifier_cols <- c(grouping_column, addition_grouping_column)
@@ -348,7 +352,7 @@ setMethod(
       # Add row identifiers to make it easier to track the list elements for
       # feature expression.
       identifier_table[, "list_id" := .I]
-      browser()
+      
     } else {
       # Get feature expression data
       feature_expression <- export_feature_expressions(
