@@ -9,7 +9,8 @@ debug_flag <- FALSE
 familiar:::test_plots(
   plot_function = familiar::plot_ordered_target,
   data_element = "prediction_data",
-  debug = debug_flag
+  debug = debug_flag,
+  not_available_some_predictions_fail = FALSE
 )
 
 # Test plotting from dataObject with selection of numeric features.
