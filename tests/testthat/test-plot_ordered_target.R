@@ -17,8 +17,7 @@ familiar:::test_plots(
 data <- familiar:::test_create_good_data(outcome_type = "binomial")
 p_bin <- familiar::plot_ordered_target(
   object = data, 
-  features = c("feature_1", "feature_2a", "feature_2b"),
-  dir_path = tempdir()
+  features = c("feature_1", "feature_2a", "feature_2b")
 )
 
 data <- familiar:::test_create_good_data(outcome_type = "multinomial")
