@@ -1,9 +1,17 @@
 # Version 2.0.4
 
+## Additions
+
+- Its now possible to create ordered target plots for both model predictions
+  and features using `plot_ordered_target`.
+
 ## Fixes
 
 - Default palette with sequential or divergent scales now returns the requested 
   number of colours by interpolating the palette.
+  
+- A warning related to non-integer instance weights that occurred when training 
+  GLM learners for binomial outcomes is now suppressed to reduce confusion.
 
 # Version 2.0.3 (Dapper Donkey)
 
