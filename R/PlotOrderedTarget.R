@@ -299,7 +299,9 @@ setMethod(
         prediction_data <- prediction_data$regression
 
       } else if (object@outcome_type %in% c("survival", "competing_risk")) {
-        browser()
+        prediction_data <- prediction_data$survival_probability
+        addition_grouping_column <- "evaluation_time"
+        
       } else if (object@outcome_type %in% c("unsupervised")) {
         browser()
       } else {
@@ -321,11 +323,6 @@ setMethod(
             data.table::setnames(x, old = value_col, new = "value")
             if (object@outcome_type %in% c("binomial", "multinomial")) {
               x[, "positive_class" := value_col]
-            } else if(object@outcome_type %in% c("survival", "competing_risk")) {
-              browser()
-              x[, "evaluation_time" := value_col]
-            } else {
-              browser()
             }
             
             x[, "feature" := "outcome"]
@@ -335,7 +332,7 @@ setMethod(
           }
         }
       }
-      
+
       # Build an identifier table.
       identifier_cols <- c(grouping_column, addition_grouping_column)
       identifier_table <- data.table::rbindlist(
@@ -433,6 +430,10 @@ setMethod(
       } else {
         ..error_outcome_type_not_implemented(object@outcome_type)
       }
+      
+      if (use_predictions) {
+        legend_label <- paste0("obs. ", legend_label)
+      }
     }
     
     # check outcome_legend_label
@@ -526,6 +527,29 @@ setMethod(
       additional_subtitle <- NULL
       
       if (is.waive(plot_title)) plot_title <- "Ordered target plot"
+
+      # Add evaluation time as subtitle component if it is not used otherwise.
+      if (
+        !"evaluation_time" %in% c(split_by, facet_by) &&
+        object@outcome_type %in% c("survival", "competing_risk")
+      ) {
+        additional_subtitle <- c(
+          additional_subtitle,
+          .add_time_to_plot_subtitle(x_sub$evaluation_time[1L])
+        )
+      }
+      
+      # Add positive class as subtitle component if it is not used otherwise.
+      if (
+        use_predictions &&
+        !"positive_class" %in% c(split_by, facet_by) &&
+        object@outcome_type %in% c("binomial", "multinomial")
+      ) {
+        additional_subtitle <- c(
+          additional_subtitle,
+          .add_class_to_plot_subtitle(x_sub$positive_class[1L])
+        )
+      }
       
       if (autogenerate_plot_subtitle) {
         plot_sub_title <- .create_plot_subtitle(
@@ -541,6 +565,7 @@ setMethod(
       # Generate plot
       p <- .plot_ordered_target_plot(
         x = data_split,
+        use_predictions = use_predictions,
         outcome_type = object@outcome_type,
         facet_by = facet_by,
         facet_wrap_cols = facet_wrap_cols,
@@ -566,7 +591,7 @@ setMethod(
       
       # Save and export
       if (!is.null(dir_path)) {
-        browser()
+        
         # Obtain decent default values for the plot.
         def_plot_dims <- .determine_ordered_target_plot_dimensions(
           x = x_sub,
@@ -614,6 +639,7 @@ setMethod(
 
 .plot_ordered_target_plot <- function(
     x,
+    use_predictions,
     outcome_type,
     facet_by,
     facet_wrap_cols,
@@ -652,10 +678,10 @@ setMethod(
     x[!is.finite(outcome_time) | is.na(outcome_event), "outcome_value" := NA_character_]
     
     # All samples that have an event before or at the evaluation time.
-    x[outcome_time <= evaluation_time & outcome_event == 1L, "outcome_value" := "yes"]
+    x[outcome_time <= as.numeric(evaluation_time) & outcome_event == 1L, "outcome_value" := "yes"]
     
     # All samples that were censored (lost to follow-up) at the evaluation time.
-    x[outcome_time <= evaluation_time & outcome_event == 0L, "outcome_value" := "cens."]
+    x[outcome_time <= as.numeric(evaluation_time) & outcome_event == 0L, "outcome_value" := "cens."]
     
     # Set as factor
     x$outcome_value <- factor(x$outcome_value, levels = c("no", "yes", "cens."))
@@ -691,6 +717,7 @@ setMethod(
   } else {
     p <- ..plot_ordered_target_plot_continuous(
       x = x,
+      use_predictions = use_predictions,
       outcome_type = outcome_type,
       facet_by = facet_by,
       facet_wrap_cols = facet_wrap_cols,
@@ -895,6 +922,7 @@ setMethod(
 
 ..plot_ordered_target_plot_continuous <- function(
     x,
+    use_predictions,
     outcome_type,
     facet_by,
     facet_wrap_cols,
@@ -921,7 +949,22 @@ setMethod(
   if (is.waive(x_label)) x_label <- "ordered samples"
   
   # y_label
-  if (is.waive(y_label)) y_label <- "feature value"
+  if (is.waive(y_label)) {
+    if (use_predictions) {
+      if (outcome_type %in% c("continuous", "unsupervised")) {
+        y_label <- "predicted value"
+      } else if (outcome_type %in% c("binomial", "multinomial")) {
+        y_label <- "pred. class prob."
+      } else if (outcome_type %in% c("survival", "competing_risk")) {
+        y_label <- "pred. survival prob."
+      } else {
+        ..error_outcome_type_not_implemented(outcome_type)
+      }
+      
+    } else {
+      y_label <- "feature value"
+    }
+  }
   
   # y_range
   if (is.null(y_range)) {

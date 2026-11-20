@@ -424,6 +424,10 @@ theme_familiar <- function(
 }
 
 
+.add_class_to_plot_subtitle <- function(value) {
+  return(list("class" = value))
+}
+
 
 .create_plot_subtype <- function(
     x,
