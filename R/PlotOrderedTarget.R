@@ -970,15 +970,19 @@ setMethod(
   if (is.null(y_range)) {
     # Obtain default ranges for the metrics.
     y_range <- c(min(x$value), max(x$value))
-    
-  } else {
-    .check_input_plot_args(y_range = y_range)
+    if (y_range[1L] > 0.0) y_range[1L] <- 0.0
+    if (y_range[2L] < 0.0) y_range[2L] <- 0.0
   }
+  
+  if (diff(y_range) == 0.0) {
+    y_range <- y_range + c(-0.01, 0.01)
+  }
+  
+  .check_input_plot_args(y_range = y_range)
   
   # y_breaks
   if (is.null(y_breaks)) {
     .check_input_plot_args(
-      y_range = y_range,
       y_n_breaks = y_n_breaks
     )
     
@@ -1009,6 +1013,7 @@ setMethod(
   
   # x_range
   x_range <- c(min(x$plot_index), max(x$plot_index))
+  if (diff(x_range) == 0.0) x_range <- x_range + c(-1L, 1L)
   
   # x_breaks
   x_breaks <- labeling::extended(
@@ -1077,18 +1082,20 @@ setMethod(
       palette_type = palette_type
     )
     
-    # Set the gradient
-    p <- p + ggplot2::scale_fill_gradientn(
-      name = legend_label,
-      colors = outcome_colours,
-      limits = range(labeling::extended(
-        dmin = min(x$outcome_value),
-        dmax = max(x$outcome_value),
-        m = 5L,
-        only.loose = TRUE
-      )),
-      oob = scales::squish
-    )
+    if (any(is.finite(x$outcome_value))) {
+      # Set the gradient
+      p <- p + ggplot2::scale_fill_gradientn(
+        name = legend_label,
+        colors = outcome_colours,
+        limits = range(labeling::extended(
+          dmin = min(x$outcome_value, na.rm = TRUE),
+          dmax = max(x$outcome_value, na.rm = TRUE),
+          m = 5L,
+          only.loose = TRUE
+        )),
+        oob = scales::squish
+      )
+    }
   }
   
   p <- p + ggplot2::scale_x_continuous(
