@@ -1217,6 +1217,8 @@ setMethod(
   "..update_warnings",
   signature(object = "familiarModel"),
   function(object, messages) {
+    if (is_empty(messages)) messages <- NULL
+    
     # Update warnings attached to the object.
     object@messages$warning <- c(
       object@messages$warning,
@@ -1233,6 +1235,8 @@ setMethod(
   "..update_errors",
   signature(object = "familiarModel"),
   function(object, messages) {
+    if (is_empty(messages)) messages <- NULL
+    
     # Update error attached to the object.
     object@messages$error <- c(
       object@messages$error,

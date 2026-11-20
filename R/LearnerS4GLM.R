@@ -357,6 +357,9 @@ setMethod(
         object@outcome_type
       ))
     }
+    
+    # Remove warnings related to non-integer number of successes.
+    model$warning <- model$warning[!sapply(model$warning, startsWith, prefix = "eval: non-integer #successes")]
 
     # Extract values.
     object <- ..update_warnings(object = object, model$warning)
